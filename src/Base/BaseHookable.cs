@@ -134,8 +134,8 @@ public class BaseHookable
 #if DEBUG
 		if (Community.Runtime.Config.PluginTrackingTime != 0)
 		{
-			HookTimeAverage.Increment(timeElapsed);
-			MemoryAverage.Increment(memoryUsed);
+			HookTimeAverage?.Increment(timeElapsed);
+			MemoryAverage?.Increment(memoryUsed);
 		}
 #endif
 

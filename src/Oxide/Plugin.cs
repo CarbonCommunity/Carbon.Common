@@ -86,8 +86,6 @@ namespace Oxide.Core.Plugins
 				Carbon.Logger.Debug(Name, "Installed hook method attributes");
 			}
 
-			TrackInit();
-
 			using (TimeMeasure.New($"Processing PluginReferences on '{this}'"))
 			{
 				InternalApplyPluginReferences();
@@ -109,6 +107,8 @@ namespace Oxide.Core.Plugins
 			}
 
 			CallHook("Init");
+
+			TrackInit();
 		}
 		internal virtual void ILoad()
 		{

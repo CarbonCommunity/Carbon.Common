@@ -28,7 +28,8 @@ public sealed class Updater
 		// when more than one file is listed here to be downloaded [and] one of
 		// them fails with 404.
 		IReadOnlyList<string> files = new List<string>(){
-			@"carbon/managed/hooks/Carbon.Hooks.Extra.dll"
+			@"carbon/managed/hooks/Carbon.Hooks.Community.dll",
+			@"carbon/managed/hooks/Carbon.Hooks.Oxide.dll"
 		};
 
 		int failed = 0;
