@@ -132,11 +132,11 @@ public class BaseHookable
 		var memoryUsed = (CurrentMemory - _currentMemory).Clamp(0, long.MaxValue);
 
 #if DEBUG
-		if (Community.Runtime.Config.PluginTrackingTime != 0)
-		{
-			HookTimeAverage?.Increment(timeElapsed);
-			MemoryAverage?.Increment(memoryUsed);
-		}
+		// if (Community.Runtime.Config.PluginTrackingTime != 0)
+		// {
+		// 	HookTimeAverage?.Increment(timeElapsed);
+		// 	MemoryAverage?.Increment(memoryUsed);
+		// }
 #endif
 
 		TotalHookTime += timeElapsed;

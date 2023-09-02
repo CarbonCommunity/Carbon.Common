@@ -19,7 +19,7 @@ public sealed class Updater
 		string target = (Community.Runtime.Analytics.Branch == "Release") ? "Release" : "Debug";
 
 		return $"https://raw.githubusercontent.com/{Repository}/{branch}/Modules/"
-			+ $"{target}{suffix}/{(protocol is null ? $"{file}" : $"/{protocol}/{file}")}";
+			+ $"{target}{suffix}/{(protocol is null ? $"{file}" : $"{protocol}/{file}")}";
 	}
 
 	public static async void DoUpdate(Action<bool> callback = null)
