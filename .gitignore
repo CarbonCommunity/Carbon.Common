@@ -17,3 +17,7 @@
 # misc
 .[Rr]elease/
 .[Rr]edist/
+
+# Code gen
+[Bb]uild.cs
+[Gg]enerated/
