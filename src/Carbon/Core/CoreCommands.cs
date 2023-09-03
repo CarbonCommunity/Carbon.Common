@@ -661,12 +661,28 @@ public partial class CorePlugin : CarbonPlugin
 	[AuthLevel(2)]
 	private void Modules(ConsoleSystem.Arg arg)
 	{
-		using var print = new StringTable("Name", "Is Enabled", "Quick Command");
+		var count = 1;
+		using var print = new StringTable("#", "Name", "Enabled", "Version", "Hook Time", "Memory Usage", "Uptime", "Quick");
 		foreach (var hookable in Community.Runtime.ModuleProcessor.Modules)
 		{
-			if (hookable is not IModule module) continue;
+			if (hookable is not BaseModule module) continue;
 
-			print.AddRow(hookable.Name, module.GetEnabled() ? "Yes" : "No", $"c.setmodule \"{hookable.Name}\" 0/1");
+			var hookTimeAverageValue =
+#if DEBUG
+	(float)module.HookTimeAverage.CalculateAverage();
+#else
+								0;
+#endif
+			var memoryAverageValue =
+#if DEBUG
+				(float)module.MemoryAverage.CalculateAverage();
+#else
+								0;
+#endif
+			var hookTimeAverage = Mathf.RoundToInt(hookTimeAverageValue) == 0 ? string.Empty : $" (avg {hookTimeAverageValue:0}ms)";
+			var memoryAverage = Mathf.RoundToInt(memoryAverageValue) == 0 ? string.Empty : $" (avg {ByteEx.Format(memoryAverageValue, shortName: true, stringFormat: "{0}{1}").ToLower()})";
+			print.AddRow(count, hookable.Name, module.GetEnabled(), module.Version, $"{module.TotalHookTime:0}ms{hookTimeAverage}", $"{ByteEx.Format(module.TotalMemoryUsed, shortName: true, stringFormat: "{0}{1}").ToLower()}{memoryAverage}", $"{TimeEx.Format(module.Uptime)}", $"c.setmodule \"{hookable.Name}\" [0|1]");
+			count++;
 		}
 
 		arg.ReplyWith(print.Write(StringTable.FormatTypes.None));
