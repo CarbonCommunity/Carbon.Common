@@ -75,7 +75,10 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			tab.ClearColumn(1);
 			
 			tab.AddName(1, $"Player Information", TextAnchor.MiddleLeft);
-			tab.AddInput(1, "Name", ap => player.displayName, null);
+			tab.AddInput(1, "Name", ap => player.displayName, (ap, args) =>
+			{
+				player.AsIPlayer().Rename(args.ToString(" "));
+			});
 			tab.AddInput(1, "Steam ID", ap => player.UserIDString, null);
 			tab.AddInput(1, "Net ID", ap => $"{player.net?.ID}", null);
 			tab.AddInput(1, "IP", ap => $"{player.net?.connection?.ipaddress}", null, hidden: true);
