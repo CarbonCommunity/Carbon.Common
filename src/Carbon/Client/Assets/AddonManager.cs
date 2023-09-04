@@ -18,8 +18,42 @@ public class AddonManager : IDisposable
 	public List<Addon> Installed { get; } = new();
 
 	public List<GameObject> PrefabCache { get; } = new();
-	public List<AssetBundle> BundleCache { get; } = new();
 
+	public GameObject CreateCacheBasedOn(GameObject source)
+	{
+		if (source == null)
+		{
+			return null;
+		}
+
+		var result = UnityEngine.Object.Instantiate(source);
+		PrefabCache.Add(result);
+
+		return result;
+	}
+	public GameObject CreatePrefab(string path, Asset asset)
+	{
+		if (string.IsNullOrEmpty(path))
+		{
+			return null;
+		}
+
+		return CreateCacheBasedOn(asset.LoadPrefab<GameObject>(path));
+	}
+	public GameObject CreatePrefab(string path, string assetName, Addon addon)
+	{
+		if (string.IsNullOrEmpty(path) || string.IsNullOrEmpty(assetName))
+		{
+			return null;
+		}
+
+		if(addon.Assets.TryGetValue(assetName, out var asset))
+		{
+			return CreateCacheBasedOn(asset.LoadPrefab<GameObject>(path));
+		}
+
+		return null;
+	}
 	public void Dispose()
 	{
 		foreach(var prefab in PrefabCache)
@@ -36,15 +70,18 @@ public class AddonManager : IDisposable
 			}
 		}
 
-		foreach(var bundle in BundleCache)
+		foreach(var addon in Installed)
 		{
-			try
+			foreach (var asset in addon.Assets)
 			{
-				bundle.Unload(true);
-			}
-			catch (Exception ex)
-			{
-				Logger.Warn($"[AddonManager] Failed unloading AssetBundle ({ex.Message})\n{ex.StackTrace}");
+				try
+				{
+					asset.Value.Dispose();
+				}
+				catch (Exception ex)
+				{
+					Logger.Warn($"[AddonManager] Failed disposing of asset '{asset.Key}' (of addon {addon.Name}) ({ex.Message})\n{ex.StackTrace}");
+				}
 			}
 		}
 	}

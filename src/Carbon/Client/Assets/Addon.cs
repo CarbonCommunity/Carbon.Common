@@ -16,7 +16,11 @@ public class Addon : IStore<Addon, Asset>
 	public const string EXTENSION = ".cca";
 
 	public string Name { get; set; }
-	public List<Asset> Assets { get; set; } = new();
+	public string Author { get; set; }
+	public string Description { get; set; }
+	public string Version { get; set; }
+	public string Checksum { get; set; }
+	public Dictionary<string, Asset> Assets { get; set; } = new();
 	public long CreationTime { get; set; } = DateTime.Now.Ticks;
 
 	public Manifest GetManifest()
@@ -24,11 +28,29 @@ public class Addon : IStore<Addon, Asset>
 		return new Manifest
 		{
 			Name = Name,
-			Assets = Assets.Select(x => x.GetManifest()).ToArray(),
+			Assets = Assets.Select(x => x.Value.GetManifest()).ToArray(),
 			CreationTime = CreationTime
 		};
 	}
 
+	public static Addon Create(AddonInfo info, params Asset[] assets) 
+	{
+		var addon = new Addon
+		{
+			Name = info.Name,
+			Author = info.Author,
+			Description = info.Description,
+			Version = info.Version,
+			Checksum = info.Checksum,
+		};
+
+		foreach(var asset in assets)
+		{
+			addon.Assets.Add(asset.Name, asset);
+		}
+
+		return addon;
+	}
 	public static Addon ImportFromBuffer(byte[] buffer)
 	{
 		return Serializer.Deserialize<Addon>(new ReadOnlySpan<byte>(buffer, 0, buffer.Length));
@@ -66,5 +88,14 @@ public class Addon : IStore<Addon, Asset>
 		public Asset.Manifest[] Assets { get; set; }
 		public long CreationTime { get; set; }
 		public string CreationTimeReadable => new DateTime(CreationTime).ToString();
+	}
+
+	public struct AddonInfo
+	{
+		public string Name;
+		public string Author;
+		public string Description;
+		public string Version;
+		public string Checksum;
 	}
 }
