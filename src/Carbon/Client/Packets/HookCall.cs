@@ -9,9 +9,10 @@ using ProtoBuf;
 
 namespace Carbon.Client.Packets;
 
-[ProtoContract(InferTagFromName = true)]
+[ProtoContract]
 public class HookCall : BasePacket
 {
+	[ProtoMember(1)]
 	public string Hook { get; set; }
 
 	public override void Dispose()

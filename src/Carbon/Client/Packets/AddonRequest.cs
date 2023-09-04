@@ -9,8 +9,9 @@ using ProtoBuf;
 
 namespace Carbon.Client.Packets;
 
-[ProtoContract(InferTagFromName = true)]
+[ProtoContract]
 public class AddonRequest : BasePacket
 {
+	[ProtoMember(1)]
 	public int AddonCount { get; set; }
 }

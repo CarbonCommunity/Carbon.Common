@@ -10,18 +10,34 @@ using ProtoBuf;
 
 namespace Carbon.Client.Assets;
 
-[ProtoContract(InferTagFromName = true)]
+[ProtoContract]
 public class Addon : IStore<Addon, Asset>
 {
 	public const string EXTENSION = ".cca";
 
+	[ProtoMember(1)]
 	public string Name { get; set; }
+
+	[ProtoMember(2)]
 	public string Author { get; set; }
+
+	[ProtoMember(3)]
 	public string Description { get; set; }
+
+	[ProtoMember(4)]
 	public string Version { get; set; }
+
+	[ProtoMember(5)]
 	public string Checksum { get; set; }
+
+	[ProtoMember(6)]
 	public Dictionary<string, Asset> Assets { get; set; } = new();
+
+	[ProtoMember(7)]
 	public long CreationTime { get; set; } = DateTime.Now.Ticks;
+
+	public bool IsDirty { get; set; }
+	public byte[] Buffer { get; set; }
 
 	public Manifest GetManifest()
 	{
@@ -48,6 +64,8 @@ public class Addon : IStore<Addon, Asset>
 		{
 			addon.Assets.Add(asset.Name, asset);
 		}
+
+		addon.MarkDirty();
 
 		return addon;
 	}
@@ -77,9 +95,31 @@ public class Addon : IStore<Addon, Asset>
 		OsEx.File.Create(path, Store());
 	}
 
+	public void MarkDirty()
+	{
+		if (IsDirty)
+		{
+			return;
+		}
+
+		if(Buffer != null)
+		{
+			Array.Clear(Buffer, 0, Buffer.Length);
+			Buffer = null;
+		}
+
+		Buffer = Store();
+
+		IsDirty = true;
+	}
+
 	public override string ToString()
 	{
 		return JsonConvert.SerializeObject(GetManifest(), Formatting.Indented);
+	}
+	public string ToName()
+	{
+		return $"{Name} v{Version} by {Author}";
 	}
 
 	public class Manifest

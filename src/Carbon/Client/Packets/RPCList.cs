@@ -9,11 +9,14 @@ using ProtoBuf;
 
 namespace Carbon.Client.Packets;
 
-[ProtoContract(InferTagFromName = true)]
+[ProtoContract]
 public class RPCList : BasePacket
 {
-	public string[] RpcNames;
-	public uint[] RpcIds;
+	[ProtoMember(1)]
+	public string[] RpcNames { get; set; }
+
+	[ProtoMember(2)]
+	public uint[] RpcIds { get; set; }
 
 	public static RPCList Get()
 	{

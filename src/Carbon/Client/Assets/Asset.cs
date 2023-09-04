@@ -13,10 +13,13 @@ namespace Carbon.Client.Assets;
 [ProtoContract(InferTagFromName = true)]
 public class Asset : IDisposable
 {
+	[ProtoMember(1)]
 	public string Name { get; set; }
+
+	[ProtoMember(2)]
 	public byte[] Data { get; set; }
 
-	internal AssetBundle _cachedBundle { get; set; }
+	public AssetBundle CachedBundle { get; set; }
 
 	public Manifest GetManifest()
 	{
@@ -40,8 +43,16 @@ public class Asset : IDisposable
 		return CreateFrom(Path.GetFileNameWithoutExtension(path), OsEx.File.ReadBytes(path));
 	}
 
-	public bool IsUnpacked => _cachedBundle != null;
+	public bool IsUnpacked => CachedBundle != null;
 
+	public IEnumerator UnpackBundleAsync()
+	{
+		var request = (AssetBundleCreateRequest)null;
+		using var stream = new MemoryStream(Data);
+		yield return request = AssetBundle.LoadFromStreamAsync(stream);
+
+		CachedBundle = request.assetBundle;
+	}
 	public void UnpackBundle()
 	{
 		if(IsUnpacked)
@@ -50,7 +61,7 @@ public class Asset : IDisposable
 		}
 
 		using var stream = new MemoryStream(Data);
-		_cachedBundle = AssetBundle.LoadFromStream(stream);
+		CachedBundle = AssetBundle.LoadFromStream(stream);
 	}
 
 	public T LoadPrefab<T>(string path) where T : UnityEngine.Object
@@ -60,7 +71,7 @@ public class Asset : IDisposable
 			UnpackBundle();
 		}
 
-		return _cachedBundle.LoadAsset<T>(path);
+		return CachedBundle.LoadAsset<T>(path);
 	}
 	public T[] LoadAllPrefabs<T>() where T : UnityEngine.Object
 	{
@@ -69,7 +80,7 @@ public class Asset : IDisposable
 			UnpackBundle();
 		}
 
-		return _cachedBundle.LoadAllAssets<T>();
+		return CachedBundle.LoadAllAssets<T>();
 	}
 
 	public override string ToString()
@@ -84,7 +95,7 @@ public class Asset : IDisposable
 			return;
 		}
 
-		_cachedBundle.Unload(true);
+		CachedBundle.Unload(true);
 	}
 
 	public class Manifest

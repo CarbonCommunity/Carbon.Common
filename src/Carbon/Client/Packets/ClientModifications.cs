@@ -9,9 +9,10 @@ using ProtoBuf;
 
 namespace Carbon.Client.Packets;
 
-[ProtoContract(InferTagFromName = true)]
+[ProtoContract]
 public class ClientModifications : BasePacket
 {
+	[ProtoMember(1)]
 	public List<Entry> Entries { get; set; } = new();
 
 	public override void Dispose()

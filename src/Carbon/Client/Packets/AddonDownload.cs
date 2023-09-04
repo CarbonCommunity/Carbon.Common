@@ -10,8 +10,19 @@ using ProtoBuf;
 
 namespace Carbon.Client.Packets;
 
-[ProtoContract(InferTagFromName = true)]
+[ProtoContract]
 public class AddonDownload : BasePacket
 {
-	public List<Addon> Addons { get; set; }
+	[ProtoMember(1)]
+	public byte[] BufferChunk { get; set; }
+
+	[ProtoMember(2)]
+	public Formats Format { get; set; }
+
+	public enum Formats
+	{
+		First,
+		Content,
+		Last
+	}
 }
