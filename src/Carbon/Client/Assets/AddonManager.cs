@@ -115,6 +115,7 @@ public class AddonManager : IDisposable
 		client.Send("addonrequest", new AddonRequest
 		{
 			AddonCount = addons.Count,
+			BufferSize = addons.Sum(x => x.Buffer.Length),
 		});
 
 		Logger.Log($"Sent download request to {client.Connection} with {addons.Count:n0} addons...");
@@ -133,11 +134,14 @@ public class AddonManager : IDisposable
 					BufferChunk = chunks[i],
 					Format = i == 0 ? AddonDownload.Formats.First : i == chunks.Length - 1 ? AddonDownload.Formats.Last : AddonDownload.Formats.Content
 				});
+
+				await AsyncEx.WaitForSeconds(0.1f);
 			}
 		}
 
 		client.Send("addonfinalized");
 	}
+
 	public void Install(List<Addon> addons)
 	{
 		foreach(var addon in addons)

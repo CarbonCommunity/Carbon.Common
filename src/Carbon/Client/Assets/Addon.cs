@@ -49,7 +49,7 @@ public class Addon : IStore<Addon, Asset>, IDisposable
 		};
 	}
 
-	public static Addon Create(AddonInfo info, params Asset[] assets) 
+	public static Addon Create(AddonInfo info, params Asset[] assets)
 	{
 		var addon = new Addon
 		{
@@ -60,7 +60,7 @@ public class Addon : IStore<Addon, Asset>, IDisposable
 			Checksum = info.Checksum,
 		};
 
-		foreach(var asset in assets)
+		foreach (var asset in assets)
 		{
 			addon.Assets.Add(asset.Name, asset);
 		}
@@ -125,7 +125,7 @@ public class Addon : IStore<Addon, Asset>, IDisposable
 	}
 	public void Dispose()
 	{
-		foreach(var asset in Assets)
+		foreach (var asset in Assets)
 		{
 			asset.Value.Dispose();
 		}

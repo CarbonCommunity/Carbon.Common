@@ -6,6 +6,7 @@
  */
 
 namespace Carbon.Client.Assets;
+
 public interface IStore<T, TA>
 {
 	byte[] Store();

@@ -14,4 +14,7 @@ public class AddonRequest : BasePacket
 {
 	[ProtoMember(1)]
 	public int AddonCount { get; set; }
+
+	[ProtoMember(2)]
+	public int BufferSize { get; set; }
 }
