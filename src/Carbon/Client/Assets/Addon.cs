@@ -5,6 +5,7 @@
  *
  */
 
+using Newtonsoft.Json;
 using ProtoBuf;
 
 namespace Carbon.Client.Assets;
@@ -52,6 +53,11 @@ public class Addon : IStore<Addon, Asset>
 		path += EXTENSION;
 
 		OsEx.File.Create(path, Store());
+	}
+
+	public override string ToString()
+	{
+		return JsonConvert.SerializeObject(GetManifest(), Formatting.Indented);
 	}
 
 	public class Manifest

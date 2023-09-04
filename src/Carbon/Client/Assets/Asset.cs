@@ -5,6 +5,7 @@
  *
  */
 
+using Newtonsoft.Json;
 using ProtoBuf;
 
 namespace Carbon.Client.Assets;
@@ -22,6 +23,11 @@ public class Asset
 			Name = Name,
 			BufferLength = Data.Length,
 		};
+	}
+
+	public override string ToString()
+	{
+		return JsonConvert.SerializeObject(GetManifest(), Formatting.Indented);
 	}
 
 	public class Manifest

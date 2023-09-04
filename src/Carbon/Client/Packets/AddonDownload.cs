@@ -5,12 +5,13 @@
  *
  */
 
+using Carbon.Client.Assets;
 using ProtoBuf;
 
 namespace Carbon.Client.Packets;
 
 [ProtoContract(InferTagFromName = true)]
-public class AddonRequest : BasePacket
+public class AddonDownload : BasePacket
 {
-	public int AddonCount { get; set; }
+	public List<Addon> Addons { get; set; }
 }
