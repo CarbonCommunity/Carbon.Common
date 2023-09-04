@@ -1,4 +1,11 @@
-﻿using Carbon.Client.Contracts;
+﻿/*
+ *
+ * Copyright (c) 2022-2023 Carbon Community 
+ * All rights reserved.
+ *
+ */
+
+using Carbon.Client.Contracts;
 using Carbon.Client.Packets;
 using Network;
 using ProtoBuf;

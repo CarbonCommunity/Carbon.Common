@@ -5,9 +5,8 @@
  *
  */
 
-namespace Carbon.Client.Contracts;
-
-public interface IPacket
+namespace Carbon.Client.Assets;
+public interface IStore<T, TA>
 {
-	byte[] Serialize();
+	byte[] Store();
 }

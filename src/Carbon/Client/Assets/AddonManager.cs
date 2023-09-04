@@ -5,12 +5,22 @@
  *
  */
 
+#define CLIENT
+
 namespace Carbon.Client.Assets;
 
 public class AddonManager
 {
+	public static AddonManager Instance { get; internal set; } = new();
+
+	public List<Addon> Installed { get; } = new();
+
+#if CLIENT
 	public void Deliver(CarbonClient client, List<Addon> addons)
 	{
 		// Send addons to the client
 	}
+#else
+
+#endif
 }
