@@ -11,7 +11,7 @@ using ProtoBuf;
 namespace Carbon.Client.Assets;
 
 [ProtoContract]
-public class Addon : IStore<Addon, Asset>
+public class Addon : IStore<Addon, Asset>, IDisposable
 {
 	public const string EXTENSION = ".cca";
 
@@ -71,7 +71,9 @@ public class Addon : IStore<Addon, Asset>
 	}
 	public static Addon ImportFromBuffer(byte[] buffer)
 	{
-		return Serializer.Deserialize<Addon>(new ReadOnlySpan<byte>(buffer, 0, buffer.Length));
+		var addon = Serializer.Deserialize<Addon>(new ReadOnlySpan<byte>(buffer, 0, buffer.Length));
+		addon.MarkDirty();
+		return addon;
 
 	}
 	public static Addon ImportFromFile(string path)
@@ -95,6 +97,15 @@ public class Addon : IStore<Addon, Asset>
 		OsEx.File.Create(path, Store());
 	}
 
+	public override string ToString()
+	{
+		return JsonConvert.SerializeObject(GetManifest(), Formatting.Indented);
+	}
+	public string ToName()
+	{
+		return $"{Name} v{Version} by {Author}";
+	}
+
 	public void MarkDirty()
 	{
 		if (IsDirty)
@@ -102,7 +113,7 @@ public class Addon : IStore<Addon, Asset>
 			return;
 		}
 
-		if(Buffer != null)
+		if (Buffer != null)
 		{
 			Array.Clear(Buffer, 0, Buffer.Length);
 			Buffer = null;
@@ -112,14 +123,18 @@ public class Addon : IStore<Addon, Asset>
 
 		IsDirty = true;
 	}
+	public void Dispose()
+	{
+		foreach(var asset in Assets)
+		{
+			asset.Value.Dispose();
+		}
 
-	public override string ToString()
-	{
-		return JsonConvert.SerializeObject(GetManifest(), Formatting.Indented);
-	}
-	public string ToName()
-	{
-		return $"{Name} v{Version} by {Author}";
+		if (Buffer != null)
+		{
+			Array.Clear(Buffer, 0, Buffer.Length);
+			Buffer = null;
+		}
 	}
 
 	public class Manifest

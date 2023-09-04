@@ -96,6 +96,12 @@ public class Asset : IDisposable
 		}
 
 		CachedBundle.Unload(true);
+
+		if (Data != null)
+		{
+			Array.Clear(Data, 0, Data.Length);
+			Data = null;
+		}
 	}
 
 	public class Manifest
