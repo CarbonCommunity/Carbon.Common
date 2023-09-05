@@ -190,15 +190,18 @@ public class Community
 
 	public void LoadConfig()
 	{
+		var needsSave = false;
+
 		if (!OsEx.File.Exists(Defines.GetConfigFile()))
 		{
-			SaveConfig();
-			return;
+			needsSave = true;
+			Config ??= new();
+		}
+		else
+		{
+			Config = JsonConvert.DeserializeObject<Config>(OsEx.File.ReadText(Defines.GetConfigFile()));
 		}
 
-		Config = JsonConvert.DeserializeObject<Config>(OsEx.File.ReadText(Defines.GetConfigFile()));
-
-		var needsSave = false;
 		if (Config.ConditionalCompilationSymbols == null)
 		{
 			Config.ConditionalCompilationSymbols = new();
