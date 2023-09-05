@@ -1,5 +1,11 @@
-﻿using ProtoBuf;
-using ProtoBuf.Meta;
+﻿/*
+ *
+ * Copyright (c) 2022-2023 Carbon Community 
+ * All rights reserved.
+ *
+ */
+
+using ProtoBuf;
 
 namespace Carbon.Client.Packets;
 
@@ -11,7 +17,7 @@ public class ItemDefinitionUpdate : BasePacket
 
 	[ProtoMember(2)]
 	public string DisplayName { get; set; }
-	 
+
 	[ProtoMember(3)]
 	public string DisplayDescription { get; set; }
 

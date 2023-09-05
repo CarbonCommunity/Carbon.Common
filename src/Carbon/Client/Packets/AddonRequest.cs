@@ -10,16 +10,11 @@ using ProtoBuf;
 namespace Carbon.Client.Packets;
 
 [ProtoContract]
-public class ClientInfo : BasePacket
+public class AddonRequest : BasePacket
 {
 	[ProtoMember(1)]
-	public int ScreenWidth { get; set; }
+	public int AddonCount { get; set; }
 
 	[ProtoMember(2)]
-	public int ScreenHeight { get; set; }
-
-	public override void Dispose()
-	{
-
-	}
+	public int BufferSize { get; set; }
 }

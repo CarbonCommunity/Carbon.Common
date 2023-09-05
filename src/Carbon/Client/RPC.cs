@@ -1,7 +1,11 @@
 ﻿using System.Diagnostics;
-using Carbon.Client.Packets;
-using Network;
-using Debug = UnityEngine.Debug;
+
+/*
+ *
+ * Copyright (c) 2022-2023 Carbon Community 
+ * All rights reserved.
+ *
+ */
 
 namespace Carbon.Client;
 

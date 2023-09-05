@@ -2,9 +2,14 @@
 using Carbon.Client.Contracts;
 using Carbon.Client.Packets;
 using Network;
-using Newtonsoft.Json;
 using ProtoBuf;
-using static Carbon.Client.RPC;
+
+/*
+ *
+ * Copyright (c) 2022-2023 Carbon Community 
+ * All rights reserved.
+ *
+ */
 
 namespace Carbon.Client;
 

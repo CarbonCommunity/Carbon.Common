@@ -1,5 +1,11 @@
-﻿using ProtoBuf;
-using ProtoBuf.Meta;
+﻿/*
+ *
+ * Copyright (c) 2022-2023 Carbon Community 
+ * All rights reserved.
+ *
+ */
+
+using ProtoBuf;
 
 namespace Carbon.Client.Packets;
 
@@ -7,10 +13,10 @@ namespace Carbon.Client.Packets;
 public class RPCList : BasePacket
 {
 	[ProtoMember(1)]
-	public string[] RpcNames;
+	public string[] RpcNames { get; set; }
 
 	[ProtoMember(2)]
-	public uint[] RpcIds;
+	public uint[] RpcIds { get; set; }
 
 	public static RPCList Get()
 	{
