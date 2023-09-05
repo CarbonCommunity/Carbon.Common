@@ -23,6 +23,7 @@ public class AddonDownload : BasePacket
 	{
 		First,
 		Content,
-		Last
+		Last,
+		Whole
 	}
 }

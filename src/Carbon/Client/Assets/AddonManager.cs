@@ -90,6 +90,7 @@ public class AddonManager : IDisposable
 	{
 		switch (download.Format)
 		{
+			case AddonDownload.Formats.Whole:
 			case AddonDownload.Formats.First:
 				Console.WriteLine($"Initial chunk");
 				CurrentChunk.Clear();
@@ -100,6 +101,7 @@ public class AddonManager : IDisposable
 
 		switch (download.Format)
 		{
+			case AddonDownload.Formats.Whole:
 			case AddonDownload.Formats.Last:
 				Console.WriteLine($"Finalized chunk");
 
@@ -134,11 +136,13 @@ public class AddonManager : IDisposable
 				client.Send("addondownload", new AddonDownload
 				{
 					BufferChunk = chunks[i],
-					Format = i == 0 ? AddonDownload.Formats.First : i == chunks.Length - 1 ? AddonDownload.Formats.Last : AddonDownload.Formats.Content
+					Format = chunks.Length == 1 ? AddonDownload.Formats.Whole : i == 0 ? AddonDownload.Formats.First : i == chunks.Length - 1 ? AddonDownload.Formats.Last : AddonDownload.Formats.Content
 				});
 
 				await AsyncEx.WaitForSeconds(0.1f);
 			}
+
+			await AsyncEx.WaitForSeconds(0.75f);
 		}
 
 		client.Send("addonfinalized");
