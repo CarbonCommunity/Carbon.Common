@@ -85,7 +85,12 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 		{
 			yield return _wfsInstance;
 
-			foreach (var element in InstanceBuffer) _runtimeCache.Add(element.Key, element.Value);
+			foreach (var element in InstanceBuffer)
+			{
+				Logger.Debug($"NEW TRACK! ID:{element.Key}", 1);
+
+				_runtimeCache.Add(element.Key, element.Value);
+			}
 
 			foreach (var element in _runtimeCache)
 			{
@@ -93,6 +98,8 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 
 				if (element.Value == null)
 				{
+					Logger.Debug($"INITIAL! ID:{element.Key}", 1);
+
 					var instance = Activator.CreateInstance(IndexedType) as Instance;
 					instance.File = element.Key;
 					instance.Execute();
@@ -104,6 +111,8 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 
 				if (element.Value.IsDirty)
 				{
+					Logger.Debug($"DIRTY! ID:{element.Key}", 1);
+
 					Process(element.Key, element.Value);
 					yield return null;
 					continue;
@@ -111,6 +120,8 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 
 				if (element.Value.IsRemoved)
 				{
+					Logger.Debug($"DELETED! ID:{element.Key}", 1);
+
 					Clear(id, element.Value);
 					yield return null;
 					continue;
