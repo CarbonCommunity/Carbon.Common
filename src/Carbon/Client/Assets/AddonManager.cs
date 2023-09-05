@@ -102,8 +102,10 @@ public class AddonManager : IDisposable
 		{
 			case AddonDownload.Formats.Last:
 				Console.WriteLine($"Finalized chunk");
-				Installed.Add(Addon.ImportFromBuffer(CurrentChunk.SelectMany(x => x).ToArray()));
-				CurrentChunk.Clear();
+
+				var completeBuffer = CurrentChunk.SelectMany(x => x).ToArray();
+				Installed.Add(Addon.ImportFromBuffer(completeBuffer));
+				Array.Clear(completeBuffer, 0, completeBuffer.Length);
 				break;
 		}
 
@@ -122,10 +124,10 @@ public class AddonManager : IDisposable
 
 		foreach (var addon in addons)
 		{
-			var store = addon.Store();
-			var chunks = store.Chunkify(4000000);
+			var buffer = addon.Buffer;
+			var chunks = buffer.Chunkify(4000000);
 
-			Logger.Warn($" Processing {chunks.Length} chunks (total of {store.Length} or {ByteEx.Format(store.Length)})");
+			Logger.Warn($" Processing {chunks.Length} chunks (total of {buffer.Length} or {ByteEx.Format(buffer.Length)})");
 
 			for (int i = 0; i < chunks.Length; i++)
 			{
