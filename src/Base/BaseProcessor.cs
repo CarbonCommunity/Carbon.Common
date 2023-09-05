@@ -223,6 +223,8 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 	{
 		if (!EnableWatcher || IsBlacklisted(e.FullPath)) return;
 
+		Logger.Debug($"_Created {e.FullPath}", 1);
+
 		if (InstanceBuffer.TryGetValue(e.FullPath, out var instance1))
 		{
 			instance1?.SetDirty();
@@ -242,6 +244,8 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 		var path = e.FullPath;
 		var name = Path.GetFileNameWithoutExtension(path);
 
+		Logger.Debug($"_Changed {path}", 1);
+
 		if (!EnableWatcher || IsBlacklisted(path)) return;
 
 		if (InstanceBuffer.TryGetValue(name, out var mod)) mod.SetDirty();
@@ -250,6 +254,8 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 	{
 		var path = e.FullPath;
 		var name = Path.GetFileNameWithoutExtension(path);
+
+		Logger.Debug($"_Renamed {path}", 1);
 
 		if (!EnableWatcher || IsBlacklisted(path)) return;
 
@@ -260,6 +266,8 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 	{
 		var path = e.FullPath;
 		var name = Path.GetFileNameWithoutExtension(path);
+
+		Logger.Debug($"_Removed{path}", 1);
 
 		if (!EnableWatcher || IsBlacklisted(path)) return;
 
