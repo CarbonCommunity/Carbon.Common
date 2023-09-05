@@ -1,5 +1,12 @@
 ﻿using Carbon.Client.Packets;
 
+/*
+ *
+ * Copyright (c) 2022-2023 Carbon Community 
+ * All rights reserved.
+ *
+ */
+
 namespace Carbon.Client;
 
 public class RPCHooks

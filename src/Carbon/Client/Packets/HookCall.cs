@@ -1,5 +1,11 @@
-﻿using ProtoBuf;
-using ProtoBuf.Meta;
+﻿/*
+ *
+ * Copyright (c) 2022-2023 Carbon Community 
+ * All rights reserved.
+ *
+ */
+
+using ProtoBuf;
 
 namespace Carbon.Client.Packets;
 
