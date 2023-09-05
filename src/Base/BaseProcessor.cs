@@ -55,7 +55,7 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 		{
 			Watcher = new FileSystemWatcher(Folder)
 			{
-				NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.LastAccess | NotifyFilters.FileName,
+				NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.FileName,
 				Filter = $"*{Extension}"
 			};
 			Watcher.Created += _onCreated;
