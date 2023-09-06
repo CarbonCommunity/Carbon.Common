@@ -119,6 +119,12 @@ public class Community
 		return $"carbonprotecc_{RandomEx.GetRandomString(16, command + Tick.ToString(), command.Length + Tick)} {arguments}".TrimEnd();
 	}
 
+	public void MarkServerInitialized(bool wants)
+	{
+		IsServerInitialized = wants;
+		Interface.CallHook("OnServerInitialized", wants);
+	}
+
 	public Community()
 	{
 		try
@@ -230,8 +236,12 @@ public class Community
 
 	#region Plugins
 
+	public static bool InitialPluginLoad { get; internal set; }
+
 	public virtual void ReloadPlugins()
 	{
+		InitialPluginLoad = true;
+
 		ModLoader.IsBatchComplete = false;
 		ModLoader.ClearAllErrored();
 		ModLoader.ClearAllRequirees();

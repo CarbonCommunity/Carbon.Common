@@ -85,7 +85,7 @@ public class Lang : Library
 			lang = lang.Replace(oldChar, '_');
 		}
 
-		var path = Path.Combine(Interface.Oxide.LangDirectory, lang, $"{plugin}.json");
+		var path = Path.Combine(Defines.GetLangFolder(), lang, $"{plugin}.json");
 
 		if (!OsEx.File.Exists(path))
 		{
