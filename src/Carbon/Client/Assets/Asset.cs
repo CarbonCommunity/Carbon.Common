@@ -8,114 +8,73 @@
 using Newtonsoft.Json;
 using ProtoBuf;
 
-namespace Carbon.Client.Assets;
-
-[ProtoContract(InferTagFromName = true)]
-public class Asset : IDisposable
+namespace Carbon.Client.Assets
 {
-	[ProtoMember(1)]
-	public string Name { get; set; }
-
-	[ProtoMember(2)]
-	public byte[] Data { get; set; }
-
-	public AssetBundle CachedBundle { get; set; }
-
-	public Manifest GetManifest()
+	[ProtoContract(InferTagFromName = true)]
+	public partial class Asset
 	{
-		return new Manifest
-		{
-			Name = Name,
-			BufferLength = Data.Length,
-		};
-	}
-
-	public static Asset CreateFrom(string name, byte[] data)
-	{
-		return new Asset
-		{
-			Name = name,
-			Data = data
-		};
-	}
-	public static Asset CreateFromFile(string path)
-	{
-		return CreateFrom(Path.GetFileNameWithoutExtension(path), OsEx.File.ReadBytes(path));
-	}
-
-	public bool IsUnpacked => CachedBundle != null;
-
-	public IEnumerator UnpackBundleAsync()
-	{
-		if (IsUnpacked)
-		{
-			Logger.Log($" Already unpacked '{Name}'");
-			yield break;
-		}
-
-		var request = (AssetBundleCreateRequest)null;
-		using var stream = new MemoryStream(Data);
-		yield return request = AssetBundle.LoadFromStreamAsync(stream);
-
-		CachedBundle = request.assetBundle;
-		Logger.Log($" Unpacked bundle '{Name}'");
-	}
-	public void UnpackBundle()
-	{
-		if(IsUnpacked)
-		{
-			Logger.Log($" Already unpacked '{Name}'");
-			return;
-		}
-
-		using var stream = new MemoryStream(Data);
-		CachedBundle = AssetBundle.LoadFromStream(stream);
-		Logger.Log($" Unpacked bundle '{Name}'");
-	}
-
-	public T LoadPrefab<T>(string path) where T : UnityEngine.Object
-	{
-		if (!IsUnpacked)
-		{
-			UnpackBundle();
-		}
-
-		return CachedBundle.LoadAsset<T>(path);
-	}
-	public T[] LoadAllPrefabs<T>() where T : UnityEngine.Object
-	{
-		if (!IsUnpacked)
-		{
-			UnpackBundle();
-		}
-
-		return CachedBundle.LoadAllAssets<T>();
-	}
-
-	public override string ToString()
-	{
-		return JsonConvert.SerializeObject(GetManifest(), Formatting.Indented);
-	}
-
-	public void Dispose()
-	{
-		if (!IsUnpacked)
-		{
-			return;
-		}
-
-		CachedBundle.Unload(true);
-
-		if (Data != null)
-		{
-			Array.Clear(Data, 0, Data.Length);
-			Data = null;
-		}
-	}
-
-	public class Manifest
-	{
+		[ProtoMember(1)]
 		public string Name { get; set; }
-		public int BufferLength { get; set; }
+
+		[ProtoMember(2)]
+		public byte[] Data { get; set; }
+
+		public Manifest GetManifest()
+		{
+			return new Manifest
+			{
+				Name = Name,
+				BufferLength = Data.Length,
+			};
+		}
+
+		public AssetBundle CachedBundle { get; set; }
+
+		public bool IsUnpacked => CachedBundle != null;
+
+		public static Asset CreateFrom(string name, byte[] data)
+		{
+			return new Asset
+			{
+				Name = name,
+				Data = data
+			};
+		}
+		public static Asset CreateFromFile(string path)
+		{
+			return CreateFrom(Path.GetFileNameWithoutExtension(path), File.ReadAllBytes(path));
+		}
+
+		public override string ToString()
+		{
+			return JsonConvert.SerializeObject(GetManifest(), Formatting.Indented);
+		}
+
+		public void ClearData()
+		{
+			if (Data != null)
+			{
+				Array.Clear(Data, 0, Data.Length);
+				Data = null;
+			}
+		}
+
+		public void Dispose()
+		{
+			if (!IsUnpacked)
+			{
+				return;
+			}
+
+			CachedBundle.Unload(true);
+
+			ClearData();
+		}
+
+		public class Manifest
+		{
+			public string Name { get; set; }
+			public int BufferLength { get; set; }
+		}
 	}
 }
