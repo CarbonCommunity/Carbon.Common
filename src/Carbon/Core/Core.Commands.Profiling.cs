@@ -18,7 +18,7 @@ public partial class CorePlugin : CarbonPlugin
 {
 #if DEBUG
 
-	[ConditionalSymbolAttribute("DEBUG")]
+	[ConditionalSymbol("DEBUG")]
 	[ConsoleCommand("beginprofile", "Starts profiling the server.")]
 	[AuthLevel(2)]
 	private void BeginProfile(ConsoleSystem.Arg arg)
@@ -34,7 +34,7 @@ public partial class CorePlugin : CarbonPlugin
 		arg.ReplyWith("Began profiling...");
 	}
 
-	[ConditionalSymbolAttribute("DEBUG")]
+	[ConditionalSymbol("DEBUG")]
 	[ConsoleCommand("endprofile", "Ends profiling the server and asynchronously writes it to disk.")]
 	[AuthLevel(2)]
 	private void EndProfile(ConsoleSystem.Arg arg)
