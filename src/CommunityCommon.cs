@@ -121,8 +121,13 @@ public class Community
 
 	public void MarkServerInitialized(bool wants)
 	{
+		var previouslyNot = !IsServerInitialized;
 		IsServerInitialized = wants;
-		Interface.CallHook("OnServerInitialized", wants);
+
+		if (previouslyNot && wants)
+		{
+			Interface.CallHook("OnServerInitialized", wants);
+		}
 	}
 
 	public Community()

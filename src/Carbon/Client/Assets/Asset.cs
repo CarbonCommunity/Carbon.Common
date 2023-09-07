@@ -47,6 +47,12 @@ public class Asset : IDisposable
 
 	public IEnumerator UnpackBundleAsync()
 	{
+		if (IsUnpacked)
+		{
+			Logger.Log($" Already unpacked '{Name}'");
+			yield break;
+		}
+
 		var request = (AssetBundleCreateRequest)null;
 		using var stream = new MemoryStream(Data);
 		yield return request = AssetBundle.LoadFromStreamAsync(stream);

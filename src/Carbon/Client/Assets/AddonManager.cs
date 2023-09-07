@@ -47,16 +47,26 @@ public class AddonManager : IDisposable
 			return null;
 		}
 
-		if(addon.Assets.TryGetValue(assetName, out var asset))
+		if (addon.Assets.TryGetValue(assetName, out var asset))
 		{
 			return CreateCacheBasedOn(asset.LoadPrefab<GameObject>(path));
 		}
 
 		return null;
 	}
+	public void ProcessPrefab(GameObject prefab)
+	{
+		if (prefab == null)
+		{
+			return;
+		}
+
+		var rustComponent = prefab.GetComponent<RustComponent>();
+		rustComponent.ApplyComponent();
+	}
 	public void Dispose()
 	{
-		foreach(var prefab in PrefabCache)
+		foreach (var prefab in PrefabCache)
 		{
 			try
 			{
@@ -64,13 +74,13 @@ public class AddonManager : IDisposable
 
 				UnityEngine.Object.Destroy(prefab);
 			}
-			catch(Exception ex)
+			catch (Exception ex)
 			{
 				Logger.Warn($"[AddonManager] Failed destroying cached prefab ({ex.Message})\n{ex.StackTrace}");
 			}
 		}
 
-		foreach(var addon in Installed)
+		foreach (var addon in Installed)
 		{
 			foreach (var asset in addon.Assets)
 			{
@@ -150,9 +160,9 @@ public class AddonManager : IDisposable
 
 	public void Install(List<Addon> addons)
 	{
-		foreach(var addon in addons)
+		foreach (var addon in addons)
 		{
-			foreach(var asset in addon.Assets)
+			foreach (var asset in addon.Assets)
 			{
 				asset.Value.UnpackBundle();
 			}
@@ -162,13 +172,13 @@ public class AddonManager : IDisposable
 	}
 	public void Uninstall()
 	{
-		foreach(var prefab in PrefabCache)
+		foreach (var prefab in PrefabCache)
 		{
 			try
 			{
 				UnityEngine.Object.Destroy(prefab);
 			}
-			catch(Exception ex)
+			catch (Exception ex)
 			{
 				Console.WriteLine($"Failed disposing a prefab ({ex.Message})\n{ex.StackTrace}");
 			}
@@ -178,13 +188,13 @@ public class AddonManager : IDisposable
 
 		foreach (var addon in Installed)
 		{
-			foreach(var asset in addon.Assets)
+			foreach (var asset in addon.Assets)
 			{
 				try
 				{
 					asset.Value.Dispose();
 				}
-				catch(Exception ex)
+				catch (Exception ex)
 				{
 					Console.WriteLine($"Failed disposing asset '{asset.Key}' of addon {addon.Name} ({ex.Message})\n{ex.StackTrace}");
 				}
