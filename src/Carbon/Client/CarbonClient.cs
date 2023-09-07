@@ -133,6 +133,9 @@ public class CarbonClient : ICommunication, IDisposable
 		var connection = client.Connection;
 		if (connection == null) return;
 
+		// OnCarbonClientLeft
+		HookCaller.CallStaticHook(978897282, client);
+
 		client.Dispose();
 		clients.Remove(connection);
 	}

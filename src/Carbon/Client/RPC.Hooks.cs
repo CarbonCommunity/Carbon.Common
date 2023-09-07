@@ -29,6 +29,9 @@ public class RPCHooks
 		client.HasCarbonClient = true;
 		client.Send("clientinfo");
 		Logger.Log($"{client.Connection} joined with Carbon client");
+
+		// OnCarbonClientJoined
+		HookCaller.CallStaticHook(2630056331, client);
 	}
 
 	[RPC.Method("inventoryopen")]

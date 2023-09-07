@@ -429,13 +429,13 @@ public class Permission : Library
 				continue;
 			}
 
-			if (GroupHasPermission(group.Value.ParentGroup, perm))
-			{
-				return true;
-			}
-
 			if (group.Key.Equals(name, StringComparison.OrdinalIgnoreCase))
 			{
+				if (GroupHasPermission(group.Value.ParentGroup, perm))
+				{
+					return true;
+				}
+
 				foreach (var permission in group.Value.Perms)
 				{
 					if (permission.Equals(perm, StringComparison.OrdinalIgnoreCase))
