@@ -23,8 +23,8 @@ public class CarbonClient : ICommunication, IDisposable
 	public bool IsConnected => Connection != null && Connection.active;
 	public bool HasCarbonClient { get; internal set; }
 
-	public int ScreenWidth { get;set; }
-	public int ScreenHeight { get;set; }
+	public int ScreenWidth { get; set; }
+	public int ScreenHeight { get; set; }
 
 	#region Methods
 
@@ -61,6 +61,11 @@ public class CarbonClient : ICommunication, IDisposable
 	{
 		var client = Get(connection);
 
+		if (client == null)
+		{
+			return;
+		}
+
 		if (!client.IsConnected)
 		{
 			Logger.Warn($"Client {client.Connection?.username}[{client.Connection?.userid}] is not connected to deliver ping.");
@@ -81,7 +86,7 @@ public class CarbonClient : ICommunication, IDisposable
 		{
 			return default;
 		}
-		
+
 		return Serializer.Deserialize<T>(new ReadOnlySpan<byte>(buffer, 0, length));
 	}
 
@@ -95,6 +100,11 @@ public class CarbonClient : ICommunication, IDisposable
 	}
 	public static CarbonClient Make(Network.Connection connection)
 	{
+		if (connection == null)
+		{
+			return null;
+		}
+
 		return new CarbonClient
 		{
 			Connection = connection
@@ -102,11 +112,16 @@ public class CarbonClient : ICommunication, IDisposable
 	}
 	public static CarbonClient Get(BasePlayer player)
 	{
-		return Get(player.Connection);
+		return Get(player?.Connection);
 	}
 	public static CarbonClient Get(Network.Connection connection)
 	{
-		if(!clients.TryGetValue(connection, out var value))
+		if (connection == null)
+		{
+			return null;
+		}
+
+		if (!clients.TryGetValue(connection, out var value))
 		{
 			clients.Add(connection, value = Make(connection));
 		}

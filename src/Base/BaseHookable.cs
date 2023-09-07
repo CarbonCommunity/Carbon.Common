@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using Facepunch.Extend;
 using Newtonsoft.Json;
 
@@ -27,6 +28,7 @@ public class BaseHookable
 		public Type[] Parameters;
 		public Delegate Delegate;
 		public bool IsByRef;
+		public bool IsAsync;
 
 		public static CachedHook Make(MethodInfo method, object context)
 		{
@@ -37,6 +39,7 @@ public class BaseHookable
 				Method = method,
 				Delegate = isByRef ? null : HookCallerCommon.CreateDelegate(method, context),
 				IsByRef = isByRef,
+				IsAsync = method.GetCustomAttribute<AsyncStateMachineAttribute>() != null,
 				Parameters = parameters.Select(x => x.ParameterType).ToArray(),
 			};
 
