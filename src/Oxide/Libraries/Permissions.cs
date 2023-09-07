@@ -417,6 +417,8 @@ public class Permission : Library
 	}
 	public virtual bool GroupHasPermission(string name, string perm)
 	{
+		Logger.Debug($"{name} {perm}");
+
 		if (string.IsNullOrEmpty(name) || !GroupExists(name))
 		{
 			return false;
@@ -424,14 +426,9 @@ public class Permission : Library
 
 		foreach (var group in groupdata)
 		{
-			if (group.Value.ParentGroup == name)
-			{
-				continue;
-			}
-
 			if (group.Key.Equals(name, StringComparison.OrdinalIgnoreCase))
 			{
-				if (GroupHasPermission(group.Value.ParentGroup, perm))
+				if (group.Value.ParentGroup != name && GroupHasPermission(group.Value.ParentGroup, perm))
 				{
 					return true;
 				}
