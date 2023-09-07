@@ -424,6 +424,11 @@ public class Permission : Library
 
 		foreach (var group in groupdata)
 		{
+			if (group.Value.ParentGroup == name)
+			{
+				continue;
+			}
+
 			if (GroupHasPermission(group.Value.ParentGroup, perm))
 			{
 				return true;
