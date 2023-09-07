@@ -502,7 +502,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 								});
 								break;
 							}
-						case MiniCopter minicopter:
+						case Minicopter minicopter:
 							{
 								tab.AddName(column, "Minicopter", TextAnchor.MiddleLeft);
 
