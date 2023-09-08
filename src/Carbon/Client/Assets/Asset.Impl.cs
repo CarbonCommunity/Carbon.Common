@@ -40,6 +40,17 @@ public partial class Asset : IDisposable
 		Logger.Log($" Unpacked bundle '{Name}'");
 	}
 
+	public void CacheAssets()
+	{
+		foreach(var asset in CachedBundle.GetAllAssetNames())
+		{
+			if (!AddonManager.Instance.InstalledCache.ContainsKey(asset))
+			{
+				AddonManager.Instance.InstalledCache.Add(asset, CachedBundle.LoadAsset<UnityEngine.GameObject>(asset));
+			}
+		}
+	}
+
 	public T LoadPrefab<T>(string path) where T : UnityEngine.Object
 	{
 		if (!IsUnpacked)

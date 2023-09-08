@@ -18,6 +18,7 @@ public class CarbonClient : ICommunication, IDisposable
 	public static Dictionary<Network.Connection, CarbonClient> clients { get; internal set; } = new();
 	public static CommunityEntity community => RPC.SERVER ? CommunityEntity.ServerInstance : CommunityEntity.ClientInstance;
 
+	public BasePlayer Player { get; internal set; }	
 	public Network.Connection Connection { get; internal set; }
 
 	public bool IsConnected => Connection != null && Connection.active;
@@ -92,6 +93,38 @@ public class CarbonClient : ICommunication, IDisposable
 
 	#endregion
 
+	#region Addons
+
+	public void SpawnPrefab(string path, Vector3 position, Vector3 rotation, Vector3 scale)
+	{
+		SpawnPrefab(path, position, Quaternion.Euler(rotation), scale);
+	}
+	public void SpawnPrefab(string path, Vector3 vector, Quaternion quaternion, Vector3 scale)
+	{
+		using var packet = new AddonPrefab
+		{
+			Path = path,
+			Position = BaseVector.ToProtoVector(vector),
+			Rotation = BaseVector.ToProtoVector(quaternion),
+			Scale = BaseVector.ToProtoVector(scale)
+		};
+		Send("addon_spawn", packet);
+	}
+	public void DestroyPrefab(string path)
+	{
+		using var packet = new AddonPrefab
+		{
+			Path = path,
+		};
+		Send("addon_destroy", packet);
+	}
+	public void DestroyAll ()
+	{
+		Send("addon_destroyall");
+	}
+
+	#endregion
+
 	#region Helpers
 
 	public static bool Exists(Network.Connection connection)
@@ -107,12 +140,15 @@ public class CarbonClient : ICommunication, IDisposable
 
 		return new CarbonClient
 		{
-			Connection = connection
+			Connection = connection,
+			Player = connection.player as BasePlayer
 		};
 	}
 	public static CarbonClient Get(BasePlayer player)
 	{
-		return Get(player?.Connection);
+		var client = Get(player?.Connection);
+		client.Player = player;
+		return client;
 	}
 	public static CarbonClient Get(Network.Connection connection)
 	{

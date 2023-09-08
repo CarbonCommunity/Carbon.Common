@@ -15,8 +15,9 @@ public class AddonManager : IDisposable
 	public static AddonManager Instance { get; internal set; } = new();
 
 	public List<Addon> Installed { get; } = new();
+	public Dictionary<string, UnityEngine.GameObject> InstalledCache { get; } = new();
 
-	public List<GameObject> PrefabCache { get; } = new();
+	public List<GameObject> PrefabInstances { get; } = new();
 	public List<byte[]> CurrentChunk { get; } = new();
 
 	public GameObject CreateCacheBasedOn(GameObject source)
@@ -27,7 +28,7 @@ public class AddonManager : IDisposable
 		}
 
 		var result = UnityEngine.Object.Instantiate(source);
-		PrefabCache.Add(result);
+		PrefabInstances.Add(result);
 
 		return result;
 	}
@@ -54,6 +55,15 @@ public class AddonManager : IDisposable
 
 		return null;
 	}
+	public GameObject CreatePrefab(string path)
+	{
+		if(InstalledCache.TryGetValue(path, out var prefab))
+		{
+			return CreateCacheBasedOn(prefab);
+		}
+
+		return null;
+	}
 	public void ProcessPrefab(GameObject prefab)
 	{
 		if (prefab == null)
@@ -66,7 +76,7 @@ public class AddonManager : IDisposable
 	}
 	public void Dispose()
 	{
-		foreach (var prefab in PrefabCache)
+		foreach (var prefab in PrefabInstances)
 		{
 			try
 			{
@@ -157,6 +167,21 @@ public class AddonManager : IDisposable
 
 		client.Send("addonfinalized");
 	}
+	public void Deliver(CarbonClient client, params string[] urls)
+	{
+		client.Send("addonrequest", new AddonRequest
+		{
+			AddonCount = urls.Length,
+			IsUrlDownload = true
+		});
+
+		Logger.Log($"Sent download request to {client.Connection} with {urls.Length:n0} addon URLs...");
+
+		client.Send("addondownloadurl", new AddonDownloadUrl
+		{
+			Urls = urls
+		});
+	}
 
 	public void Install(List<Addon> addons)
 	{
@@ -172,7 +197,21 @@ public class AddonManager : IDisposable
 	}
 	public void Uninstall()
 	{
-		foreach (var prefab in PrefabCache)
+		foreach (var prefab in InstalledCache)
+		{
+			try
+			{
+				UnityEngine.Object.Destroy(prefab.Value);
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine($"Failed disposing asset '{prefab.Key}' ({ex.Message})\n{ex.StackTrace}");
+			}
+		}
+
+		InstalledCache.Clear();
+
+		foreach (var prefab in PrefabInstances)
 		{
 			try
 			{
@@ -184,7 +223,7 @@ public class AddonManager : IDisposable
 			}
 		}
 
-		PrefabCache.Clear();
+		PrefabInstances.Clear();
 
 		foreach (var addon in Installed)
 		{

@@ -63,6 +63,6 @@ public class RPCHooks
 	{
 		var info = CarbonClient.Receive<HookCall>(message);
 
-		Interface.CallHook(info.Hook, player);
+		Interface.CallHook(info.Hook, player.ToCarbonClient());
 	}
 }

@@ -20,6 +20,8 @@ namespace Carbon.Client;
 [ProtoInclude(14, typeof(HookCall))]
 [ProtoInclude(15, typeof(AddonRequest))]
 [ProtoInclude(16, typeof(AddonDownload))]
+[ProtoInclude(17, typeof(AddonDownloadUrl))]
+[ProtoInclude(18, typeof(AddonPrefab))]
 public class BasePacket : IPacket, IDisposable
 {
 	public static T Deserialize<T>(NetRead reader)

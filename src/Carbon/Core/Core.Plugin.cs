@@ -123,11 +123,6 @@ public partial class CorePlugin : CarbonPlugin
 				{
 					Logger.Warn($"All plugins have been loaded. Changing maximum players back to {_originalMaxPlayers}.");
 					ConVar.Server.maxplayers = _originalMaxPlayers;
-
-					if (ConVar.Global.skipAssetWarmup_crashes && !Community.InitialPluginLoad)
-					{
-						Community.Runtime.ReloadPlugins();
-					}
 				}
 
 				pluginCheck.Destroy();
@@ -137,6 +132,11 @@ public partial class CorePlugin : CarbonPlugin
 
 		CarbonAuto.Init();
 		API.Abstracts.CarbonAuto.Singleton.Load();
+
+		if (ConVar.Global.skipAssetWarmup_crashes)
+		{
+			Community.Runtime.ReloadPlugins();
+		}
 	}
 	private void OnServerSave()
 	{
