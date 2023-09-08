@@ -17,4 +17,7 @@ public class AddonRequest : BasePacket
 
 	[ProtoMember(2)]
 	public int BufferSize { get; set; }
+
+	[ProtoMember(3)]
+	public bool IsUrlDownload { get; set; }
 }
