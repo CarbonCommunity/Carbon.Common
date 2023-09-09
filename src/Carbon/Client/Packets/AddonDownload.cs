@@ -19,6 +19,9 @@ public class AddonDownload : BasePacket
 	[ProtoMember(2)]
 	public Formats Format { get; set; }
 
+	[ProtoMember(3)]
+	public bool UninstallAll { get; set; }
+
 	public enum Formats
 	{
 		First,

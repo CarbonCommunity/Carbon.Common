@@ -134,7 +134,7 @@ public class AddonManager : IDisposable
 		download.Dispose();
 	}
 
-	public async void Deliver(CarbonClient client, List<Addon> addons)
+	public async void Deliver(CarbonClient client, bool uninstallAll, List<Addon> addons)
 	{
 		client.Send("addonrequest", new AddonRequest
 		{
@@ -144,6 +144,7 @@ public class AddonManager : IDisposable
 
 		Logger.Log($"Sent download request to {client.Connection} with {addons.Count:n0} addons...");
 
+		var sentMain = true;
 		foreach (var addon in addons)
 		{
 			var buffer = addon.Buffer;
@@ -156,8 +157,14 @@ public class AddonManager : IDisposable
 				client.Send("addondownload", new AddonDownload
 				{
 					BufferChunk = chunks[i],
-					Format = chunks.Length == 1 ? AddonDownload.Formats.Whole : i == 0 ? AddonDownload.Formats.First : i == chunks.Length - 1 ? AddonDownload.Formats.Last : AddonDownload.Formats.Content
+					Format = chunks.Length == 1 ? AddonDownload.Formats.Whole : i == 0 ? AddonDownload.Formats.First : i == chunks.Length - 1 ? AddonDownload.Formats.Last : AddonDownload.Formats.Content,
+					UninstallAll = sentMain
 				});
+
+				if (sentMain)
+				{
+					sentMain = false;
+				}
 
 				await AsyncEx.WaitForSeconds(0.1f);
 			}
@@ -167,7 +174,7 @@ public class AddonManager : IDisposable
 
 		client.Send("addonfinalized");
 	}
-	public void Deliver(CarbonClient client, params string[] urls)
+	public void Deliver(CarbonClient client, bool uninstallAll, params string[] urls)
 	{
 		client.Send("addonrequest", new AddonRequest
 		{
@@ -179,7 +186,8 @@ public class AddonManager : IDisposable
 
 		client.Send("addondownloadurl", new AddonDownloadUrl
 		{
-			Urls = urls
+			Urls = urls,
+			UninstallAll = uninstallAll
 		});
 	}
 

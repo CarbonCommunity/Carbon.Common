@@ -122,6 +122,18 @@ public class CarbonClient : ICommunication, IDisposable
 	{
 		Send("addon_destroyall");
 	}
+	public void Uninstall(string id)
+	{
+		using var packet = new AddonPrefab
+		{
+			Path = id,
+		};
+		Send("addon_uninstall", packet);
+	}
+	public void UninstallAll()
+	{
+		Send("addon_uninstallall");
+	}
 
 	#endregion
 
