@@ -72,7 +72,7 @@ public class AddonManager : IDisposable
 		}
 
 		var rustComponent = prefab.GetComponent<RustComponent>();
-		rustComponent.ApplyComponent();
+		rustComponent.ApplyComponent(prefab);
 	}
 	public void Dispose()
 	{

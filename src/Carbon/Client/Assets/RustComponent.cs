@@ -1,37 +1,54 @@
-﻿namespace Carbon.Client
+﻿using Newtonsoft.Json;
+using ProtoBuf;
+
+namespace Carbon.Client
 {
+	[ProtoContract]
 	public class RustComponent : MonoBehaviour
 	{
-		public bool IsClient;
+		[Header("Installation")]
+
+		[ProtoMember(1)]
 		public bool IsServer;
 
-		public string BaseType;
-		public ValuePair[] Members;
+		[ProtoMember(2)]
+		public bool IsClient;
 
-		internal Component _instance;
+		[Header("Member Configuration")]
 
-		[Serializable]
-		public class ValuePair
+		[ProtoMember(3)]
+		public string TargetType;
+
+		[ProtoMember(4)]
+		public Member[] Members;
+
+		[Serializable, ProtoContract]
+		public class Member
 		{
-			public string MemberName;
+			[ProtoMember(1)]
+			public string Name;
+
+			[ProtoMember(2)]
 			public string Value;
 		}
 
-		public void ApplyComponent()
+		internal Component _instance;
+
+		public void ApplyComponent(GameObject go)
 		{
 			if (_instance != null)
 			{
 				return;
 			}
 
-			var type = AccessToolsEx.TypeByName(BaseType);
-			_instance = gameObject.AddComponent(type);
+			var type = AccessToolsEx.TypeByName(TargetType);
+			_instance = go.AddComponent(type);
 
 			const BindingFlags _monoFlags = BindingFlags.Instance | BindingFlags.Public;
 
 			foreach (var member in Members)
 			{
-				var typeMember = type.GetField(member.MemberName, _monoFlags);
+				var typeMember = type.GetField(member.Name, _monoFlags);
 				typeMember.SetValue(this, Convert.ChangeType(member.Value, typeMember.FieldType));
 			}
 		}
