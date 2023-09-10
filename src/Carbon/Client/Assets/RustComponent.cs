@@ -34,7 +34,7 @@ namespace Carbon.Client
 
 		public void ApplyComponent(GameObject go)
 		{
-			if (_instance != null)
+			if (!IsServer || _instance != null)
 			{
 				return;
 			}
