@@ -36,6 +36,7 @@ namespace Carbon.Client
 		{
 			if (!IsServer || _instance != null)
 			{
+				Debug.LogWarning($"Didn't apply '{TargetType}' component since it's client-only");
 				return;
 			}
 
@@ -44,48 +45,64 @@ namespace Carbon.Client
 
 			const BindingFlags _monoFlags = BindingFlags.Instance | BindingFlags.Public;
 
-			foreach (var member in Members)
-			{
-				try
-				{
-					var field = type.GetField(member.Name, _monoFlags);
-					var memberType = field.FieldType;
-					var value = (object)null;
+			Debug.LogWarning($"Applying component on {go.transform.GetRecursiveName()} with type: '{type}'");
 
-					if (memberType == typeof(LayerMask))
+			var trigger = go.GetComponent<TriggerBase>();
+
+			if (trigger != null)
+			{
+				Debug.LogWarning($"Trigger ok");
+				switch (trigger)
+				{
+					case TriggerLadder ladder:
+						Debug.LogWarning($"ladder ok");
+						ladder.interestLayers = new LayerMask { value = 131072 };
+						break;
+
+					case TriggerSafeZone safeZone:
+						Debug.LogWarning($"sz ok");
+						safeZone.interestLayers = new LayerMask { value = 163840 };
+						break;
+				}
+			}
+
+			if (Members != null && Members.Length > 0)
+			{
+				foreach (var member in Members)
+				{
+					try
 					{
-						if (int.TryParse(member.Value, out var intValue))
+						var field = type.GetField(member.Name, _monoFlags);
+						var memberType = field.FieldType;
+						var value = (object)null;
+
+						if (memberType == typeof(LayerMask))
 						{
-							value = new LayerMask { value = intValue };
+
+						}
+						else if (memberType.IsEnum)
+						{
+							value = Enum.Parse(memberType, member.Value);
 						}
 						else
 						{
-							var layer = LayerMask.GetMask(member.Value.Split(LayerSplitter, StringSplitOptions.RemoveEmptyEntries));
-							value = new LayerMask { value = layer };
+							value = Convert.ChangeType(member.Value, memberType);
+						}
+
+						if (field != null)
+						{
+							field?.SetValue(_instance, value);
+							Debug.Log($" Assigned member '{member.Name}'");
+						}
+						else
+						{
+							Debug.LogWarning($" Couldn't find member '{member.Name}'");
 						}
 					}
-					else if (memberType.IsEnum)
+					catch (Exception ex)
 					{
-						value = Enum.Parse(memberType, member.Value);
+						Logger.Error($"Failed assigning Rust component member '{member.Name}' to {go.transform.GetRecursiveName()}", ex);
 					}
-					else
-					{
-						value = Convert.ChangeType(member.Value, field.FieldType);
-					}
-
-					if (field != null)
-					{
-						field?.SetValue(_instance, value);
-						Debug.Log($" Assigned member '{member.Name}'");
-					}
-					else
-					{
-						Debug.LogWarning($" Couldn't find member '{member.Name}'");
-					}
-				}
-				catch (Exception ex)
-				{
-					Logger.Error($"Failed assigning Rust component member '{member.Name}' to {go.transform.GetRecursiveName()}", ex);
 				}
 			}
 		}

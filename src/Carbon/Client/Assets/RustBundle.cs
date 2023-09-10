@@ -18,6 +18,8 @@ namespace Carbon.Client
 
 				if (unityAsset is GameObject go)
 				{
+					Recurse(go.transform);
+
 					void Recurse(Transform transform)
 					{
 						if (Components.TryGetValue(transform.GetRecursiveName().ToLower(), out var component))
