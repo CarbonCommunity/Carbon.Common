@@ -30,6 +30,8 @@ namespace Carbon.Client
 
 		public Component _instance;
 
+		public static readonly char[] LayerSplitter = new char[] { '|' };
+
 		public void ApplyComponent(GameObject go)
 		{
 			if (_instance != null)
@@ -50,7 +52,19 @@ namespace Carbon.Client
 					var memberType = field.FieldType;
 					var value = (object)null;
 
-					if (memberType.IsEnum)
+					if (memberType == typeof(LayerMask))
+					{
+						if (int.TryParse(member.Value, out var intValue))
+						{
+							value = new LayerMask { value = intValue };
+						}
+						else
+						{
+							var layer = LayerMask.GetMask(member.Value.Split(LayerSplitter, StringSplitOptions.RemoveEmptyEntries));
+							value = new LayerMask { value = layer };
+						}
+					}
+					else if (memberType.IsEnum)
 					{
 						value = Enum.Parse(memberType, member.Value);
 					}
