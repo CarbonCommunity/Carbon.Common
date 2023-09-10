@@ -30,6 +30,8 @@ public class AddonManager : IDisposable
 		var result = UnityEngine.Object.Instantiate(source);
 		PrefabInstances.Add(result);
 
+		result.name = result.name.Replace("(Clone)", string.Empty);
+
 		return result;
 	}
 	public GameObject CreatePrefab(string path, Asset asset)

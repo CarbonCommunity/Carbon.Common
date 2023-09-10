@@ -6,15 +6,11 @@ namespace Carbon.Client
 	[ProtoContract]
 	public class RustComponent : MonoBehaviour
 	{
-		[Header("Installation")]
-
 		[ProtoMember(1)]
 		public bool IsServer;
 
 		[ProtoMember(2)]
 		public bool IsClient;
-
-		[Header("Member Configuration")]
 
 		[ProtoMember(3)]
 		public string TargetType;
@@ -32,7 +28,7 @@ namespace Carbon.Client
 			public string Value;
 		}
 
-		internal Component _instance;
+		public Component _instance;
 
 		public void ApplyComponent(GameObject go)
 		{
@@ -48,8 +44,35 @@ namespace Carbon.Client
 
 			foreach (var member in Members)
 			{
-				var typeMember = type.GetField(member.Name, _monoFlags);
-				typeMember.SetValue(this, Convert.ChangeType(member.Value, typeMember.FieldType));
+				try
+				{
+					var field = type.GetField(member.Name, _monoFlags);
+					var memberType = field.FieldType;
+					var value = (object)null;
+
+					if (memberType.IsEnum)
+					{
+						value = Enum.Parse(memberType, member.Value);
+					}
+					else
+					{
+						value = Convert.ChangeType(member.Value, field.FieldType);
+					}
+
+					if (field != null)
+					{
+						field?.SetValue(_instance, value);
+						Debug.Log($" Assigned member '{member.Name}'");
+					}
+					else
+					{
+						Debug.LogWarning($" Couldn't find member '{member.Name}'");
+					}
+				}
+				catch (Exception ex)
+				{
+					Logger.Error($"Failed assigning Rust component member '{member.Name}' to {go.transform.GetRecursiveName()}", ex);
+				}
 			}
 		}
 	}
