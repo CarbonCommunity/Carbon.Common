@@ -31,7 +31,7 @@ namespace Carbon.Client.Assets
 			};
 		}
 
-		public AssetBundle CachedBundle { get; set; }
+		public UnityEngine.AssetBundle CachedBundle { get; set; }
 
 		public bool IsUnpacked => CachedBundle != null;
 
@@ -45,7 +45,7 @@ namespace Carbon.Client.Assets
 		}
 		public static Asset CreateFromFile(string path)
 		{
-			return CreateFrom(Path.GetFileNameWithoutExtension(path), File.ReadAllBytes(path));
+			return CreateFrom(System.IO.Path.GetFileNameWithoutExtension(path), System.IO.File.ReadAllBytes(path));
 		}
 
 		public override string ToString()
@@ -57,7 +57,7 @@ namespace Carbon.Client.Assets
 		{
 			if (Data != null)
 			{
-				Array.Clear(Data, 0, Data.Length);
+				System.Array.Clear(Data, 0, Data.Length);
 				Data = null;
 			}
 		}
