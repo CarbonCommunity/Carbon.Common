@@ -63,9 +63,14 @@ namespace Carbon.Client
 						Debug.LogWarning($"sz ok");
 						safeZone.interestLayers = new LayerMask { value = 163840 };
 						break;
+
+					case TriggerRadiation radiation:
+						Debug.LogWarning($"rad ok");
+						radiation.interestLayers = new LayerMask { value = 163840 };
+						break;
 				}
 			}
-
+			
 			if (Members != null && Members.Length > 0)
 			{
 				foreach (var member in Members)
