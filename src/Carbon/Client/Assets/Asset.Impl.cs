@@ -27,7 +27,7 @@ public partial class Asset : IDisposable
 		CachedBundle = request.assetBundle;
 		Logger.Log($" Unpacked bundle '{Name}'");
 
-		using var stream2 = new MemoryStream(Components);
+		using var stream2 = new MemoryStream(AdditionalData);
 		var bundle = Serializer.Deserialize<RustBundle>(stream2);
 
 		bundle.Process(this);
@@ -44,7 +44,7 @@ public partial class Asset : IDisposable
 		CachedBundle = AssetBundle.LoadFromStream(stream);
 		Logger.Log($" Unpacked bundle '{Name}'");
 
-		using var stream2 = new MemoryStream(Components);
+		using var stream2 = new MemoryStream(AdditionalData);
 		var bundle = Serializer.Deserialize<RustBundle>(stream2);
 
 		bundle.Process(this);

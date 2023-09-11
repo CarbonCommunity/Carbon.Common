@@ -66,7 +66,7 @@ namespace Carbon.Client
 
 					case TriggerRadiation radiation:
 						Debug.LogWarning($"rad ok");
-						radiation.interestLayers = new LayerMask { value = 163840 };
+						radiation.interestLayers = new LayerMask { value = 131072 };
 						break;
 				}
 			}

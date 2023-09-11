@@ -20,7 +20,7 @@ namespace Carbon.Client.Assets
 		public byte[] Data { get; set; }
 
 		[ProtoMember(3)]
-		public byte[] Components { get; set; }
+		public byte[] AdditionalData { get; set; }
 
 		public Manifest GetManifest()
 		{

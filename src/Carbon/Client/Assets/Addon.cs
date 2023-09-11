@@ -36,7 +36,7 @@ namespace Carbon.Client.Assets
 		public string Checksum { get; set; }
 
 		[ProtoMember(6)]
-		public Dictionary<string, Asset> Assets { get; set; } = new();
+		public Dictionary<string, Asset> Assets { get; set; } = new Dictionary<string, Asset>();
 
 		[ProtoMember(7)]
 		public long CreationTime { get; set; } = DateTime.Now.Ticks;

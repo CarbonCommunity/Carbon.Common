@@ -8,7 +8,10 @@ namespace Carbon.Client
 	public class RustBundle
 	{
 		[ProtoMember(1)]
-		public Dictionary<string, RustComponent> Components = new();
+		public Dictionary<string, RustComponent> Components = new Dictionary<string, RustComponent>();
+
+		[ProtoMember(2)]
+		public List<RustPrefab> RustPrefabs = new List<RustPrefab>();
 
 		public void Process(Asset asset)
 		{
