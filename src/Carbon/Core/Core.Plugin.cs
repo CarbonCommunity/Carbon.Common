@@ -135,7 +135,7 @@ public partial class CorePlugin : CarbonPlugin
 
 		if (ConVar.Global.skipAssetWarmup_crashes)
 		{
-			Community.Runtime.ReloadPlugins();
+			Community.Runtime.MarkServerInitialized(true);
 		}
 	}
 	private void OnServerSave()

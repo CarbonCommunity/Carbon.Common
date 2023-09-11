@@ -107,7 +107,10 @@ public partial class CorePlugin : CarbonPlugin
 
 	private void OnItemResearch(ResearchTable table, Item targetItem, BasePlayer player)
 	{
-		table.researchDuration = ResearchDuration;
+		if (ResearchDuration != -1)
+		{
+			table.researchDuration = ResearchDuration;
+		}
 	}
 
 	#endregion

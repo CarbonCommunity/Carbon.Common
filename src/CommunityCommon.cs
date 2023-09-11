@@ -119,12 +119,12 @@ public class Community
 		return $"carbonprotecc_{RandomEx.GetRandomString(16, command + Tick.ToString(), command.Length + Tick)} {arguments}".TrimEnd();
 	}
 
-	public void MarkServerInitialized(bool wants)
+	public void MarkServerInitialized(bool wants, bool hookCall = true)
 	{
 		var previouslyNot = !IsServerInitialized;
 		IsServerInitialized = wants;
 
-		if (previouslyNot && wants)
+		if (hookCall && previouslyNot && wants)
 		{
 			Interface.CallHook("OnServerInitialized", wants);
 		}
