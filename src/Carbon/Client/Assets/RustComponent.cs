@@ -36,7 +36,6 @@ namespace Carbon.Client
 		{
 			if (!IsServer || _instance != null)
 			{
-				Debug.LogWarning($"Didn't apply '{TargetType}' component since it's client-only");
 				return;
 			}
 
@@ -44,8 +43,6 @@ namespace Carbon.Client
 			_instance = go.AddComponent(type);
 
 			const BindingFlags _monoFlags = BindingFlags.Instance | BindingFlags.Public;
-
-			Debug.LogWarning($"Applying component on {go.transform.GetRecursiveName()} with type: '{type}'");
 
 			var trigger = go.GetComponent<TriggerBase>();
 
@@ -55,17 +52,14 @@ namespace Carbon.Client
 				switch (trigger)
 				{
 					case TriggerLadder ladder:
-						Debug.LogWarning($"ladder ok");
 						ladder.interestLayers = new LayerMask { value = 131072 };
 						break;
 
 					case TriggerSafeZone safeZone:
-						Debug.LogWarning($"sz ok");
 						safeZone.interestLayers = new LayerMask { value = 163840 };
 						break;
 
 					case TriggerRadiation radiation:
-						Debug.LogWarning($"rad ok");
 						radiation.interestLayers = new LayerMask { value = 131072 };
 						break;
 				}
@@ -97,11 +91,10 @@ namespace Carbon.Client
 						if (field != null)
 						{
 							field?.SetValue(_instance, value);
-							Debug.Log($" Assigned member '{member.Name}'");
 						}
 						else
 						{
-							Debug.LogWarning($" Couldn't find member '{member.Name}'");
+							Logger.Error($" Couldn't find member '{member.Name}' for '{TargetType}' on '{go.transform.GetRecursiveName()}'");
 						}
 					}
 					catch (Exception ex)
