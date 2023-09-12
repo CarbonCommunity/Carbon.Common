@@ -56,7 +56,7 @@ public class AddonManager : IDisposable
 	}
 	public GameObject CreateFromCache(string path)
 	{
-		if(InstalledCache.TryGetValue(path, out var prefab))
+		if (InstalledCache.TryGetValue(path, out var prefab))
 		{
 			return CreateBasedOnImpl(prefab);
 		}
@@ -69,6 +69,7 @@ public class AddonManager : IDisposable
 		if (string.IsNullOrEmpty(path))
 		{
 			Logger.Warn($"Couldn't find '{path}' as it's an empty string. (CreateFromCacheAsync)");
+			callback?.Invoke(null);
 			return;
 		}
 
@@ -79,6 +80,7 @@ public class AddonManager : IDisposable
 		else
 		{
 			Logger.Warn($"Couldn't find '{path}' as it hasn't been cached yet. Use 'CreateFromAssetAsync'? (CreateFromCacheAsync)");
+			callback?.Invoke(null);
 		}
 	}
 	public void CreateFromAssetAsync(string path, Asset asset, Action<GameObject> callback = null)
@@ -86,12 +88,14 @@ public class AddonManager : IDisposable
 		if (asset == null)
 		{
 			Logger.Warn($"Couldn't find '{path}' as the asset provided is null. (CreateFromAssetAsync)");
+			callback?.Invoke(null);
 			return;
 		}
 
 		if (string.IsNullOrEmpty(path))
 		{
 			Logger.Warn($"Couldn't find '{path}' as it's an empty string. (CreateFromAssetAsync)");
+			callback?.Invoke(null);
 			return;
 		}
 
@@ -104,6 +108,7 @@ public class AddonManager : IDisposable
 		else
 		{
 			Logger.Warn($"Couldn't find '{path}' in any addons or assets. (CreateFromAssetAsync)");
+			callback?.Invoke(null);
 		}
 	}
 
