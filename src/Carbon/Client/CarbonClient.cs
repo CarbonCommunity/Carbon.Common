@@ -95,18 +95,19 @@ public class CarbonClient : ICommunication, IDisposable
 
 	#region Addons
 
-	public void SpawnPrefab(string path, Vector3 position, Vector3 rotation, Vector3 scale)
+	public void SpawnPrefab(string path, Vector3 position, Vector3 rotation, Vector3 scale, bool asynchronous = true)
 	{
-		SpawnPrefab(path, position, Quaternion.Euler(rotation), scale);
+		SpawnPrefab(path, position, Quaternion.Euler(rotation), scale, asynchronous);
 	}
-	public void SpawnPrefab(string path, Vector3 vector, Quaternion quaternion, Vector3 scale)
+	public void SpawnPrefab(string path, Vector3 vector, Quaternion quaternion, Vector3 scale, bool asynchronous = true)
 	{
 		using var packet = new AddonPrefab
 		{
 			Path = path,
 			Position = BaseVector.ToProtoVector(vector),
 			Rotation = BaseVector.ToProtoVector(quaternion),
-			Scale = BaseVector.ToProtoVector(scale)
+			Scale = BaseVector.ToProtoVector(scale),
+			Asynchronous = asynchronous
 		};
 		Send("addon_spawn", packet);
 	}

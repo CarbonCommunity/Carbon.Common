@@ -14,13 +14,102 @@ public class AddonManager : IDisposable
 {
 	public static AddonManager Instance { get; internal set; } = new();
 
+	public FacepunchBehaviour Persistence => Community.Runtime.CorePlugin.persistence;
+
 	public List<Addon> Installed { get; } = new();
 	public Dictionary<string, UnityEngine.GameObject> InstalledCache { get; } = new();
 
 	public List<GameObject> PrefabInstances { get; } = new();
 	public List<byte[]> CurrentChunk { get; } = new();
 
-	public GameObject CreateCacheBasedOn(GameObject source)
+	internal void FixName(GameObject gameObject)
+	{
+		gameObject.name = gameObject.name.Replace("(Clone)", string.Empty);
+	}
+
+	public GameObject CreateFromAsset(string path, Asset asset)
+	{
+		if (asset == null)
+		{
+			Logger.Warn($"Couldn't find '{path}' as the asset provided is null. (CreateFromAsset)");
+			return null;
+		}
+
+		if (string.IsNullOrEmpty(path))
+		{
+			Logger.Warn($"Couldn't find prefab from asset '{asset.Name}' as it's an empty string. (CreateFromAsset)");
+			return null;
+		}
+
+		var prefab = asset.LoadPrefab<GameObject>(path);
+
+		if (prefab != null)
+		{
+			return CreateBasedOnImpl(prefab);
+		}
+		else
+		{
+			Logger.Warn($"Couldn't find '{path}' in any addons or assets. (CreateFromAsset)");
+		}
+
+		return null;
+	}
+	public GameObject CreateFromCache(string path)
+	{
+		if(InstalledCache.TryGetValue(path, out var prefab))
+		{
+			return CreateBasedOnImpl(prefab);
+		}
+
+		return null;
+	}
+
+	public void CreateFromCacheAsync(string path, Action<GameObject> callback = null)
+	{
+		if (string.IsNullOrEmpty(path))
+		{
+			Logger.Warn($"Couldn't find '{path}' as it's an empty string. (CreateFromCacheAsync)");
+			return;
+		}
+
+		if (InstalledCache.TryGetValue(path, out var prefab))
+		{
+			Persistence.StartCoroutine(CreateBasedOnAsyncImpl(prefab, callback));
+		}
+		else
+		{
+			Logger.Warn($"Couldn't find '{path}' as it hasn't been cached yet. Use 'CreateFromAssetAsync'? (CreateFromCacheAsync)");
+		}
+	}
+	public void CreateFromAssetAsync(string path, Asset asset, Action<GameObject> callback = null)
+	{
+		if (asset == null)
+		{
+			Logger.Warn($"Couldn't find '{path}' as the asset provided is null. (CreateFromAssetAsync)");
+			return;
+		}
+
+		if (string.IsNullOrEmpty(path))
+		{
+			Logger.Warn($"Couldn't find '{path}' as it's an empty string. (CreateFromAssetAsync)");
+			return;
+		}
+
+		var prefab = asset.LoadPrefab<GameObject>(path);
+
+		if (prefab != null)
+		{
+			Persistence.StartCoroutine(CreateBasedOnAsyncImpl(prefab, callback));
+		}
+		else
+		{
+			Logger.Warn($"Couldn't find '{path}' in any addons or assets. (CreateFromAssetAsync)");
+		}
+	}
+
+	#region Helpers
+
+	internal GameObject CreateBasedOnImpl(GameObject source)
 	{
 		if (source == null)
 		{
@@ -30,42 +119,24 @@ public class AddonManager : IDisposable
 		var result = UnityEngine.Object.Instantiate(source);
 		PrefabInstances.Add(result);
 
-		result.name = result.name.Replace("(Clone)", string.Empty);
+		FixName(result);
 
 		return result;
 	}
-	public GameObject CreatePrefab(string path, Asset asset)
+	internal IEnumerator CreateBasedOnAsyncImpl(GameObject gameObject, Action<GameObject> callback = null)
 	{
-		if (string.IsNullOrEmpty(path))
-		{
-			return null;
-		}
+		var result = (GameObject)null;
 
-		return CreateCacheBasedOn(asset.LoadPrefab<GameObject>(path));
+		yield return result = UnityEngine.Object.Instantiate(gameObject);
+		PrefabInstances.Add(result);
+
+		FixName(result);
+
+		callback?.Invoke(result);
 	}
-	public GameObject CreatePrefab(string path, string assetName, Addon addon)
-	{
-		if (string.IsNullOrEmpty(path) || string.IsNullOrEmpty(assetName))
-		{
-			return null;
-		}
 
-		if (addon.Assets.TryGetValue(assetName, out var asset))
-		{
-			return CreateCacheBasedOn(asset.LoadPrefab<GameObject>(path));
-		}
+	#endregion
 
-		return null;
-	}
-	public GameObject CreatePrefab(string path)
-	{
-		if(InstalledCache.TryGetValue(path, out var prefab))
-		{
-			return CreateCacheBasedOn(prefab);
-		}
-
-		return null;
-	}
 	public void ProcessPrefab(GameObject prefab)
 	{
 		if (prefab == null)
