@@ -16,7 +16,7 @@ public partial class Asset : IDisposable
 	{
 		if (IsUnpacked)
 		{
-			Logger.Log($" Already unpacked '{Name}'");
+			Logger.Log($"Already unpacked Asset '{Name}'");
 			yield break;
 		}
 
@@ -25,7 +25,7 @@ public partial class Asset : IDisposable
 		yield return request = AssetBundle.LoadFromStreamAsync(stream);
 
 		CachedBundle = request.assetBundle;
-		Logger.Log($" Unpacked bundle '{Name}'");
+		Logger.Debug($"Unpacked bundle '{Name}'", 2);
 
 		using var stream2 = new MemoryStream(AdditionalData);
 		var bundle = Serializer.Deserialize<RustBundle>(stream2);
@@ -42,7 +42,7 @@ public partial class Asset : IDisposable
 
 		using var stream = new MemoryStream(Data);
 		CachedBundle = AssetBundle.LoadFromStream(stream);
-		Logger.Log($" Unpacked bundle '{Name}'");
+		Logger.Debug($"Unpacked bundle '{Name}'", 2);
 
 		using var stream2 = new MemoryStream(AdditionalData);
 		var bundle = Serializer.Deserialize<RustBundle>(stream2);

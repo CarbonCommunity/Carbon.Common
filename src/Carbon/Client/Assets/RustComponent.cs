@@ -48,7 +48,6 @@ namespace Carbon.Client
 
 			if (trigger != null)
 			{
-				Debug.LogWarning($"Trigger ok");
 				switch (trigger)
 				{
 					case TriggerLadder ladder:
