@@ -43,26 +43,6 @@ namespace Carbon.Client
 			_instance = go.AddComponent(type);
 
 			const BindingFlags _monoFlags = BindingFlags.Instance | BindingFlags.Public;
-
-			var trigger = go.GetComponent<TriggerBase>();
-
-			if (trigger != null)
-			{
-				switch (trigger)
-				{
-					case TriggerLadder ladder:
-						ladder.interestLayers = new LayerMask { value = 131072 };
-						break;
-
-					case TriggerSafeZone safeZone:
-						safeZone.interestLayers = new LayerMask { value = 163840 };
-						break;
-
-					case TriggerRadiation radiation:
-						radiation.interestLayers = new LayerMask { value = 131072 };
-						break;
-				}
-			}
 			
 			if (Members != null && Members.Length > 0)
 			{
@@ -76,7 +56,7 @@ namespace Carbon.Client
 
 						if (memberType == typeof(LayerMask))
 						{
-
+							value = new LayerMask { value = member.Value.ToInt() };
 						}
 						else if (memberType.IsEnum)
 						{
