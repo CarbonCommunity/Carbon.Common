@@ -21,6 +21,8 @@ public struct NoMap
 		}
 
 		ConVar.Server.levelurl = MAP_URL;
+
+		ProcessConVars();
 	}
 	public static void TerrainPostprocess()
 	{
@@ -30,5 +32,9 @@ public struct NoMap
 		}
 
 		TerrainMeta.Collider.enabled = false;
+	}
+	public static void ProcessConVars()
+	{
+		ConVar.Spawn.max_density = 0;
 	}
 }
