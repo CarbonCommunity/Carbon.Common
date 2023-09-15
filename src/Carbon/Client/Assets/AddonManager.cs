@@ -142,16 +142,6 @@ public class AddonManager : IDisposable
 
 	#endregion
 
-	public void ProcessPrefab(GameObject prefab)
-	{
-		if (prefab == null)
-		{
-			return;
-		}
-
-		var rustComponent = prefab.GetComponent<RustComponent>();
-		rustComponent.ApplyComponent(prefab);
-	}
 	public void Dispose()
 	{
 		foreach (var prefab in PrefabInstances)

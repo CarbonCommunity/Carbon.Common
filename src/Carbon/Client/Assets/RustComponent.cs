@@ -1,4 +1,6 @@
-﻿using ProtoBuf;
+﻿using System;
+using ProtoBuf;
+using UnityEngine;
 
 namespace Carbon.Client
 {
@@ -6,10 +8,10 @@ namespace Carbon.Client
 	public partial class RustComponent : MonoBehaviour
 	{
 		[ProtoMember(1)]
-		public Controls DisableObjectOn = new Controls();
+		public Platform DisableObjectOn = new Platform();
 
 		[ProtoMember(2)]
-		public Controls DestroyObjectOn = new Controls();
+		public Platform DestroyObjectOn = new Platform();
 
 		[ProtoMember(3)]
 		public ComponentInfo Component = new ComponentInfo();
@@ -25,7 +27,7 @@ namespace Carbon.Client
 		}
 
 		[Serializable, ProtoContract]
-		public class Controls
+		public class Platform
 		{
 			[ProtoMember(1)]
 			public bool Server;
@@ -38,12 +40,12 @@ namespace Carbon.Client
 		public class ComponentInfo
 		{
 			[ProtoMember(1)]
-			public Controls CreateOn = new Controls();
-
-			[ProtoMember(1)]
-			public string Type;
+			public Platform CreateOn = new Platform();
 
 			[ProtoMember(2)]
+			public string Type;
+
+			[ProtoMember(3)]
 			public Member[] Members;
 		}
 	}

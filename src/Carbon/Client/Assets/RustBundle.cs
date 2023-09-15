@@ -27,7 +27,7 @@ namespace Carbon.Client
 					{
 						if (Components.TryGetValue(transform.GetRecursiveName().ToLower(), out var component))
 						{
-							component.ApplyComponent(transform.gameObject);
+							component.Apply(transform.gameObject);
 						}
 
 						foreach (Transform subTransform in transform)

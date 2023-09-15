@@ -2,24 +2,37 @@
 
 namespace Carbon.Client
 {
-	public partial class RustComponent 
+	public partial class RustComponent
 	{
 		public Component _instance;
 
 		public static readonly char[] LayerSplitter = new char[] { '|' };
 
-		public void ApplyComponent(GameObject go)
+		public void Apply(GameObject go)
 		{
-			if (!Component.CreateOn.Server || _instance != null)
+			if (!HandleDisabled(go))
 			{
-				return;
+				if (HandleDestroy(go))
+				{
+					return;
+				}
+			}
+
+			HandleComponents(go);
+		}
+
+		internal bool HandleComponents(GameObject go)
+		{
+			if (!Component.CreateOn.Server || DestroyObjectOn.Server || _instance != null)
+			{
+				return false;
 			}
 
 			var type = AccessToolsEx.TypeByName(Component.Type);
 			_instance = go.AddComponent(type);
 
 			const BindingFlags _monoFlags = BindingFlags.Instance | BindingFlags.Public;
-			
+
 			if (Component.Members != null && Component.Members.Length > 0)
 			{
 				foreach (var member in Component.Members)
@@ -58,6 +71,28 @@ namespace Carbon.Client
 					}
 				}
 			}
+
+			return true;
+		}
+		internal bool HandleDisabled(GameObject go)
+		{
+			if (!DisableObjectOn.Server)
+			{
+				return false;
+			}
+
+			go.SetActive(false);
+			return true;
+		}
+		internal bool HandleDestroy(GameObject go)
+		{
+			if (!DestroyObjectOn.Server)
+			{
+				return false;
+			}
+
+			GameObject.Destroy(go);
+			return true;
 		}
 	}
 }
