@@ -1524,7 +1524,7 @@ partial class {@class.Identifier.ValueText}
 	{method}
 }}";
 
-		output = CSharpSyntaxTree.ParseText(source, options, $"{fileName}.Gen.cs", Encoding.UTF8);
+		output = CSharpSyntaxTree.ParseText(source, options, $"{fileName}.cs/Internal", Encoding.UTF8);
 	}
 
 	public static bool IsUnmanagedType(string type)
