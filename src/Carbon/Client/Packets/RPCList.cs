@@ -18,12 +18,16 @@ public class RPCList : BasePacket
 	[ProtoMember(2)]
 	public uint[] RpcIds { get; set; }
 
+	[ProtoMember(3)]
+	public bool NoMap { get; set; }
+
 	public static RPCList Get()
 	{
 		return new RPCList()
 		{
 			RpcIds = RPC.rpcList.Select(x => x.Id).ToArray(),
-			RpcNames = RPC.rpcList.Select(x => x.Name).ToArray()
+			RpcNames = RPC.rpcList.Select(x => x.Name).ToArray(),
+			NoMap = Carbon.Client.NoMap.Enabled
 		};
 	}
 

@@ -212,12 +212,13 @@ public class AddonManager : IDisposable
 		download.Dispose();
 	}
 
-	public async void Deliver(CarbonClient client, bool uninstallAll, List<Addon> addons)
+	public async void Deliver(CarbonClient client, bool uninstallAll, List<Addon> addons, bool loadingScreen)
 	{
 		client.Send("addonrequest", new AddonRequest
 		{
 			AddonCount = addons.Count,
 			BufferSize = addons.Sum(x => x.Buffer.Length),
+			LoadingScreen = loadingScreen
 		});
 
 		Logger.Log($"Sent download request to {client.Connection} with {addons.Count:n0} addons...");
@@ -252,12 +253,13 @@ public class AddonManager : IDisposable
 
 		client.Send("addonfinalized");
 	}
-	public void Deliver(CarbonClient client, bool uninstallAll, params string[] urls)
+	public void Deliver(CarbonClient client, bool uninstallAll, bool loadingScreen, params string[] urls)
 	{
 		client.Send("addonrequest", new AddonRequest
 		{
 			AddonCount = urls.Length,
-			IsUrlDownload = true
+			IsUrlDownload = true,
+			LoadingScreen = loadingScreen
 		});
 
 		Logger.Log($"Sent download request to {client.Connection} with {urls.Length:n0} addon URLs...");

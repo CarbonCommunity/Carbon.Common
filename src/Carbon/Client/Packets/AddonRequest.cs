@@ -20,4 +20,7 @@ public class AddonRequest : BasePacket
 
 	[ProtoMember(3)]
 	public bool IsUrlDownload { get; set; }
+
+	[ProtoMember(4)]
+	public bool LoadingScreen { get; set; }
 }
