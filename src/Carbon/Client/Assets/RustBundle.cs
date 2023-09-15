@@ -8,7 +8,7 @@ namespace Carbon.Client
 	public class RustBundle
 	{
 		[ProtoMember(1)]
-		public Dictionary<string, RustComponent> Components = new Dictionary<string, RustComponent>();
+		public Dictionary<string, List<RustComponent>> Components = new Dictionary<string, List<RustComponent>>();
 
 		[ProtoMember(2)]
 		public List<RustPrefab> RustPrefabs = new List<RustPrefab>();
@@ -25,9 +25,12 @@ namespace Carbon.Client
 
 					void Recurse(Transform transform)
 					{
-						if (Components.TryGetValue(transform.GetRecursiveName().ToLower(), out var component))
+						if (Components.TryGetValue(transform.GetRecursiveName().ToLower(), out var components))
 						{
-							component.Apply(transform.gameObject);
+							foreach (var component in components)
+							{
+								component.Apply(transform.gameObject);
+							}
 						}
 
 						foreach (Transform subTransform in transform)
