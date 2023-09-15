@@ -1,21 +1,23 @@
-﻿using Newtonsoft.Json;
-using ProtoBuf;
+﻿using ProtoBuf;
 
 namespace Carbon.Client
 {
 	[ProtoContract]
-	public class RustComponent : MonoBehaviour
+	public partial class RustComponent : MonoBehaviour
 	{
 		[ProtoMember(1)]
-		public bool IsServer;
+		public Controls CreateComponentOn = new Controls();
 
 		[ProtoMember(2)]
-		public bool IsClient;
+		public Controls DisableObjectOn = new Controls();
 
 		[ProtoMember(3)]
-		public string TargetType;
+		public Controls DestroyObjectOn = new Controls();
 
 		[ProtoMember(4)]
+		public string TargetType;
+
+		[ProtoMember(5)]
 		public Member[] Members;
 
 		[Serializable, ProtoContract]
@@ -28,60 +30,14 @@ namespace Carbon.Client
 			public string Value;
 		}
 
-		public Component _instance;
-
-		public static readonly char[] LayerSplitter = new char[] { '|' };
-
-		public void ApplyComponent(GameObject go)
+		[Serializable, ProtoContract]
+		public class Controls
 		{
-			if (!IsServer || _instance != null)
-			{
-				return;
-			}
+			[ProtoMember(1)]
+			public bool Server;
 
-			var type = AccessToolsEx.TypeByName(TargetType);
-			_instance = go.AddComponent(type);
-
-			const BindingFlags _monoFlags = BindingFlags.Instance | BindingFlags.Public;
-			
-			if (Members != null && Members.Length > 0)
-			{
-				foreach (var member in Members)
-				{
-					try
-					{
-						var field = type.GetField(member.Name, _monoFlags);
-						var memberType = field.FieldType;
-						var value = (object)null;
-
-						if (memberType == typeof(LayerMask))
-						{
-							value = new LayerMask { value = member.Value.ToInt() };
-						}
-						else if (memberType.IsEnum)
-						{
-							value = Enum.Parse(memberType, member.Value);
-						}
-						else
-						{
-							value = Convert.ChangeType(member.Value, memberType);
-						}
-
-						if (field != null)
-						{
-							field?.SetValue(_instance, value);
-						}
-						else
-						{
-							Logger.Error($" Couldn't find member '{member.Name}' for '{TargetType}' on '{go.transform.GetRecursiveName()}'");
-						}
-					}
-					catch (Exception ex)
-					{
-						Logger.Error($"Failed assigning Rust component member '{member.Name}' to {go.transform.GetRecursiveName()}", ex);
-					}
-				}
-			}
+			[ProtoMember(2)]
+			public bool Client;
 		}
 	}
 }
