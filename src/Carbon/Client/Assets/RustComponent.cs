@@ -6,19 +6,13 @@ namespace Carbon.Client
 	public partial class RustComponent : MonoBehaviour
 	{
 		[ProtoMember(1)]
-		public Controls CreateComponentOn = new Controls();
-
-		[ProtoMember(2)]
 		public Controls DisableObjectOn = new Controls();
 
-		[ProtoMember(3)]
+		[ProtoMember(2)]
 		public Controls DestroyObjectOn = new Controls();
 
-		[ProtoMember(4)]
-		public string TargetType;
-
-		[ProtoMember(5)]
-		public Member[] Members;
+		[ProtoMember(3)]
+		public ComponentInfo Component = new ComponentInfo();
 
 		[Serializable, ProtoContract]
 		public class Member
@@ -38,6 +32,19 @@ namespace Carbon.Client
 
 			[ProtoMember(2)]
 			public bool Client;
+		}
+
+		[Serializable, ProtoContract]
+		public class ComponentInfo
+		{
+			[ProtoMember(1)]
+			public Controls CreateOn = new Controls();
+
+			[ProtoMember(1)]
+			public string Type;
+
+			[ProtoMember(2)]
+			public Member[] Members;
 		}
 	}
 }

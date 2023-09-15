@@ -10,19 +10,19 @@ namespace Carbon.Client
 
 		public void ApplyComponent(GameObject go)
 		{
-			if (!CreateComponentOn.Server || _instance != null)
+			if (!Component.CreateOn.Server || _instance != null)
 			{
 				return;
 			}
 
-			var type = AccessToolsEx.TypeByName(TargetType);
+			var type = AccessToolsEx.TypeByName(Component.Type);
 			_instance = go.AddComponent(type);
 
 			const BindingFlags _monoFlags = BindingFlags.Instance | BindingFlags.Public;
 			
-			if (Members != null && Members.Length > 0)
+			if (Component.Members != null && Component.Members.Length > 0)
 			{
-				foreach (var member in Members)
+				foreach (var member in Component.Members)
 				{
 					try
 					{
@@ -49,7 +49,7 @@ namespace Carbon.Client
 						}
 						else
 						{
-							Logger.Error($" Couldn't find member '{member.Name}' for '{TargetType}' on '{go.transform.GetRecursiveName()}'");
+							Logger.Error($" Couldn't find member '{member.Name}' for '{Component.Type}' on '{go.transform.GetRecursiveName()}'");
 						}
 					}
 					catch (Exception ex)
