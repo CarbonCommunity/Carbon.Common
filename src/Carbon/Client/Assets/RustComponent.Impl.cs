@@ -91,7 +91,7 @@ namespace Carbon.Client
 				return false;
 			}
 
-			GameObject.Destroy(go);
+			Destroy(go);
 			return true;
 		}
 	}
