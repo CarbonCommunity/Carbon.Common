@@ -8,13 +8,20 @@ namespace Carbon.Client
 	public partial class RustComponent : MonoBehaviour
 	{
 		[ProtoMember(1)]
-		public Platform DisableObjectOn = new Platform();
+		public PostProcessMode Server = PostProcessMode.Active;
 
 		[ProtoMember(2)]
-		public Platform DestroyObjectOn = new Platform();
+		public PostProcessMode Client = PostProcessMode.Active;
 
 		[ProtoMember(3)]
 		public ComponentInfo Component = new ComponentInfo();
+
+		public enum PostProcessMode
+		{
+			Active,
+			Disabled,
+			Destroyed
+		}
 
 		[Serializable, ProtoContract]
 		public class Member

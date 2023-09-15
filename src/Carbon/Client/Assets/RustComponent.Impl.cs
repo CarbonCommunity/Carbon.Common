@@ -23,7 +23,7 @@ namespace Carbon.Client
 
 		internal bool HandleComponents(GameObject go)
 		{
-			if (!Component.CreateOn.Server || DestroyObjectOn.Server || _instance != null)
+			if (!Component.CreateOn.Server || Server == PostProcessMode.Destroyed || _instance != null)
 			{
 				return false;
 			}
@@ -76,7 +76,7 @@ namespace Carbon.Client
 		}
 		internal bool HandleDisabled(GameObject go)
 		{
-			if (!DisableObjectOn.Server)
+			if (Server != PostProcessMode.Disabled)
 			{
 				return false;
 			}
@@ -86,7 +86,7 @@ namespace Carbon.Client
 		}
 		internal bool HandleDestroy(GameObject go)
 		{
-			if (!DestroyObjectOn.Server)
+			if (Server != PostProcessMode.Destroyed)
 			{
 				return false;
 			}
