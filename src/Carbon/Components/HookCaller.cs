@@ -1,5 +1,6 @@
 ﻿using System.Buffers;
 using System.Linq.Expressions;
+using System.Text;
 using Carbon.Base.Interfaces;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -1505,6 +1506,25 @@ public static class HookCaller
 		hookableMethods = null;
 
 		#endregion
+	}
+
+	public static void GeneratePartial(CompilationUnitSyntax input, out SyntaxTree output, CSharpParseOptions options, string fileName)
+	{
+		GenerateInternalCallHook(input, out _, out var method, false);
+		var @namespace = input.Members.FirstOrDefault(x => x is BaseNamespaceDeclarationSyntax ns && (ns.Name.ToString() == "Carbon.Plugins" || ns.Name.ToString() == "Oxide.Plugins")) as BaseNamespaceDeclarationSyntax;
+		var index = input.Members.IndexOf(@namespace);
+		var @class = @namespace.Members[0] as ClassDeclarationSyntax;
+
+		var source = @$"{input.Usings.Select(x => x.ToString()).ToString("\n")}
+
+namespace {@namespace.Name};
+
+partial class {@class.Identifier.ValueText}
+{{
+	{method}
+}}";
+
+		output = CSharpSyntaxTree.ParseText(source, options, $"{fileName} [Generated]", Encoding.UTF8);
 	}
 
 	public static bool IsUnmanagedType(string type)
