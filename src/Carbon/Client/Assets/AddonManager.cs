@@ -5,6 +5,7 @@
  *
  */
 
+using System.Linq;
 using Carbon.Client.Packets;
 using Network;
 
@@ -146,6 +147,10 @@ public class AddonManager : IDisposable
 
 		Persistence.StartCoroutine(CreateBasedOnAsyncImpl(lookup, prefab.Apply));
 	}
+	public void CreateRustPrefabsAsync(IEnumerable<RustPrefab> prefabs)
+	{
+		Persistence.StartCoroutine(CreateBasedOnPrefabsAsyncImpl(prefabs));
+	}
 
 	#region Helpers
 
@@ -173,6 +178,28 @@ public class AddonManager : IDisposable
 		FixName(result);
 
 		callback?.Invoke(result);
+	}
+	internal IEnumerator CreateBasedOnPrefabsAsyncImpl(IEnumerable<RustPrefab> prefabs)
+	{
+		foreach (var prefab in prefabs)
+		{
+			var lookup = prefab.Lookup();
+
+			if(lookup == null)
+			{
+				Logger.Warn($"Couldn't find '{prefab.Path}' as the asset provided is null. (CreateBasedOnPrefabsAsyncImpl)");
+				continue;
+			}
+
+			yield return CreateBasedOnAsyncImpl(lookup, prefab.Apply);
+		}
+	}
+	internal IEnumerator CreateBasedOnEnumerableAsyncImpl(IEnumerable<GameObject> gameObjects, Action<GameObject> callback = null)
+	{
+		foreach(var gameObject in gameObjects)
+		{
+			yield return CreateBasedOnAsyncImpl(gameObject, callback);
+		}
 	}
 
 	#endregion

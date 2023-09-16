@@ -30,7 +30,7 @@ public partial class Asset : IDisposable
 		using var stream2 = new MemoryStream(AdditionalData);
 		var bundle = Serializer.Deserialize<RustBundle>(stream2);
 
-		bundle.Process(this);
+		bundle.ProcessComponents(this);
 	}
 	public void UnpackBundle()
 	{
@@ -47,7 +47,7 @@ public partial class Asset : IDisposable
 		using var stream2 = new MemoryStream(AdditionalData);
 		var bundle = Serializer.Deserialize<RustBundle>(stream2);
 
-		bundle.Process(this);
+		bundle.ProcessComponents(this);
 	}
 
 	public void CacheAssets()

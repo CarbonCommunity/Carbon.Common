@@ -13,7 +13,7 @@ namespace Carbon.Client
 		[ProtoMember(2)]
 		public List<RustPrefab> RustPrefabs = new List<RustPrefab>();
 
-		public void Process(Asset asset)
+		public void ProcessComponents(Asset asset)
 		{
 			foreach (var path in asset.CachedBundle.GetAllAssetNames())
 			{
@@ -40,6 +40,14 @@ namespace Carbon.Client
 					}
 				}
 			}
+		}
+		public void ProcessPrefabs()
+		{
+			AddonManager.Instance.CreateRustPrefabs(RustPrefabs);
+		}
+		public void ProcessPrefabsAsync()
+		{
+			AddonManager.Instance.CreateRustPrefabsAsync(RustPrefabs);
 		}
 	}
 }
