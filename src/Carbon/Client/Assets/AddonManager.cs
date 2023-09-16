@@ -63,6 +63,29 @@ public class AddonManager : IDisposable
 
 		return null;
 	}
+	public GameObject CreateRustPrefab(RustPrefab prefab)
+	{
+		var lookup = prefab.Lookup();
+
+		if (lookup == null)
+		{
+			Logger.Warn($"Couldn't find '{prefab.Path}' as the asset provided is null. (CreateRustPrefab)");
+			return null;
+		}
+
+		var instance = CreateBasedOnImpl(lookup);
+
+		prefab.Apply(instance);
+
+		return instance;
+	}
+	public void CreateRustPrefabs(IEnumerable<RustPrefab> prefabs)
+	{
+		foreach(var prefab in prefabs)
+		{
+			CreateRustPrefab(prefab);
+		}
+	}
 
 	public void CreateFromCacheAsync(string path, Action<GameObject> callback = null)
 	{
@@ -110,6 +133,18 @@ public class AddonManager : IDisposable
 			Logger.Warn($"Couldn't find '{path}' in any addons or assets. (CreateFromAssetAsync)");
 			callback?.Invoke(null);
 		}
+	}
+	public void CreateRustPrefabAsync(RustPrefab prefab)
+	{
+		var lookup = prefab.Lookup();
+
+		if (lookup == null)
+		{
+			Logger.Warn($"Couldn't find '{prefab.Path}' as the asset provided is null. (CreateRustPrefabAsync)");
+			return;
+		}
+
+		Persistence.StartCoroutine(CreateBasedOnAsyncImpl(lookup, prefab.Apply));
 	}
 
 	#region Helpers

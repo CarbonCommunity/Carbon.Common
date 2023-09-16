@@ -4,7 +4,7 @@ using ProtoBuf;
 namespace Carbon.Client
 {
 	[ProtoContract]
-	public class RustPrefab : MonoBehaviour
+	public partial class RustPrefab : MonoBehaviour
 	{
 		[ProtoMember(1)]
 		public string Path;
