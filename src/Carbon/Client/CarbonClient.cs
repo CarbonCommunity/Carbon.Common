@@ -111,6 +111,16 @@ public class CarbonClient : ICommunication, IDisposable
 		};
 		Send("addon_spawn", packet);
 	}
+	public void SpawnRustPrefabs(string addon, string asset, bool asynchronous = true)
+	{
+		using var packet = new AddonRustPrefab
+		{
+			Asynchronous = asynchronous,
+			Addon = addon,
+			Asset = asset
+		};
+		Send("addon_assetspawn", packet);
+	}
 	public void DestroyPrefab(string path)
 	{
 		using var packet = new AddonPrefab

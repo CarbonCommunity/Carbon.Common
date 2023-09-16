@@ -17,7 +17,5 @@ namespace Carbon.Client
 
 		[ProtoMember(4)]
 		public BaseVector Scale;
-
-		public GameObject _instance;
 	}
 }
