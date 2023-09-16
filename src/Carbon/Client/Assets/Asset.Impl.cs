@@ -28,9 +28,9 @@ public partial class Asset : IDisposable
 		Logger.Debug($"Unpacked bundle '{Name}'", 2);
 
 		using var stream2 = new MemoryStream(AdditionalData);
-		var bundle = Serializer.Deserialize<RustBundle>(stream2);
+		CachedRustBundle = Serializer.Deserialize<RustBundle>(stream2);
 
-		bundle.ProcessComponents(this);
+		CachedRustBundle.ProcessComponents(this);
 	}
 	public void UnpackBundle()
 	{
@@ -45,9 +45,9 @@ public partial class Asset : IDisposable
 		Logger.Debug($"Unpacked bundle '{Name}'", 2);
 
 		using var stream2 = new MemoryStream(AdditionalData);
-		var bundle = Serializer.Deserialize<RustBundle>(stream2);
+		CachedRustBundle = Serializer.Deserialize<RustBundle>(stream2);
 
-		bundle.ProcessComponents(this);
+		CachedRustBundle.ProcessComponents(this);
 	}
 
 	public void CacheAssets()

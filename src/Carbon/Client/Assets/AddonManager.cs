@@ -87,6 +87,22 @@ public class AddonManager : IDisposable
 			CreateRustPrefab(prefab);
 		}
 	}
+	public void CreateRustPrefabsFromAsset(Asset asset)
+	{
+		if(asset == null)
+		{
+			Logger.Warn($"Couldn't create Rust prefabs since asset is null. (CreateRustPrefabsFromAsset)");
+			return;
+		}
+
+		if(asset.CachedRustBundle == null)
+		{
+			Logger.Warn($"Couldn't create Rust prefabs for '{asset.Name}' since Rust bundle is not cached. (CreateRustPrefabsFromAsset)");
+			return;
+		}
+
+		CreateRustPrefabs(asset.CachedRustBundle.RustPrefabs);
+	}
 
 	public void CreateFromCacheAsync(string path, Action<GameObject> callback = null)
 	{
@@ -150,6 +166,22 @@ public class AddonManager : IDisposable
 	public void CreateRustPrefabsAsync(IEnumerable<RustPrefab> prefabs)
 	{
 		Persistence.StartCoroutine(CreateBasedOnPrefabsAsyncImpl(prefabs));
+	}
+	public void CreateRustPrefabsFromAssetAsync(Asset asset)
+	{
+		if (asset == null)
+		{
+			Logger.Warn($"Couldn't create Rust prefabs since asset is null. (CreateRustPrefabsFromAsset)");
+			return;
+		}
+
+		if (asset.CachedRustBundle == null)
+		{
+			Logger.Warn($"Couldn't create Rust prefabs for '{asset.Name}' since Rust bundle is not cached. (CreateRustPrefabsFromAsset)");
+			return;
+		}
+
+		CreateRustPrefabsAsync(asset.CachedRustBundle.RustPrefabs);
 	}
 
 	#region Helpers
