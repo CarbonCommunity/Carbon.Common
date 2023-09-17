@@ -74,9 +74,9 @@ public class AddonManager : IDisposable
 			return null;
 		}
 
-		var instance = CreateBasedOnImpl(lookup);
+		var instance = GameManager.server.CreatePrefab(prefab.Path, prefab.Position.ToVector3(), prefab.Rotation.ToQuaternion(), prefab.Scale.ToVector3());
 
-		prefab.Apply(instance);
+		PrefabInstances.Add(instance);
 
 		return instance;
 	}
@@ -213,6 +213,8 @@ public class AddonManager : IDisposable
 	}
 	internal IEnumerator CreateBasedOnPrefabsAsyncImpl(IEnumerable<RustPrefab> prefabs)
 	{
+		Logger.Log($"Test1 {prefabs.Count()}");
+
 		foreach (var prefab in prefabs)
 		{
 			var lookup = prefab.Lookup();
@@ -223,7 +225,13 @@ public class AddonManager : IDisposable
 				continue;
 			}
 
-			yield return CreateBasedOnAsyncImpl(lookup, prefab.Apply);
+			var instance = (GameObject)null;
+
+			yield return instance = GameManager.server.CreatePrefab(prefab.Path, prefab.Position.ToVector3(), prefab.Rotation.ToQuaternion(), prefab.Scale.ToVector3());
+
+			Logger.Log($"Test2 {instance.name}");
+
+			PrefabInstances.Add(instance);
 		}
 	}
 	internal IEnumerator CreateBasedOnEnumerableAsyncImpl(IEnumerable<GameObject> gameObjects, Action<GameObject> callback = null)
