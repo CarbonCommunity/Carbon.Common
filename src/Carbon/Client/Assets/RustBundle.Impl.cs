@@ -18,17 +18,20 @@ namespace Carbon.Client
 
 					void Recurse(Transform transform)
 					{
+						foreach (Transform subTransform in transform)
+						{
+							Recurse(subTransform);
+						}
+
 						if (Components.TryGetValue(transform.GetRecursiveName().ToLower(), out var components))
 						{
 							foreach (var component in components)
 							{
-								component.Apply(transform.gameObject);
+								if (!component.Apply(transform.gameObject))
+								{
+									break;
+								}
 							}
-						}
-
-						foreach (Transform subTransform in transform)
-						{
-							Recurse(subTransform);
 						}
 					}
 				}

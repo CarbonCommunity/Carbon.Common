@@ -213,8 +213,6 @@ public class AddonManager : IDisposable
 	}
 	internal IEnumerator CreateBasedOnPrefabsAsyncImpl(IEnumerable<RustPrefab> prefabs)
 	{
-		Logger.Log($"Test1 {prefabs.Count()}");
-
 		foreach (var prefab in prefabs)
 		{
 			var lookup = prefab.Lookup();
@@ -228,8 +226,6 @@ public class AddonManager : IDisposable
 			var instance = (GameObject)null;
 
 			yield return instance = GameManager.server.CreatePrefab(prefab.Path, prefab.Position.ToVector3(), prefab.Rotation.ToQuaternion(), prefab.Scale.ToVector3());
-
-			Logger.Log($"Test2 {instance.name}");
 
 			PrefabInstances.Add(instance);
 		}

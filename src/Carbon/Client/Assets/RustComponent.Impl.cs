@@ -8,17 +8,17 @@ namespace Carbon.Client
 
 		public static readonly char[] LayerSplitter = new char[] { '|' };
 
-		public void Apply(GameObject go)
+		public bool Apply(GameObject go)
 		{
 			if (!HandleDisabled(go))
 			{
 				if (HandleDestroy(go))
 				{
-					return;
+					return false;
 				}
 			}
 
-			HandleComponents(go);
+			return HandleComponents(go);
 		}
 
 		internal bool HandleComponents(GameObject go)
@@ -91,7 +91,7 @@ namespace Carbon.Client
 				return false;
 			}
 
-			Destroy(go);
+			go.SetActive(false);
 			return true;
 		}
 	}
