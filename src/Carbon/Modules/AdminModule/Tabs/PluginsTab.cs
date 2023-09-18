@@ -1519,6 +1519,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					Refresh();
 				}
 				catch { return false; }
+
 				return true;
 			}
 			public void Save()

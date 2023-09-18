@@ -97,9 +97,9 @@ public class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModule
 		if (Validate())
 		{
 			Save();
+			LoadDefaultImages();
 		}
 
-		LoadDefaultImages();
 	}
 	public override void OnServerSaved()
 	{
@@ -115,7 +115,16 @@ public class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModule
 		if (OsEx.File.Exists(path))
 		{
 			using var stream = new MemoryStream(OsEx.File.ReadBytes(path));
-			try { _protoData = Serializer.Deserialize<ImageDatabaseDataProto>(stream); } catch { _protoData = new ImageDatabaseDataProto(); }
+			try
+			{
+				_protoData = Serializer.Deserialize<ImageDatabaseDataProto>(stream);
+			}
+			catch (Exception ex)
+			{
+				Logger.Error($"Failed loading data for {Name}", ex);
+				_protoData = new ImageDatabaseDataProto();
+				Save();
+			}
 		}
 		else
 		{
@@ -135,10 +144,13 @@ public class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModule
 		var path = _getProtoDataPath();
 		OsEx.Folder.Create(Path.GetDirectoryName(path));
 
-		using var file = System.IO.File.OpenWrite(path);
-		Serializer.Serialize(file, _protoData ??= new ImageDatabaseDataProto());
-		file.Flush();
-		file.Dispose();
+		using var stream = new MemoryStream();
+		Serializer.Serialize(stream, _protoData ??= new ImageDatabaseDataProto());
+
+		var result = stream.ToArray();
+		OsEx.File.Create(path, result);
+		Array.Clear(result,0,result.Length);
+		result = null;
 	}
 	private void LoadDefaultImages()
 	{
@@ -168,8 +180,9 @@ public class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModule
 	{
 		if (_protoData.Identifier != CommunityEntity.ServerInstance.net.ID.Value)
 		{
-			PutsWarn($"The server identifier has changed. Wiping old image database."); _protoData.Map.Clear();
+			PutsWarn($"The server identifier has changed. Wiping old image database. [old {_protoData.Identifier}, new {CommunityEntity.ServerInstance.net.ID.Value}]"); _protoData.Map.Clear();
 			_protoData.CustomMap.Clear();
+			_protoData.Map.Clear();
 			_protoData.Identifier = CommunityEntity.ServerInstance.net.ID.Value;
 			return true;
 		}
