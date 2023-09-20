@@ -1511,7 +1511,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 					if (page % (maxPage / 4) == 0 || page == maxPage - 1)
 					{
-						Logger.Log($"[{Type}] Caching plugin metadata page {page} out of {maxPage}");
+						Logger.Log($"Caching plugin metadata page {page} out of {maxPage}");
 					}
 
 					list = null;
