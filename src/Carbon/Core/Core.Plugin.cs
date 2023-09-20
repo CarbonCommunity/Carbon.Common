@@ -1,9 +1,7 @@
 ﻿using API.Events;
 using Carbon.Client;
-using ConVar;
 using Application = UnityEngine.Application;
 using CommandLine = Carbon.Components.CommandLine;
-using Connection = Network.Connection;
 using Timer = Oxide.Plugins.Timer;
 
 /*
@@ -179,7 +177,7 @@ public partial class CorePlugin : CarbonPlugin
 			}
 		}
 
-		CarbonClient.Dispose(CarbonClient.Get(player));
+		Community.Runtime.CarbonClientManager.OnDisconnected(player.Connection);
 	}
 	private void OnPluginLoaded(Plugin plugin)
 	{

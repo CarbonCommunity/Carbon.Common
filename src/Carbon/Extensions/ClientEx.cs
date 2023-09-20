@@ -1,11 +1,12 @@
 ﻿using Carbon.Client;
+using Carbon.Client.SDK;
 
 namespace Carbon.Extensions;
 
 public static class ClientEx
 {
-	public static CarbonClient ToCarbonClient(this BasePlayer player)
+	public static ICarbonClient ToCarbonClient(this BasePlayer player)
 	{
-		return CarbonClient.Get(player);
+		return Community.Runtime.CarbonClientManager.Get(player);
 	}
 }
