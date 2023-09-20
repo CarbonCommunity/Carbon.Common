@@ -28,7 +28,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		{
 			Local,
 			Codefling,
-			uMod
+			uMod,
+			// Lone_Design
 		}
 		public enum FilterTypes
 		{
@@ -121,10 +122,9 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			}
 
 			// Lone_DesignInstance = new Lone_Design();
-			// if (!Lone_DesignInstance.Load())
+			// if (Lone_DesignInstance is IVendorStored loneStored && !loneStored.Load())
 			// {
-			// 	Lone_DesignInstance.FetchList();
-			// 	Lone_DesignInstance.Refresh();
+			// 	Lone_DesignInstance.FetchList(vendor => Lone_DesignInstance.Refresh());
 			// }
 
 			LocalInstance = new Local();
@@ -826,6 +826,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			public override string BarInfo => $"{FetchedPlugins.Count(x => !x.IsPaid()):n0} free, {FetchedPlugins.Count(x => x.IsPaid()):n0} paid";
 
 			public override string ListEndpoint => "https://codefling.com/capi/category-2/?do=apicall";
+			public string List2Endpoint => "https://codefling.com/capi/category-21/?do=apicall";
 			public override string DownloadEndpoint => "https://codefling.com/files/file/[ID]-a?do=download";
 
 			public override void Refresh()
@@ -897,58 +898,79 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			{
 				Community.Runtime.CorePlugin.webrequest.Enqueue(ListEndpoint, null, (error, data) =>
 				{
-					try
+					FetchedPlugins.Clear();
+					var plugins = Community.Runtime.CorePlugin.plugins.GetAll();
+
+					ParseData(data, false, false);
+
+					Community.Runtime.CorePlugin.webrequest.Enqueue(List2Endpoint, null, (error, data) =>
 					{
-						var list = JObject.Parse(data);
+						ParseData(data, true, true);
 
-						FetchedPlugins.Clear();
+					}, Community.Runtime.CorePlugin);
 
-						var plugins = Community.Runtime.CorePlugin.plugins.GetAll();
-						var file = list["file"];
-						foreach (var token in file)
+					void ParseData(string data, bool doSave, bool insert)
+					{
+						try
 						{
-							var fileStatus = token["file_status"]?.ToString();
-							var plugin = new Plugin
+							var list = JObject.Parse(data);
+							var file = list["file"];
+							foreach (var token in file)
 							{
-								Id = token["file_id"]?.ToString(),
-								Name = token["file_name"]?.ToString(),
-								Author = token["file_author"]?.ToString(),
-								Description = token["file_description"]?.ToString(),
-								Version = token["file_version"]?.ToString(),
-								OriginalPrice = token["file_price"]?.ToString(),
-								UpdateDate = token["file_updated"]?.ToString(),
-								Changelog = token["file_changelogs"]?.ToString(),
-								File = token["file_file_1"]?.ToString(),
-								Image = token["file_image"]["url"]?.ToString(),
-								ImageSize = (token["file_image"]["size"]?.ToString().ToInt()).GetValueOrDefault(),
-								Tags = token["file_tags"]?.ToString().Split(','),
-								DownloadCount = (token["file_downloads"]?.ToString().ToInt()).GetValueOrDefault(),
-								Dependencies = token["file_depends"]?.ToString().Split(),
-								CarbonCompatible = (token["file_compatibility"]?.ToString().ToBool()).GetValueOrDefault(),
-								Rating = (token["file_rating"]?.ToString().ToFloat()).GetValueOrDefault(0),
-								Status = string.IsNullOrEmpty(fileStatus) ? Status.Approved : (Status)fileStatus.ToInt(),
-								HasLookup = true
-							};
+								var fileStatus = token["file_status"]?.ToString();
+								var plugin = new Plugin
+								{
+									Id = token["file_id"]?.ToString(),
+									Name = token["file_name"]?.ToString(),
+									Author = token["file_author"]?.ToString(),
+									Description = token["file_description"]?.ToString(),
+									Version = token["file_version"]?.ToString(),
+									OriginalPrice = token["file_price"]?.ToString(),
+									UpdateDate = token["file_updated"]?.ToString(),
+									Changelog = token["file_changelogs"]?.ToString(),
+									File = token["file_file_1"]?.ToString(),
+									Image = token["file_image"]["url"]?.ToString(),
+									ImageSize = (token["file_image"]["size"]?.ToString().ToInt()).GetValueOrDefault(),
+									Tags = token["file_tags"]?.ToString().Split(','),
+									DownloadCount = (token["file_downloads"]?.ToString().ToInt()).GetValueOrDefault(),
+									Dependencies = token["file_depends"]?.ToString().Split(),
+									CarbonCompatible = (token["file_compatibility"]?.ToString().ToBool()).GetValueOrDefault(),
+									Rating = (token["file_rating"]?.ToString().ToFloat()).GetValueOrDefault(0),
+									Status = string.IsNullOrEmpty(fileStatus) ? Status.Approved : (Status)fileStatus.ToInt(),
+									HasLookup = true
+								};
 
-							var date = DateTimeOffset.FromUnixTimeSeconds(plugin.UpdateDate.ToLong());
-							plugin.UpdateDate = date.UtcDateTime.ToString();
+								var date = DateTimeOffset.FromUnixTimeSeconds(plugin.UpdateDate.ToLong());
+								plugin.UpdateDate = date.UtcDateTime.ToString();
 
-							try { plugin.Description = plugin.Description.TrimStart('\t').Replace("\t", "\n").Split('\n')[0]; } catch { }
+								try { plugin.Description = plugin.Description.TrimStart('\t').Replace("\t", "\n").Split('\n')[0]; } catch { }
 
-							if (plugin.OriginalPrice == "{}") plugin.OriginalPrice = "FREE";
-							try { plugin.ExistentPlugin = plugins.FirstOrDefault(x => Path.GetFileNameWithoutExtension(x.FilePath) == Path.GetFileNameWithoutExtension(plugin.File)) as RustPlugin; } catch { }
+								if (plugin.OriginalPrice == "{}") plugin.OriginalPrice = "FREE";
+								try { plugin.ExistentPlugin = plugins.FirstOrDefault(x => Path.GetFileNameWithoutExtension(x.FilePath) == Path.GetFileNameWithoutExtension(plugin.File)) as RustPlugin; } catch { }
 
-							FetchedPlugins.Add(plugin);
+								if (insert)
+								{
+									FetchedPlugins.Insert(0, plugin);
+								}
+								else
+								{
+									FetchedPlugins.Add(plugin);
+								}
+							}
+
+							callback?.Invoke(this);
+
+							if (doSave)
+							{
+								Logger.Log($"[{Type} Tab] Fetched latest plugin information.");
+
+								Save();
+							}
 						}
-
-						callback?.Invoke(this);
-						Logger.Log($"[{Type}] Downloaded JSON");
-
-						Save();
-					}
-					catch (Exception ex)
-					{
-						Logger.Error($" Couldn't fetch Codefling API to get the plugins list. Most likely because it's down.", ex);
+						catch (Exception ex)
+						{
+							Logger.Error($" Couldn't fetch Codefling API to get the plugins list. Most likely because it's down.", ex);
+						}
 					}
 				}, Community.Runtime.CorePlugin);
 			}
@@ -1239,7 +1261,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					var path = Path.Combine(Defines.GetDataFolder(), "vendordata_cf.db");
 					if (!OsEx.File.Exists(path)) return false;
 
-					using var file = File.OpenRead(path);
+					using var file = new MemoryStream(OsEx.File.ReadBytes(path));
 					var value = Serializer.Deserialize<Codefling>(file);
 
 					LastTick = value.LastTick;
@@ -1272,7 +1294,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				try
 				{
 					var path = Path.Combine(Defines.GetDataFolder(), "vendordata_cf.db");
-					using var file = File.OpenWrite(path);
+					using var file = new MemoryStream(OsEx.File.ReadBytes(path));
 					LastTick = DateTime.Now.Ticks;
 					Serializer.Serialize(file, this);
 					Singleton.Puts($"Stored {Type} to file: {path}");
@@ -1360,6 +1382,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			public override void FetchList(Action<Vendor> callback = null)
 			{
 				FetchedPlugins.Clear();
+
+				Logger.Log($"[{Type}] Caching plugin metadata for displaying plugins in the Admin module -> Plugins tab. This might take a while..");
 
 				Community.Runtime.CorePlugin.webrequest.Enqueue(ListEndpoint.Replace("[ID]", "0"), null, (error, data) =>
 				{
@@ -1487,7 +1511,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 					if (page % (maxPage / 4) == 0 || page == maxPage - 1)
 					{
-						Logger.Log($"[{Type}] Downloaded {page} out of {maxPage}");
+						Logger.Log($"[{Type}] Caching plugin metadata page {page} out of {maxPage}");
 					}
 
 					list = null;
@@ -1502,7 +1526,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					var path = Path.Combine(Defines.GetDataFolder(), "vendordata_umod.db");
 					if (!OsEx.File.Exists(path)) return false;
 
-					using var file = File.OpenRead(path);
+					using var file = new MemoryStream(OsEx.File.ReadBytes(path));
 					var value = Serializer.Deserialize<uMod>(file);
 
 					LastTick = value.LastTick;
@@ -1515,10 +1539,13 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 						return false;
 					}
 
-					Singleton.Puts($"Loaded {Type} from file: {path}");
+					Singleton.Puts($"[Admin Module] Loaded {Type} plugin metadata cache from file.");
 					Refresh();
 				}
-				catch { return false; }
+				catch
+				{
+					return false;
+				}
 
 				return true;
 			}
@@ -1527,11 +1554,11 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				try
 				{
 					var path = Path.Combine(Defines.GetDataFolder(), "vendordata_umod.db");
-					using var file = File.OpenWrite(path);
+					using var file = new MemoryStream(OsEx.File.ReadBytes(path));
 
 					LastTick = DateTime.Now.Ticks;
 					Serializer.Serialize(file, this);
-					Singleton.Puts($"Stored {Type} to file: {path}");
+					Singleton.Puts($"[Admin Module] Stored {Type} plugin metadata cache to file.");
 				}
 				catch (Exception ex)
 				{
@@ -1611,7 +1638,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 				Community.Runtime.CorePlugin.webrequest.Enqueue(ListEndpoint, null, (error, data) =>
 				{
-					var list = JToken.Parse(data);
+					var list = JArray.Parse(data);
 
 					FetchedPlugins.Clear();
 
@@ -1629,6 +1656,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 							File = token["filename"]?.ToString(),
 							Image = token["images"][0]["src"]?.ToString(),
 							Tags = token["tags"]?.Select(x => x["name"]?.ToString())?.ToArray(),
+							Rating = (token["rating"]?.ToString().ToFloat()).GetValueOrDefault(),
 							HasLookup = true
 						};
 
@@ -1702,7 +1730,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					var path = Path.Combine(Defines.GetDataFolder(), "vendordata_lone.db");
 					if (!OsEx.File.Exists(path)) return false;
 
-					using var file = File.OpenRead(path);
+					using var file = new MemoryStream(OsEx.File.ReadBytes(path));
 					var value = Serializer.Deserialize<Codefling>(file);
 
 					LastTick = value.LastTick;
@@ -1726,7 +1754,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				try
 				{
 					var path = Path.Combine(Defines.GetDataFolder(), "vendordata_lone.db");
-					using var file = File.OpenWrite(path);
+					using var file = new MemoryStream(OsEx.File.ReadBytes(path));
 					LastTick = DateTime.Now.Ticks;
 					Serializer.Serialize(file, this);
 					Singleton.Puts($"Stored {Type} to file: {path}");
@@ -1842,7 +1870,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 						return;
 					}
 
-					using var file = File.OpenRead(path);
+					using var file = new MemoryStream(OsEx.File.ReadBytes(path));
 					Singleton = Serializer.Deserialize<ServerOwner>(file);
 
 					Singleton.FavouritePlugins ??= new();
@@ -1860,7 +1888,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				try
 				{
 					var path = Path.Combine(Defines.GetDataFolder(), "vendordata_svowner.db");
-					using var file = File.OpenWrite(path);
+					using var file = new MemoryStream(OsEx.File.ReadBytes(path));
 
 					Serializer.Serialize(file, Singleton);
 				}
@@ -2142,7 +2170,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 			if (vendor is IVendorStored stored && !stored.Load())
 			{
-				vendor.FetchList();
+				vendor.FetchList(vendor => vendor.Refresh());
 				vendor.Refresh();
 			}
 			if (vendor is IVendorAuthenticated auth)
@@ -2359,7 +2387,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 		if (vendor is IVendorStored stored && !stored.Load())
 		{
-			vendor.FetchList();
+			vendor.FetchList(vendor => vendor.Refresh());
 			vendor.Refresh();
 		}
 	}

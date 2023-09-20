@@ -39,7 +39,7 @@ public class ProtoStorage
 			if (File.Exists(fileDataPath))
 			{
 				T result;
-				using (FileStream fileStream = File.OpenRead(fileDataPath))
+				using (var fileStream = new MemoryStream(OsEx.File.ReadBytes(fileDataPath)))
 				{
 					result = Serializer.Deserialize<T>(fileStream);
 				}
