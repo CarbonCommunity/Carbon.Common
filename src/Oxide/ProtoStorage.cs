@@ -68,10 +68,9 @@ public class ProtoStorage
 			}
 
 			var mode = File.Exists(fileDataPath) ? FileMode.Truncate : FileMode.Create;
-			using (FileStream fileStream = File.Open(fileDataPath, mode))
-			{
-				Serializer.Serialize<T>(fileStream, data);
-			}
+			using var stream = new MemoryStream();
+			Serializer.Serialize(stream, data);
+			OsEx.File.Create(fileDataPath, stream.ToArray());
 		}
 		catch (Exception ex)
 		{

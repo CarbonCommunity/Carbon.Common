@@ -1294,9 +1294,10 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				try
 				{
 					var path = Path.Combine(Defines.GetDataFolder(), "vendordata_cf.db");
-					using var file = new MemoryStream(OsEx.File.ReadBytes(path));
+					using var file = new MemoryStream();
 					LastTick = DateTime.Now.Ticks;
 					Serializer.Serialize(file, this);
+					OsEx.File.Create(path, file.ToArray());
 					Singleton.Puts($"Stored {Type} to file: {path}");
 				}
 				catch (Exception ex)
@@ -1539,7 +1540,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 						return false;
 					}
 
-					Singleton.Puts($"[Admin Module] Loaded {Type} plugin metadata cache from file.");
+					Singleton.Puts($"Loaded {Type} plugin metadata cache from file.");
 					Refresh();
 				}
 				catch
@@ -1554,11 +1555,12 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				try
 				{
 					var path = Path.Combine(Defines.GetDataFolder(), "vendordata_umod.db");
-					using var file = new MemoryStream(OsEx.File.ReadBytes(path));
+					using var file = new MemoryStream();
 
 					LastTick = DateTime.Now.Ticks;
 					Serializer.Serialize(file, this);
-					Singleton.Puts($"[Admin Module] Stored {Type} plugin metadata cache to file.");
+					OsEx.File.Create(path, file.ToArray());
+					Singleton.Puts($"Stored {Type} plugin metadata cache to file.");
 				}
 				catch (Exception ex)
 				{
@@ -1754,9 +1756,10 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				try
 				{
 					var path = Path.Combine(Defines.GetDataFolder(), "vendordata_lone.db");
-					using var file = new MemoryStream(OsEx.File.ReadBytes(path));
+					using var file = new MemoryStream();
 					LastTick = DateTime.Now.Ticks;
 					Serializer.Serialize(file, this);
+					OsEx.File.Create(path, file.ToArray());
 					Singleton.Puts($"Stored {Type} to file: {path}");
 				}
 				catch { }
@@ -1888,9 +1891,10 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				try
 				{
 					var path = Path.Combine(Defines.GetDataFolder(), "vendordata_svowner.db");
-					using var file = new MemoryStream(OsEx.File.ReadBytes(path));
+					using var file = new MemoryStream();
 
 					Serializer.Serialize(file, Singleton);
+					OsEx.File.Create(path, file.ToArray());
 				}
 				catch (Exception ex)
 				{
