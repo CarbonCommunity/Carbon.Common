@@ -1280,7 +1280,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 						return false;
 					}
 
-					Singleton.Puts($"Loaded {Type} from file: {path}");
+					Singleton.Puts($"Loaded {Type} plugin metadata cache from file.");
 					Refresh();
 				}
 				catch
