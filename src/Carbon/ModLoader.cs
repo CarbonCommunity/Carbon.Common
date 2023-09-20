@@ -202,7 +202,8 @@ public static class ModLoader
 		}
 		catch (Exception ex)
 		{
-			Logger.Error($"Failed invoking {plugin.ToString()} constructor", ex);
+			Logger.Error($"Failed executing constructor for {plugin.ToString()}. This is fatal! Unloading plugin.", ex);
+			return false;
 		}
 
 		if (precompiled)
