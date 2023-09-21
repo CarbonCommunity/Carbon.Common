@@ -15,14 +15,14 @@ public partial class CorePlugin : CarbonPlugin
 	[AuthLevel(2)]
 	private void ReloadExtensions(ConsoleSystem.Arg arg)
 	{
-		Community.Runtime.AssemblyEx.Extensions.Reload("Command reload");
+		Community.Runtime.AssemblyEx.Extensions.Watcher.TriggerAll(WatcherChangeTypes.Changed);
 	}
 
 	[ConsoleCommand("reloadmodules", "Fully reloads all modules.")]
 	[AuthLevel(2)]
 	private void ReloadModules(ConsoleSystem.Arg arg)
 	{
-		Community.Runtime.AssemblyEx.Modules.Reload("Command reload");
+		Community.Runtime.AssemblyEx.Modules.Watcher.TriggerAll(WatcherChangeTypes.Changed);
 	}
 
 	[ConsoleCommand("extensions", "Prints a list of all currently loaded extensions.")]

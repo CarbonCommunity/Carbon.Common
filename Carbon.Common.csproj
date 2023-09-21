@@ -24,6 +24,14 @@
 		<Reference Include="$(SolutionDir)..\Rust\$(OperatingSystem)\RustDedicated_Data\Managed\UnityEngine.CoreModule.dll" Private="false" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <PackageReference Update="Microsoft.Unity.Analyzers" Version="1.17.0">
+	    <PrivateAssets>all</PrivateAssets>
+	    <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+	  </PackageReference>
+	  <PackageReference Update="Roslynator.CSharp" Version="4.5.0" />
+	</ItemGroup>
+
 	<Choose>
 		<When Condition="Exists('$(SolutionDir).tmp\.gitbranch')">
 			<PropertyGroup>
