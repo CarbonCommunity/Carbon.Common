@@ -12,6 +12,8 @@ namespace Carbon.Base;
 
 public abstract class BaseModule : BaseHookable
 {
+	public object Context { get; set; }
+
 	public virtual bool EnabledByDefault => false;
 	public virtual bool ForceModded => false;
 	public virtual bool ForceEnabled => false;
@@ -23,6 +25,7 @@ public abstract class BaseModule : BaseHookable
 	public abstract void Save();
 	public abstract bool GetEnabled();
 	public abstract void SetEnabled(bool enable);
+	public abstract void Shutdown();
 
 	public static T GetModule<T>()
 	{
@@ -180,9 +183,9 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 		Config.WriteObject(ModuleConfiguration);
 		if (DataInstance != null) Data?.WriteObject(DataInstance);
 	}
-	public virtual void Shutdown()
+	public override void Shutdown()
 	{
-
+		Community.Runtime.ModuleProcessor.Uninstall(this);
 	}
 
 	public override void SetEnabled(bool enable)
