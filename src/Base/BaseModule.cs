@@ -12,7 +12,7 @@ namespace Carbon.Base;
 
 public abstract class BaseModule : BaseHookable
 {
-	public object Context { get; set; }
+	public string Context { get; set; }
 
 	public virtual bool EnabledByDefault => false;
 	public virtual bool ForceModded => false;
