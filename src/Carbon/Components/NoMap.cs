@@ -23,6 +23,7 @@ public struct NoMap
 		ConVar.Server.levelurl = MAP_URL;
 
 		ProcessConVars();
+		ProcessPatches();
 	}
 	public static void TerrainPostprocess()
 	{
@@ -36,5 +37,14 @@ public struct NoMap
 	public static void ProcessConVars()
 	{
 		ConVar.Spawn.max_density = 0;
+	}
+	public static void ProcessPatches()
+	{
+		if (!Enabled)
+		{
+			return;
+		}
+
+		Community.Runtime.CarbonClientManager.ApplyPatch();
 	}
 }
