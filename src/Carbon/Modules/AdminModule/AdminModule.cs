@@ -1031,7 +1031,7 @@ public partial class AdminModule
 	{
 		var player = args.Player();
 
-		if (CallColumnRow(player, args.Args[0].ToInt(), args.Args[1].ToInt(), args.Args.Skip(2)))
+		if (CallColumnRow(player, args.Args[0].ToInt(), args.Args[1].ToInt(), args.Args.Skip(2).Count() > 0 ? args.Args.Skip(2) : Array.Empty<string>()))
 			Draw(player);
 	}
 
@@ -1597,9 +1597,7 @@ public partial class AdminModule
 				return button.Callback != null;
 
 			case Tab.OptionInput input:
-				{
-					input.Callback?.Invoke(ap, args);
-				}
+				input.Callback?.Invoke(ap, args);
 				return input.Callback != null;
 
 			case Tab.OptionEnum @enum:

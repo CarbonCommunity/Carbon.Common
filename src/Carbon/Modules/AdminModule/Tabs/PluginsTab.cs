@@ -374,8 +374,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				}
 				else
 				{
-					if (Singleton.ImageDatabase.GetImage(plugin.Image) != 0) cui.CreateImage(container, card, null, plugin.Image, plugin.HasInvalidImage() ? vendor.SafeIconScale : vendor.IconScale, "1 1 1 1");
-					else cui.CreateClientImage(container, card, null, plugin.Image, "1 1 1 1");
+					if (Singleton.ImageDatabase.GetImage(plugin.Thumbnail) != 0) cui.CreateImage(container, card, null, plugin.Thumbnail, plugin.HasInvalidImage() ? vendor.SafeIconScale : vendor.IconScale, "1 1 1 1");
+					else cui.CreateClientImage(container, card, null, plugin.Thumbnail, "1 1 1 1");
 				}
 
 				var cardTitle = cui.CreatePanel(container, card, null, "0 0 0 0.9", yMax: 0.25f);
@@ -383,7 +383,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 				cui.CreateText(container, cardTitle, null, "1 1 1 1", plugin.Name, 11, xMin: 0.05f, yMax: 0.87f, align: TextAnchor.UpperLeft);
 				cui.CreateText(container, cardTitle, null, "0.6 0.6 0.3 0.8", $"by <b>{(plugin.ExistentPlugin != null ? plugin.ExistentPlugin.Author : plugin.Author)}</b>", 9, xMin: 0.05f, yMin: 0.15f, align: TextAnchor.LowerLeft);
-				cui.CreateText(container, cardTitle, null, "0.6 0.75 0.3 0.8", $"<b>{plugin.OriginalPrice}</b>", 11, xMax: 0.95f, yMin: 0.1f, align: TextAnchor.LowerRight);
+				cui.CreateText(container, cardTitle, null, "0.6 0.75 0.3 0.8", plugin.IsPaid() ? $"<b>${plugin.OriginalPrice}</b>" : "<b>FREE</b>", 11, xMax: 0.95f, yMin: 0.1f, align: TextAnchor.LowerRight);
 
 				var shadowShift = -0.003f;
 				cui.CreateText(container, card, null, "0 0 0 0.9", $"v{plugin.Version}", 9, xMax: 0.97f, yMax: 0.95f, OyMin: shadowShift, OxMin: shadowShift, OyMax: shadowShift, OxMax: shadowShift, align: TextAnchor.UpperRight);
@@ -500,7 +500,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				const float badgeYMin = 5;
 				const float badgeYMax = 20;
 				var priceBadge = cui.CreatePanel(container, pluginName, null, "0.3 0.4 0.9 0.25", xMax: 0f, yMin: 1, OyMin: badgeYMin, OyMax: badgeYMax, OxMax: 40);
-				cui.CreateText(container, priceBadge, null, "0.4 0.5 1 1", selectedPlugin.OriginalPrice, 8);
+				cui.CreateText(container, priceBadge, null, "0.4 0.5 1 1", selectedPlugin.IsPaid() ? $"${selectedPlugin.OriginalPrice}" : "FREE", 8);
 
 				if (selectedPlugin.Owned)
 				{
@@ -825,8 +825,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 			public override string BarInfo => $"{FetchedPlugins.Count(x => !x.IsPaid()):n0} free, {FetchedPlugins.Count(x => x.IsPaid()):n0} paid";
 
-			public override string ListEndpoint => "https://codefling.com/capi/category-2/?do=apicall";
-			public string List2Endpoint => "https://codefling.com/capi/category-21/?do=apicall";
+			public override string ListEndpoint => "https://codefling.com/db/?category=2";
+			public string List2Endpoint => "https://codefling.com/db/?category=21";
 			public override string DownloadEndpoint => "https://codefling.com/files/file/[ID]-a?do=download";
 
 			public override void Refresh()
@@ -870,7 +870,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					PriceData = AuthorData = InstalledData = OwnedData = null;
 				}
 
-				PriceData = FetchedPlugins.Where(x => x.Status == Status.Approved).OrderBy(x => x.OriginalPrice).ToArray();
+				PriceData = FetchedPlugins.Where(x => x.Status == Status.Approved).OrderBy(x => x.OriginalPrice.ToFloat()).ToArray();
 				AuthorData = FetchedPlugins.Where(x => x.Status == Status.Approved).OrderBy(x => x.Author).ToArray();
 				InstalledData = FetchedPlugins.Where(x => x.IsInstalled()).ToArray();
 				OutOfDateData = FetchedPlugins.Where(x => x.Status == Status.Approved).Where(x => x.IsInstalled() && !x.IsUpToDate()).ToArray();
@@ -879,7 +879,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				var tags = Facepunch.Pool.GetList<string>();
 				foreach (var plugin in FetchedPlugins)
 				{
-					if (plugin.Tags == null || plugin.Tags.Length == 0) continue;
+					if (plugin.Tags == null || plugin.Tags.Count() == 0) continue;
 
 					foreach (var tag in plugin.Tags)
 					{
@@ -913,30 +913,32 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					{
 						try
 						{
-							var list = JObject.Parse(data);
-							var file = list["file"];
-							foreach (var token in file)
+							var list = JArray.Parse(data);
+							foreach (var token in list)
 							{
-								var fileStatus = token["file_status"]?.ToString();
+								//var fileStatus = token["file_status"]?.ToString();
+								var price = token["prices"];
+
 								var plugin = new Plugin
 								{
-									Id = token["file_id"]?.ToString(),
-									Name = token["file_name"]?.ToString(),
-									Author = token["file_author"]?.ToString(),
-									Description = token["file_description"]?.ToString(),
-									Version = token["file_version"]?.ToString(),
-									OriginalPrice = token["file_price"]?.ToString(),
-									UpdateDate = token["file_updated"]?.ToString(),
-									Changelog = token["file_changelogs"]?.ToString(),
-									File = token["file_file_1"]?.ToString(),
-									Image = token["file_image"]["url"]?.ToString(),
-									ImageSize = (token["file_image"]["size"]?.ToString().ToInt()).GetValueOrDefault(),
-									Tags = token["file_tags"]?.ToString().Split(','),
-									DownloadCount = (token["file_downloads"]?.ToString().ToInt()).GetValueOrDefault(),
-									Dependencies = token["file_depends"]?.ToString().Split(),
-									CarbonCompatible = (token["file_compatibility"]?.ToString().ToBool()).GetValueOrDefault(),
-									Rating = (token["file_rating"]?.ToString().ToFloat()).GetValueOrDefault(0),
-									Status = string.IsNullOrEmpty(fileStatus) ? Status.Approved : (Status)fileStatus.ToInt(),
+									Id = token["id"]?.ToString(),
+									Name = token["title"]?.ToString(),
+									Author = token["author"]?.ToString(),
+									Description = token["description"]?.ToString(),
+									Version = token["version"]?.ToString(),
+									OriginalPrice = price == null || !price.HasValues ? "FREE" : price["USD"]?.ToString(),
+									UpdateDate = token["updated"]?.ToString(),
+									Changelog = token["changelog"]?.ToString(),
+									File = $"{token["title"]?.ToString()}.cs",
+									Image = token["primaryScreenshot"]?.ToString(),
+									Thumbnail = token["thumbnailScreenshot"]?.ToString(),
+									Tags = token["tags"].Select(x => x.ToString()),
+									DownloadCount = (token["downloads"]?.ToString().ToInt()).GetValueOrDefault(),
+									// Dependencies = token["file_depends"]?.ToString().Split(),
+									// CarbonCompatible = (token["carboncomp"]?.ToString().ToBool()).GetValueOrDefault(),
+									Rating = (token["rating"]?.ToString().ToFloat()).GetValueOrDefault(0),
+									Status = Status.Approved,
+									CarbonCompatible = true,
 									HasLookup = true
 								};
 
@@ -1485,6 +1487,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					var file = list["data"];
 					foreach (var plugin in file)
 					{
+						var image = plugin["icon_url"]?.ToString();
 						var p = new Plugin
 						{
 							Id = plugin["url"]?.ToString(),
@@ -1494,7 +1497,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 							Description = plugin["description"]?.ToString(),
 							OriginalPrice = "FREE",
 							File = $"{plugin["name"]?.ToString()}.cs",
-							Image = plugin["icon_url"]?.ToString(),
+							Image = image,
+							Thumbnail = image,
 							ImageSize = 0,
 							DownloadCount = (plugin["downloads"]?.ToString().ToInt()).GetValueOrDefault(),
 							UpdateDate = plugin["updated_at"]?.ToString(),
@@ -1646,6 +1650,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 					foreach (var token in list)
 					{
+						var image = token["images"][0]["src"]?.ToString();
 						var plugin = new Plugin
 						{
 							Id = token["url"]?.ToString(),
@@ -1656,7 +1661,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 							OriginalPrice = $"${token["price"]?.ToString()}",
 							SalePrice = $"${token["salePrice"]?.ToString()}",
 							File = token["filename"]?.ToString(),
-							Image = token["images"][0]["src"]?.ToString(),
+							Image = image,
+							Thumbnail = image,
 							Tags = token["tags"]?.Select(x => x["name"]?.ToString())?.ToArray(),
 							Rating = (token["rating"]?.ToString().ToFloat()).GetValueOrDefault(),
 							HasLookup = true
@@ -1917,8 +1923,9 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			public string[] Dependencies { get; set; }
 			public string File { get; set; }
 			public string Image { get; set; }
+			public string Thumbnail { get; set; }
 			public int ImageSize { get; set; }
-			public string[] Tags { get; set; }
+			public IEnumerable<string> Tags { get; set; }
 			public int DownloadCount { get; set; }
 			public float Rating { get; set; }
 			public string UpdateDate { get; set; }
@@ -1932,11 +1939,11 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 			public bool HasInvalidImage()
 			{
-				return ImageSize >= 2504304 || Image.EndsWith(".gif");
+				return ImageSize >= 2504304;
 			}
 			public bool NoImage()
 			{
-				return string.IsNullOrEmpty(Image) || Image.EndsWith(".gif");
+				return string.IsNullOrEmpty(Image);
 			}
 			public bool IsInstalled()
 			{
