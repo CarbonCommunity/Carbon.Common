@@ -521,14 +521,17 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				var tempTags = Facepunch.Pool.GetList<string>();
 				var counter = 0;
 
-				foreach (var tag in selectedPlugin.Tags)
+				if (selectedPlugin.Tags != null && selectedPlugin.Tags.Count() > 0)
 				{
-					counter += tag.Length;
-					tempTags.Add(tag);
-
-					if (counter > 50)
+					foreach (var tag in selectedPlugin.Tags)
 					{
-						break;
+						counter += tag.Length;
+						tempTags.Add(tag);
+
+						if (counter > 50)
+						{
+							break;
+						}
 					}
 				}
 
@@ -932,7 +935,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 									File = $"{token["title"]?.ToString()}.cs",
 									Image = token["primaryScreenshot"]?.ToString(),
 									Thumbnail = token["thumbnailScreenshot"]?.ToString(),
-									Tags = token["tags"].Select(x => x.ToString()),
+									Tags = token["tags"]?.Select(x => x.ToString()),
 									DownloadCount = (token["downloads"]?.ToString().ToInt()).GetValueOrDefault(),
 									// Dependencies = token["file_depends"]?.ToString().Split(),
 									// CarbonCompatible = (token["carboncomp"]?.ToString().ToBool()).GetValueOrDefault(),
