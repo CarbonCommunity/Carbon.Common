@@ -832,6 +832,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			public string List2Endpoint => "https://codefling.com/db/?category=21";
 			public override string DownloadEndpoint => "https://codefling.com/files/file/[ID]-a?do=download";
 
+			public const string _backSlashes = "\\";
+
 			public override void Refresh()
 			{
 				if (FetchedPlugins == null) return;
@@ -927,11 +929,11 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 									Id = token["id"]?.ToString(),
 									Name = token["title"]?.ToString(),
 									Author = token["author"]?.ToString(),
-									Description = token["description"]?.ToString(),
+									Description = token["description"]?.ToString().Replace(_backSlashes, string.Empty),
 									Version = token["version"]?.ToString(),
 									OriginalPrice = price == null || !price.HasValues ? "FREE" : price["USD"]?.ToString(),
 									UpdateDate = token["updated"]?.ToString(),
-									Changelog = token["changelog"]?.ToString(),
+									Changelog = token["changelog"]?.ToString().Replace(_backSlashes, string.Empty),
 									File = $"{token["title"]?.ToString()}.cs",
 									Image = token["primaryScreenshot"]?.ToString(),
 									Thumbnail = token["thumbnailScreenshot"]?.ToString(),
