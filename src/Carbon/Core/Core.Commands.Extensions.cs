@@ -35,7 +35,7 @@ public partial class CorePlugin : CarbonPlugin
 		var addonType = typeof(ICarbonAddon);
 		foreach (var mod in Community.Runtime.AssemblyEx.Extensions.Loaded)
 		{
-			body.AddRow($"{count:n0}", Path.GetFileNameWithoutExtension(mod.Value), mod.Key.FullName);
+			body.AddRow($"{count:n0}", Path.GetFileNameWithoutExtension(mod.Value.Key), mod.Key.FullName);
 			count++;
 		}
 
@@ -52,7 +52,7 @@ public partial class CorePlugin : CarbonPlugin
 		var addonType = typeof(ICarbonAddon);
 		foreach (var mod in Community.Runtime.AssemblyEx.Modules.Loaded)
 		{
-			body.AddRow($"{count:n0}", Path.GetFileNameWithoutExtension(mod.Value), mod.Key.FullName);
+			body.AddRow($"{count:n0}", Path.GetFileNameWithoutExtension(mod.Value.Key), mod.Key.FullName);
 			count++;
 		}
 

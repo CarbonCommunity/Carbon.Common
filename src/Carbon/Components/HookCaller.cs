@@ -46,32 +46,6 @@ public class HookCallerCommon
 			Result = result
 		};
 	}
-
-	public static Delegate CreateDelegate(MethodInfo methodInfo, object target)
-	{
-		Func<Type[], Type> getType;
-		var isAction = methodInfo.ReturnType.Equals(typeof(void));
-		var types = methodInfo.GetParameters().Select(p => p.ParameterType);
-
-		if (isAction)
-		{
-			getType = Expression.GetActionType;
-		}
-		else
-		{
-			getType = Expression.GetFuncType;
-			types = types.Concat(new[] { methodInfo.ReturnType });
-		}
-
-		if (methodInfo.IsStatic)
-		{
-			return Delegate.CreateDelegate(getType(types.ToArray()), methodInfo);
-		}
-
-		return types.Any()
-			? Delegate.CreateDelegate(getType(types.ToArray()), target, methodInfo.Name)
-			: Delegate.CreateDelegate(getType(Array.Empty<Type>()), target, methodInfo.Name);
-	}
 }
 
 public static class HookCaller
