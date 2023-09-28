@@ -29,9 +29,7 @@ public class BaseHookable
 		public bool IsByRef;
 		public bool IsAsync;
 
-		const BindingFlags _all = BindingFlags.Instance | BindingFlags.Public | BindingFlags.Static | BindingFlags.NonPublic;
-
-		public static CachedHook Make(MethodInfo method, object context)
+		public static CachedHook Make(MethodInfo method)
 		{
 			var parameters = method.GetParameters();
 			var isByRef = parameters.Any(x => x.ParameterType.IsByRef);
@@ -39,7 +37,7 @@ public class BaseHookable
 			{
 				Method = method,
 				IsByRef = isByRef,
-				IsAsync = method.ReturnType?.GetMethod("GetAwaiter", _all) != null ||
+				IsAsync = method.ReturnType?.GetMethod("GetAwaiter") != null ||
 						  method.GetCustomAttribute<AsyncStateMachineAttribute>() != null,
 				Parameters = parameters.Select(x => x.ParameterType).ToArray(),
 			};
