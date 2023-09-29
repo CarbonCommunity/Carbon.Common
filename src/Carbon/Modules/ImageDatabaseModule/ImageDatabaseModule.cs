@@ -119,12 +119,19 @@ public class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModule
 			{
 				_protoData = Serializer.Deserialize<ImageDatabaseDataProto>(stream);
 			}
+#if DEBUG
 			catch (Exception ex)
 			{
-				Logger.Error($"Failed loading data for {Name}", ex);
+				// Logger.Error($"Failed loading data for {Name}", ex);
 				_protoData = new ImageDatabaseDataProto();
 				Save();
 			}
+#else
+			catch
+			{
+
+			}
+#endif
 		}
 		else
 		{

@@ -2,7 +2,7 @@
 
 /*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -843,14 +843,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 				foreach (var plugin in FetchedPlugins)
 				{
-					var name = plugin.File;
-					var length = 0;
-
-					if (!string.IsNullOrEmpty(name) && (length = name.LastIndexOf('.')) != 0)
-					{
-						name = name.Substring(0, length);
-					}
-
+					var name = Path.GetFileNameWithoutExtension(plugin.File);
 					plugin.Owned = auth.User != null && auth.User.OwnedFiles.Contains(plugin.Id);
 
 					foreach (var existentPlugin in plugins)
