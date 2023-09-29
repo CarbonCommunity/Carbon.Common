@@ -22,7 +22,7 @@ namespace Carbon.Modules;
 
 public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 {
-	public class PluginsTab
+	public static class PluginsTab
 	{
 		public enum VendorTypes
 		{

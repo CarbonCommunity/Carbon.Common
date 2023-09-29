@@ -9,7 +9,7 @@ using Graphics = System.Drawing.Graphics;
 
 /*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -23,10 +23,10 @@ public class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModule
 	public override bool EnabledByDefault => true;
 	public override bool ForceEnabled => true;
 
-	internal List<QueuedThread> _queue = new();
+	internal readonly List<QueuedThread> _queue = new();
 	internal ImageDatabaseDataProto _protoData { get; set; }
 
-	internal Dictionary<string, string> DefaultImages = new()
+	internal Dictionary<string, string> _defaultImages = new()
 	{
 		["carbonb"] = "https://carbonmod.gg/assets/media/carbonlogo_b.png",
 		["carbonw"] = "https://carbonmod.gg/assets/media/carbonlogo_w.png",
@@ -161,7 +161,7 @@ public class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModule
 	}
 	private void LoadDefaultImages()
 	{
-		Queue(DefaultImages);
+		Queue(_defaultImages);
 	}
 
 	public override bool PreLoadShouldSave(bool newConfig, bool newData)
@@ -438,7 +438,7 @@ public class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModule
 			uid = FileStorage.server.Store(raw, FileStorage.Type.png, new NetworkableId(_protoData.Identifier));
 			_protoData.Map.Add($"qr_{Community.Protect(text)}_{pixels}_0", uid);
 			return uid;
-		};
+		}
 	}
 
 	internal static string GetId(string url, float scale)

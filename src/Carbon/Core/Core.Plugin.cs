@@ -6,7 +6,7 @@ using Timer = Oxide.Plugins.Timer;
 
 /*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -96,7 +96,7 @@ public partial class CorePlugin : CarbonPlugin
 
 		var serverConfigPath = Path.Combine(ConVar.Server.GetServerFolder("cfg"), "server.cfg");
 		var lines = OsEx.File.Exists(serverConfigPath) ? OsEx.File.ReadTextLines(serverConfigPath) : null;
-		
+
 		if (lines != null)
 		{
 			CommandLine.ExecuteCommands("+carbon.onserverinit", "cfg/server.cfg", lines);
@@ -128,8 +128,11 @@ public partial class CorePlugin : CarbonPlugin
 			}
 		});
 
+
+#if !MINIMAL
 		CarbonAuto.Init();
 		API.Abstracts.CarbonAuto.Singleton.Load();
+#endif
 
 		if (ConVar.Global.skipAssetWarmup_crashes)
 		{
@@ -145,13 +148,15 @@ public partial class CorePlugin : CarbonPlugin
 		Community.Runtime.Events
 			.Trigger(CarbonEvent.OnServerSave, EventArgs.Empty);
 
+#if !MINIMAL
 		API.Abstracts.CarbonAuto.Singleton?.Save();
+#endif
 	}
 
 	private void OnPlayerDisconnected(BasePlayer player, string reason)
 	{
 		HookCaller.CallStaticHook(4253366379, player?.AsIPlayer(), reason);
-	
+
 		if (player.IsAdmin && !player.IsOnGround())
 		{
 			var newPosition = player.transform.position;
