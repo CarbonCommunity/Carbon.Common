@@ -3,7 +3,7 @@ using static Carbon.Components.CUI;
 
 /*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -852,7 +852,7 @@ public static class CUIStatics
 	}
 	public static Pair<string, CuiElement> UpdateImage(this CUI cui, string id, string url, string color, float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string destroyUi = null, string outlineColor = null, string outlineDistance = null, bool outlineUseGraphicAlpha = false)
 	{
-		return cui.CreateImage(null, null, id, url, color, xMin, xMax, yMin, yMax, OxMin, OxMax, OyMin, OyMax, fadeIn, fadeOut, needsCursor, needsKeyboard, destroyUi, outlineColor, outlineDistance, outlineUseGraphicAlpha, true); ;
+		return cui.CreateImage(null, null, id, url, color, xMin, xMax, yMin, yMax, OxMin, OxMax, OyMin, OyMax, fadeIn, fadeOut, needsCursor, needsKeyboard, destroyUi, outlineColor, outlineDistance, outlineUseGraphicAlpha, true);
 	}
 	public static Pair<string, CuiElement> UpdateImage(this CUI cui, string id, string url, float scale, string color, float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string destroyUi = null, string outlineColor = null, string outlineDistance = null, bool outlineUseGraphicAlpha = false)
 	{
@@ -864,7 +864,7 @@ public static class CUIStatics
 	}
 	public static Pair<string, CuiElement> UpdateImage(this CUI cui, string id, string url, string color, string material, float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string destroyUi = null, string outlineColor = null, string outlineDistance = null, bool outlineUseGraphicAlpha = false)
 	{
-		return cui.CreateImage(null, null, id, url, color, material, xMin, xMax, yMin, yMax, OxMin, OxMax, OyMin, OyMax, fadeIn, fadeOut, needsCursor, needsKeyboard, destroyUi, outlineColor, outlineDistance, outlineUseGraphicAlpha, true); ;
+		return cui.CreateImage(null, null, id, url, color, material, xMin, xMax, yMin, yMax, OxMin, OxMax, OyMin, OyMax, fadeIn, fadeOut, needsCursor, needsKeyboard, destroyUi, outlineColor, outlineDistance, outlineUseGraphicAlpha, true);
 	}
 	public static Pair<string, CuiElement> UpdateImage(this CUI cui, string id, string url, float scale, string color, string material, float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string destroyUi = null, string outlineColor = null, string outlineDistance = null, bool outlineUseGraphicAlpha = false)
 	{
