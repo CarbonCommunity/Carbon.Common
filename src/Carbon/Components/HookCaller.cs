@@ -9,7 +9,7 @@ using static Carbon.HookCallerCommon;
 
 /*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -172,7 +172,7 @@ public static class HookCaller
 				var localResult = _conflictCache[0].Result;
 				var priorityConflict = _defaultConflict;
 
-				for(int i = 0; i < _conflictCache.Count; i++) 
+				for(int i = 0; i < _conflictCache.Count; i++)
 				{
 					var conflict = _conflictCache[i];
 
@@ -1292,11 +1292,12 @@ public static class HookCaller
 
 	#region Generator
 
-	public static void GenerateInternalCallHook(CompilationUnitSyntax input, out CompilationUnitSyntax output, out MethodDeclarationSyntax generatedMethod, bool publicize = true)
+	public static void GenerateInternalCallHook(CompilationUnitSyntax input, out CompilationUnitSyntax output, out MethodDeclarationSyntax generatedMethod)
 	{
 		var methodContents = "\n\tvar result = (object)null;\n\ttry\n\t{\n\t\tswitch(hook)\n\t\t{\n";
-		var @namespace = input.Members[0] as BaseNamespaceDeclarationSyntax;
-		var @class = @namespace.Members[0] as ClassDeclarationSyntax;
+
+		FindPluginInfo(input, out var @namespace, out var @class, out var namespaceIndex, out var classIndex);
+
 		var methodDeclarations = new List<MethodDeclarationSyntax>();
 		methodDeclarations.AddRange(@class.ChildNodes().OfType<MethodDeclarationSyntax>());
 
@@ -1314,39 +1315,6 @@ public static class HookCaller
 		}
 
 		#endregion
-
-		if (publicize)
-		{
-			ClassDeclarationSyntax PublicizeRecursively(ClassDeclarationSyntax @cls)
-			{
-				for (int i = 0; i < @cls.Modifiers.Count; i++)
-				{
-					var modifier = @cls.Modifiers[i];
-
-					if (modifier.IsKind(SyntaxKind.PrivateKeyword) || modifier.IsKind(SyntaxKind.ProtectedKeyword) || modifier.IsKind(SyntaxKind.InternalKeyword))
-					{
-						@cls = @cls.WithModifiers(@cls.Modifiers.RemoveAt(i));
-					}
-				}
-
-				if (!@cls.Modifiers.Any(x => x.IsKind(SyntaxKind.PublicKeyword)))
-				{
-					@cls = @cls.WithModifiers(@cls.Modifiers.Insert(0, SyntaxFactory.Token(SyntaxKind.PublicKeyword).WithTrailingTrivia(SyntaxFactory.Space)));
-				}
-
-				for (int i = 0; i < cls.Members.Count; i++)
-				{
-					if (cls.Members[i] is ClassDeclarationSyntax @cls2)
-					{
-						cls = cls.WithMembers(cls.Members.Replace(cls2, PublicizeRecursively(@cls2)));
-					}
-				}
-
-				return cls;
-			}
-
-			@class = PublicizeRecursively(@class);
-		}
 
 		var hookableMethods = new Dictionary<uint, List<MethodDeclarationSyntax>>();
 		var privateMethods0 = methodDeclarations.Where(md => (md.Modifiers.Count == 0 || md.Modifiers.All(modifier => !modifier.IsKind(SyntaxKind.PublicKeyword) && !modifier.IsKind(SyntaxKind.StaticKeyword)) || md.AttributeLists.Any(x => x.Attributes.Any(y => y.Name.ToString() == "HookMethod"))) && md.TypeParameterList == null);
@@ -1466,7 +1434,7 @@ public static class HookCaller
 			.AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword).WithTrailingTrivia(SyntaxFactory.Space), SyntaxFactory.Token(SyntaxKind.OverrideKeyword).WithTrailingTrivia(SyntaxFactory.Space))
 			.AddBodyStatements(SyntaxFactory.ParseStatement(methodContents)).WithTrailingTrivia(SyntaxFactory.LineFeed);
 
-		output = input.WithMembers(input.Members.RemoveAt(0).Insert(0, @namespace.WithMembers(@namespace.Members.RemoveAt(0).Insert(0, @class.WithMembers(@class.Members.Insert(@class.Members.Count, generatedMethod))))));
+		output = input.WithMembers(input.Members.RemoveAt(namespaceIndex).Insert(namespaceIndex, @namespace.WithMembers(@namespace.Members.RemoveAt(classIndex).Insert(classIndex, @class.WithMembers(@class.Members.Insert(@class.Members.Count, generatedMethod))))));
 
 		#region Cleanup
 
@@ -1484,10 +1452,9 @@ public static class HookCaller
 
 	public static void GeneratePartial(CompilationUnitSyntax input, out SyntaxTree output, CSharpParseOptions options, string fileName)
 	{
-		GenerateInternalCallHook(input, out _, out var method, false);
-		var @namespace = input.Members.FirstOrDefault(x => x is BaseNamespaceDeclarationSyntax ns && (ns.Name.ToString() == "Carbon.Plugins" || ns.Name.ToString() == "Oxide.Plugins")) as BaseNamespaceDeclarationSyntax;
-		var index = input.Members.IndexOf(@namespace);
-		var @class = @namespace.Members[0] as ClassDeclarationSyntax;
+		GenerateInternalCallHook(input, out _, out var method);
+
+		FindPluginInfo(input, out var @namespace, out var @class, out _, out _);
 
 		var source = @$"{input.Usings.Select(x => x.ToString()).ToString("\n")}
 
@@ -1499,6 +1466,52 @@ partial class {@class.Identifier.ValueText}
 }}";
 
 		output = CSharpSyntaxTree.ParseText(source, options, $"{fileName}.cs/Internal", Encoding.UTF8);
+	}
+
+	public static void FindPluginInfo(CompilationUnitSyntax input, out BaseNamespaceDeclarationSyntax @namespace, out ClassDeclarationSyntax @class, out int namespaceIndex, out int classIndex)
+	{
+		@namespace = null;
+		@class = null;
+		namespaceIndex = 0;
+		classIndex = 0;
+
+		var found = false;
+
+		foreach (var ns in input.Members.OfType<BaseNamespaceDeclarationSyntax>())
+		{
+			classIndex = 0;
+
+			foreach (var cls in ns.Members.OfType<ClassDeclarationSyntax>())
+			{
+				if (cls.AttributeLists.Count > 0)
+				{
+					foreach(var attribute in cls.AttributeLists)
+					{
+						if (attribute.Attributes[0].Name is IdentifierNameSyntax nameSyntax && nameSyntax.Identifier.Text == "Info")
+						{
+							@namespace = ns;
+							@class = cls;
+							found = true;
+							break;
+						}
+					}
+				}
+
+				if (found)
+				{
+					break;
+				}
+
+				classIndex++;
+			}
+
+			if (found)
+			{
+				break;
+			}
+
+			namespaceIndex++;
+		}
 	}
 
 	public static bool IsUnmanagedType(string type)
