@@ -30,7 +30,7 @@ public class HookCallerCommon
 	public virtual object[] RescaleBuffer(object[] oldBuffer, int newScale) => null;
 	public virtual void ClearBuffer(object[] buffer) { }
 
-	public virtual object CallHook<T>(T plugin, uint hookId, BindingFlags flags, object[] args, bool keepArgs = false) where T : BaseHookable => null;
+	public virtual object CallHook<T>(T hookable, uint hookId, BindingFlags flags, object[] args, bool keepArgs = false) where T : BaseHookable => null;
 	public virtual object CallDeprecatedHook<T>(T plugin, uint oldHookId, uint newHookId, DateTime expireDate, BindingFlags flags, object[] args) where T : BaseHookable => null;
 
 	public struct Conflict

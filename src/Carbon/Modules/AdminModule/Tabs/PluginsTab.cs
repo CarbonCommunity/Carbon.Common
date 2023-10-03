@@ -840,9 +840,15 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 				var plugins = Community.Runtime.CorePlugin.plugins.GetAll();
 				var auth = this as IVendorAuthenticated;
+				var invalids = Path.GetInvalidFileNameChars();
 
 				foreach (var plugin in FetchedPlugins)
 				{
+					if (string.IsNullOrEmpty(plugin.File) || plugin.File.Any(y => Path.GetInvalidFileNameChars().Any(x => x == y)))
+					{
+						continue;
+					}
+
 					var name = Path.GetFileNameWithoutExtension(plugin.File);
 					plugin.Owned = auth.User != null && auth.User.OwnedFiles.Contains(plugin.Id);
 
