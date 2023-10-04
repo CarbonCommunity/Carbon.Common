@@ -10,6 +10,7 @@
 	<Import Project="$(SolutionDir)\.msbuild\ReferencesRust.props" />
 
 	<ItemGroup>
+		<PackageReference Include="Lib.Harmony" Version="2.2.2" />
 		<PackageReference Include="Ben.Demystifier" Version="0.4.1" />
 		<PackageReference Include="MySql.Data" Version="8.0.32.1" />
 		<PackageReference Include="protobuf-net.Core" Version="3.2.26" />

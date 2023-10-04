@@ -1,9 +1,11 @@
 ﻿/*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
+
+using HarmonyLib;
 
 namespace Carbon.Plugins;
 
@@ -16,6 +18,23 @@ public class CarbonPlugin : RustPlugin
 		base.Setup(name, author, version, description);
 
 		CuiHandler = new CUI.Handler();
+	}
+
+	public override void IInit()
+	{
+		base.IInit();
+
+		if (AutoPatch)
+		{
+			ApplyPatch();
+		}
+	}
+
+	public override void IUnload()
+	{
+		UnapplyPatch();
+
+		base.IUnload();
 	}
 
 	#region CUI
@@ -76,6 +95,34 @@ public class CarbonPlugin : RustPlugin
 	{
 		public string Command;
 		public DateTime LastCall;
+	}
+
+	#endregion
+
+	#region Harmony
+
+	public virtual bool AutoPatch => false;
+
+	public string Domain => $"com.carbon.{Name}.{Author}";
+
+	public Harmony _CARBON_PATCH;
+
+	public void ApplyPatch()
+	{
+		UnapplyPatch();
+
+		_CARBON_PATCH = new Harmony(Domain);
+		_CARBON_PATCH.PatchAll(Type.Assembly);
+	}
+	public void UnapplyPatch()
+	{
+		if (_CARBON_PATCH == null)
+		{
+			return;
+		}
+
+		_CARBON_PATCH.UnpatchAll(Domain);
+		_CARBON_PATCH = null;
 	}
 
 	#endregion
