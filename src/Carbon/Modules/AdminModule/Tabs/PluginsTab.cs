@@ -844,21 +844,23 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 				foreach (var plugin in FetchedPlugins)
 				{
-					if (string.IsNullOrEmpty(plugin.File) || plugin.File.Any(y => Path.GetInvalidFileNameChars().Any(x => x == y)))
+					try
 					{
-						continue;
-					}
+						var name = Path.GetFileNameWithoutExtension(plugin.File);
+						plugin.Owned = auth.User != null && auth.User.OwnedFiles.Contains(plugin.Id);
 
-					var name = Path.GetFileNameWithoutExtension(plugin.File);
-					plugin.Owned = auth.User != null && auth.User.OwnedFiles.Contains(plugin.Id);
-
-					foreach (var existentPlugin in plugins)
-					{
-						if (existentPlugin.FileName == name)
+						foreach (var existentPlugin in plugins)
 						{
-							plugin.ExistentPlugin = (RustPlugin)existentPlugin;
-							break;
+							if (existentPlugin.FileName == name)
+							{
+								plugin.ExistentPlugin = (RustPlugin)existentPlugin;
+								break;
+							}
 						}
+					}
+					catch (Exception ex)
+					{
+						Logger.Warn($"{plugin.File} ({ex.Message})\n{ex.StackTrace}");
 					}
 				}
 
@@ -933,16 +935,15 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 									OriginalPrice = price == null || !price.HasValues ? "FREE" : price["USD"]?.ToString(),
 									UpdateDate = token["updated"]?.ToString(),
 									Changelog = token["changelog"]?.ToString().Replace(_backSlashes, string.Empty),
-									File = $"{token["title"]?.ToString()}.cs",
+									File = token["fileName"]?.ToString(),
 									Image = token["primaryScreenshot"]?.ToString(),
 									Thumbnail = token["thumbnailScreenshot"]?.ToString(),
 									Tags = token["tags"]?.Select(x => x.ToString()),
 									DownloadCount = (token["downloads"]?.ToString().ToInt()).GetValueOrDefault(),
 									// Dependencies = token["file_depends"]?.ToString().Split(),
-									// CarbonCompatible = (token["carboncomp"]?.ToString().ToBool()).GetValueOrDefault(),
+									CarbonCompatible = (token["compatibility"]?.ToString().ToBool()).GetValueOrDefault(),
 									Rating = (token["rating"]?.ToString().ToFloat()).GetValueOrDefault(0),
 									Status = Status.Approved,
-									CarbonCompatible = true,
 									HasLookup = true
 								};
 
