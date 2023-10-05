@@ -78,9 +78,9 @@ namespace Oxide.Core.Plugins
 						var hash = (uint)(HookStringPool.GetOrAdd(string.IsNullOrEmpty(attribute.Name) ? method.Name : attribute.Name) + method.GetParameters().Length);
 						if (!HookMethodAttributeCache.TryGetValue(hash, out var list))
 						{
-							HookMethodAttributeCache.Add(hash, new() { CachedHook.Make(method, this) });
+							HookMethodAttributeCache.Add(hash, new() { CachedHook.Make(method) });
 						}
-						else list.Add(CachedHook.Make(method, this));
+						else list.Add(CachedHook.Make(method));
 					}
 				}
 				Carbon.Logger.Debug(Name, "Installed hook method attributes");

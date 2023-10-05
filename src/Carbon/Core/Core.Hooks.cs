@@ -32,7 +32,7 @@ public partial class CorePlugin : CarbonPlugin
 		// OnUserConnected
 		HookCaller.CallStaticHook(1971459992, player.AsIPlayer());
 
-		Carbon.Client.CarbonClient.SendPing(player.Connection);
+		Community.Runtime.CarbonClientManager.OnConnected(player.Connection);
 	}
 
 	private object IOnUserApprove(Connection connection)

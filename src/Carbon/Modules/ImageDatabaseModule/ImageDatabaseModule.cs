@@ -9,7 +9,7 @@ using Graphics = System.Drawing.Graphics;
 
 /*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -23,10 +23,10 @@ public class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModule
 	public override bool EnabledByDefault => true;
 	public override bool ForceEnabled => true;
 
-	internal List<QueuedThread> _queue = new();
+	internal readonly List<QueuedThread> _queue = new();
 	internal ImageDatabaseDataProto _protoData { get; set; }
 
-	internal Dictionary<string, string> DefaultImages = new()
+	internal Dictionary<string, string> _defaultImages = new()
 	{
 		["carbonb"] = "https://carbonmod.gg/assets/media/carbonlogo_b.png",
 		["carbonw"] = "https://carbonmod.gg/assets/media/carbonlogo_w.png",
@@ -97,9 +97,9 @@ public class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModule
 		if (Validate())
 		{
 			Save();
+			LoadDefaultImages();
 		}
 
-		LoadDefaultImages();
 	}
 	public override void OnServerSaved()
 	{
@@ -115,7 +115,23 @@ public class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModule
 		if (OsEx.File.Exists(path))
 		{
 			using var stream = new MemoryStream(OsEx.File.ReadBytes(path));
-			try { _protoData = Serializer.Deserialize<ImageDatabaseDataProto>(stream); } catch { _protoData = new ImageDatabaseDataProto(); }
+			try
+			{
+				_protoData = Serializer.Deserialize<ImageDatabaseDataProto>(stream);
+			}
+#if DEBUG
+			catch (Exception ex)
+			{
+				// Logger.Error($"Failed loading data for {Name}", ex);
+				_protoData = new ImageDatabaseDataProto();
+				Save();
+			}
+#else
+			catch
+			{
+
+			}
+#endif
 		}
 		else
 		{
@@ -135,14 +151,17 @@ public class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModule
 		var path = _getProtoDataPath();
 		OsEx.Folder.Create(Path.GetDirectoryName(path));
 
-		using var file = System.IO.File.OpenWrite(path);
-		Serializer.Serialize(file, _protoData ??= new ImageDatabaseDataProto());
-		file.Flush();
-		file.Dispose();
+		using var stream = new MemoryStream();
+		Serializer.Serialize(stream, _protoData ??= new ImageDatabaseDataProto());
+
+		var result = stream.ToArray();
+		OsEx.File.Create(path, result);
+		Array.Clear(result,0,result.Length);
+		result = null;
 	}
 	private void LoadDefaultImages()
 	{
-		Queue(DefaultImages);
+		Queue(_defaultImages);
 	}
 
 	public override bool PreLoadShouldSave(bool newConfig, bool newData)
@@ -168,8 +187,9 @@ public class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModule
 	{
 		if (_protoData.Identifier != CommunityEntity.ServerInstance.net.ID.Value)
 		{
-			PutsWarn($"The server identifier has changed. Wiping old image database."); _protoData.Map.Clear();
+			PutsWarn($"The server identifier has changed. Wiping old image database. [old {_protoData.Identifier}, new {CommunityEntity.ServerInstance.net.ID.Value}]"); _protoData.Map.Clear();
 			_protoData.CustomMap.Clear();
+			_protoData.Map.Clear();
 			_protoData.Identifier = CommunityEntity.ServerInstance.net.ID.Value;
 			return true;
 		}
@@ -418,7 +438,7 @@ public class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModule
 			uid = FileStorage.server.Store(raw, FileStorage.Type.png, new NetworkableId(_protoData.Identifier));
 			_protoData.Map.Add($"qr_{Community.Protect(text)}_{pixels}_0", uid);
 			return uid;
-		};
+		}
 	}
 
 	internal static string GetId(string url, float scale)

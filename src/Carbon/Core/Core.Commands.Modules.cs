@@ -108,19 +108,23 @@ public partial class CorePlugin : CarbonPlugin
 		using var print = new StringTable("#", "Name", "Enabled", "Version", "Hook Time", "Memory Usage", "Uptime", "Quick");
 		foreach (var hookable in Community.Runtime.ModuleProcessor.Modules)
 		{
-			if (hookable is not BaseModule module) continue;
+			if (hookable is not BaseModule module)
+			{
+				Logger.Warn($" Not a module {hookable.GetType()}");
+				continue;
+			}
 
 			var hookTimeAverageValue =
 #if DEBUG
-	(float)module.HookTimeAverage.CalculateAverage();
+				(float)module.HookTimeAverage.CalculateAverage();
 #else
-								0;
+				0;
 #endif
 			var memoryAverageValue =
 #if DEBUG
 				(float)module.MemoryAverage.CalculateAverage();
 #else
-								0;
+				0;
 #endif
 			var hookTimeAverage = Mathf.RoundToInt(hookTimeAverageValue) == 0 ? string.Empty : $" (avg {hookTimeAverageValue:0}ms)";
 			var memoryAverage = Mathf.RoundToInt(memoryAverageValue) == 0 ? string.Empty : $" (avg {ByteEx.Format(memoryAverageValue, shortName: true, stringFormat: "{0}{1}").ToLower()})";

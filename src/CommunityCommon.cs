@@ -9,6 +9,7 @@ using Newtonsoft.Json;
 using Carbon.Extensions;
 using Application = UnityEngine.Application;
 using MathEx = Carbon.Extensions.MathEx;
+using Carbon.Client.SDK;
 
 /*
  *
@@ -84,6 +85,9 @@ public class Community
 	{ get; set; }
 
 	public ICarbonProcessor CarbonProcessor
+	{ get; set; }
+
+	public ICarbonClientManager CarbonClientManager
 	{ get; set; }
 
 	public static bool IsServerInitialized { get; internal set; }

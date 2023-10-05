@@ -10,6 +10,7 @@
 	<Import Project="$(SolutionDir)\.msbuild\ReferencesRust.props" />
 
 	<ItemGroup>
+		<PackageReference Include="Lib.Harmony" Version="2.2.2" />
 		<PackageReference Include="Ben.Demystifier" Version="0.4.1" />
 		<PackageReference Include="MySql.Data" Version="8.0.32.1" />
 		<PackageReference Include="protobuf-net.Core" Version="3.2.26" />
@@ -22,6 +23,14 @@
 
 	<ItemGroup>
 		<Reference Include="$(SolutionDir)..\Rust\$(OperatingSystem)\RustDedicated_Data\Managed\UnityEngine.CoreModule.dll" Private="false" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <PackageReference Update="Microsoft.Unity.Analyzers" Version="1.17.0">
+	    <PrivateAssets>all</PrivateAssets>
+	    <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+	  </PackageReference>
+	  <PackageReference Update="Roslynator.CSharp" Version="4.5.0" />
 	</ItemGroup>
 
 	<Choose>
@@ -53,7 +62,6 @@
 	</Choose>
 
 	<Target Name="GitMetadata" AfterTargets="_GenerateRestoreProjectSpec">
-		<Message Text="$(BuildMetadataCode)" Importance="high" />
 		<WriteLinesToFile File="$(MSBuildProjectDirectory)\src\Carbon\Build.cs" Overwrite="true" Lines="$(BuildMetadataCode)" />
 	</Target>
 

@@ -39,7 +39,7 @@ public class ProtoStorage
 			if (File.Exists(fileDataPath))
 			{
 				T result;
-				using (FileStream fileStream = File.OpenRead(fileDataPath))
+				using (var fileStream = new MemoryStream(OsEx.File.ReadBytes(fileDataPath)))
 				{
 					result = Serializer.Deserialize<T>(fileStream);
 				}
@@ -68,10 +68,9 @@ public class ProtoStorage
 			}
 
 			var mode = File.Exists(fileDataPath) ? FileMode.Truncate : FileMode.Create;
-			using (FileStream fileStream = File.Open(fileDataPath, mode))
-			{
-				Serializer.Serialize<T>(fileStream, data);
-			}
+			using var stream = new MemoryStream();
+			Serializer.Serialize(stream, data);
+			OsEx.File.Create(fileDataPath, stream.ToArray());
 		}
 		catch (Exception ex)
 		{

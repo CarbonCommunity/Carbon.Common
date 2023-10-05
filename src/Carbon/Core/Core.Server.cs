@@ -1,6 +1,6 @@
 ﻿/*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -10,6 +10,7 @@ namespace Carbon.Core;
 
 public partial class CorePlugin : CarbonPlugin
 {
+#if !MINIMAL
 	[CommandVar("recycletick", help: "Configures the recycling ticks speed.", saved: true)]
 	[AuthLevel(2)]
 	public float RecycleTick = -1;
@@ -56,21 +57,33 @@ public partial class CorePlugin : CarbonPlugin
 
 	#region Implementation
 
+	[Conditional("!MINIMAL")]
 	private object IRecyclerThinkSpeed()
 	{
-		if (RecycleTick != -1) return RecycleTick;
+		if (RecycleTick != -1)
+		{
+			return RecycleTick;
+		}
 
 		return null;
 	}
+	[Conditional("!MINIMAL")]
 	private object ICraftDurationMultiplier()
 	{
-		if (CraftingSpeedMultiplier != -1) return CraftingSpeedMultiplier;
+		if (CraftingSpeedMultiplier != -1)
+		{
+			return CraftingSpeedMultiplier;
+		}
 
 		return null;
 	}
+	[Conditional("!MINIMAL")]
 	private object IMixingSpeedMultiplier(MixingTable table, float originalValue)
 	{
-		if (MixingSpeedMultiplier == -1 || table.currentRecipe == null) return null;
+		if (MixingSpeedMultiplier == -1 || table.currentRecipe == null)
+		{
+			return null;
+		}
 
 		if (originalValue == table.currentRecipe.MixingDuration * table.currentQuantity)
 		{
@@ -79,15 +92,20 @@ public partial class CorePlugin : CarbonPlugin
 
 		return null;
 	}
+	[Conditional("!MINIMAL")]
 	private object IVendingBuyDuration()
 	{
-		if (VendingMachineBuyDuration != -1) return VendingMachineBuyDuration;
+		if (VendingMachineBuyDuration != -1)
+		{
+			return VendingMachineBuyDuration;
+		}
 
-		return null; ;
+		return null;
 	}
-	private object IOnExcavatorInit(ExcavatorArm arm)
+	[Conditional("!MINIMAL")]
+	private void IOnExcavatorInit(ExcavatorArm arm)
 	{
-		if(ExcavatorResourceTickRate != -1)
+		if (ExcavatorResourceTickRate != -1)
 		{
 			arm.resourceProductionTickRate = ExcavatorResourceTickRate;
 		}
@@ -101,10 +119,8 @@ public partial class CorePlugin : CarbonPlugin
 		{
 			arm.beltSpeedMax = ExcavatorBeltSpeedMax;
 		}
-
-		return null; ;
 	}
-
+	[Conditional("!MINIMAL")]
 	private void OnItemResearch(ResearchTable table, Item targetItem, BasePlayer player)
 	{
 		if (ResearchDuration != -1)
@@ -114,4 +130,5 @@ public partial class CorePlugin : CarbonPlugin
 	}
 
 	#endregion
+#endif
 }

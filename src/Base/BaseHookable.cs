@@ -26,23 +26,22 @@ public class BaseHookable
 	{
 		public MethodInfo Method;
 		public Type[] Parameters;
-		public Delegate Delegate;
 		public bool IsByRef;
 		public bool IsAsync;
 
-		public static CachedHook Make(MethodInfo method, object context)
+		public static CachedHook Make(MethodInfo method)
 		{
 			var parameters = method.GetParameters();
 			var isByRef = parameters.Any(x => x.ParameterType.IsByRef);
 			var hook = new CachedHook
 			{
 				Method = method,
-				Delegate = isByRef ? null : HookCallerCommon.CreateDelegate(method, context),
 				IsByRef = isByRef,
-				IsAsync = method.GetCustomAttribute<AsyncStateMachineAttribute>() != null,
+				IsAsync = method.ReturnType?.GetMethod("GetAwaiter") != null ||
+						  method.GetCustomAttribute<AsyncStateMachineAttribute>() != null,
 				Parameters = parameters.Select(x => x.ParameterType).ToArray(),
 			};
-
+			
 			return hook;
 		}
 	}

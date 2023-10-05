@@ -1,6 +1,6 @@
 ﻿/*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -97,11 +97,16 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 				if (element.Value == null)
 				{
 					var instance = Activator.CreateInstance(IndexedType) as Instance;
-					instance.File = element.Key;
-					instance.Execute();
 
-					InstanceBuffer.Remove(element.Key);
-					InstanceBuffer[id] = instance;
+					if (instance != null)
+					{
+						instance.File = element.Key;
+						instance.Execute();
+
+						InstanceBuffer.Remove(element.Key);
+						InstanceBuffer[id] = instance;
+					}
+
 					continue;
 				}
 

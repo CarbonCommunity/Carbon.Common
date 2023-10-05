@@ -15,14 +15,14 @@ public partial class CorePlugin : CarbonPlugin
 	[AuthLevel(2)]
 	private void ReloadExtensions(ConsoleSystem.Arg arg)
 	{
-		Community.Runtime.AssemblyEx.Extensions.Reload("Command reload");
+		Community.Runtime.AssemblyEx.Extensions.Watcher.TriggerAll(WatcherChangeTypes.Changed);
 	}
 
 	[ConsoleCommand("reloadmodules", "Fully reloads all modules.")]
 	[AuthLevel(2)]
 	private void ReloadModules(ConsoleSystem.Arg arg)
 	{
-		Community.Runtime.AssemblyEx.Modules.Reload("Command reload");
+		Community.Runtime.AssemblyEx.Modules.Watcher.TriggerAll(WatcherChangeTypes.Changed);
 	}
 
 	[ConsoleCommand("extensions", "Prints a list of all currently loaded extensions.")]
@@ -35,7 +35,7 @@ public partial class CorePlugin : CarbonPlugin
 		var addonType = typeof(ICarbonAddon);
 		foreach (var mod in Community.Runtime.AssemblyEx.Extensions.Loaded)
 		{
-			body.AddRow($"{count:n0}", Path.GetFileNameWithoutExtension(mod.Value), mod.Key.FullName);
+			body.AddRow($"{count:n0}", Path.GetFileNameWithoutExtension(mod.Value.Key), mod.Key.FullName);
 			count++;
 		}
 
@@ -52,7 +52,7 @@ public partial class CorePlugin : CarbonPlugin
 		var addonType = typeof(ICarbonAddon);
 		foreach (var mod in Community.Runtime.AssemblyEx.Modules.Loaded)
 		{
-			body.AddRow($"{count:n0}", Path.GetFileNameWithoutExtension(mod.Value), mod.Key.FullName);
+			body.AddRow($"{count:n0}", Path.GetFileNameWithoutExtension(mod.Value.Key), mod.Key.FullName);
 			count++;
 		}
 
