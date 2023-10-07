@@ -5,7 +5,7 @@ using Report = Carbon.Components.Report;
 
 /*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -40,14 +40,21 @@ public static class ModLoader
 
 		return null;
 	}
-	public static void AddPendingRequiree(Plugin initial, Plugin requiree)
+	public static void AddPendingRequiree(string initial, string requiree)
 	{
-		if (!PendingRequirees.TryGetValue(initial.FilePath, out var requirees))
+		if (!PendingRequirees.TryGetValue(initial, out var requirees))
 		{
-			PendingRequirees.Add(initial.FilePath, requirees = new List<string>(20));
+			PendingRequirees.Add(initial, requirees = new List<string>(20));
 		}
 
-		requirees.Add(requiree.FilePath);
+		if (!requirees.Contains(requiree))
+		{
+			requirees.Add(requiree);
+		}
+	}
+	public static void AddPendingRequiree(Plugin initial, Plugin requiree)
+	{
+		AddPendingRequiree(initial.FilePath, requiree.FilePath);
 	}
 	public static void ClearPendingRequirees(Plugin initial)
 	{
@@ -222,7 +229,20 @@ public static class ModLoader
 
 		plugin.ILoadConfig();
 		plugin.ILoadDefaultMessages();
-		plugin.IInit();
+
+		if (!plugin.IInit())
+		{
+			if (UninitializePlugin(plugin, true))
+			{
+				if (package != null && package.Plugins.Contains(plugin))
+				{
+					package.Plugins.Remove(plugin);
+				}
+
+				return false;
+			}
+		}
+
 		plugin.ILoad();
 
 		ProcessCommands(type, plugin);
@@ -230,17 +250,27 @@ public static class ModLoader
 		Logger.Log($"Loaded plugin {plugin.ToString()} [{plugin.CompileTime:0}ms]");
 		return true;
 	}
-	public static bool UninitializePlugin(RustPlugin plugin)
+	public static bool UninitializePlugin(RustPlugin plugin, bool premature = false)
 	{
-		plugin.CallHook("Unload");
+		if (!premature)
+		{
+			plugin.CallHook("Unload");
+		}
 
 		RemoveCommands(plugin);
 		plugin.IUnload();
 
-		HookCaller.CallStaticHook(3843290135, plugin);
+		if (!premature)
+		{
+			HookCaller.CallStaticHook(3843290135, plugin);
+		}
 
 		plugin.Dispose();
-		Logger.Log($"Unloaded plugin {plugin.ToString()}");
+
+		if (!premature)
+		{
+			Logger.Log($"Unloaded plugin {plugin.ToString()}");
+		}
 		return true;
 	}
 

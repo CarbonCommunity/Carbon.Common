@@ -1,6 +1,6 @@
 ﻿/*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -74,9 +74,12 @@ public class RustPlugin : Plugin
 		base.Dispose();
 	}
 
-	public override void IInit()
+	public override bool IInit()
 	{
-		base.IInit();
+		if (!base.IInit())
+		{
+			return false;
+		}
 
 #if DEBUG
 		timer.Every(1f, () =>
@@ -85,6 +88,8 @@ public class RustPlugin : Plugin
 			MemoryAverage?.Calibrate();
 		});
 #endif
+
+		return true;
 	}
 
 	public static T Singleton<T>()
