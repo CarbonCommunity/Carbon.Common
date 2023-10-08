@@ -5,6 +5,13 @@ using System.Linq;
 
 public class Build
 {
+	public bool IsDebug =>
+#if DEBUG
+		true;
+#else
+		false;
+#endif
+
 	public class Git
 	{
 		static Git()
@@ -66,7 +73,7 @@ public class Build
 		public static readonly string HashShort = @"[GIT_HASH_SHORT]";
 		public static readonly string HashLong = @"[GIT_HASH_LONG]";
 
-		public static readonly string Url = @"[GIT_URL]";		
+		public static readonly string Url = @"[GIT_URL]";
 
 		public static readonly AssetChange[] Changes;
 
