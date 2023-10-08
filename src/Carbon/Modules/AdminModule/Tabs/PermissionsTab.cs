@@ -367,6 +367,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 						tab.AddRow(2, new Tab.OptionButton($"{user.Value.LastSeenNickname} ({user.Key})", instance3 =>
 						{
 							ap.SetStorage(tab, "groupedit", false);
+							ap.SetStorage(tab, "pluginedit", false);
 
 							tab.ClearColumn(1);
 							tab.ClearColumn(2);
