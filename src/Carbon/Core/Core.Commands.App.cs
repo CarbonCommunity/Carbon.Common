@@ -2,7 +2,7 @@
 
 /*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -53,7 +53,7 @@ public partial class CorePlugin : CarbonPlugin
 	{
 		if (!arg.IsPlayerCalledOrAdmin()) return;
 
-		var mode = arg.HasArgs(1) ? arg.GetString(0) : null;
+		var mode = arg.GetString(0);
 
 		switch (mode)
 		{
@@ -72,7 +72,7 @@ public partial class CorePlugin : CarbonPlugin
 					using var body = new StringTable("#", "Mod", "Author", "Version", "Hook Time", "Memory Usage", "Compile Time", "Uptime");
 					var count = 1;
 
-					foreach (var mod in ModLoader.LoadedPackages)
+					foreach (var mod in (mode == "-abc" ? ModLoader.LoadedPackages.OrderBy(x => x.Name) : ModLoader.LoadedPackages.AsEnumerable())!)
 					{
 						if (mod.IsCoreMod) continue;
 
