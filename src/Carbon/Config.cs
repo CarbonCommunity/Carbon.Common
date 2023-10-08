@@ -2,7 +2,7 @@
 
 /*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -12,7 +12,6 @@ namespace Carbon.Core;
 [Serializable]
 public class Config
 {
-	public bool AutoUpdateExtHooks { get; set; } = true;
 	public bool ScriptWatchers { get; set; } = true;
 	public SearchOption ScriptWatcherOption { get; set; } = SearchOption.TopDirectoryOnly;
 	public bool FileNameCheck { get; set; } = true;
