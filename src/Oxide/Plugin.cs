@@ -652,6 +652,20 @@ namespace Oxide.Core.Plugins
 				processor.CurrentFrameQueue.Add(callback);
 			}
 		}
+		public void QueueWorkerThread(Action<object> callback)
+		{
+			ThreadPool.QueueUserWorkItem(context =>
+			{
+				try
+				{
+					callback(context);
+				}
+				catch (Exception ex)
+				{
+					Carbon.Logger.Error($"Worker thread callback failed in '{Name} v{Version}'", ex);
+				}
+			});
+		}
 
 		public DynamicConfigFile Config { get; internal set; }
 
