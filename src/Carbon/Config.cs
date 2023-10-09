@@ -13,6 +13,7 @@ namespace Carbon.Core;
 public class Config
 {
 	public bool ScriptWatchers { get; set; } = true;
+	public bool ZipScriptWatchers { get; set; } = true;
 	public SearchOption ScriptWatcherOption { get; set; } = SearchOption.TopDirectoryOnly;
 	public bool FileNameCheck { get; set; } = true;
 	public bool IsModded { get; set; } = true;

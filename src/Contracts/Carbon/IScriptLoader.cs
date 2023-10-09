@@ -7,7 +7,7 @@ public interface IScriptLoader : IDisposable
 	void Load();
 
 	string File { get; set; }
-	string Source { get; set; }
+	List<string> Sources { get; set; }
 	bool IsCore { get; set; }
 	bool IsExtension { get; set; }
 

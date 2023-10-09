@@ -9,7 +9,6 @@ public interface IScript : IDisposable
 	string Author { get; set; }
 	VersionNumber Version { get; set; }
 	string Description { get; set; }
-	string Source { get; set; }
 	IScriptLoader Loader { get; set; }
 	RustPlugin Instance { get; set; }
 	bool IsCore { get; set; }
