@@ -1,4 +1,5 @@
-﻿#if !MINIMAL
+﻿using System.Net;
+#if !MINIMAL
 
 /*
  *
@@ -115,7 +116,16 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 					tab.AddName(1, Singleton.GetPhrase("misc", ap.Player.UserIDString), TextAnchor.MiddleLeft);
 					tab.AddInput(1, Singleton.GetPhrase("serverlang", ap.Player.UserIDString), ap => Config.Language, (ap, args) => { Config.Language = args.ToString(" "); Community.Runtime.SaveConfig(); });
-					tab.AddInput(1, Singleton.GetPhrase("webreqip", ap.Player.UserIDString), ap => Config.WebRequestIp, (ap, args) => { Config.WebRequestIp = args.ToString(" "); Community.Runtime.SaveConfig(); });
+					tab.AddInput(1, Singleton.GetPhrase("webreqip", ap.Player.UserIDString), ap => Config.WebRequestIp, (ap, args) =>
+					{
+						var ip = args.ToString(" ");
+
+						if (string.IsNullOrEmpty(ip) || IPAddress.TryParse(ip, out _))
+						{
+							Config.WebRequestIp = ip;
+							Community.Runtime.SaveConfig();
+						}
+					});
 					tab.AddEnum(1, Singleton.GetPhrase("permmode", ap.Player.UserIDString), (ap, back) =>
 					{
 						var e = Enum.GetNames(typeof(Permission.SerializationMode));
