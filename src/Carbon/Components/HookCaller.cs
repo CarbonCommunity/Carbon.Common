@@ -1311,11 +1311,13 @@ public static class HookCaller
 
 	#region Generator
 
-	public static void GenerateInternalCallHook(CompilationUnitSyntax input, out CompilationUnitSyntax output, out MethodDeclarationSyntax generatedMethod)
+	public static void GenerateInternalCallHook(CompilationUnitSyntax input, out CompilationUnitSyntax output, out MethodDeclarationSyntax generatedMethod, out bool isPartial)
 	{
 		var methodContents = "\n\tvar result = (object)null;\n\ttry\n\t{\n\t\tswitch(hook)\n\t\t{\n";
 
 		FindPluginInfo(input, out var @namespace, out var @class, out var namespaceIndex, out var classIndex);
+
+		isPartial = @class.Modifiers.Any(x => x.IsKind(SyntaxKind.PartialKeyword));
 
 		var methodDeclarations = new List<MethodDeclarationSyntax>();
 		methodDeclarations.AddRange(@class.ChildNodes().OfType<MethodDeclarationSyntax>());
@@ -1471,7 +1473,7 @@ public static class HookCaller
 
 	public static void GeneratePartial(CompilationUnitSyntax input, out CompilationUnitSyntax output, CSharpParseOptions options, string fileName)
 	{
-		GenerateInternalCallHook(input, out var internalCallOutput, out var method);
+		GenerateInternalCallHook(input, out var internalCallOutput, out var method, out var isPartial);
 
 		FindPluginInfo(input, out var @namespace, out var @class, out _, out _);
 
@@ -1485,25 +1487,22 @@ partial class {@class.Identifier.ValueText}
 }}";
 
 		string path;
-	#if DEBUG
-		if (Debugger.IsAttached)
+
+#if DEBUG
+		if (isPartial && Debugger.IsAttached)
 		{
 			path = Path.Combine(Defines.GetScriptDebugFolder(), $"{Path.GetFileNameWithoutExtension(fileName)}.Internal.cs");
+			output = CSharpSyntaxTree.ParseText(source, options, path, Encoding.UTF8).GetCompilationUnitRoot().NormalizeWhitespace();
+			OsEx.File.Create(path, output.ToFullString());
 		}
 		else
 		{
 			path = $"{fileName}/Internal";
+			output = CSharpSyntaxTree.ParseText(source, options, path, Encoding.UTF8).GetCompilationUnitRoot();
 		}
-	#else
-		path = $"{fileName}/Internal";
-	#endif
-		output = CSharpSyntaxTree.ParseText(source, options, path, Encoding.UTF8).GetCompilationUnitRoot().NormalizeWhitespace();
-
-#if DEBUG
-		if (Debugger.IsAttached)
-		{
-			OsEx.File.Create(path, output.ToFullString());
-		}
+#else
+			path = $"{fileName}/Internal";
+			output = CSharpSyntaxTree.ParseText(source, options, path, Encoding.UTF8).GetCompilationUnitRoot();
 #endif
 	}
 
