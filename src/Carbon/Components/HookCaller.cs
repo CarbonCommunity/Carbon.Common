@@ -1,5 +1,4 @@
-﻿using System.Buffers;
-using System.Linq.Expressions;
+﻿using System.Diagnostics;
 using System.Text;
 using Carbon.Base.Interfaces;
 using Microsoft.CodeAnalysis;
@@ -1465,7 +1464,23 @@ partial class {@class.Identifier.ValueText}
 	{method}
 }}";
 
-		output = CSharpSyntaxTree.ParseText(source, options, $"{fileName}.cs/Internal", Encoding.UTF8);
+		string path;
+	#if DEBUG
+		if (Debugger.IsAttached)
+		{
+			string dir = Path.Combine(Path.GetDirectoryName(fileName), "debug");
+			Directory.CreateDirectory(dir);
+			path = Path.Combine(dir, $"{Path.GetFileNameWithoutExtension(fileName)}.Internal.cs");
+			File.WriteAllText(path, source);
+		}
+		else
+		{
+			path = $"{fileName}/Internal";
+		}
+	#else
+		path = $"{fileName}/Internal";
+	#endif
+		output = CSharpSyntaxTree.ParseText(source, options, path, Encoding.UTF8);
 	}
 
 	public static void FindPluginInfo(CompilationUnitSyntax input, out BaseNamespaceDeclarationSyntax @namespace, out ClassDeclarationSyntax @class, out int namespaceIndex, out int classIndex)
