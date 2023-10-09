@@ -1469,9 +1469,9 @@ public static class HookCaller
 		#endregion
 	}
 
-	public static void GeneratePartial(CompilationUnitSyntax input, out SyntaxTree output, CSharpParseOptions options, string fileName)
+	public static void GeneratePartial(CompilationUnitSyntax input, out CompilationUnitSyntax output, CSharpParseOptions options, string fileName)
 	{
-		GenerateInternalCallHook(input, out _, out var method);
+		GenerateInternalCallHook(input, out var internalCallOutput, out var method);
 
 		FindPluginInfo(input, out var @namespace, out var @class, out _, out _);
 
@@ -1489,7 +1489,6 @@ partial class {@class.Identifier.ValueText}
 		if (Debugger.IsAttached)
 		{
 			path = Path.Combine(Defines.GetScriptDebugFolder(), $"{Path.GetFileNameWithoutExtension(fileName)}.Internal.cs");
-			OsEx.File.Create(path, source);
 		}
 		else
 		{
@@ -1498,7 +1497,14 @@ partial class {@class.Identifier.ValueText}
 	#else
 		path = $"{fileName}/Internal";
 	#endif
-		output = CSharpSyntaxTree.ParseText(source, options, path, Encoding.UTF8);
+		output = CSharpSyntaxTree.ParseText(source, options, path, Encoding.UTF8).GetCompilationUnitRoot().NormalizeWhitespace();
+
+#if DEBUG
+		if (Debugger.IsAttached)
+		{
+			OsEx.File.Create(path, output.ToFullString());
+		}
+#endif
 	}
 
 	public static void FindPluginInfo(CompilationUnitSyntax input, out BaseNamespaceDeclarationSyntax @namespace, out ClassDeclarationSyntax @class, out int namespaceIndex, out int classIndex)
