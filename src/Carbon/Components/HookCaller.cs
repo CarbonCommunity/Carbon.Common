@@ -109,7 +109,7 @@ public static class HookCaller
 		Caller.ClearHookTime(hookId);
 
 		var result = (object)null;
-		var array = args == null || args.Length == 0 ? null : keepArgs ? args : args.ToArray();
+		var array = args == null ? null : keepArgs ? args : args.ToArray();
 
 		for (int i = 0; i < Community.Runtime.ModuleProcessor.Modules.Count; i++)
 		{
@@ -213,15 +213,27 @@ public static class HookCaller
 
 	public static object CallHook(BaseHookable plugin, uint hookId)
 	{
-		return Caller.CallHook(plugin, hookId, flags: BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public, null);
+		var buffer = Caller.AllocateBuffer(0);
+		var result = Caller.CallHook(plugin, hookId, BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public, buffer);
+
+		Caller.ClearBuffer(buffer);
+		return result;
 	}
 	public static T CallHook<T>(BaseHookable plugin, uint hookId)
 	{
-		return (T)Caller.CallHook(plugin, hookId, BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public, null);
+		var buffer = Caller.AllocateBuffer(0);
+		var result = Caller.CallHook(plugin, hookId, BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public, buffer);
+
+		Caller.ClearBuffer(buffer);
+		return (T)result;
 	}
 	public static T CallDeprecatedHook<T>(BaseHookable plugin, uint oldHookId, uint newHookId, DateTime expireDate)
 	{
-		return (T)Caller.CallDeprecatedHook(plugin, oldHookId, newHookId, expireDate, BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public, null);
+		var buffer = Caller.AllocateBuffer(0);
+		var result = Caller.CallDeprecatedHook(plugin, oldHookId, newHookId, expireDate, BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public, buffer);
+
+		Caller.ClearBuffer(buffer);
+		return (T)result;
 	}
 	public static object CallHook(BaseHookable plugin, uint hookId, object arg1)
 	{
@@ -855,11 +867,19 @@ public static class HookCaller
 
 	public static object CallStaticHook(uint hookId)
 	{
-		return CallStaticHook(hookId, BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public, null);
+		var buffer = Caller.AllocateBuffer(0);
+		var result = CallStaticHook(hookId, flag: BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public, args: buffer);
+
+		Caller.ClearBuffer(buffer);
+		return result;
 	}
 	public static object CallStaticDeprecatedHook(uint oldHookId, uint newHookId, DateTime expireDate)
 	{
-		return CallStaticDeprecatedHook(oldHookId, newHookId, expireDate, BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public, null);
+		var buffer = Caller.AllocateBuffer(0);
+		var result = CallStaticDeprecatedHook(oldHookId, newHookId, expireDate, flag: BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public, args: buffer);
+
+		Caller.ClearBuffer(buffer);
+		return result;
 	}
 	public static object CallStaticHook(uint hookId, object arg1)
 	{
@@ -1468,10 +1488,8 @@ partial class {@class.Identifier.ValueText}
 	#if DEBUG
 		if (Debugger.IsAttached)
 		{
-			string dir = Path.Combine(Path.GetDirectoryName(fileName), "debug");
-			Directory.CreateDirectory(dir);
-			path = Path.Combine(dir, $"{Path.GetFileNameWithoutExtension(fileName)}.Internal.cs");
-			File.WriteAllText(path, source);
+			path = Path.Combine(Defines.GetScriptDebugFolder(), $"{Path.GetFileNameWithoutExtension(fileName)}.Internal.cs");
+			OsEx.File.Create(path, source);
 		}
 		else
 		{
