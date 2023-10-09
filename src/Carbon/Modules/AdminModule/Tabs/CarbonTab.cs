@@ -120,7 +120,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					{
 						var ip = args.ToString(" ");
 
-						if (string.IsNullOrEmpty(ip) || IPAddress.TryParse(ip, out _))
+						if (string.IsNullOrEmpty(ip) || (IPAddress.TryParse(ip, out _) && ip.Contains(".")))
 						{
 							Config.WebRequestIp = ip;
 							Community.Runtime.SaveConfig();
