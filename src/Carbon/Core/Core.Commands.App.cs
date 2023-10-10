@@ -18,25 +18,6 @@ public partial class CorePlugin : CarbonPlugin
 		Community.Runtime.Uninitialize();
 	}
 
-	[ConsoleCommand("reboot", "Unloads Carbon from the game and then loads it back again with the latest version changes (if any).")]
-	private void Reboot(ConsoleSystem.Arg arg)
-	{
-		var loader = Community.Runtime.AssemblyEx;
-		var patcher = Community.Runtime.HookManager;
-		Community.Runtime.Uninitialize();
-
-		var timer = new System.Timers.Timer(5000);
-		timer.Elapsed += (object sender, System.Timers.ElapsedEventArgs e) =>
-		{
-			loader.Components.Load("Carbon.dll", "CarbonEvent.StartupShared");
-			Community.Runtime ??= new();
-			Community.Runtime.Initialize();
-			timer.Dispose();
-			timer = null;
-		};
-		timer.Start();
-	}
-
 	[ConsoleCommand("help", "Returns a brief introduction to Carbon.")]
 	[AuthLevel(2)]
 	private void Help(ConsoleSystem.Arg arg)
