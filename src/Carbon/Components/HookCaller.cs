@@ -1335,7 +1335,7 @@ public static class HookCaller
 			FindPluginInfo(input, out @namespace, out namespaceIndex, out classIndex, null);
 		}
 
-		var @class = _classList[0];
+		var @class = _classList.FirstOrDefault(x => x.AttributeLists.Any(y => y.Attributes.Any(z => z.Name.ToString() == "Info")));
 
 		isPartial = @class.Modifiers.Any(x => x.IsKind(SyntaxKind.PartialKeyword));
 

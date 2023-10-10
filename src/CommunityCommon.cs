@@ -87,6 +87,9 @@ public class Community
 	public IZipScriptProcessor ZipScriptProcessor
 	{ get; set; }
 
+	public IZipDevScriptProcessor ZipDevScriptProcessor
+	{ get; set; }
+
 	public ICarbonProcessor CarbonProcessor
 	{ get; set; }
 

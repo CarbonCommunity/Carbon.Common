@@ -59,7 +59,7 @@ namespace Oxide.Core.Plugins
 
 		public ModLoader.ModPackage Package;
 		public IBaseProcessor Processor;
-		public IBaseProcessor.IInstance ProcessorInstance;
+		public IBaseProcessor.IProcess ProcessorProcess;
 
 		public static implicit operator bool(Plugin other)
 		{

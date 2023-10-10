@@ -131,6 +131,13 @@ public class Defines
 
 		return folder;
 	}
+	public static string GetZipDevFolder()
+	{
+		var folder = Path.Combine(GetScriptFolder(), "cszip_dev");
+		Directory.CreateDirectory(folder);
+
+		return folder;
+	}
 	public static string GetExtensionsFolder()
 	{
 		_initializeCommandLine();

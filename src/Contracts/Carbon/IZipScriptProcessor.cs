@@ -2,7 +2,7 @@
 
 public interface IZipScriptProcessor : IScriptProcessor, IDisposable
 {
-	public interface IZipScript : IInstance
+	public interface IZipScript : IProcess
 	{
 		IScriptLoader Loader { get; set; }
 	}

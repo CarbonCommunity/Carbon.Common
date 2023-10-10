@@ -6,8 +6,7 @@ public interface IScriptLoader : IDisposable
 	void Clear();
 	void Load();
 
-	string File { get; set; }
-	List<string> Sources { get; set; }
+	List<ISource> Sources { get; set; }
 	bool IsCore { get; set; }
 	bool IsExtension { get; set; }
 
@@ -15,6 +14,6 @@ public interface IScriptLoader : IDisposable
 	bool HasRequires { get; set; }
 
 	ModLoader.ModPackage Mod { get; set; }
-	IBaseProcessor.IInstance Instance { get; set; }
+	IBaseProcessor.IProcess Process { get; set; }
 	IBaseProcessor.IParser Parser { get; set; }
 }
