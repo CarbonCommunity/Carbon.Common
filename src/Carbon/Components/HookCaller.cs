@@ -1328,14 +1328,21 @@ public static class HookCaller
 		{
 			_classList = Pool.GetList<ClassDeclarationSyntax>();
 			isTemp = true;
-			FindPluginInfo(input, out @namespace, out namespaceIndex, out classIndex, _classList);
+			FindPluginInfo(input, out @namespace, _classList);
 		}
 		else
 		{
-			FindPluginInfo(input, out @namespace, out namespaceIndex, out classIndex, null);
+			FindPluginInfo(input, out @namespace, null);
+
+			namespaceIndex = classIndex = 0;
 		}
 
-		var @class = _classList.FirstOrDefault(x => x.AttributeLists.Any(y => y.Attributes.Any(z => z.Name.ToString() == "Info")));
+		var @class = _classList[0];
+
+		if (@namespace == null)
+		{
+			@namespace = @class.Parent as BaseNamespaceDeclarationSyntax;
+		}
 
 		isPartial = @class.Modifiers.Any(x => x.IsKind(SyntaxKind.PartialKeyword));
 
@@ -1506,7 +1513,7 @@ public static class HookCaller
 		if (classes == null)
 		{
 			classes = Facepunch.Pool.GetList<ClassDeclarationSyntax>();
-			FindPluginInfo(input, out @namespace, out _, out _, classes);
+			FindPluginInfo(input, out @namespace, classes);
 
 			@class = classes[0];
 			Facepunch.Pool.FreeList(ref classes);
@@ -1546,18 +1553,13 @@ partial class {@class.Identifier.ValueText}
 #endif
 	}
 
-	public static bool FindPluginInfo(CompilationUnitSyntax input, out BaseNamespaceDeclarationSyntax @namespace, out int namespaceIndex, out int classIndex, List<ClassDeclarationSyntax> classes)
+	public static bool FindPluginInfo(CompilationUnitSyntax input, out BaseNamespaceDeclarationSyntax @namespace, List<ClassDeclarationSyntax> classes)
 	{
-		@namespace = null;
-		namespaceIndex = 0;
-		classIndex = 0;
-
 		var @class = (ClassDeclarationSyntax)null;
+		@namespace = null;
 
 		foreach (var ns in input.Members.OfType<BaseNamespaceDeclarationSyntax>())
 		{
-			classIndex = 0;
-
 			foreach (var cls in ns.Members.OfType<ClassDeclarationSyntax>())
 			{
 				if (cls.AttributeLists.Count > 0)
@@ -1568,7 +1570,7 @@ partial class {@class.Identifier.ValueText}
 						{
 							@namespace = ns;
 							@class = cls;
-							classes?.Add(@class);
+							classes?.Insert(0, @class);
 						}
 					}
 				}
@@ -1576,16 +1578,6 @@ partial class {@class.Identifier.ValueText}
 				{
 					classes?.Add(cls);
 				}
-
-				if (@class == null)
-				{
-					classIndex++;
-				}
-			}
-
-			if (@namespace == null)
-			{
-				namespaceIndex++;
 			}
 		}
 
