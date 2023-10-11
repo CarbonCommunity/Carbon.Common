@@ -2,7 +2,7 @@
 
 /*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -98,7 +98,6 @@ public struct StringTable : IDisposable
 		Array.Clear(temp1, 0, temp1.Length);
 		temp1 = null;
 		results = null;
-		columnLengths.Clear();
 		columnLengths = null;
 		return builder.ToNewLine();
 	}
@@ -109,7 +108,7 @@ public struct StringTable : IDisposable
 
 		var columnLengths = ColumnLengths();
 		var format = Enumerable.Range(0, Columns.Count)
-			.Select(i => " | {" + i + ",-" + columnLengths[i] + "}")
+			.Select(i => " | {" + i + ",-" + columnLengths.ElementAt(i) + "}")
 			.Aggregate((s, a) => s + a) + " |";
 
 		var temp1 = Columns.ToArray();
@@ -121,7 +120,6 @@ public struct StringTable : IDisposable
 
 		Array.Clear(temp1, 0, temp1.Length);
 		temp1 = null;
-		columnLengths.Clear();
 		columnLengths = null;
 
 		builder.AppendLine(divider);
@@ -159,7 +157,6 @@ public struct StringTable : IDisposable
 		var results = Rows.Select(row => string.Format(format, row));
 		var divider = Regex.Replace(columnHeaders, @"[^|]", "-");
 
-		columnLengths.Clear();
 		columnLengths = null;
 
 		builder.AppendLine(columnHeaders);
@@ -192,7 +189,6 @@ public struct StringTable : IDisposable
 
 		Array.Clear(temp1, 0, temp1.Length);
 		temp1 = null;
-		columnLengths.Clear();
 		columnLengths = null;
 
 		builder.AppendLine(dividerPlus);
@@ -208,16 +204,16 @@ public struct StringTable : IDisposable
 		return builder.ToString();
 	}
 
-	private string Format(List<int> columnLengths, char delimiter = '|')
+	private string Format(IEnumerable<int> columnLengths, char delimiter = '|')
 	{
 		var delimiterStr = delimiter == char.MinValue ? string.Empty : delimiter.ToString();
 		var format = (Enumerable.Range(0, Columns.Count)
-			.Select(i => " " + delimiterStr + " {" + i + ",-" + columnLengths[i] + "}")
+			.Select(i => " " + delimiterStr + " {" + i + ",-" + columnLengths.ElementAt(i) + "}")
 			.Aggregate((s, a) => s + a) + " " + delimiterStr).Trim();
 		return format;
 	}
 
-	private List<int> ColumnLengths()
+	private IEnumerable<int> ColumnLengths()
 	{
 		var rows = Rows;
 		var columns = Columns;
@@ -226,8 +222,7 @@ public struct StringTable : IDisposable
 			.Select((t, i) => rows.Select(x => x[i])
 				.Union(new[] { columns[i] })
 				.Where(x => x != null)
-				.Select(x => x.ToString().Length).Max())
-			.ToList();
+				.Select(x => x.ToString().Length).Max());
 		return columnLengths;
 	}
 

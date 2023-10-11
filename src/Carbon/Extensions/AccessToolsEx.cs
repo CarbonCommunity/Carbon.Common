@@ -1,6 +1,6 @@
 ﻿/*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -55,7 +55,7 @@ public static class AccessToolsEx
 			   select a;
 	}
 
-	public static List<Type> GetConstraints(Type type)
+	public static IEnumerable<Type> GetConstraints(Type type)
 	{
 		// generics with only one type will be supported
 		Type[] generics = type.GetGenericArguments();
@@ -64,15 +64,15 @@ public static class AccessToolsEx
 			throw new Exception($"GetConstraints only supports generics with one type");
 
 		Type generic = generics.First();
-		return generic.GetGenericParameterConstraints().ToList();
+		return generic.GetGenericParameterConstraints();
 	}
 
-	public static List<Type> MatchConstrains(List<Type> constrains)
+	public static IEnumerable<Type> MatchConstrains(IEnumerable<Type> constrains)
 	{
 		IEnumerable<Type> interfaces = constrains.Where(x => x.IsInterface);
 		Type @base = constrains.Single(x => !x.IsInterface);
 
 		return AccessToolsEx.AllTypes().Where(type =>
-			type.IsSubclassOf(@base) && type.GetInterfaces().Intersect(interfaces).Any()).ToList();
+			type.IsSubclassOf(@base) && type.GetInterfaces().Intersect(interfaces).Any());
 	}
 }
