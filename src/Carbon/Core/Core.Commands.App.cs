@@ -58,7 +58,7 @@ public partial class CorePlugin : CarbonPlugin
 					{
 						if (mod.IsCoreMod) continue;
 
-						body.AddRow($"{count:n0}", $"{mod.Name}{(mod.Plugins.Count > 1 ? $" ({mod.Plugins.Count:n0})" : "")}", string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
+						body.AddRow($"{count:n0}", $"{mod.Name}{(mod.Plugins.Count >= 1 ? $" ({mod.Plugins.Count:n0})" : string.Empty)}", string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
 
 						foreach (var plugin in (alphabeticalOrder ? mod.Plugins.OrderBy(x => x.Name) : mod.Plugins.AsEnumerable())!)
 						{
