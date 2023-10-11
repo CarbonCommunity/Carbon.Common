@@ -4,10 +4,14 @@
 	{
 		void Start();
 
-		T Get<T>(string fileName) where T : IInstance;
+		T Get<T>(string fileName) where T : IProcess;
 
-		Dictionary<string, IInstance> InstanceBuffer { get; set; }
+		Dictionary<string, IProcess> InstanceBuffer { get; set; }
 		List<string> IgnoreList { get; set; }
+
+		public string Name { get; }
+		public string Folder { get; }
+		public string Extension { get; }
 
 		void Prepare(string path);
 		void Prepare(string name, string path);
@@ -17,14 +21,14 @@
 		bool IsBlacklisted(string path);
 		bool IncludeSubdirectories { get; set; }
 
-		public interface IInstance : IDisposable
+		public interface IProcess : IDisposable
 		{
 			bool IsRemoved { get; }
 			bool IsDirty { get; }
 
 			string File { get; set; }
 
-			void Execute();
+			void Execute(IBaseProcessor processor);
 			void SetDirty();
 			void MarkDeleted();
 		}

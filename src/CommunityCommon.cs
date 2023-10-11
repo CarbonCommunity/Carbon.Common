@@ -84,6 +84,12 @@ public class Community
 	public IWebScriptProcessor WebScriptProcessor
 	{ get; set; }
 
+	public IZipScriptProcessor ZipScriptProcessor
+	{ get; set; }
+
+	public IZipDevScriptProcessor ZipDevScriptProcessor
+	{ get; set; }
+
 	public ICarbonProcessor CarbonProcessor
 	{ get; set; }
 
@@ -101,6 +107,9 @@ public class Community
 	{ get; set; }
 
 	public ModLoader.ModPackage Plugins
+	{ get; set; }
+
+	public ModLoader.ModPackage ZipPlugins
 	{ get; set; }
 
 	public Entities Entities

@@ -1,10 +1,12 @@
 ﻿using System.Diagnostics;
 using System.Text;
 using Carbon.Base.Interfaces;
+using ConVar;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using static Carbon.HookCallerCommon;
+using Pool = Facepunch.Pool;
 
 /*
  *
@@ -1311,31 +1313,61 @@ public static class HookCaller
 
 	#region Generator
 
-	public static void GenerateInternalCallHook(CompilationUnitSyntax input, out CompilationUnitSyntax output, out MethodDeclarationSyntax generatedMethod, out bool isPartial)
+	internal static List<ClassDeclarationSyntax> _classList = new();
+
+	public static void GenerateInternalCallHook(CompilationUnitSyntax input, out CompilationUnitSyntax output, out MethodDeclarationSyntax generatedMethod, out bool isPartial, List<ClassDeclarationSyntax> _classList = null)
 	{
 		var methodContents = "\n\tvar result = (object)null;\n\ttry\n\t{\n\t\tswitch(hook)\n\t\t{\n";
 
-		FindPluginInfo(input, out var @namespace, out var @class, out var namespaceIndex, out var classIndex);
+		var @namespace = (BaseNamespaceDeclarationSyntax)null;
+		var namespaceIndex = 0;
+		var classIndex = 0;
+		var isTemp = false;
+
+		if (_classList == null)
+		{
+			_classList = Pool.GetList<ClassDeclarationSyntax>();
+			isTemp = true;
+			FindPluginInfo(input, out @namespace, _classList);
+		}
+		else
+		{
+			FindPluginInfo(input, out @namespace, null);
+
+			namespaceIndex = classIndex = 0;
+		}
+
+		var @class = _classList[0];
+
+		if (@namespace == null)
+		{
+			@namespace = @class.Parent as BaseNamespaceDeclarationSyntax;
+		}
 
 		isPartial = @class.Modifiers.Any(x => x.IsKind(SyntaxKind.PartialKeyword));
 
 		var methodDeclarations = new List<MethodDeclarationSyntax>();
-		methodDeclarations.AddRange(@class.ChildNodes().OfType<MethodDeclarationSyntax>());
+		methodDeclarations.AddRange(  _classList.SelectMany(x => x.ChildNodes()).OfType<MethodDeclarationSyntax>());
 
-		#region Handle partials
-
-		foreach (var subNamespace in input.Members.OfType<BaseNamespaceDeclarationSyntax>())
+		if (isTemp)
 		{
-			foreach (var subClass in subNamespace.Members.OfType<ClassDeclarationSyntax>())
-			{
-				if (subClass != @class && subClass.Modifiers.Any(SyntaxKind.PartialKeyword) && subClass.Identifier.ValueText == @class.Identifier.ValueText)
-				{
-					methodDeclarations.AddRange(subClass.ChildNodes().OfType<MethodDeclarationSyntax>());
-				}
-			}
+			Pool.FreeList(ref _classList);
 		}
 
-		#endregion
+		// #region Handle partials
+//
+		// foreach (var subNamespace in input.Members.OfType<BaseNamespaceDeclarationSyntax>())
+		// {
+		// 	foreach (var subClass in subNamespace.Members.OfType<ClassDeclarationSyntax>())
+		// 	{
+		// 		if (subClass != @class && subClass.Modifiers.Any(SyntaxKind.PartialKeyword) && subClass.Identifier.ValueText == @class.Identifier.ValueText)
+		// 		{
+		// 			methodDeclarations.AddRange(subClass.ChildNodes().OfType<MethodDeclarationSyntax>());
+		// 		}
+		// 	}
+		// }
+//
+		// #endregion
 
 		var hookableMethods = new Dictionary<uint, List<MethodDeclarationSyntax>>();
 		var privateMethods0 = methodDeclarations.Where(md => (md.Modifiers.Count == 0 || md.Modifiers.All(modifier => !modifier.IsKind(SyntaxKind.PublicKeyword) && !modifier.IsKind(SyntaxKind.StaticKeyword)) || md.AttributeLists.Any(x => x.Attributes.Any(y => y.Name.ToString() == "HookMethod"))) && md.TypeParameterList == null);
@@ -1471,11 +1503,26 @@ public static class HookCaller
 		#endregion
 	}
 
-	public static void GeneratePartial(CompilationUnitSyntax input, out CompilationUnitSyntax output, CSharpParseOptions options, string fileName)
+	public static void GeneratePartial(CompilationUnitSyntax input, out CompilationUnitSyntax output, CSharpParseOptions options, string fileName, List<ClassDeclarationSyntax> classes = null)
 	{
-		GenerateInternalCallHook(input, out var internalCallOutput, out var method, out var isPartial);
+		GenerateInternalCallHook(input, out _, out var method, out var isPartial, classes);
 
-		FindPluginInfo(input, out var @namespace, out var @class, out _, out _);
+		var @namespace = (BaseNamespaceDeclarationSyntax)null;
+		var @class = (ClassDeclarationSyntax)null;
+
+		if (classes == null)
+		{
+			classes = Facepunch.Pool.GetList<ClassDeclarationSyntax>();
+			FindPluginInfo(input, out @namespace, classes);
+
+			@class = classes[0];
+			Facepunch.Pool.FreeList(ref classes);
+		}
+		else
+		{
+			@namespace = classes[0].Parent as BaseNamespaceDeclarationSyntax;
+			@class = classes[0];
+		}
 
 		var source = @$"{input.Usings.Select(x => x.ToString()).ToString("\n")}
 
@@ -1506,19 +1553,13 @@ partial class {@class.Identifier.ValueText}
 #endif
 	}
 
-	public static void FindPluginInfo(CompilationUnitSyntax input, out BaseNamespaceDeclarationSyntax @namespace, out ClassDeclarationSyntax @class, out int namespaceIndex, out int classIndex)
+	public static bool FindPluginInfo(CompilationUnitSyntax input, out BaseNamespaceDeclarationSyntax @namespace, List<ClassDeclarationSyntax> classes)
 	{
+		var @class = (ClassDeclarationSyntax)null;
 		@namespace = null;
-		@class = null;
-		namespaceIndex = 0;
-		classIndex = 0;
-
-		var found = false;
 
 		foreach (var ns in input.Members.OfType<BaseNamespaceDeclarationSyntax>())
 		{
-			classIndex = 0;
-
 			foreach (var cls in ns.Members.OfType<ClassDeclarationSyntax>())
 			{
 				if (cls.AttributeLists.Count > 0)
@@ -1529,27 +1570,18 @@ partial class {@class.Identifier.ValueText}
 						{
 							@namespace = ns;
 							@class = cls;
-							found = true;
-							break;
+							classes?.Insert(0, @class);
 						}
 					}
 				}
-
-				if (found)
+				else if(cls.Modifiers.Any(x => x.IsKind(SyntaxKind.PartialKeyword)))
 				{
-					break;
+					classes?.Add(cls);
 				}
-
-				classIndex++;
 			}
-
-			if (found)
-			{
-				break;
-			}
-
-			namespaceIndex++;
 		}
+
+		return @class != null;
 	}
 
 	public static bool IsUnmanagedType(string type)

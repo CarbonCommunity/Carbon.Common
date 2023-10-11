@@ -2068,7 +2068,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					(ap, jobject) =>
 					{
 						OsEx.File.Create(path, jobject.ToString(Formatting.Indented));
-						plugin.ProcessorInstance.SetDirty();
+						plugin.ProcessorProcess.SetDirty();
 						Community.Runtime.CorePlugin.NextTick(() => Singleton.SetTab(ap.Player, "plugins", false));
 					}));
 				Array.Clear(arg, 0, arg.Length);

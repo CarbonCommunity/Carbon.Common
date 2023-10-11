@@ -127,7 +127,7 @@ namespace Oxide.Game.Rust.Libraries
 		{
 			var methodInfos = plugin.GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 			var covalenceMethod = methodInfos.FirstOrDefault(x => x.Name == method && (!x.GetParameters().Any() || x.GetParameters().Any(y => y.ParameterType == typeof(IPlayer))));
-			var consoleMethod = methodInfos.FirstOrDefault(x => x.Name == method && (!x.GetParameters().Any() || x.GetParameters().Any(y => y.ParameterType == typeof(ConsoleSystem.Arg) && y.ParameterType != typeof(IPlayer))));
+			var consoleMethod = methodInfos.FirstOrDefault(x => x.Name == method && (!x.GetParameters().Any() || x.GetParameters().Any(y => y.ParameterType != typeof(IPlayer))));
 			var methodInfo = covalenceMethod ?? consoleMethod;
 
 			AddChatCommand(command, plugin, methodInfo, help, reference, permissions, groups, authLevel, cooldown, isHidden, @protected, silent);
@@ -276,7 +276,7 @@ namespace Oxide.Game.Rust.Libraries
 		{
 			var methodInfos = plugin.GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 			var covalenceMethod = methodInfos.FirstOrDefault(x => x.Name == method && (!x.GetParameters().Any() || x.GetParameters().Any(y => y.ParameterType == typeof(IPlayer))));
-			var consoleMethod = methodInfos.FirstOrDefault(x => x.Name == method && (!x.GetParameters().Any() || x.GetParameters().Any(y => y.ParameterType == typeof(ConsoleSystem.Arg) && y.ParameterType != typeof(IPlayer))));
+			var consoleMethod = methodInfos.FirstOrDefault(x => x.Name == method && (!x.GetParameters().Any() || x.GetParameters().Any(y => y.ParameterType != typeof(IPlayer))));
 			var methodInfo = covalenceMethod ?? consoleMethod;
 
 			AddConsoleCommand(command, plugin, methodInfo, help, reference, permissions, groups, authLevel, cooldown, isHidden, @protected, silent);
