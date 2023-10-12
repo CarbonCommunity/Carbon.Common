@@ -11,7 +11,7 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 {
 	public virtual string Name { get; }
 
-	public Dictionary<string, IBaseProcessor.IInstance> InstanceBuffer { get; set; }
+	public Dictionary<string, IBaseProcessor.IProcess> InstanceBuffer { get; set; }
 	public List<string> IgnoreList { get; set; }
 
 	public virtual bool EnableWatcher => true;
@@ -24,7 +24,7 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 	public FileSystemWatcher Watcher { get; private set; }
 
 	internal WaitForSeconds _wfsInstance;
-	internal Dictionary<string, IBaseProcessor.IInstance> _runtimeCache = new(1000);
+	internal Dictionary<string, IBaseProcessor.IProcess> _runtimeCache = new(1000);
 
 	public bool IsInitialized { get; set; }
 
@@ -36,7 +36,7 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 	{
 		if (IsInitialized) return;
 
-		InstanceBuffer = new Dictionary<string, IBaseProcessor.IInstance>();
+		InstanceBuffer = new Dictionary<string, IBaseProcessor.IProcess>();
 		IgnoreList = new List<string>();
 
 		DontDestroyOnLoad(gameObject);
@@ -55,13 +55,13 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 		{
 			Watcher = new FileSystemWatcher(Folder)
 			{
-				NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.FileName,
+				NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName,
 				Filter = $"*{Extension}"
 			};
-			Watcher.Created += _onCreated;
-			Watcher.Changed += _onChanged;
-			Watcher.Renamed += _onRenamed;
-			Watcher.Deleted += _onRemoved;
+			Watcher.Created += OnCreated;
+			Watcher.Changed += OnChanged;
+			Watcher.Renamed += OnRenamed;
+			Watcher.Deleted += OnRemoved;
 			Watcher.IncludeSubdirectories = true;
 			Watcher.EnableRaisingEvents = true;
 		}
@@ -96,12 +96,12 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 
 				if (element.Value == null)
 				{
-					var instance = Activator.CreateInstance(IndexedType) as Instance;
+					var instance = Activator.CreateInstance(IndexedType) as Process;
 
 					if (instance != null)
 					{
 						instance.File = element.Key;
-						instance.Execute();
+						instance.Execute(this);
 
 						InstanceBuffer.Remove(element.Key);
 						InstanceBuffer[id] = instance;
@@ -112,7 +112,7 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 
 				if (element.Value.IsDirty)
 				{
-					Process(element.Key, element.Value);
+					Execute(element.Key, element.Value);
 					yield return null;
 					continue;
 				}
@@ -158,11 +158,11 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 
 		Remove(id);
 
-		var instance = Activator.CreateInstance(IndexedType) as Instance;
+		var instance = Activator.CreateInstance(IndexedType) as Process;
 		InstanceBuffer.Add(id, instance);
 
 		instance.File = file;
-		instance.Execute();
+		instance.Execute(this);
 	}
 	public virtual void Remove(string id)
 	{
@@ -192,7 +192,7 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 	{
 		IgnoreList.RemoveAll(x => x == file);
 	}
-	public T Get<T>(string id) where T : IBaseProcessor.IInstance
+	public T Get<T>(string id) where T : IBaseProcessor.IProcess
 	{
 		if (InstanceBuffer.TryGetValue(id, out var instance))
 		{
@@ -202,21 +202,21 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 		return default;
 	}
 
-	public virtual void Clear(string id, IBaseProcessor.IInstance instance)
+	public virtual void Clear(string id, IBaseProcessor.IProcess process)
 	{
-		instance?.Dispose();
-		instance = null;
+		process?.Dispose();
+		process = null;
 		Remove(id);
 	}
-	public virtual void Process(string id, IBaseProcessor.IInstance instance)
+	public virtual void Execute(string id, IBaseProcessor.IProcess process)
 	{
-		var file = instance.File;
+		var file = process.File;
 
-		Clear(id, instance);
+		Clear(id, process);
 		Prepare(id, file);
 	}
 
-	internal void _onCreated(object sender, FileSystemEventArgs e)
+	public virtual void OnCreated(object sender, FileSystemEventArgs e)
 	{
 		if (!EnableWatcher || IsBlacklisted(e.FullPath)) return;
 
@@ -234,7 +234,7 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 
 		InstanceBuffer.Add(e.FullPath, null);
 	}
-	internal void _onChanged(object sender, FileSystemEventArgs e)
+	public virtual void OnChanged(object sender, FileSystemEventArgs e)
 	{
 		var path = e.FullPath;
 		var name = Path.GetFileNameWithoutExtension(path);
@@ -243,7 +243,7 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 
 		if (InstanceBuffer.TryGetValue(name, out var mod)) mod.SetDirty();
 	}
-	internal void _onRenamed(object sender, RenamedEventArgs e)
+	public virtual void OnRenamed(object sender, RenamedEventArgs e)
 	{
 		var path = e.FullPath;
 		var name = Path.GetFileNameWithoutExtension(path);
@@ -253,7 +253,7 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 		if (InstanceBuffer.TryGetValue(name, out var mod)) mod.MarkDeleted();
 		InstanceBuffer.Add(name, null);
 	}
-	internal void _onRemoved(object sender, FileSystemEventArgs e)
+	public virtual void OnRemoved(object sender, FileSystemEventArgs e)
 	{
 		var path = e.FullPath;
 		var name = Path.GetFileNameWithoutExtension(path);
@@ -280,8 +280,9 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 		return false;
 	}
 
-	public class Instance : IBaseProcessor.IInstance, IDisposable
+	public class Process : IBaseProcessor.IProcess, IDisposable
 	{
+		public IBaseProcessor Processor { get; internal set; }
 		public virtual IBaseProcessor.IParser Parser { get; }
 
 		public string File { get; set; }
@@ -290,7 +291,10 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 		internal bool _hasRemoved;
 
 		public virtual void Dispose() { }
-		public virtual void Execute() { }
+		public virtual void Execute(IBaseProcessor processor)
+		{
+			Processor = processor;
+		}
 
 		public bool HasSucceeded { get; set; }
 		public bool IsDirty => _hasChanged;

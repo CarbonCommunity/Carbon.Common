@@ -112,13 +112,21 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			CodeflingInstance = new Codefling();
 			if (CodeflingInstance is IVendorStored cfStored && !cfStored.Load())
 			{
-				CodeflingInstance.FetchList(vendor => CodeflingInstance.Refresh());
+				CodeflingInstance.FetchList((vendor) =>
+				{
+					CodeflingInstance.Refresh();
+					CodeflingInstance.VersionCheck();
+				});
 			}
 
 			uModInstance = new uMod();
 			if (uModInstance is IVendorStored umodStored && !umodStored.Load())
 			{
-				uModInstance.FetchList(vendor => uModInstance.Refresh());
+				uModInstance.FetchList((vendor) =>
+				{
+					uModInstance.Refresh();
+					uModInstance.VersionCheck();
+				});
 			}
 
 			// Lone_DesignInstance = new Lone_Design();
@@ -743,6 +751,18 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			public abstract void Download(string id, Action onTimeout = null);
 			public abstract void Uninstall(string id);
 			public abstract void CheckMetadata(string id, Action onMetadataRetrieved);
+
+			public virtual void VersionCheck()
+			{
+				foreach (var plugin in FetchedPlugins)
+				{
+					if (plugin.IsInstalled() && ServerOwner.Singleton.IsAutoUpdatable(plugin.Name) && !plugin.IsUpToDate())
+					{
+						// 3156772569 aka OnPluginOutdated
+						HookCaller.CallStaticHook(3156772569, plugin.Name, new VersionNumber(plugin.CurrentVersion()), new VersionNumber(plugin.Version), plugin.ExistentPlugin, Type);
+					}
+				}
+			}
 		}
 
 		public interface IVendorStored
@@ -913,6 +933,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					{
 						ParseData(data, true, true);
 
+						VersionCheck();
 					}, Community.Runtime.CorePlugin);
 
 					void ParseData(string data, bool doSave, bool insert)
@@ -965,10 +986,10 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 								}
 							}
 
-							callback?.Invoke(this);
-
 							if (doSave)
 							{
+								callback?.Invoke(this);
+
 								Logger.Log($"[{Type} Tab] Fetched latest plugin information.");
 
 								Save();
@@ -1873,6 +1894,11 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			[ProtoMember(2)]
 			public List<string> AutoUpdate { get; set; } = new();
 
+			public bool IsAutoUpdatable(string pluginName)
+			{
+				return AutoUpdate.Contains(pluginName);
+			}
+
 			public static void Load()
 			{
 				try
@@ -2042,7 +2068,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					(ap, jobject) =>
 					{
 						OsEx.File.Create(path, jobject.ToString(Formatting.Indented));
-						plugin.ProcessorInstance.SetDirty();
+						plugin.ProcessorProcess.SetDirty();
 						Community.Runtime.CorePlugin.NextTick(() => Singleton.SetTab(ap.Player, "plugins", false));
 					}));
 				Array.Clear(arg, 0, arg.Length);

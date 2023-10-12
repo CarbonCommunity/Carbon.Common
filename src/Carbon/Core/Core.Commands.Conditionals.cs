@@ -1,6 +1,6 @@
 ﻿/*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -35,8 +35,8 @@ public partial class CorePlugin : CarbonPlugin
 			{
 				if (plugin.HasConditionals)
 				{
-					plugin.ProcessorInstance.Dispose();
-					plugin.ProcessorInstance.Execute();
+					plugin.ProcessorProcess.Dispose();
+					plugin.ProcessorProcess.Execute(plugin.Processor);
 					mod.Plugins.Remove(plugin);
 				}
 			}
@@ -71,8 +71,8 @@ public partial class CorePlugin : CarbonPlugin
 			{
 				if (plugin.HasConditionals)
 				{
-					plugin.ProcessorInstance.Dispose();
-					plugin.ProcessorInstance.Execute();
+					plugin.ProcessorProcess.Dispose();
+					plugin.ProcessorProcess.Execute(plugin.Processor);
 					mod.Plugins.Remove(plugin);
 				}
 			}

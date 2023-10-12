@@ -6,7 +6,7 @@ using Oxide.Game.Rust.Cui;
 
 /*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -20,6 +20,13 @@ public partial class CorePlugin : CarbonPlugin
 	[AuthLevel(2)]
 	private void WipeUI(ConsoleSystem.Arg arg)
 	{
-		CuiHelper.DestroyActivePanelList(arg.Player());
+		if (arg.Player() is BasePlayer player)
+		{
+			CuiHelper.DestroyActivePanelList(player);
+		}
+		else
+		{
+			arg.ReplyWith($"This command can only be called from a client.");
+		}
 	}
 }

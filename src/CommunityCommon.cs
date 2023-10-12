@@ -13,7 +13,7 @@ using Carbon.Client.SDK;
 
 /*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -84,6 +84,14 @@ public class Community
 	public IWebScriptProcessor WebScriptProcessor
 	{ get; set; }
 
+	public IZipScriptProcessor ZipScriptProcessor
+	{ get; set; }
+
+#if DEBUG
+	public IZipDevScriptProcessor ZipDevScriptProcessor
+	{ get; set; }
+#endif
+
 	public ICarbonProcessor CarbonProcessor
 	{ get; set; }
 
@@ -101,6 +109,9 @@ public class Community
 	{ get; set; }
 
 	public ModLoader.ModPackage Plugins
+	{ get; set; }
+
+	public ModLoader.ModPackage ZipPlugins
 	{ get; set; }
 
 	public Entities Entities
@@ -282,7 +293,7 @@ public class Community
 #if MINIMAL
 			$" Minimal" +
 #endif
-			$" v{version}, {ModLoader.LoadedPackages.Count:n0} mods, {ModLoader.LoadedPackages.Sum(x => x.Plugins.Count):n0} plgs";
+			$" v{version}, {ModLoader.LoadedPackages.Count:n0} mods, {ModLoader.LoadedPackages.Sum(x => x.Plugins.Count):n0} plgs, {ModuleProcessor.Modules.Count(x => x is BaseModule module && module.GetEnabled()):n0}/{ModuleProcessor.Modules.Count:n0} mdls, {AssemblyEx.Extensions.Loaded.Count:n0} exts";
 #endif
 	}
 

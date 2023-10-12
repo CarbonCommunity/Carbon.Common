@@ -4,7 +4,7 @@ using Logger = Carbon.Logger;
 
 /*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -28,6 +28,11 @@ public class Timers : Library
 	}
 	public void Clear()
 	{
+		if (_timers == null)
+		{
+			return;
+		}
+
 		foreach (var timer in _timers)
 		{
 			timer.Destroy();
