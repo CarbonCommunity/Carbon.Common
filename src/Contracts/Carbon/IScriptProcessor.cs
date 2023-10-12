@@ -15,7 +15,7 @@ public interface IScriptProcessor : IBaseProcessor, IDisposable
 
 	void Remove(string name);
 
-	public interface IScript : IInstance
+	public interface IScript : IProcess
 	{
 		IScriptLoader Loader { get; set; }
 	}

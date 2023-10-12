@@ -2,7 +2,7 @@
 
 /*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -32,7 +32,7 @@ namespace Oxide.Game.Rust.Libraries.Covalence
 
 		public string Name { get; set; }
 
-		public string Id { get; set; }
+		public string Id { get; set; } = "server_console";
 
 		public string Address => BasePlayer?.Connection?.ipaddress;
 

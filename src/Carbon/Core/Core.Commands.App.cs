@@ -2,7 +2,7 @@
 
 /*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -34,7 +34,7 @@ public partial class CorePlugin : CarbonPlugin
 	{
 		if (!arg.IsPlayerCalledOrAdmin()) return;
 
-		var mode = arg.HasArgs(1) ? arg.GetString(0) : null;
+		var mode = arg.GetString(0);
 
 		switch (mode)
 		{
@@ -47,19 +47,20 @@ public partial class CorePlugin : CarbonPlugin
 
 			default:
 				var result = string.Empty;
+				var alphabeticalOrder = mode == "-abc";
 
 				// Loaded plugins
 				{
 					using var body = new StringTable("#", "Mod", "Author", "Version", "Hook Time", "Memory Usage", "Compile Time", "Uptime");
 					var count = 1;
 
-					foreach (var mod in ModLoader.LoadedPackages)
+					foreach (var mod in (alphabeticalOrder ? ModLoader.LoadedPackages.OrderBy(x => x.Name) : ModLoader.LoadedPackages.AsEnumerable())!)
 					{
 						if (mod.IsCoreMod) continue;
 
-						body.AddRow($"{count:n0}", $"{mod.Name}{(mod.Plugins.Count > 1 ? $" ({mod.Plugins.Count:n0})" : "")}", string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
+						body.AddRow($"{count:n0}", $"{mod.Name}{(mod.Plugins.Count >= 1 ? $" ({mod.Plugins.Count:n0})" : string.Empty)}", string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
 
-						foreach (var plugin in mod.Plugins)
+						foreach (var plugin in (alphabeticalOrder ? mod.Plugins.OrderBy(x => x.Name) : mod.Plugins.AsEnumerable())!)
 						{
 							var hookTimeAverageValue =
 #if DEBUG

@@ -46,7 +46,7 @@ public partial class CorePlugin : CarbonPlugin
 		return null;
 	}
 
-	public override void IInit()
+	public override bool IInit()
 	{
 		_defaultLogTrace = Application.GetStackTraceLogType(LogType.Log);
 		_defaultWarningTrace = Application.GetStackTraceLogType(LogType.Warning);
@@ -70,7 +70,10 @@ public partial class CorePlugin : CarbonPlugin
 			}
 		}
 
-		base.IInit();
+		if (!base.IInit())
+		{
+			return false;
+		}
 
 		foreach (var player in BasePlayer.activePlayerList)
 		{
@@ -87,6 +90,8 @@ public partial class CorePlugin : CarbonPlugin
 
 		_originalMaxPlayers = ConVar.Server.maxplayers;
 		ConVar.Server.maxplayers = 0;
+
+		return true;
 	}
 
 	private void OnServerInitialized()
