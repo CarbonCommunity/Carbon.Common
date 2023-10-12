@@ -87,8 +87,10 @@ public class Community
 	public IZipScriptProcessor ZipScriptProcessor
 	{ get; set; }
 
+#if DEBUG
 	public IZipDevScriptProcessor ZipDevScriptProcessor
 	{ get; set; }
+#endif
 
 	public ICarbonProcessor CarbonProcessor
 	{ get; set; }
