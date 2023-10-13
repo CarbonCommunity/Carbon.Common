@@ -1,6 +1,6 @@
 ﻿/*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -146,8 +146,9 @@ public partial class CorePlugin : CarbonPlugin
 						return;
 					}
 
+					var permissions = permission.GetUserPermissions(user.Key);
 					arg.ReplyWith($"User {user.Value.LastSeenNickname}[{user.Key}] found in {user.Value.Groups.Count:n0} groups:\n  {user.Value.Groups.Select(x => x).ToString(", ", " and ")}\n" +
-						$"and has {user.Value.Perms.Count:n0} permissions:\n  {user.Value.Perms.Select(x => x).ToString(", ", " and ")}");
+						$"and has {permissions.Count():n0} permissions:\n  {permissions.ToString(", ")}");
 					break;
 				}
 			case "group":
@@ -164,8 +165,8 @@ public partial class CorePlugin : CarbonPlugin
 
 					var users = permission.GetUsersInGroup(name);
 					var permissions = permission.GetGroupPermissions(name, false);
-					arg.ReplyWith($"Group {name} has {users.Length:n0} users:\n  {users.Select(x => x).ToString(", ", " and ")}\n" +
-						$"and has {permissions.Length:n0} permissions:\n  {permissions.Select(x => x).ToString(", ", " and ")}");
+					arg.ReplyWith($"Group {name} has {users.Length:n0} users:\n  {users.Select(x => x).ToString(", ")}\n" +
+						$"and has {permissions.Length:n0} permissions:\n  {permissions.Select(x => x).ToString(", ")}");
 					break;
 				}
 			case "groups":
@@ -177,7 +178,7 @@ public partial class CorePlugin : CarbonPlugin
 						return;
 					}
 
-					arg.ReplyWith($"Groups:\n {String.Join(", ", groups)}");
+					arg.ReplyWith($"Groups:\n {groups.ToString(", ")}");
 					break;
 				}
 			case "perms":
@@ -188,7 +189,7 @@ public partial class CorePlugin : CarbonPlugin
 						arg.ReplyWith($"Couldn't find any permission.");
 					}
 
-					arg.ReplyWith($"Permissions:\n {String.Join(", ", perms)}");
+					arg.ReplyWith($"Permissions:\n {perms.ToString(", ")}");
 
 					break;
 				}

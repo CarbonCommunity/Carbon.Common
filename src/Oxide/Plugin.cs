@@ -1,10 +1,11 @@
 ﻿using Facepunch;
+using Facepunch.Models;
 using Newtonsoft.Json;
 using Logger = Carbon.Logger;
 
 /*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -58,14 +59,14 @@ namespace Oxide.Core.Plugins
 
 		public ModLoader.ModPackage Package;
 		public IBaseProcessor Processor;
-		public IBaseProcessor.IInstance ProcessorInstance;
+		public IBaseProcessor.IProcess ProcessorProcess;
 
 		public static implicit operator bool(Plugin other)
 		{
 			return other != null && other.IsLoaded;
 		}
 
-		public virtual void IInit()
+		public virtual bool IInit()
 		{
 			if (HookMethods != null)
 			{
@@ -88,7 +89,11 @@ namespace Oxide.Core.Plugins
 
 			using (TimeMeasure.New($"Processing PluginReferences on '{this}'"))
 			{
-				InternalApplyPluginReferences();
+				if (!InternalApplyPluginReferences())
+				{
+					Logger.Warn($"Failed vibe check {ToString()}");
+					return false;
+				}
 			}
 			Carbon.Logger.Debug(Name, "Assigned plugin references");
 
@@ -101,7 +106,7 @@ namespace Oxide.Core.Plugins
 					{
 						Community.Runtime.HookManager.Subscribe(HookStringPool.GetOrAdd(hook), requester);
 					}
-						
+
 				}
 				Carbon.Logger.Debug(Name, "Processed hooks");
 			}
@@ -109,6 +114,8 @@ namespace Oxide.Core.Plugins
 			CallHook("Init");
 
 			TrackInit();
+
+			return true;
 		}
 		internal virtual void ILoad()
 		{
@@ -221,17 +228,15 @@ namespace Oxide.Core.Plugins
 				Logger.Error($"Failed calling Plugin.IUnload.UnloadRequirees on {this}", ex);
 			}
 		}
-		internal void InternalApplyPluginReferences()
+		internal bool InternalApplyPluginReferences()
 		{
-			if (PluginReferences == null) return;
+			if (PluginReferences == null) return true;
 
-			foreach (var reference in PluginReferences)
+			foreach (var attribute in PluginReferences)
 			{
-				var field = reference.Field;
-				var attribute = field.GetCustomAttribute<PluginReferenceAttribute>();
-				if (attribute == null) continue;
-
+				var field = attribute.Field;
 				var name = string.IsNullOrEmpty(attribute.Name) ? field.Name : attribute.Name;
+				var path = Path.Combine(Defines.GetScriptFolder(), $"{name}.cs");
 
 				var plugin = (Plugin)null;
 				if (field.FieldType.Name != nameof(Plugin) &&
@@ -252,19 +257,58 @@ namespace Oxide.Core.Plugins
 					plugin = Community.Runtime.CorePlugin.plugins.Find(name);
 				}
 
-				if (plugin != null) field.SetValue(this, plugin);
+				if (plugin != null)
+				{
+					var version = new VersionNumber(attribute.MinVersion);
+
+					if (version.IsValid() && plugin.Version < version)
+					{
+						Logger.Warn($"Plugin '{Name} by {Author} v{Version}' references a required plugin which is outdated: {plugin.Name} by {plugin.Author} v{plugin.Version} < v{version}");
+						return false;
+					}
+					else
+					{
+						field.SetValue(this, plugin);
+
+						if (attribute.IsRequired)
+						{
+							ModLoader.AddPendingRequiree(plugin, this);
+						}
+					}
+				}
+				else if (attribute.IsRequired)
+				{
+					ModLoader.PostBatchFailedRequirees.Add(FilePath);
+					ModLoader.AddPendingRequiree(path, FilePath);
+					Logger.Warn($"Plugin '{Name} by {Author} v{Version}' references a required plugin which is not loaded: {name}");
+					return false;
+				}
 			}
+
+			return true;
 		}
 
 		public static void InternalApplyAllPluginReferences()
 		{
+			var list = Pool.GetList<RustPlugin>();
+
 			foreach (var package in ModLoader.LoadedPackages)
 			{
 				foreach (var plugin in package.Plugins)
 				{
-					plugin.InternalApplyPluginReferences();
+					if (!plugin.InternalApplyPluginReferences())
+					{
+						list.Add(plugin);
+					}
 				}
 			}
+
+			foreach (var plugin in list)
+			{
+				ModLoader.UninitializePlugin(plugin);
+			}
+
+			Pool.FreeList(ref list);
 		}
 
 		public void SetProcessor(IBaseProcessor processor)
@@ -607,6 +651,20 @@ namespace Oxide.Core.Plugins
 			{
 				processor.CurrentFrameQueue.Add(callback);
 			}
+		}
+		public void QueueWorkerThread(Action<object> callback)
+		{
+			ThreadPool.QueueUserWorkItem(context =>
+			{
+				try
+				{
+					callback(context);
+				}
+				catch (Exception ex)
+				{
+					Carbon.Logger.Error($"Worker thread callback failed in '{Name} v{Version}'", ex);
+				}
+			});
 		}
 
 		public DynamicConfigFile Config { get; internal set; }

@@ -20,14 +20,19 @@ public class CarbonPlugin : RustPlugin
 		CuiHandler = new CUI.Handler();
 	}
 
-	public override void IInit()
+	public override bool IInit()
 	{
-		base.IInit();
+		if (!base.IInit())
+		{
+			return false;
+		}
 
 		if (AutoPatch)
 		{
 			ApplyPatch();
 		}
+
+		return true;
 	}
 
 	public override void IUnload()

@@ -4,7 +4,7 @@ using Formatting = Newtonsoft.Json.Formatting;
 
 /*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -32,16 +32,10 @@ public static class CuiHelper
 
 	public static void DestroyActivePanelList(BasePlayer player, string[] except = null)
 	{
-		var list = GetActivePanelList(player);
-		var cui = Pool.GetList<string>();
-		cui.AddRange(GetActivePanelList(player).Where(x => except == null || except.Length == 0 ? true : !except.Any(y => x.StartsWith(y))));
-
-		foreach (var element in cui)
+		foreach (var element in GetActivePanelList(player).Where(x => except == null || except.Length == 0 ? true : !except.Any(y => x.StartsWith(y))))
 		{
 			DestroyUi(player, element);
 		}
-
-		Pool.FreeList(ref cui);
 	}
 
 	public static string ToJson(List<CuiElement> elements, bool format = false)

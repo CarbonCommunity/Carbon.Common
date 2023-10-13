@@ -1,6 +1,6 @@
 ﻿/*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -119,6 +119,21 @@ public class Defines
 	{
 		_initializeCommandLine();
 		var folder = Path.GetFullPath(Path.Combine(GetScriptFolder(), "backups"));
+		Directory.CreateDirectory(folder);
+
+		return folder;
+	}
+	public static string GetScriptDebugFolder()
+	{
+		_initializeCommandLine();
+		var folder = Path.GetFullPath(Path.Combine(GetScriptFolder(), "debug"));
+		Directory.CreateDirectory(folder);
+
+		return folder;
+	}
+	public static string GetZipDevFolder()
+	{
+		var folder = Path.Combine(GetScriptFolder(), "cszip_dev");
 		Directory.CreateDirectory(folder);
 
 		return folder;

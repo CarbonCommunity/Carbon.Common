@@ -5,7 +5,7 @@ using Report = Carbon.Components.Report;
 
 /*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -40,14 +40,21 @@ public static class ModLoader
 
 		return null;
 	}
-	public static void AddPendingRequiree(Plugin initial, Plugin requiree)
+	public static void AddPendingRequiree(string initial, string requiree)
 	{
-		if (!PendingRequirees.TryGetValue(initial.FilePath, out var requirees))
+		if (!PendingRequirees.TryGetValue(initial, out var requirees))
 		{
-			PendingRequirees.Add(initial.FilePath, requirees = new List<string>(20));
+			PendingRequirees.Add(initial, requirees = new List<string>(20));
 		}
 
-		requirees.Add(requiree.FilePath);
+		if (!requirees.Contains(requiree))
+		{
+			requirees.Add(requiree);
+		}
+	}
+	public static void AddPendingRequiree(Plugin initial, Plugin requiree)
+	{
+		AddPendingRequiree(initial.FilePath, requiree.FilePath);
 	}
 	public static void ClearPendingRequirees(Plugin initial)
 	{
@@ -222,7 +229,20 @@ public static class ModLoader
 
 		plugin.ILoadConfig();
 		plugin.ILoadDefaultMessages();
-		plugin.IInit();
+
+		if (!plugin.IInit())
+		{
+			if (UninitializePlugin(plugin, true))
+			{
+				if (package != null && package.Plugins.Contains(plugin))
+				{
+					package.Plugins.Remove(plugin);
+				}
+
+				return false;
+			}
+		}
+
 		plugin.ILoad();
 
 		ProcessCommands(type, plugin);
@@ -230,17 +250,27 @@ public static class ModLoader
 		Logger.Log($"Loaded plugin {plugin.ToString()} [{plugin.CompileTime:0}ms]");
 		return true;
 	}
-	public static bool UninitializePlugin(RustPlugin plugin)
+	public static bool UninitializePlugin(RustPlugin plugin, bool premature = false)
 	{
-		plugin.CallHook("Unload");
+		if (!premature)
+		{
+			plugin.CallHook("Unload");
+		}
 
 		RemoveCommands(plugin);
 		plugin.IUnload();
 
-		HookCaller.CallStaticHook(3843290135, plugin);
+		if (!premature)
+		{
+			HookCaller.CallStaticHook(3843290135, plugin);
+		}
 
 		plugin.Dispose();
-		Logger.Log($"Unloaded plugin {plugin.ToString()}");
+
+		if (!premature)
+		{
+			Logger.Log($"Unloaded plugin {plugin.ToString()}");
+		}
 		return true;
 	}
 
@@ -323,24 +353,24 @@ public static class ModLoader
 				foreach (var commandName in command.Names)
 				{
 					var name = string.IsNullOrEmpty(prefix) ? commandName : $"{prefix}.{commandName}";
-					Community.Runtime.CorePlugin.cmd.AddChatCommand(name, hookable, method.Name, help: string.Empty, reference: method, permissions: ps, groups: gs, authLevel: authLevel, cooldown: cooldownTime);
-					Community.Runtime.CorePlugin.cmd.AddConsoleCommand(name, hookable, method.Name, help: string.Empty, reference: method, permissions: ps, groups: gs, authLevel: authLevel, cooldown: cooldownTime);
+					Community.Runtime.CorePlugin.cmd.AddChatCommand(name, hookable, method, help: string.Empty, reference: method, permissions: ps, groups: gs, authLevel: authLevel, cooldown: cooldownTime, silent: true);
+					Community.Runtime.CorePlugin.cmd.AddConsoleCommand(name, hookable, method, help: string.Empty, reference: method, permissions: ps, groups: gs, authLevel: authLevel, cooldown: cooldownTime, silent: true);
 				}
 			}
 
 			if (chatCommand != null)
 			{
-				Community.Runtime.CorePlugin.cmd.AddChatCommand(string.IsNullOrEmpty(prefix) ? chatCommand.Name : $"{prefix}.{chatCommand.Name}", hookable, method.Name, help: chatCommand.Help, reference: method, permissions: ps, groups: gs, authLevel: authLevel, cooldown: cooldownTime);
+				Community.Runtime.CorePlugin.cmd.AddChatCommand(string.IsNullOrEmpty(prefix) ? chatCommand.Name : $"{prefix}.{chatCommand.Name}", hookable, method, help: chatCommand.Help, reference: method, permissions: ps, groups: gs, authLevel: authLevel, cooldown: cooldownTime, silent: true);
 			}
 
 			if (consoleCommand != null)
 			{
-				Community.Runtime.CorePlugin.cmd.AddConsoleCommand(string.IsNullOrEmpty(prefix) ? consoleCommand.Name : $"{prefix}.{consoleCommand.Name}", hookable, method.Name, help: consoleCommand.Help, reference: method, permissions: ps, groups: gs, authLevel: authLevel, cooldown: cooldownTime);
+				Community.Runtime.CorePlugin.cmd.AddConsoleCommand(string.IsNullOrEmpty(prefix) ? consoleCommand.Name : $"{prefix}.{consoleCommand.Name}", hookable, method, help: consoleCommand.Help, reference: method, permissions: ps, groups: gs, authLevel: authLevel, cooldown: cooldownTime, silent: true);
 			}
 
 			if (protectedCommand != null)
 			{
-				Community.Runtime.CorePlugin.cmd.AddConsoleCommand(Community.Protect(string.IsNullOrEmpty(prefix) ? protectedCommand.Name : $"{prefix}.{protectedCommand.Name}"), hookable, method.Name, help: protectedCommand.Help, reference: method, permissions: ps, groups: gs, authLevel: authLevel, cooldown: cooldownTime, isHidden: true);
+				Community.Runtime.CorePlugin.cmd.AddConsoleCommand(Community.Protect(string.IsNullOrEmpty(prefix) ? protectedCommand.Name : $"{prefix}.{protectedCommand.Name}"), hookable, method, help: protectedCommand.Help, reference: method, permissions: ps, groups: gs, authLevel: authLevel, cooldown: cooldownTime, isHidden: true, silent: true);
 			}
 
 			if (ps != null && ps.Length > 0)
@@ -417,7 +447,7 @@ public static class ModLoader
 					if (value != null && var.Protected) value = new string('*', value.ToString().Length);
 
 					Community.LogCommand($"{command}: \"{value}\"", player);
-				}, help: var.Help, reference: field, permissions: ps, groups: gs, authLevel: authLevel, cooldown: cooldownTime, @protected: var.Protected);
+				}, help: var.Help, reference: field, permissions: ps, groups: gs, authLevel: authLevel, cooldown: cooldownTime, @protected: var.Protected, silent: true);
 			}
 		}
 
@@ -483,7 +513,7 @@ public static class ModLoader
 					if (value != null && var.Protected) value = new string('*', value.ToString().Length);
 
 					Community.LogCommand($"{command}: \"{value}\"", player);
-				}, help: var.Help, reference: property, permissions: ps, groups: gs, authLevel: authLevel, cooldown: cooldownTime, @protected: var.Protected);
+				}, help: var.Help, reference: property, permissions: ps, groups: gs, authLevel: authLevel, cooldown: cooldownTime, @protected: var.Protected, silent: true);
 			}
 		}
 

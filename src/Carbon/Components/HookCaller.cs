@@ -1,11 +1,12 @@
-﻿using System.Buffers;
-using System.Linq.Expressions;
+﻿using System.Diagnostics;
 using System.Text;
 using Carbon.Base.Interfaces;
+using ConVar;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using static Carbon.HookCallerCommon;
+using Pool = Facepunch.Pool;
 
 /*
  *
@@ -110,7 +111,7 @@ public static class HookCaller
 		Caller.ClearHookTime(hookId);
 
 		var result = (object)null;
-		var array = args == null || args.Length == 0 ? null : keepArgs ? args : args.ToArray();
+		var array = args == null ? null : keepArgs ? args : args.ToArray();
 
 		for (int i = 0; i < Community.Runtime.ModuleProcessor.Modules.Count; i++)
 		{
@@ -214,15 +215,27 @@ public static class HookCaller
 
 	public static object CallHook(BaseHookable plugin, uint hookId)
 	{
-		return Caller.CallHook(plugin, hookId, flags: BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public, null);
+		var buffer = Caller.AllocateBuffer(0);
+		var result = Caller.CallHook(plugin, hookId, BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public, buffer);
+
+		Caller.ClearBuffer(buffer);
+		return result;
 	}
 	public static T CallHook<T>(BaseHookable plugin, uint hookId)
 	{
-		return (T)Caller.CallHook(plugin, hookId, BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public, null);
+		var buffer = Caller.AllocateBuffer(0);
+		var result = Caller.CallHook(plugin, hookId, BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public, buffer);
+
+		Caller.ClearBuffer(buffer);
+		return (T)result;
 	}
 	public static T CallDeprecatedHook<T>(BaseHookable plugin, uint oldHookId, uint newHookId, DateTime expireDate)
 	{
-		return (T)Caller.CallDeprecatedHook(plugin, oldHookId, newHookId, expireDate, BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public, null);
+		var buffer = Caller.AllocateBuffer(0);
+		var result = Caller.CallDeprecatedHook(plugin, oldHookId, newHookId, expireDate, BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public, buffer);
+
+		Caller.ClearBuffer(buffer);
+		return (T)result;
 	}
 	public static object CallHook(BaseHookable plugin, uint hookId, object arg1)
 	{
@@ -856,11 +869,19 @@ public static class HookCaller
 
 	public static object CallStaticHook(uint hookId)
 	{
-		return CallStaticHook(hookId, BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public, null);
+		var buffer = Caller.AllocateBuffer(0);
+		var result = CallStaticHook(hookId, flag: BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public, args: buffer);
+
+		Caller.ClearBuffer(buffer);
+		return result;
 	}
 	public static object CallStaticDeprecatedHook(uint oldHookId, uint newHookId, DateTime expireDate)
 	{
-		return CallStaticDeprecatedHook(oldHookId, newHookId, expireDate, BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public, null);
+		var buffer = Caller.AllocateBuffer(0);
+		var result = CallStaticDeprecatedHook(oldHookId, newHookId, expireDate, flag: BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public, args: buffer);
+
+		Caller.ClearBuffer(buffer);
+		return result;
 	}
 	public static object CallStaticHook(uint hookId, object arg1)
 	{
@@ -1292,29 +1313,61 @@ public static class HookCaller
 
 	#region Generator
 
-	public static void GenerateInternalCallHook(CompilationUnitSyntax input, out CompilationUnitSyntax output, out MethodDeclarationSyntax generatedMethod)
+	internal static List<ClassDeclarationSyntax> _classList = new();
+
+	public static void GenerateInternalCallHook(CompilationUnitSyntax input, out CompilationUnitSyntax output, out MethodDeclarationSyntax generatedMethod, out bool isPartial, List<ClassDeclarationSyntax> _classList = null)
 	{
 		var methodContents = "\n\tvar result = (object)null;\n\ttry\n\t{\n\t\tswitch(hook)\n\t\t{\n";
 
-		FindPluginInfo(input, out var @namespace, out var @class, out var namespaceIndex, out var classIndex);
+		var @namespace = (BaseNamespaceDeclarationSyntax)null;
+		var namespaceIndex = 0;
+		var classIndex = 0;
+		var isTemp = false;
 
-		var methodDeclarations = new List<MethodDeclarationSyntax>();
-		methodDeclarations.AddRange(@class.ChildNodes().OfType<MethodDeclarationSyntax>());
-
-		#region Handle partials
-
-		foreach (var subNamespace in input.Members.OfType<BaseNamespaceDeclarationSyntax>())
+		if (_classList == null)
 		{
-			foreach (var subClass in subNamespace.Members.OfType<ClassDeclarationSyntax>())
-			{
-				if (subClass != @class && subClass.Modifiers.Any(SyntaxKind.PartialKeyword) && subClass.Identifier.ValueText == @class.Identifier.ValueText)
-				{
-					methodDeclarations.AddRange(subClass.ChildNodes().OfType<MethodDeclarationSyntax>());
-				}
-			}
+			_classList = Pool.GetList<ClassDeclarationSyntax>();
+			isTemp = true;
+			FindPluginInfo(input, out @namespace, _classList);
+		}
+		else
+		{
+			FindPluginInfo(input, out @namespace, null);
+
+			namespaceIndex = classIndex = 0;
 		}
 
-		#endregion
+		var @class = _classList[0];
+
+		if (@namespace == null)
+		{
+			@namespace = @class.Parent as BaseNamespaceDeclarationSyntax;
+		}
+
+		isPartial = @class.Modifiers.Any(x => x.IsKind(SyntaxKind.PartialKeyword));
+
+		var methodDeclarations = new List<MethodDeclarationSyntax>();
+		methodDeclarations.AddRange(  _classList.SelectMany(x => x.ChildNodes()).OfType<MethodDeclarationSyntax>());
+
+		if (isTemp)
+		{
+			Pool.FreeList(ref _classList);
+		}
+
+		// #region Handle partials
+//
+		// foreach (var subNamespace in input.Members.OfType<BaseNamespaceDeclarationSyntax>())
+		// {
+		// 	foreach (var subClass in subNamespace.Members.OfType<ClassDeclarationSyntax>())
+		// 	{
+		// 		if (subClass != @class && subClass.Modifiers.Any(SyntaxKind.PartialKeyword) && subClass.Identifier.ValueText == @class.Identifier.ValueText)
+		// 		{
+		// 			methodDeclarations.AddRange(subClass.ChildNodes().OfType<MethodDeclarationSyntax>());
+		// 		}
+		// 	}
+		// }
+//
+		// #endregion
 
 		var hookableMethods = new Dictionary<uint, List<MethodDeclarationSyntax>>();
 		var privateMethods0 = methodDeclarations.Where(md => (md.Modifiers.Count == 0 || md.Modifiers.All(modifier => !modifier.IsKind(SyntaxKind.PublicKeyword) && !modifier.IsKind(SyntaxKind.StaticKeyword)) || md.AttributeLists.Any(x => x.Attributes.Any(y => y.Name.ToString() == "HookMethod"))) && md.TypeParameterList == null);
@@ -1450,11 +1503,26 @@ public static class HookCaller
 		#endregion
 	}
 
-	public static void GeneratePartial(CompilationUnitSyntax input, out SyntaxTree output, CSharpParseOptions options, string fileName)
+	public static void GeneratePartial(CompilationUnitSyntax input, out CompilationUnitSyntax output, CSharpParseOptions options, string fileName, List<ClassDeclarationSyntax> classes = null)
 	{
-		GenerateInternalCallHook(input, out _, out var method);
+		GenerateInternalCallHook(input, out _, out var method, out var isPartial, classes);
 
-		FindPluginInfo(input, out var @namespace, out var @class, out _, out _);
+		var @namespace = (BaseNamespaceDeclarationSyntax)null;
+		var @class = (ClassDeclarationSyntax)null;
+
+		if (classes == null)
+		{
+			classes = Facepunch.Pool.GetList<ClassDeclarationSyntax>();
+			FindPluginInfo(input, out @namespace, classes);
+
+			@class = classes[0];
+			Facepunch.Pool.FreeList(ref classes);
+		}
+		else
+		{
+			@namespace = classes[0].Parent as BaseNamespaceDeclarationSyntax;
+			@class = classes[0];
+		}
 
 		var source = @$"{input.Usings.Select(x => x.ToString()).ToString("\n")}
 
@@ -1465,22 +1533,33 @@ partial class {@class.Identifier.ValueText}
 	{method}
 }}";
 
-		output = CSharpSyntaxTree.ParseText(source, options, $"{fileName}.cs/Internal", Encoding.UTF8);
+		string path;
+
+#if DEBUG
+		if (isPartial && Debugger.IsAttached)
+		{
+			path = Path.Combine(Defines.GetScriptDebugFolder(), $"{Path.GetFileNameWithoutExtension(fileName)}.Internal.cs");
+			output = CSharpSyntaxTree.ParseText(source, options, path, Encoding.UTF8).GetCompilationUnitRoot().NormalizeWhitespace();
+			OsEx.File.Create(path, output.ToFullString());
+		}
+		else
+		{
+			path = $"{fileName}/Internal";
+			output = CSharpSyntaxTree.ParseText(source, options, path, Encoding.UTF8).GetCompilationUnitRoot();
+		}
+#else
+			path = $"{fileName}/Internal";
+			output = CSharpSyntaxTree.ParseText(source, options, path, Encoding.UTF8).GetCompilationUnitRoot();
+#endif
 	}
 
-	public static void FindPluginInfo(CompilationUnitSyntax input, out BaseNamespaceDeclarationSyntax @namespace, out ClassDeclarationSyntax @class, out int namespaceIndex, out int classIndex)
+	public static bool FindPluginInfo(CompilationUnitSyntax input, out BaseNamespaceDeclarationSyntax @namespace, List<ClassDeclarationSyntax> classes)
 	{
+		var @class = (ClassDeclarationSyntax)null;
 		@namespace = null;
-		@class = null;
-		namespaceIndex = 0;
-		classIndex = 0;
-
-		var found = false;
 
 		foreach (var ns in input.Members.OfType<BaseNamespaceDeclarationSyntax>())
 		{
-			classIndex = 0;
-
 			foreach (var cls in ns.Members.OfType<ClassDeclarationSyntax>())
 			{
 				if (cls.AttributeLists.Count > 0)
@@ -1491,27 +1570,18 @@ partial class {@class.Identifier.ValueText}
 						{
 							@namespace = ns;
 							@class = cls;
-							found = true;
-							break;
+							classes?.Insert(0, @class);
 						}
 					}
 				}
-
-				if (found)
+				else if(cls.Modifiers.Any(x => x.IsKind(SyntaxKind.PartialKeyword)))
 				{
-					break;
+					classes?.Add(cls);
 				}
-
-				classIndex++;
 			}
-
-			if (found)
-			{
-				break;
-			}
-
-			namespaceIndex++;
 		}
+
+		return @class != null;
 	}
 
 	public static bool IsUnmanagedType(string type)
