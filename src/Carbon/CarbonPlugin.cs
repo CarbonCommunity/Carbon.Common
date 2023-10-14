@@ -27,9 +27,9 @@ public class CarbonPlugin : RustPlugin
 			return false;
 		}
 
-		if (AutoPatch)
+		if (AutoPatch && !ApplyPatch())
 		{
-			ApplyPatch();
+			return false;
 		}
 
 		return true;
@@ -40,11 +40,6 @@ public class CarbonPlugin : RustPlugin
 		UnapplyPatch();
 
 		base.IUnload();
-	}
-
-	public virtual async ValueTask OnAsyncServerShutdown()
-	{
-		await Task.CompletedTask;
 	}
 
 	#region CUI

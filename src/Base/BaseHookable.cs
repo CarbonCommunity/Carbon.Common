@@ -5,7 +5,7 @@ using Newtonsoft.Json;
 
 /*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -41,7 +41,7 @@ public class BaseHookable
 						  method.GetCustomAttribute<AsyncStateMachineAttribute>() != null,
 				Parameters = parameters.Select(x => x.ParameterType).ToArray(),
 			};
-			
+
 			return hook;
 		}
 	}
@@ -149,6 +149,11 @@ public class BaseHookable
 
 #endregion
 
+	public virtual async ValueTask OnAsyncServerShutdown()
+	{
+		await Task.CompletedTask;
+	}
+	
 	public virtual object InternalCallHook(uint hook, object[] args)
 	{
 		InternalCallHookOverriden = false;
