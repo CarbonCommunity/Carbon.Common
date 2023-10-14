@@ -42,6 +42,11 @@ public class CarbonPlugin : RustPlugin
 		base.IUnload();
 	}
 
+	public virtual async ValueTask OnAsyncServerShutdown()
+	{
+		await Task.CompletedTask;
+	}
+
 	#region CUI
 
 	public CUI CreateCUI()
