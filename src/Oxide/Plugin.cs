@@ -686,7 +686,7 @@ namespace Oxide.Core.Plugins
 			}
 			catch (Exception ex)
 			{
-				Carbon.Logger.Error("Failed to load config file (is the config file corrupt?) (" + ex.Message + ")");
+				Carbon.Logger.Error("Failed to load config file (is the config file corrupt?)", ex);
 			}
 		}
 		protected virtual void LoadDefaultConfig()

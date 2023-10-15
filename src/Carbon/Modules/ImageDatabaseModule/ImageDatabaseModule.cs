@@ -279,7 +279,7 @@ public class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModule
 			}
 			catch (Exception ex)
 			{
-				PutsWarn($"Failed QueueBatch of {urls.Length:n0}. ({ex.Message})");
+				PutsError($"Failed QueueBatch of {urls.Length:n0}", ex);
 			}
 		}));
 
