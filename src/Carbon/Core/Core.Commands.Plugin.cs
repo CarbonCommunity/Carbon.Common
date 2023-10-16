@@ -9,7 +9,7 @@ namespace Carbon.Core;
 
 public partial class CorePlugin : CarbonPlugin
 {
-	[ConsoleCommand("reload", "Reloads all or specific mods / plugins. E.g 'c.reload *' to reload everything.")]
+	[ConsoleCommand("reload", "Reloads all or specific mods / plugins. E.g 'c.reload * <except[]>'' to reload everything.")]
 	[AuthLevel(2)]
 	private void Reload(ConsoleSystem.Arg arg)
 	{
@@ -21,7 +21,7 @@ public partial class CorePlugin : CarbonPlugin
 		switch (name)
 		{
 			case "*":
-				Community.Runtime.ReloadPlugins();
+				Community.Runtime.ReloadPlugins(arg.Args.Skip(1));
 				break;
 
 			default:
@@ -78,7 +78,7 @@ public partial class CorePlugin : CarbonPlugin
 		}
 	}
 
-	[ConsoleCommand("load", "Loads all mods and/or plugins. E.g 'c.load *' to load everything you've unloaded.")]
+	[ConsoleCommand("load", "Loads all mods and/or plugins. E.g 'c.load * <except[]>'' to load everything you've unloaded.")]
 	[AuthLevel(2)]
 	private void LoadPlugin(ConsoleSystem.Arg arg)
 	{
@@ -98,16 +98,21 @@ public partial class CorePlugin : CarbonPlugin
 				// Scripts
 				//
 				{
-					Community.Runtime.ScriptProcessor.IgnoreList.Clear();
+					var except = arg.Args.Skip(1);
+
+					Community.Runtime.ScriptProcessor.IgnoreList.RemoveAll(x => !except.Any() || except.Any(x.Contains));
 
 					foreach (var plugin in OrderedFiles)
 					{
-						if (Community.Runtime.ScriptProcessor.InstanceBuffer.ContainsKey(plugin.Key))
+						if (except.Any(plugin.Value.Contains) || Community.Runtime.ScriptProcessor.InstanceBuffer.ContainsKey(plugin.Key))
 						{
 							continue;
 						}
 
-						Community.Runtime.ScriptProcessor.Prepare(plugin.Key, plugin.Value);
+						if (!Community.Runtime.ScriptProcessor.Exists(plugin.Value))
+						{
+							Community.Runtime.ScriptProcessor.Prepare(plugin.Key, plugin.Value);
+						}
 					}
 					break;
 				}
@@ -118,7 +123,12 @@ public partial class CorePlugin : CarbonPlugin
 					if (!string.IsNullOrEmpty(path))
 					{
 						Community.Runtime.ScriptProcessor.ClearIgnore(path);
-						Community.Runtime.ScriptProcessor.Prepare(path);
+
+						if (!Community.Runtime.ScriptProcessor.Exists(path))
+						{
+							Community.Runtime.ScriptProcessor.Prepare(path);
+						}
+
 						return;
 					}
 
@@ -137,7 +147,7 @@ public partial class CorePlugin : CarbonPlugin
 		}
 	}
 
-	[ConsoleCommand("unload", "Unloads all mods and/or plugins. E.g 'c.unload *' to unload everything. They'll be marked as 'ignored'.")]
+	[ConsoleCommand("unload", "Unloads all mods and/or plugins. E.g 'c.unload * <except[]>' to unload everything. They'll be marked as 'ignored'.")]
 	[AuthLevel(2)]
 	private void UnloadPlugin(ConsoleSystem.Arg arg)
 	{
@@ -153,6 +163,8 @@ public partial class CorePlugin : CarbonPlugin
 		switch (name)
 		{
 			case "*":
+				var except = arg.Args.Skip(1);
+
 				//
 				// Scripts
 				//
@@ -164,11 +176,16 @@ public partial class CorePlugin : CarbonPlugin
 						tempList.Add(bufferInstance.Value.File);
 					}
 
-					Community.Runtime.ScriptProcessor.IgnoreList.Clear();
-					Community.Runtime.ScriptProcessor.Clear();
+					Community.Runtime.ScriptProcessor.IgnoreList.RemoveAll(x => !except.Any() || (except.Any() && !except.Any(x.Contains)));
+					Community.Runtime.ScriptProcessor.Clear(except);
 
 					foreach (var plugin in tempList)
 					{
+						if (except.Any(plugin.Contains))
+						{
+							continue;
+						}
+
 						Community.Runtime.ScriptProcessor.Ignore(plugin);
 					}
 				}
@@ -179,11 +196,16 @@ public partial class CorePlugin : CarbonPlugin
 				{
 					var tempList = Facepunch.Pool.GetList<string>();
 					tempList.AddRange(Community.Runtime.WebScriptProcessor.IgnoreList);
-					Community.Runtime.WebScriptProcessor.IgnoreList.Clear();
-					Community.Runtime.WebScriptProcessor.Clear();
+					Community.Runtime.WebScriptProcessor.IgnoreList.RemoveAll(x => !except.Any() || (except.Any() && !except.Any(x.Contains)));
+					Community.Runtime.WebScriptProcessor.Clear(except);
 
 					foreach (var plugin in tempList)
 					{
+						if (except.Any(plugin.Contains))
+						{
+							continue;
+						}
+
 						Community.Runtime.WebScriptProcessor.Ignore(plugin);
 					}
 					Facepunch.Pool.FreeList(ref tempList);

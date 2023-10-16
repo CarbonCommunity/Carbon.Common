@@ -1558,21 +1558,25 @@ partial class {@class.Identifier.ValueText}
 		var @class = (ClassDeclarationSyntax)null;
 		@namespace = null;
 		namespaceIndex = 0;
-		classIndex = -1;
+		classIndex = 0;
 
 		foreach (var ns in input.Members.OfType<BaseNamespaceDeclarationSyntax>())
 		{
-			classIndex = -1;
+			var nsClasses = ns.Members.OfType<ClassDeclarationSyntax>();
 
-			foreach (var cls in ns.Members.OfType<ClassDeclarationSyntax>())
+			for(int i = 0; i < nsClasses.Count(); i++)
 			{
+				var cls = nsClasses.ElementAt(i);
+
 				if (cls.AttributeLists.Count > 0)
 				{
 					foreach(var attribute in cls.AttributeLists)
 					{
 						if (attribute.Attributes[0].Name is IdentifierNameSyntax nameSyntax && nameSyntax.Identifier.Text == "Info")
 						{
+							@namespaceIndex = input.Members.IndexOf(ns);
 							@namespace = ns;
+							classIndex = i;
 							@class = cls;
 							classes?.Insert(0, @class);
 						}
@@ -1582,13 +1586,6 @@ partial class {@class.Identifier.ValueText}
 				{
 					classes?.Add(cls);
 				}
-
-				classIndex++;
-			}
-
-			if (@class == null)
-			{
-				namespaceIndex++;
 			}
 		}
 
