@@ -86,6 +86,8 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 
 		Community.Runtime.HookManager.LoadHooksFromType(Type);
 
+		BuildHookCache(BindingFlags.Instance | BindingFlags.NonPublic);
+
 		foreach (var method in Type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic))
 		{
 			if (Community.Runtime.HookManager.IsHookLoaded(method.Name))

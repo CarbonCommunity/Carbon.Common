@@ -22,12 +22,15 @@ public class BaseHookable
 	public Dictionary<uint, List<CachedHook>> HookMethodAttributeCache = new();
 	public HashSet<uint> IgnoredHooks = new();
 
-	public struct CachedHook
+	public class CachedHook
 	{
 		public MethodInfo Method;
 		public Type[] Parameters;
 		public bool IsByRef;
 		public bool IsAsync;
+
+		public double HookTime;
+		public double MemoryUsage;
 
 		public static CachedHook Make(MethodInfo method)
 		{
@@ -61,6 +64,7 @@ public class BaseHookable
 	[JsonProperty]
 	public double Uptime => _initializationTime.GetValueOrDefault();
 
+	public bool HasBuiltHookCache { get; internal set; }
 	public bool HasInitialized { get; internal set; }
 	public Type Type { get; internal set; }
 	public bool InternalCallHookOverriden { get; internal set; } = true;
@@ -153,7 +157,44 @@ public class BaseHookable
 	{
 		await Task.CompletedTask;
 	}
-	
+
+	public void BuildHookCache(BindingFlags flag)
+	{
+		if (HasBuiltHookCache)
+		{
+			return;
+		}
+
+		HookCache.Clear();
+		HookMethodAttributeCache.Clear();
+
+		var methods = Type.GetMethods(flag);
+
+		foreach (var method in methods)
+		{
+			var id = HookStringPool.GetOrAdd(method.Name);
+
+			if (!HookCache.TryGetValue(id, out var hooks))
+			{
+				HookCache.Add(id, hooks = new());
+			}
+
+			hooks.Add(CachedHook.Make(method));
+
+			if (method.HasAttribute(typeof(HookMethodAttribute)))
+			{
+				if (!HookMethodAttributeCache.TryGetValue(id, out var hooks2))
+				{
+					HookMethodAttributeCache.Add(id, hooks2 = new());
+				}
+
+				hooks2.Add(CachedHook.Make(method));
+			}
+		}
+
+		HasBuiltHookCache = true;
+		Logger.Debug(Name, $"Built hook cache", 2);
+	}
 	public virtual object InternalCallHook(uint hook, object[] args)
 	{
 		InternalCallHookOverriden = false;

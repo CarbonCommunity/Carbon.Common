@@ -68,24 +68,7 @@ namespace Oxide.Core.Plugins
 
 		public virtual bool IInit()
 		{
-			if (HookMethods != null)
-			{
-				using (TimeMeasure.New($"Processing HookMethods on '{this}'"))
-				{
-					foreach (var attribute in HookMethods)
-					{
-						var method = attribute.Method;
-
-						var hash = (uint)(HookStringPool.GetOrAdd(string.IsNullOrEmpty(attribute.Name) ? method.Name : attribute.Name) + method.GetParameters().Length);
-						if (!HookMethodAttributeCache.TryGetValue(hash, out var list))
-						{
-							HookMethodAttributeCache.Add(hash, new() { CachedHook.Make(method) });
-						}
-						else list.Add(CachedHook.Make(method));
-					}
-				}
-				Carbon.Logger.Debug(Name, "Installed hook method attributes");
-			}
+			BuildHookCache(BindingFlags.NonPublic | BindingFlags.Instance);
 
 			using (TimeMeasure.New($"Processing PluginReferences on '{this}'"))
 			{

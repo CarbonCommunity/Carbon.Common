@@ -5,6 +5,7 @@
  *
  */
 
+using System.Text;
 namespace Carbon.Core;
 
 public partial class CorePlugin : CarbonPlugin
@@ -261,6 +262,64 @@ public partial class CorePlugin : CarbonPlugin
 					}
 					break;
 				}
+		}
+	}
+
+	[ConsoleCommand("plugininfo", "Prints advanced information about a currently loaded plugin. From hooks, hook times, hook memory usage and other things.")]
+	[AuthLevel(2)]
+	private void PluginInfo(ConsoleSystem.Arg arg)
+	{
+		if (!arg.HasArgs(1))
+		{
+			Logger.Warn("You must provide the name of a plugin to print plugin advanced information.");
+			return;
+		}
+
+		var name = arg.GetString(0);
+		var plugin = Community.Runtime.Plugins.Plugins.FirstOrDefault(x => x.FileName.Contains(name));
+		var count = 1;
+
+		using (var table = new StringTable("#", "Id", "Hook", "Time", "Memory"))
+		{
+			foreach (var hook in plugin.HookCache)
+			{
+				if (hook.Value.Count == 0)
+				{
+					continue;
+				}
+
+				var current = hook.Value[0];
+				var hookName = current.Method.Name;
+
+				var hookId = HookStringPool.GetOrAdd(hookName);
+				var hookTime = hook.Value.Sum(x => x.HookTime);
+				var memoryUsage = hook.Value.Sum(x => x.MemoryUsage);
+
+				if (!plugin.Hooks.Contains(hookId))
+				{
+					continue;
+				}
+
+				table.AddRow(count, hookId, $"{hookName}", $"{hookTime:0}ms", $"{ByteEx.Format(memoryUsage, shortName: true).ToLower()}");
+
+				count++;
+			}
+
+			var builder = new StringBuilder();
+
+			builder.AppendLine($"{plugin.Name} v{plugin.Version} by {plugin.Author}{(plugin.IsCorePlugin ? $" [core]" : string.Empty)}");
+			builder.AppendLine($"  Path:                   {plugin.FilePath}");
+			builder.AppendLine($"  Compile Time:           {plugin.CompileTime}ms");
+			builder.AppendLine($"  Uptime:                 {TimeEx.Format(plugin.Uptime, true).ToLower()}");
+			builder.AppendLine($"  Total Hook Time:        {plugin.TotalHookTime:0}ms");
+			builder.AppendLine($"  Total Memory Used:      {ByteEx.Format(plugin.TotalMemoryUsed, shortName: true).ToLower()}");
+			builder.AppendLine($"  Internal Hook Override: {plugin.InternalCallHookOverriden}");
+			builder.AppendLine($"  Has Conditionals:       {plugin.HasConditionals}");
+			builder.AppendLine($"  Mod Package:            {plugin.Package?.Name} ({plugin.Package?.Plugins.Count}){((plugin.Package?.IsCoreMod).GetValueOrDefault() ? $" [core]" : string.Empty)}");
+			builder.AppendLine($"Hooks:");
+			builder.AppendLine(table.ToStringMinimal());
+
+			arg.ReplyWith(builder.ToString());
 		}
 	}
 
