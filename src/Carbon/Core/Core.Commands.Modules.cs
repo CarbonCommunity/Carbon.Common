@@ -150,6 +150,12 @@ public partial class CorePlugin : CarbonPlugin
 		var module = Community.Runtime.ModuleProcessor.Modules.FirstOrDefault(x => x.Name == name) as BaseModule;
 		var count = 1;
 
+		if (module == null)
+		{
+			arg.ReplyWith("Couldn't find that plugin.");
+			return;
+		}
+
 		using (var table = new StringTable("#", "Id", "Hook", "Time", "Memory"))
 		{
 			foreach (var hook in module.HookCache)

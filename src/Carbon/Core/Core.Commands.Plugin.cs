@@ -276,8 +276,14 @@ public partial class CorePlugin : CarbonPlugin
 		}
 
 		var name = arg.GetString(0);
-		var plugin = Community.Runtime.Plugins.Plugins.FirstOrDefault(x => x.FileName.Contains(name));
+		var plugin = ModLoader.LoadedPackages.SelectMany(x => x.Plugins).FirstOrDefault(x => x.FileName.Contains(name));
 		var count = 1;
+
+		if (plugin == null)
+		{
+			arg.ReplyWith("Couldn't find that plugin.");
+			return;
+		}
 
 		using (var table = new StringTable("#", "Id", "Hook", "Time", "Memory"))
 		{
