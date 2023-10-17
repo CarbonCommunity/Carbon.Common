@@ -1524,7 +1524,9 @@ public static class HookCaller
 			@class = classes[0];
 		}
 
-		var source = @$"{input.Usings.Select(x => x.ToString()).ToString("\n")}
+		var usings = input.Usings.Concat(input.Members.OfType<BaseNamespaceDeclarationSyntax>().SelectMany(x => x.Usings));
+
+		var source = @$"{usings.Select(x => x.ToString()).ToString("\n")}
 
 namespace {@namespace.Name};
 

@@ -276,7 +276,7 @@ public partial class CorePlugin : CarbonPlugin
 		}
 
 		var name = arg.GetString(0);
-		var plugin = ModLoader.LoadedPackages.SelectMany(x => x.Plugins).FirstOrDefault(x => x.FileName.Contains(name));
+		var plugin = ModLoader.LoadedPackages.SelectMany(x => x.Plugins).FirstOrDefault(x => string.IsNullOrEmpty(x.FileName) ? x.Name == name : x.FileName.Contains(name));
 		var count = 1;
 
 		if (plugin == null)
@@ -322,8 +322,16 @@ public partial class CorePlugin : CarbonPlugin
 			builder.AppendLine($"  Internal Hook Override: {plugin.InternalCallHookOverriden}");
 			builder.AppendLine($"  Has Conditionals:       {plugin.HasConditionals}");
 			builder.AppendLine($"  Mod Package:            {plugin.Package?.Name} ({plugin.Package?.Plugins.Count}){((plugin.Package?.IsCoreMod).GetValueOrDefault() ? $" [core]" : string.Empty)}");
-			builder.AppendLine($"Hooks:");
-			builder.AppendLine(table.ToStringMinimal());
+
+			if (count == 1)
+			{
+				builder.AppendLine($"No hooks found.");
+			}
+			else
+			{
+				builder.AppendLine($"Hooks:");
+				builder.AppendLine(table.ToStringMinimal());
+			}
 
 			arg.ReplyWith(builder.ToString());
 		}

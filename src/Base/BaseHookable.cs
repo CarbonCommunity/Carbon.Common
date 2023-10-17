@@ -165,6 +165,8 @@ public class BaseHookable
 			return;
 		}
 
+		var hooksPresent = Hooks.Count != 0;
+
 		HookCache.Clear();
 		HookMethodAttributeCache.Clear();
 
@@ -173,6 +175,14 @@ public class BaseHookable
 		foreach (var method in methods)
 		{
 			var id = HookStringPool.GetOrAdd(method.Name);
+
+			if (!hooksPresent)
+			{
+				if (Community.Runtime.HookManager.IsHookLoaded(method.Name) && !Hooks.Contains(id))
+				{
+					Hooks.Add(id);
+				}
+			}
 
 			if (!HookCache.TryGetValue(id, out var hooks))
 			{
