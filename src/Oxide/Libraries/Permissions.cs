@@ -1,6 +1,6 @@
 ﻿/*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -350,7 +350,7 @@ public class Permission : Library
 
 		foreach (var user in userdata)
 		{
-			if (user.Value != null && user.Key == id || (!string.IsNullOrEmpty(user.Value.LastSeenNickname) && user.Value.LastSeenNickname.ToLower().Trim().Contains(id)))
+			if (user.Value != null && user.Key == id || (!string.IsNullOrEmpty(user.Value.LastSeenNickname) && user.Value.LastSeenNickname.Contains(id)))
 				return new KeyValuePair<string, UserData>(user.Key, user.Value);
 		}
 
@@ -475,12 +475,7 @@ public class Permission : Library
 	public virtual string[] GetUserPermissions(string id)
 	{
 		var userData = GetUserData(id);
-		var list = userData.Perms.ToList();
-		foreach (string name in userData.Groups)
-		{
-			list.AddRange(GetGroupPermissions(name, false));
-		}
-		return new HashSet<string>(list).ToArray();
+		return new HashSet<string>(userData.Perms.Concat(userData.Groups.SelectMany(x => GetGroupPermissions(x, true)))).ToArray();
 	}
 	public virtual string[] GetGroupPermissions(string name, bool parents = false)
 	{
@@ -494,12 +489,7 @@ public class Permission : Library
 			return EmptyStringArray;
 		}
 
-		var list = groupData.Perms.ToList();
-		if (parents)
-		{
-			list.AddRange(GetGroupPermissions(groupData.ParentGroup, false));
-		}
-		return new HashSet<string>(list).ToArray();
+		return new HashSet<string>(groupData.Perms.Concat(GetGroupPermissions(groupData.ParentGroup, parents))).ToArray();
 	}
 	public virtual string[] GetPermissions()
 	{
@@ -515,12 +505,9 @@ public class Permission : Library
 
 		perm = perm.ToLower();
 		var hashSet = Pool.Get<HashSet<string>>();
-		foreach (KeyValuePair<string, UserData> keyValuePair in userdata)
+		foreach (var keyValuePair in userdata.Where(keyValuePair => keyValuePair.Value.Perms.Contains(perm)))
 		{
-			if (keyValuePair.Value.Perms.Contains(perm))
-			{
-				hashSet.Add(keyValuePair.Key + "(" + keyValuePair.Value.LastSeenNickname + ")");
-			}
+			hashSet.Add(keyValuePair.Key + "(" + keyValuePair.Value.LastSeenNickname + ")");
 		}
 
 		var result = hashSet.ToArray();

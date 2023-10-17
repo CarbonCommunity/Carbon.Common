@@ -12,7 +12,7 @@ using StringEx = Carbon.Extensions.StringEx;
 
 /*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -183,20 +183,12 @@ public partial class AdminModule
 				["config"] = "Config",
 				["ismodded"] = "Is Modded",
 				["ismodded_help"] = "When enabled, it marks the server as modded.",
-				["autoupdateexthooks"] = "Auto Update External Hooks",
-				["autoupdateexthooks_help"] = "Automatically update the 'Carbon.Hooks.Extra' file on boot. Recommended to be enabled.",
 				["general"] = "General",
-				["hookvalidation"] = "Hook Validation",
-				["hookvalidation_help"] = "Probably obsolete, but when enabled, it prints a list of hooks that are compatible in Oxide, but not Carbon.",
-				["entmapbuffersize"] = "Entity Map Buffer Size (restart required)",
-				["entmapbuffersize_help"] = "Only change if you're aware what this is used for. Developers-related option.",
 				["watchers"] = "Watchers",
 				["scriptwatchers"] = "Script Watchers",
 				["scriptwatchers_help"] = "When disabled, you must load/unload plugins manually with 'c.load' or 'c.unload'.",
 				["scriptwatchersoption"] = "Script Watchers Option",
 				["scriptwatchersoption_help"] = "Indicates wether the script watcher (whenever enabled) listens to the 'carbon/plugins' folder only, or its subfolders.",
-				["harmonyreference"] = "Harmony Reference (<color=red>!</color>)",
-				["harmonyreference_help"] = "Enabling this will allow plugins to patch Harmony patches at runtime. This might create instability and conflict if unmanaged.",
 				["filenamecheck"] = "File Name Check",
 				["filenamecheck_help"] = "Checks for file names. Otherwise will load the plugins regardless. Recommended to be enabled.",
 				["logging"] = "Logging",

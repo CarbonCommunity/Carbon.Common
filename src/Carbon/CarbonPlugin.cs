@@ -27,9 +27,9 @@ public class CarbonPlugin : RustPlugin
 			return false;
 		}
 
-		if (AutoPatch)
+		if (AutoPatch && !ApplyPatch())
 		{
-			ApplyPatch();
+			return false;
 		}
 
 		return true;
@@ -112,22 +112,43 @@ public class CarbonPlugin : RustPlugin
 
 	public Harmony _CARBON_PATCH;
 
-	public void ApplyPatch()
+	public bool ApplyPatch()
 	{
-		UnapplyPatch();
+		if (!UnapplyPatch())
+		{
+			return false;
+		}
 
-		_CARBON_PATCH = new Harmony(Domain);
-		_CARBON_PATCH.PatchAll(Type.Assembly);
+		try
+		{
+			_CARBON_PATCH = new Harmony(Domain);
+			_CARBON_PATCH.PatchAll(Type.Assembly);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			PrintError($"Failed auto-patching Harmony methods", ex);
+			return false;
+		}
 	}
-	public void UnapplyPatch()
+	public bool UnapplyPatch()
 	{
 		if (_CARBON_PATCH == null)
 		{
-			return;
+			return true;
 		}
 
-		_CARBON_PATCH.UnpatchAll(Domain);
-		_CARBON_PATCH = null;
+		try
+		{
+			_CARBON_PATCH.UnpatchAll(Domain);
+			_CARBON_PATCH = null;
+			return true;
+		}
+		catch (Exception ex)
+		{
+			PrintError($"Failed unpatching Harmony methods", ex);
+			return false;
+		}
 	}
 
 	#endregion

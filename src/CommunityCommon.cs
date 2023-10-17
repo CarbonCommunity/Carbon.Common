@@ -87,8 +87,10 @@ public class Community
 	public IZipScriptProcessor ZipScriptProcessor
 	{ get; set; }
 
+#if DEBUG
 	public IZipDevScriptProcessor ZipDevScriptProcessor
 	{ get; set; }
+#endif
 
 	public ICarbonProcessor CarbonProcessor
 	{ get; set; }
@@ -256,7 +258,7 @@ public class Community
 
 	public static bool InitialPluginLoad { get; internal set; }
 
-	public virtual void ReloadPlugins()
+	public virtual void ReloadPlugins(IEnumerable<string> except = null)
 	{
 		InitialPluginLoad = true;
 

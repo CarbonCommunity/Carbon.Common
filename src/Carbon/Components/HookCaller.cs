@@ -1328,11 +1328,11 @@ public static class HookCaller
 		{
 			_classList = Pool.GetList<ClassDeclarationSyntax>();
 			isTemp = true;
-			FindPluginInfo(input, out @namespace, _classList);
+			FindPluginInfo(input, out @namespace, out _, out _, _classList);
 		}
 		else
 		{
-			FindPluginInfo(input, out @namespace, null);
+			FindPluginInfo(input, out @namespace, out _, out _, null);
 
 			namespaceIndex = classIndex = 0;
 		}
@@ -1513,7 +1513,7 @@ public static class HookCaller
 		if (classes == null)
 		{
 			classes = Facepunch.Pool.GetList<ClassDeclarationSyntax>();
-			FindPluginInfo(input, out @namespace, classes);
+			FindPluginInfo(input, out @namespace, out _, out _, classes);
 
 			@class = classes[0];
 			Facepunch.Pool.FreeList(ref classes);
@@ -1553,22 +1553,30 @@ partial class {@class.Identifier.ValueText}
 #endif
 	}
 
-	public static bool FindPluginInfo(CompilationUnitSyntax input, out BaseNamespaceDeclarationSyntax @namespace, List<ClassDeclarationSyntax> classes)
+	public static bool FindPluginInfo(CompilationUnitSyntax input, out BaseNamespaceDeclarationSyntax @namespace, out int namespaceIndex, out int classIndex, List<ClassDeclarationSyntax> classes)
 	{
 		var @class = (ClassDeclarationSyntax)null;
 		@namespace = null;
+		namespaceIndex = 0;
+		classIndex = 0;
 
 		foreach (var ns in input.Members.OfType<BaseNamespaceDeclarationSyntax>())
 		{
-			foreach (var cls in ns.Members.OfType<ClassDeclarationSyntax>())
+			var nsClasses = ns.Members.OfType<ClassDeclarationSyntax>();
+
+			for(int i = 0; i < nsClasses.Count(); i++)
 			{
+				var cls = nsClasses.ElementAt(i);
+
 				if (cls.AttributeLists.Count > 0)
 				{
 					foreach(var attribute in cls.AttributeLists)
 					{
 						if (attribute.Attributes[0].Name is IdentifierNameSyntax nameSyntax && nameSyntax.Identifier.Text == "Info")
 						{
+							@namespaceIndex = input.Members.IndexOf(ns);
 							@namespace = ns;
+							classIndex = i;
 							@class = cls;
 							classes?.Insert(0, @class);
 						}
