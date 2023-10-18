@@ -13,7 +13,7 @@
 
 namespace System.Runtime.CompilerServices
 {
-	public sealed class RuntimeHelpers
+	/*public sealed class RuntimeHelpers
 	{
 		public static T[] GetSubArray<T>(T[] array, Range range)
 		{
@@ -44,5 +44,5 @@ namespace System.Runtime.CompilerServices
 			Array.Copy(array, offset, dest, 0, length);
 			return dest;
 		}
-	}
+	}*/
 }

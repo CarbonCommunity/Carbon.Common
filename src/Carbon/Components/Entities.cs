@@ -1,6 +1,6 @@
 ﻿/*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -17,7 +17,7 @@ public class Entities : IDisposable
 
 			foreach (var type in _findSubClassesOf<BaseEntity>())
 			{
-				Mapping.Add(type, new List<BaseEntity>(Community.Runtime.Config.EntityMapBufferSize));
+				Mapping.Add(type, new List<BaseEntity>(100000));
 			}
 
 			if (Community.IsServerInitialized)
