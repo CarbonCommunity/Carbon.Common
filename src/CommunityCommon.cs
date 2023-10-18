@@ -258,7 +258,7 @@ public class Community
 
 	public static bool InitialPluginLoad { get; internal set; }
 
-	public virtual void ReloadPlugins()
+	public virtual void ReloadPlugins(IEnumerable<string> except = null)
 	{
 		InitialPluginLoad = true;
 

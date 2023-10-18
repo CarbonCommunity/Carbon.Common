@@ -131,6 +131,10 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 		}
 	}
 
+	public virtual bool Exists(string path)
+	{
+		return InstanceBuffer.Any(x => x.Value.File == path);
+	}
 	public virtual void Prepare(string file)
 	{
 		if (file.StartsWith("http"))
@@ -171,10 +175,15 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 
 		if (InstanceBuffer.ContainsKey(id)) InstanceBuffer.Remove(id);
 	}
-	public virtual void Clear()
+	public virtual void Clear(IEnumerable<string> except = null)
 	{
 		foreach (var item in InstanceBuffer)
 		{
+			if (except != null && except.Any(x => item.Value.File.Contains(x)))
+			{
+				continue;
+			}
+
 			try
 			{
 				item.Value?.Dispose();
@@ -182,7 +191,24 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 			catch (Exception ex) { Logger.Error($" Processor error: '{item.Key}'", ex); }
 		}
 
-		InstanceBuffer.Clear();
+		var temp = PoolEx.GetDictionary<string, IBaseProcessor.IProcess>();
+
+		foreach (var instance in InstanceBuffer)
+		{
+			temp.Add(instance.Key, instance.Value);
+		}
+
+		if (except == null || !except.Any())
+		{
+			InstanceBuffer.Clear();
+		}
+		else
+		{
+			foreach (var instance in temp.Where(instance => !except.Any(instance.Value.File.Contains)))
+			{
+				InstanceBuffer.Remove(instance.Key);
+			}
+		}
 	}
 	public virtual void Ignore(string file)
 	{
