@@ -97,7 +97,6 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					tab.AddToggle(1, Singleton.GetPhrase("ismodded", ap.Player.UserIDString), ap => { Config.IsModded = !Config.IsModded; Community.Runtime.SaveConfig(); }, ap => Config.IsModded, Singleton.GetPhrase("ismodded_help", ap.Player.UserIDString));
 
 					tab.AddName(1, Singleton.GetPhrase("general", ap.Player.UserIDString), TextAnchor.MiddleLeft);
-					tab.AddInput(1, Singleton.GetPhrase("entmapbuffersize", ap.Player.UserIDString), ap => Config.EntityMapBufferSize.ToString(), (ap, args) => { Config.EntityMapBufferSize = args.ElementAt(0).ToInt().Clamp(10000, 500000); Community.Runtime.SaveConfig(); }, Singleton.GetPhrase("entmapbuffersize_help", ap.Player.UserIDString));
 
 					tab.AddName(1, Singleton.GetPhrase("watchers", ap.Player.UserIDString), TextAnchor.MiddleLeft);
 					tab.AddToggle(1, Singleton.GetPhrase("scriptwatchers", ap.Player.UserIDString), ap => { Config.ScriptWatchers = !Config.ScriptWatchers; Community.Runtime.SaveConfig(); }, ap => Config.ScriptWatchers, Singleton.GetPhrase("scriptwatchers_help", ap.Player.UserIDString));

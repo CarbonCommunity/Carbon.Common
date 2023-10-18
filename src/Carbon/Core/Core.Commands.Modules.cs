@@ -1,8 +1,9 @@
-﻿using Carbon.Base.Interfaces;
+﻿using System.Text;
+using Carbon.Base.Interfaces;
 
 /*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -133,5 +134,69 @@ public partial class CorePlugin : CarbonPlugin
 		}
 
 		arg.ReplyWith(print.Write(StringTable.FormatTypes.None));
+	}
+
+	[ConsoleCommand("moduleinfo", "Prints advanced information about a currently loaded module. From hooks, hook times, hook memory usage and other things.")]
+	[AuthLevel(2)]
+	private void ModuleInfo(ConsoleSystem.Arg arg)
+	{
+		if (!arg.HasArgs(1))
+		{
+			Logger.Warn("You must provide the name of a module to print module advanced information.");
+			return;
+		}
+
+		var name = arg.GetString(0);
+		var module = Community.Runtime.ModuleProcessor.Modules.FirstOrDefault(x => x.Name == name) as BaseModule;
+		var count = 1;
+
+		if (module == null)
+		{
+			arg.ReplyWith("Couldn't find that plugin.");
+			return;
+		}
+
+		using (var table = new StringTable("#", "Id", "Hook", "Time", "Memory"))
+		{
+			foreach (var hook in module.HookCache)
+			{
+				if (hook.Value.Count == 0)
+				{
+					continue;
+				}
+
+				var current = hook.Value[0];
+				var hookId = HookStringPool.GetOrAdd(current.Method.Name);
+
+				if (!module.Hooks.Contains(hookId))
+				{
+					continue;
+				}
+
+				var hookName = current.Method.Name;
+
+				var hookTime = hook.Value.Sum(x => x.HookTime);
+				var memoryUsage = hook.Value.Sum(x => x.MemoryUsage);
+
+				table.AddRow(count, hookId, $"{hookName}", $"{hookTime:0}ms", $"{ByteEx.Format(memoryUsage, shortName: true).ToLower()}");
+
+				count++;
+			}
+
+			var builder = new StringBuilder();
+
+			builder.AppendLine($"Additional information for {module.Name} v{module.Version}{(module.ForceEnabled ? $" [force enabled]" : string.Empty)}");
+			builder.AppendLine($"  Enabled:                {module.GetEnabled()}");
+			builder.AppendLine($"  Enabled (default):      {module.EnabledByDefault}");
+			builder.AppendLine($"  Context:                {module.Context}");
+			builder.AppendLine($"  Uptime:                 {TimeEx.Format(module.Uptime, true).ToLower()}");
+			builder.AppendLine($"  Total Hook Time:        {module.TotalHookTime:0}ms");
+			builder.AppendLine($"  Total Memory Used:      {ByteEx.Format(module.TotalMemoryUsed, shortName: true).ToLower()}");
+			builder.AppendLine($"  Internal Hook Override: {module.InternalCallHookOverriden}");
+			builder.AppendLine($"Hooks:");
+			builder.AppendLine(table.ToStringMinimal());
+
+			arg.ReplyWith(builder.ToString());
+		}
 	}
 }

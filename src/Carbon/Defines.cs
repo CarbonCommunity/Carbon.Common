@@ -67,6 +67,13 @@ public class Defines
 
 		return folder;
 	}
+	public static string GetCompilerFolder()
+	{
+		string folder = Path.Combine($"{GetRootFolder()}", "compiler");
+		Directory.CreateDirectory(folder);
+
+		return folder;
+	}
 	public static string GetLibFolder()
 	{
 		_initializeCommandLine();
