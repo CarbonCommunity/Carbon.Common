@@ -13,8 +13,6 @@ public interface IScriptProcessor : IBaseProcessor, IDisposable
 	void StartCoroutine(IEnumerator coroutine);
 	void StopCoroutine(IEnumerator coroutine);
 
-	void Remove(string name);
-
 	public interface IScript : IProcess
 	{
 		IScriptLoader Loader { get; set; }

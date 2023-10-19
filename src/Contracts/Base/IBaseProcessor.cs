@@ -17,6 +17,7 @@
 		void Prepare(string name, string path);
 		void Ignore(string path);
 		bool Exists(string path);
+		void Remove(string name, bool dispose = false);
 		void Clear(IEnumerable<string> except = null);
 		void ClearIgnore(string path);
 		bool IsBlacklisted(string path);
