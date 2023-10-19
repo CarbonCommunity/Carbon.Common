@@ -33,9 +33,9 @@ public static class CuiHelper
 	public static void DestroyActivePanelList(BasePlayer player, string[] except = null)
 	{
 		var temp = Pool.GetList<string>();
-		temp.AddRange(GetActivePanelList(player).Where(x => except == null || except.Length == 0 ? true : !except.Any(y => x.StartsWith(y))));
+		temp.AddRange(GetActivePanelList(player));
 
-		foreach (var element in temp)
+		foreach (var element in temp.Where(x => except == null || except.Length == 0 ? true : !except.Any(y => x.StartsWith(y))))
 		{
 			DestroyUi(player, element);
 		}
