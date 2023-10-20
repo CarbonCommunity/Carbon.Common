@@ -258,6 +258,7 @@ public static class ModLoader
 		}
 
 		RemoveCommands(plugin);
+		plugin.IUnload();
 
 		if (!premature)
 		{

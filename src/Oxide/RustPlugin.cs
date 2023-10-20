@@ -71,15 +71,6 @@ public class RustPlugin : Plugin
 			UnityEngine.Object.Destroy(go);
 		}
 
-		if (Package != null)
-		{
-			if (Package.Plugins.Contains(this))
-			{
-				Package.Plugins.Remove(this);
-			}
-		}
-
-		IUnload();
 		base.Dispose();
 	}
 

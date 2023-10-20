@@ -160,7 +160,7 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 
 		Logger.Debug($" Loading plugin '{id}'...", 1);
 
-		Remove(id, dispose: false);
+		Remove(id);
 
 		var instance = Activator.CreateInstance(IndexedType) as Process;
 		InstanceBuffer.Add(id, instance);
@@ -168,14 +168,10 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 		instance.File = file;
 		instance.Execute(this);
 	}
-	public virtual void Remove(string id, bool dispose = false)
+	public virtual void Remove(string id)
 	{
 		var existent = !InstanceBuffer.ContainsKey(id) ? null : InstanceBuffer[id];
-
-		if (dispose)
-		{
-			existent?.Dispose();
-		}
+		existent?.Dispose();
 
 		if (InstanceBuffer.ContainsKey(id)) InstanceBuffer.Remove(id);
 	}
@@ -242,7 +238,7 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 	{
 		var file = process.File;
 
-		// Clear(id, process);
+		Clear(id, process);
 		Prepare(id, file);
 	}
 

@@ -1,7 +1,5 @@
-﻿using System.Diagnostics;
-using API.Events;
+﻿using API.Events;
 using Carbon.Client;
-using Microsoft.CodeAnalysis.CSharp;
 using Application = UnityEngine.Application;
 using CommandLine = Carbon.Components.CommandLine;
 using Timer = Oxide.Plugins.Timer;
@@ -36,25 +34,12 @@ public partial class CorePlugin : CarbonPlugin
 			var id = Path.GetFileNameWithoutExtension(file);
 			if (!OrderedFiles.ContainsKey(id)) OrderedFiles.Add(id, file);
 		}
-
-#if DEBUG
-		foreach (var folder in Directory.GetDirectories(Defines.GetZipDevFolder()))
-		{
-			var id = Path.GetFileNameWithoutExtension(folder);
-			if (!OrderedFiles.ContainsKey(id)) OrderedFiles.Add(id, folder);
-		}
-#endif
 	}
 
-	public static string GetPluginPath(string shortName, bool contains = false)
+	public static string GetPluginPath(string shortName)
 	{
 		foreach (var file in OrderedFiles)
 		{
-			if (contains && file.Value.Contains(shortName))
-			{
-				return file.Value;
-			}
-
 			if (file.Key == shortName) return file.Value;
 		}
 
