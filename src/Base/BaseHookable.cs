@@ -26,6 +26,7 @@ public class BaseHookable
 	{
 		public MethodInfo Method;
 		public Type[] Parameters;
+		public object[] DefaultParameterValues;
 		public bool IsByRef;
 		public bool IsAsync;
 
@@ -43,6 +44,7 @@ public class BaseHookable
 				IsAsync = method.ReturnType?.GetMethod("GetAwaiter") != null ||
 						  method.GetCustomAttribute<AsyncStateMachineAttribute>() != null,
 				Parameters = parameters.Select(x => x.ParameterType).ToArray(),
+				DefaultParameterValues = parameters.Select(x => x.DefaultValue).ToArray()
 			};
 
 			return hook;

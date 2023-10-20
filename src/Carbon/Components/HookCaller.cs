@@ -28,7 +28,8 @@ public class HookCallerCommon
 	public virtual void ClearHookTime(uint hook) { }
 
 	public virtual object[] AllocateBuffer(int count) => null;
-	public virtual object[] RescaleBuffer(object[] oldBuffer, int newScale) => null;
+	public virtual object[] RescaleBuffer(object[] oldBuffer, int newScale, BaseHookable.CachedHook hook) => null;
+	public virtual void ProcessDefaults(object[] buffer, BaseHookable.CachedHook hook) { }
 	public virtual void ClearBuffer(object[] buffer) { }
 
 	public virtual object CallHook<T>(T hookable, uint hookId, BindingFlags flags, object[] args, bool keepArgs = false) where T : BaseHookable => null;
