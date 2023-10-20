@@ -30,8 +30,20 @@ public partial class CorePlugin : CarbonPlugin
 
 				if (!string.IsNullOrEmpty(path))
 				{
-					Community.Runtime.ScriptProcessor.ClearIgnore(path);
-					Community.Runtime.ScriptProcessor.Prepare(name, path);
+					ApplyProcessor(Community.Runtime.ScriptProcessor);
+					ApplyProcessor(Community.Runtime.WebScriptProcessor);
+					ApplyProcessor(Community.Runtime.ZipScriptProcessor);
+#if DEBUG
+					ApplyProcessor(Community.Runtime.ZipDevScriptProcessor);
+#endif
+
+					void ApplyProcessor(IBaseProcessor processor, bool folder = false)
+					{
+						var newPath = folder ? Path.GetDirectoryName(path) : path;
+
+						processor.ClearIgnore(newPath);
+						processor.Prepare(newPath);
+					}
 					return;
 				}
 
@@ -102,17 +114,34 @@ public partial class CorePlugin : CarbonPlugin
 					var except = arg.Args.Skip(1);
 
 					Community.Runtime.ScriptProcessor.IgnoreList.RemoveAll(x => !except.Any() || except.Any(x.Contains));
+					Community.Runtime.WebScriptProcessor.IgnoreList.RemoveAll(x => !except.Any() || except.Any(x.Contains));
+					Community.Runtime.ZipScriptProcessor.IgnoreList.RemoveAll(x => !except.Any() || except.Any(x.Contains));
+#if DEBUG
+					Community.Runtime.ZipDevScriptProcessor.IgnoreList.RemoveAll(x => !except.Any() || except.Any(x.Contains));
+#endif
 
 					foreach (var plugin in OrderedFiles)
 					{
-						if (except.Any(plugin.Value.Contains) || Community.Runtime.ScriptProcessor.InstanceBuffer.ContainsKey(plugin.Key))
+						if (except.Any(plugin.Value.Contains))
 						{
 							continue;
 						}
 
-						if (!Community.Runtime.ScriptProcessor.Exists(plugin.Value))
+						ApplyProcessor(Community.Runtime.ScriptProcessor);
+						ApplyProcessor(Community.Runtime.WebScriptProcessor);
+						ApplyProcessor(Community.Runtime.ZipScriptProcessor);
+#if DEBUG
+						ApplyProcessor(Community.Runtime.ZipDevScriptProcessor);
+#endif
+
+						void ApplyProcessor(IBaseProcessor processor)
 						{
-							Community.Runtime.ScriptProcessor.Prepare(plugin.Key, plugin.Value);
+							processor.InstanceBuffer.ContainsKey(plugin.Key);
+
+							if (!processor.Exists(plugin.Value))
+							{
+								processor.Prepare(plugin.Key, plugin.Value);
+							}
 						}
 					}
 					break;
@@ -120,29 +149,32 @@ public partial class CorePlugin : CarbonPlugin
 
 			default:
 				{
-					var path = GetPluginPath(name);
-					if (!string.IsNullOrEmpty(path))
+					var path = GetPluginPath(name, true);
+
+					if (string.IsNullOrEmpty(path))
 					{
-						Community.Runtime.ScriptProcessor.ClearIgnore(path);
-
-						if (!Community.Runtime.ScriptProcessor.Exists(path))
-						{
-							Community.Runtime.ScriptProcessor.Prepare(path);
-						}
-
+						Logger.Warn($"Plugin {name} was not found or was typed incorrectly.");
 						return;
 					}
 
-					Logger.Warn($"Plugin {name} was not found or was typed incorrectly.");
-
-					/*var module = BaseModule.GetModule<DRMModule>();
-					foreach (var drm in module.Config.DRMs)
+					void ApplyProcessor(IBaseProcessor processor, bool folder = false)
 					{
-						foreach (var entry in drm.Entries)
+						var newPath = folder ? Path.GetDirectoryName(path) : path;
+
+						processor.ClearIgnore(newPath);
+
+						if (!processor.Exists(newPath))
 						{
-							if (entry.Id == name) drm.RequestEntry(entry);
+							processor.Prepare(newPath);
 						}
-					}*/
+					}
+
+					ApplyProcessor(Community.Runtime.ScriptProcessor);
+					ApplyProcessor(Community.Runtime.WebScriptProcessor);
+					ApplyProcessor(Community.Runtime.ZipScriptProcessor);
+#if DEBUG
+					ApplyProcessor(Community.Runtime.ZipDevScriptProcessor, true);
+#endif
 					break;
 				}
 		}
@@ -164,21 +196,20 @@ public partial class CorePlugin : CarbonPlugin
 		switch (name)
 		{
 			case "*":
+			{
 				var except = arg.Args.Skip(1);
 
-				//
-				// Scripts
-				//
+				void ApplyProcessor(IBaseProcessor processor)
 				{
 					var tempList = Facepunch.Pool.GetList<string>();
 
-					foreach (var bufferInstance in Community.Runtime.ScriptProcessor.InstanceBuffer)
+					foreach (var bufferInstance in processor.InstanceBuffer)
 					{
 						tempList.Add(bufferInstance.Value.File);
 					}
 
-					Community.Runtime.ScriptProcessor.IgnoreList.RemoveAll(x => !except.Any() || (except.Any() && !except.Any(x.Contains)));
-					Community.Runtime.ScriptProcessor.Clear(except);
+					processor.IgnoreList.RemoveAll(x => !except.Any() || (except.Any() && !except.Any(x.Contains)));
+					processor.Clear(except);
 
 					foreach (var plugin in tempList)
 					{
@@ -187,39 +218,33 @@ public partial class CorePlugin : CarbonPlugin
 							continue;
 						}
 
-						Community.Runtime.ScriptProcessor.Ignore(plugin);
+						processor.Ignore(plugin);
 					}
-				}
 
-				//
-				// Web-Scripts
-				//
-				{
-					var tempList = Facepunch.Pool.GetList<string>();
-					tempList.AddRange(Community.Runtime.WebScriptProcessor.IgnoreList);
-					Community.Runtime.WebScriptProcessor.IgnoreList.RemoveAll(x => !except.Any() || (except.Any() && !except.Any(x.Contains)));
-					Community.Runtime.WebScriptProcessor.Clear(except);
-
-					foreach (var plugin in tempList)
-					{
-						if (except.Any(plugin.Contains))
-						{
-							continue;
-						}
-
-						Community.Runtime.WebScriptProcessor.Ignore(plugin);
-					}
 					Facepunch.Pool.FreeList(ref tempList);
-					break;
 				}
+
+				ApplyProcessor(Community.Runtime.ScriptProcessor);
+				ApplyProcessor(Community.Runtime.WebScriptProcessor);
+				ApplyProcessor(Community.Runtime.ZipScriptProcessor);
+#if DEBUG
+				ApplyProcessor(Community.Runtime.ZipDevScriptProcessor);
+#endif
+				break;
+			}
 
 			default:
 				{
 					var path = GetPluginPath(name);
+
 					if (!string.IsNullOrEmpty(path))
 					{
 						Community.Runtime.ScriptProcessor.Ignore(path);
 						Community.Runtime.WebScriptProcessor.Ignore(path);
+						Community.Runtime.ZipScriptProcessor.Ignore(path);
+#if DEBUG
+						Community.Runtime.ZipDevScriptProcessor.Ignore(path);
+#endif
 					}
 
 					var pluginFound = false;
