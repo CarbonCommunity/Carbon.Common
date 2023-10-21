@@ -191,7 +191,16 @@ public class BaseHookable
 				HookCache.Add(id, hooks = new());
 			}
 
-			hooks.Add(CachedHook.Make(method));
+			var hook = CachedHook.Make(method);
+
+			if (hooks.Count > 0 && hooks[0].Parameters.Length < hook.Parameters.Length)
+			{
+				hooks.Insert(0, hook);
+			}
+			else
+			{
+				hooks.Add(hook);
+			}
 
 			if (method.HasAttribute(typeof(HookMethodAttribute)))
 			{
@@ -200,7 +209,14 @@ public class BaseHookable
 					HookMethodAttributeCache.Add(id, hooks2 = new());
 				}
 
-				hooks2.Add(CachedHook.Make(method));
+				if (hooks2.Count > 0 && hooks2[0].Parameters.Length < hook.Parameters.Length)
+				{
+					hooks2.Insert(0, hook);
+				}
+				else
+				{
+					hooks2.Add(hook);
+				}
 			}
 		}
 

@@ -1355,21 +1355,6 @@ public static class HookCaller
 			Pool.FreeList(ref _classList);
 		}
 
-		// #region Handle partials
-//
-		// foreach (var subNamespace in input.Members.OfType<BaseNamespaceDeclarationSyntax>())
-		// {
-		// 	foreach (var subClass in subNamespace.Members.OfType<ClassDeclarationSyntax>())
-		// 	{
-		// 		if (subClass != @class && subClass.Modifiers.Any(SyntaxKind.PartialKeyword) && subClass.Identifier.ValueText == @class.Identifier.ValueText)
-		// 		{
-		// 			methodDeclarations.AddRange(subClass.ChildNodes().OfType<MethodDeclarationSyntax>());
-		// 		}
-		// 	}
-		// }
-//
-		// #endregion
-
 		var hookableMethods = new Dictionary<uint, List<MethodDeclarationSyntax>>();
 		var privateMethods0 = methodDeclarations.Where(md => (md.Modifiers.Count == 0 || md.Modifiers.All(modifier => !modifier.IsKind(SyntaxKind.PublicKeyword) && !modifier.IsKind(SyntaxKind.StaticKeyword)) || md.AttributeLists.Any(x => x.Attributes.Any(y => y.Name.ToString() == "HookMethod"))) && md.TypeParameterList == null);
 		var privateMethods = privateMethods0.OrderBy(x => x.Identifier.ValueText);
@@ -1391,6 +1376,8 @@ public static class HookCaller
 		foreach (var group in hookableMethods)
 		{
 			methodContents += $"\t\t\t// {group.Value[0].Identifier.ValueText} aka {group.Key}\n\t\t\tcase {group.Key}:\n\t\t\t{{";
+
+			var overrideCount = 1;
 
 			for (int i = 0; i < group.Value.Count; i++)
 			{
@@ -1457,12 +1444,14 @@ public static class HookCaller
 				}
 
 				var validLengthCheck = group.Value.Min(y => y.ParameterList.Parameters.Count) != group.Value.Max(y => y.ParameterList.Parameters.Count);
-				methodContents += $"{(string.IsNullOrEmpty(conditional) ? string.Empty : $"\n#if {conditional}")}\t\t\t\n\t\t\t\t{(requiredParameterCount > 0 ? $"{(validLengthCheck ? $"if(args.Length == {method.ParameterList.Parameters.Count})" : string.Empty)}" : "")} {(requiredParameterCount > 0 && methodName != "OnServerInitialized" && validLengthCheck ? "{" : "")} {varText}{(string.IsNullOrEmpty(parameterText) ? string.Empty : $"if({parameterText}) {{")} {(method.ReturnType.ToString() != "void" ? "result = " : string.Empty)}{methodName}({string.Join(", ", parameters)}); {refSets} {(requiredParameterCount > 0 && methodName != "OnServerInitialized" && validLengthCheck ? "}" : "")}{(string.IsNullOrEmpty(parameterText) ? string.Empty : $"}}")}{(string.IsNullOrEmpty(conditional) ? string.Empty : $"\n#endif")}\n";
+				methodContents += $"{(string.IsNullOrEmpty(conditional) ? string.Empty : $"\n#if {conditional}")}\t\t\t\n\t\t\t\t{(overrideCount > 1 ? $"if(result == null) {{" : string.Empty)}{(requiredParameterCount > 0 ? $"{(validLengthCheck ? $"if(args.Length >= {method.ParameterList.Parameters.Count})" : string.Empty)}" : "")} {(requiredParameterCount > 0 && methodName != "OnServerInitialized" && validLengthCheck ? "{" : "")} {varText}{(string.IsNullOrEmpty(parameterText) ? string.Empty : $"if({parameterText}) {{")} {(method.ReturnType.ToString() != "void" ? "result = " : string.Empty)}{methodName}({string.Join(", ", parameters)}); {refSets} {(requiredParameterCount > 0 && methodName != "OnServerInitialized" && validLengthCheck ? "}" : "")}{(string.IsNullOrEmpty(parameterText) ? string.Empty : $"}}")}{(overrideCount > 1 ? $"}}" : string.Empty)}{(string.IsNullOrEmpty(conditional) ? string.Empty : $"\n#endif")}\n";
 
 				Array.Clear(parameters, 0, parameters.Length);
 				parameters = null;
 				parameters0 = null;
 				requiredParameters = null;
+
+				overrideCount++;
 			}
 
 			methodContents += "\t\t\t\tbreak;\n\t\t\t}\n";
