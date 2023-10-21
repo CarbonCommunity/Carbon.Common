@@ -285,7 +285,7 @@ public partial class CorePlugin : CarbonPlugin
 			return;
 		}
 
-		using (var table = new StringTable("#", "Id", "Hook", "Time", "Memory"))
+		using (var table = new StringTable("#", "Id", "Hook", "Time", "Memory", "Subscribed"))
 		{
 			foreach (var hook in plugin.HookCache)
 			{
@@ -306,7 +306,7 @@ public partial class CorePlugin : CarbonPlugin
 					continue;
 				}
 
-				table.AddRow(count, hookId, $"{hookName}", $"{hookTime:0}ms", $"{ByteEx.Format(memoryUsage, shortName: true).ToLower()}");
+				table.AddRow(count, hookId, $"{hookName}", $"{hookTime:0}ms", $"{ByteEx.Format(memoryUsage, shortName: true).ToLower()}", !plugin.IgnoredHooks.Contains(hookId));
 
 				count++;
 			}
