@@ -1119,6 +1119,15 @@ public partial class AdminModule
 				xMin: 0, xMax: 1, yMin: 0, yMax: 1,
 				needsCursor: true, destroyUi: PanelId, parent: ClientPanels.HudMenu);
 
+			using (TimeMeasure.New($"{Name}.Exit"))
+			{
+				cui.CreateProtectedButton(container, parent: PanelId, id: null,
+					color: "0 0 0 0",
+					textColor: "0 0 0 0",
+					text: string.Empty, 0,
+					command: PanelId + ".close");
+			}
+
 			var shade = cui.CreatePanel(container, parent: PanelId, id: $"{PanelId}color",
 				color: "0 0 0 0.6",
 				xMin: 0.5f, xMax: 0.5f, yMin: 0.5f, yMax: 0.5f,
