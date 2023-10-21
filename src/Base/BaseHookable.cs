@@ -26,6 +26,7 @@ public class BaseHookable
 	{
 		public MethodInfo Method;
 		public Type[] Parameters;
+		public object[] DefaultParameterValues;
 		public bool IsByRef;
 		public bool IsAsync;
 
@@ -43,6 +44,7 @@ public class BaseHookable
 				IsAsync = method.ReturnType?.GetMethod("GetAwaiter") != null ||
 						  method.GetCustomAttribute<AsyncStateMachineAttribute>() != null,
 				Parameters = parameters.Select(x => x.ParameterType).ToArray(),
+				DefaultParameterValues = parameters.Select(x => x.DefaultValue).ToArray()
 			};
 
 			return hook;
@@ -165,6 +167,8 @@ public class BaseHookable
 			return;
 		}
 
+		var hooksPresent = Hooks.Count != 0;
+
 		HookCache.Clear();
 		HookMethodAttributeCache.Clear();
 
@@ -174,12 +178,29 @@ public class BaseHookable
 		{
 			var id = HookStringPool.GetOrAdd(method.Name);
 
+			if (!hooksPresent)
+			{
+				if (Community.Runtime.HookManager.IsHookLoaded(method.Name) && !Hooks.Contains(id))
+				{
+					Hooks.Add(id);
+				}
+			}
+
 			if (!HookCache.TryGetValue(id, out var hooks))
 			{
 				HookCache.Add(id, hooks = new());
 			}
 
-			hooks.Add(CachedHook.Make(method));
+			var hook = CachedHook.Make(method);
+
+			if (hooks.Count > 0 && hooks[0].Parameters.Length < hook.Parameters.Length)
+			{
+				hooks.Insert(0, hook);
+			}
+			else
+			{
+				hooks.Add(hook);
+			}
 
 			if (method.HasAttribute(typeof(HookMethodAttribute)))
 			{
@@ -188,7 +209,14 @@ public class BaseHookable
 					HookMethodAttributeCache.Add(id, hooks2 = new());
 				}
 
-				hooks2.Add(CachedHook.Make(method));
+				if (hooks2.Count > 0 && hooks2[0].Parameters.Length < hook.Parameters.Length)
+				{
+					hooks2.Insert(0, hook);
+				}
+				else
+				{
+					hooks2.Add(hook);
+				}
 			}
 		}
 

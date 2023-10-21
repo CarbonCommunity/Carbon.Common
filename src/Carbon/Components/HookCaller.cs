@@ -28,7 +28,8 @@ public class HookCallerCommon
 	public virtual void ClearHookTime(uint hook) { }
 
 	public virtual object[] AllocateBuffer(int count) => null;
-	public virtual object[] RescaleBuffer(object[] oldBuffer, int newScale) => null;
+	public virtual object[] RescaleBuffer(object[] oldBuffer, int newScale, BaseHookable.CachedHook hook) => null;
+	public virtual void ProcessDefaults(object[] buffer, BaseHookable.CachedHook hook) { }
 	public virtual void ClearBuffer(object[] buffer) { }
 
 	public virtual object CallHook<T>(T hookable, uint hookId, BindingFlags flags, object[] args, bool keepArgs = false) where T : BaseHookable => null;
@@ -1354,21 +1355,6 @@ public static class HookCaller
 			Pool.FreeList(ref _classList);
 		}
 
-		// #region Handle partials
-//
-		// foreach (var subNamespace in input.Members.OfType<BaseNamespaceDeclarationSyntax>())
-		// {
-		// 	foreach (var subClass in subNamespace.Members.OfType<ClassDeclarationSyntax>())
-		// 	{
-		// 		if (subClass != @class && subClass.Modifiers.Any(SyntaxKind.PartialKeyword) && subClass.Identifier.ValueText == @class.Identifier.ValueText)
-		// 		{
-		// 			methodDeclarations.AddRange(subClass.ChildNodes().OfType<MethodDeclarationSyntax>());
-		// 		}
-		// 	}
-		// }
-//
-		// #endregion
-
 		var hookableMethods = new Dictionary<uint, List<MethodDeclarationSyntax>>();
 		var privateMethods0 = methodDeclarations.Where(md => (md.Modifiers.Count == 0 || md.Modifiers.All(modifier => !modifier.IsKind(SyntaxKind.PublicKeyword) && !modifier.IsKind(SyntaxKind.StaticKeyword)) || md.AttributeLists.Any(x => x.Attributes.Any(y => y.Name.ToString() == "HookMethod"))) && md.TypeParameterList == null);
 		var privateMethods = privateMethods0.OrderBy(x => x.Identifier.ValueText);
@@ -1390,6 +1376,8 @@ public static class HookCaller
 		foreach (var group in hookableMethods)
 		{
 			methodContents += $"\t\t\t// {group.Value[0].Identifier.ValueText} aka {group.Key}\n\t\t\tcase {group.Key}:\n\t\t\t{{";
+
+			var overrideCount = 1;
 
 			for (int i = 0; i < group.Value.Count; i++)
 			{
@@ -1456,12 +1444,20 @@ public static class HookCaller
 				}
 
 				var validLengthCheck = group.Value.Min(y => y.ParameterList.Parameters.Count) != group.Value.Max(y => y.ParameterList.Parameters.Count);
-				methodContents += $"{(string.IsNullOrEmpty(conditional) ? string.Empty : $"\n#if {conditional}")}\t\t\t\n\t\t\t\t{(requiredParameterCount > 0 ? $"{(validLengthCheck ? $"if(args.Length == {method.ParameterList.Parameters.Count})" : string.Empty)}" : "")} {(requiredParameterCount > 0 && methodName != "OnServerInitialized" && validLengthCheck ? "{" : "")} {varText}{(string.IsNullOrEmpty(parameterText) ? string.Empty : $"if({parameterText}) {{")} {(method.ReturnType.ToString() != "void" ? "result = " : string.Empty)}{methodName}({string.Join(", ", parameters)}); {refSets} {(requiredParameterCount > 0 && methodName != "OnServerInitialized" && validLengthCheck ? "}" : "")}{(string.IsNullOrEmpty(parameterText) ? string.Empty : $"}}")}{(string.IsNullOrEmpty(conditional) ? string.Empty : $"\n#endif")}\n";
+				methodContents += $"{(string.IsNullOrEmpty(conditional) ? string.Empty : $"\n#if {conditional}")}\t\t\t\n\t\t\t\t" +
+					$"{(requiredParameterCount > 0 ? $"{(validLengthCheck ? $"if(args.Length >= {method.ParameterList.Parameters.Count})" : string.Empty)}" : "")} " +
+					$"{(requiredParameterCount > 0 && methodName != "OnServerInitialized" && validLengthCheck ? "{" : "")} {varText}" +
+					$"{(string.IsNullOrEmpty(parameterText) ? string.Empty : $"if({parameterText}) {{")} {(method.ReturnType.ToString() != "void" ? $"var result{overrideCount} = " : string.Empty)}" +
+					$"{methodName}({string.Join(", ", parameters)}); {refSets} {(method.ReturnType.ToString() != "void" ? $"if(result == null) {{ result = result{overrideCount}; }}" : string.Empty)} " +
+					$"{(requiredParameterCount > 0 && methodName != "OnServerInitialized" && validLengthCheck ? "}" : "")}" +
+					$"{(string.IsNullOrEmpty(parameterText) ? string.Empty : $"}}")}{(string.IsNullOrEmpty(conditional) ? string.Empty : $"\n#endif")}\n";
 
 				Array.Clear(parameters, 0, parameters.Length);
 				parameters = null;
 				parameters0 = null;
 				requiredParameters = null;
+
+				overrideCount++;
 			}
 
 			methodContents += "\t\t\t\tbreak;\n\t\t\t}\n";
@@ -1524,7 +1520,9 @@ public static class HookCaller
 			@class = classes[0];
 		}
 
-		var source = @$"{input.Usings.Select(x => x.ToString()).ToString("\n")}
+		var usings = input.Usings.Concat(input.Members.OfType<BaseNamespaceDeclarationSyntax>().SelectMany(x => x.Usings));
+
+		var source = @$"{usings.Select(x => x.ToString()).ToString("\n")}
 
 namespace {@namespace.Name};
 
