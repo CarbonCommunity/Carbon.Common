@@ -111,11 +111,17 @@ public partial class AdminModule
 
 		foreach (var command in ConfigInstance.OpenCommands)
 		{
-			Community.Runtime.CorePlugin.cmd.AddChatCommand(command, this, (player, cmd, args) =>
+			var action = new Action<BasePlayer, string, string[]>((player, cmd, args) =>
 			{
 				if (!CanAccess(player)) return;
 
 				var ap = GetPlayerSession(player);
+
+				if (ap.IsInMenu)
+				{
+					Close(player);
+					return;
+				}
 
 				ap.SelectedTab = Tabs.FirstOrDefault(x => HasAccessLevel(player, x.AccessLevel));
 
@@ -126,7 +132,10 @@ public partial class AdminModule
 
 				DrawCursorLocker(player);
 				Draw(player);
-			}, silent: true);
+			});
+
+			Community.Runtime.CorePlugin.cmd.AddChatCommand(command, this, action, silent: true);
+			Community.Runtime.CorePlugin.cmd.AddConsoleCommand(command, this, action, silent: true);
 		}
 	}
 	public override void OnDisabled(bool initialized)
@@ -497,7 +506,7 @@ public partial class AdminModule
 				xMin: 0.15f, xMax: 0.85f, yMin: 0.15f, yMax: 0.85f);
 		}
 	}
-	public void TabPanelInput(CUI cui, CuiElementContainer container, string parent, string text, string placeholder, string command, int characterLimit, bool readOnly, float height, float offset, PlayerSession session, Tab.OptionButton.Types type = Tab.OptionButton.Types.None)
+	public void TabPanelInput(CUI cui, CuiElementContainer container, string parent, string text, string placeholder, string command, int characterLimit, bool readOnly, float height, float offset, PlayerSession session, Tab.OptionButton.Types type = Tab.OptionButton.Types.None, Tab.Option option = null)
 	{
 		var color = type switch
 		{
@@ -514,11 +523,11 @@ public partial class AdminModule
 		if (!string.IsNullOrEmpty(text))
 		{
 			cui.CreateText(container, parent: $"{parent}panel", id: $"{parent}text",
-			color: $"1 1 1 {DataInstance.Colors.OptionNameOpacity}",
-			text: $"{text}:", 12,
-			xMin: 0.025f, xMax: 0.98f, yMin: 0, yMax: 1,
-			align: TextAnchor.MiddleLeft,
-			font: Handler.FontTypes.RobotoCondensedRegular);
+				color: $"1 1 1 {DataInstance.Colors.OptionNameOpacity}",
+				text: $"{text}:", 12,
+				xMin: 0.025f, xMax: 0.98f, yMin: 0, yMax: 1,
+				align: TextAnchor.MiddleLeft,
+				font: Handler.FontTypes.RobotoCondensedRegular);
 
 			cui.CreatePanel(container, $"{parent}panel", null,
 				color: color,
@@ -537,8 +546,14 @@ public partial class AdminModule
 			align: TextAnchor.MiddleLeft,
 			characterLimit: characterLimit,
 			readOnly: readOnly,
-			needsKeyboard: Singleton.HandleEnableNeedsKeyboard(session),
+			needsKeyboard: session.Input == option,
+			autoFocus: session.Input == option && session.Input != session.PreviousInput,
 			font: Handler.FontTypes.RobotoCondensedRegular);
+
+		if (session.Input == option)
+		{
+			session.PreviousInput = session.Input;
+		}
 
 		if (!readOnly)
 		{
@@ -876,7 +891,7 @@ public partial class AdminModule
 			currentOffset += cuts + spacing;
 		}
 	}
-	public void TabPanelInputButton(CUI cui, CuiElementContainer container, string parent, string text, string command, float buttonPriority, Tab.OptionInput input, Tab.OptionButton button, PlayerSession ap, float height, float offset)
+	public void TabPanelInputButton(CUI cui, CuiElementContainer container, string parent, string text, string command, float buttonPriority, Tab.OptionInput input, Tab.OptionButton button, PlayerSession session, float height, float offset, Tab.Option option = null)
 	{
 		var color = "0.2 0.2 0.2 0.5";
 		var buttonColor = (button.Type == null ? Tab.OptionButton.Types.None : button.Type(null)) switch
@@ -887,7 +902,7 @@ public partial class AdminModule
 			_ => "0.2 0.2 0.2 0.5",
 		};
 
-		var panel = cui.CreatePanel(container, parent, $"{parent}panel",
+		cui.CreatePanel(container, parent, $"{parent}panel",
 			color: "0.2 0.2 0.2 0",
 			xMin: 0, xMax: 1f, yMin: offset, yMax: offset + height);
 
@@ -911,14 +926,20 @@ public partial class AdminModule
 
 		cui.CreateProtectedInputField(container, parent: inPanel, id: null,
 			color: $"1 1 1 {(input.ReadOnly ? 0.2f : 1f)}",
-			text: input.Placeholder?.Invoke(ap), 11,
+			text: input.Placeholder?.Invoke(session), 11,
 			xMin: 0.03f, xMax: 1f - buttonPriority, yMin: 0, yMax: 1,
 			command: $"{command} input",
 			align: TextAnchor.MiddleLeft,
 			characterLimit: input.CharacterLimit,
 			readOnly: input.ReadOnly,
-			needsKeyboard: Singleton.HandleEnableNeedsKeyboard(ap),
+			needsKeyboard: session.Input == option,
+			autoFocus: session.Input == option && session.Input != session.PreviousInput,
 			font: Handler.FontTypes.RobotoCondensedRegular);
+
+		if (session.Input == option)
+		{
+			session.PreviousInput = session.Input;
+		}
 
 		cui.CreateProtectedButton(container, parent: inPanel, id: null,
 			color: buttonColor,
@@ -1119,15 +1140,6 @@ public partial class AdminModule
 				xMin: 0, xMax: 1, yMin: 0, yMax: 1,
 				needsCursor: true, destroyUi: PanelId, parent: ClientPanels.HudMenu);
 
-			using (TimeMeasure.New($"{Name}.Exit"))
-			{
-				cui.CreateProtectedButton(container, parent: PanelId, id: null,
-					color: "0 0 0 0",
-					textColor: "0 0 0 0",
-					text: string.Empty, 0,
-					command: PanelId + ".close");
-			}
-
 			var shade = cui.CreatePanel(container, parent: PanelId, id: $"{PanelId}color",
 				color: "0 0 0 0.6",
 				xMin: 0.5f, xMax: 0.5f, yMin: 0.5f, yMax: 0.5f,
@@ -1259,8 +1271,9 @@ public partial class AdminModule
 											break;
 
 										case Tab.OptionInput input:
-											TabPanelInput(cui, container, panel, input.Name, input.Placeholder?.Invoke(ap), PanelId + $".callaction {i} {actualI}", input.CharacterLimit, input.ReadOnly, rowHeight, rowIndex, ap);
+											TabPanelInput(cui, container, panel, input.Name, input.Placeholder?.Invoke(ap), PanelId + $".callaction {i} {actualI}", input.CharacterLimit, input.ReadOnly, rowHeight, rowIndex, ap, option: input);
 											HandleReveal(OptionWidth);
+											HandleInputHighlight(OptionWidth);
 											break;
 
 										case Tab.OptionEnum @enum:
@@ -1293,8 +1306,9 @@ public partial class AdminModule
 											break;
 
 										case Tab.OptionInputButton inputButton:
-											TabPanelInputButton(cui, container, panel, inputButton.Name, PanelId + $".callaction {i} {actualI}", inputButton.ButtonPriority, inputButton.Input, inputButton.Button, ap, rowHeight, rowIndex);
+											TabPanelInputButton(cui, container, panel, inputButton.Name, PanelId + $".callaction {i} {actualI}", inputButton.ButtonPriority, inputButton.Input, inputButton.Button, ap, rowHeight, rowIndex, option: inputButton);
 											HandleReveal(OptionWidth);
+											HandleInputHighlight(OptionWidth);
 											break;
 
 										case Tab.OptionColor color:
@@ -1318,6 +1332,16 @@ public partial class AdminModule
 											blur: true);
 
 										cui.CreateProtectedButton(container, blur, null, color: "0 0 0 0", "1 1 1 0.5", "REVEAL".SpacedString(1), 8, command: PanelId + $".callaction {i} {actualI}");
+									}
+
+									void HandleInputHighlight(float xMin)
+									{
+										if (row == ap.Input) return;
+
+										cui.CreateProtectedButton(container, panel, null,
+											color: "0 0 0 0", "0 0 0 0", string.Empty, 0,
+											xMin: xMin, xMax: 0.98f, yMin: rowIndex, yMax: rowIndex + rowHeight,
+											command: PanelId + $".callaction {i} {actualI}");
 									}
 
 									#endregion
@@ -1509,6 +1533,7 @@ public partial class AdminModule
 
 		if (ap.SelectedTab != previous)
 		{
+			ap.Input = ap.PreviousInput = null;
 			ap.SelectedTab.ResetHiddens();
 			Draw(player);
 		}
@@ -1529,6 +1554,7 @@ public partial class AdminModule
 
 		if (ap.SelectedTab != previous)
 		{
+			ap.Input = ap.PreviousInput = null;
 			ap.SelectedTab.ResetHiddens();
 			Draw(player);
 		}
@@ -1548,6 +1574,7 @@ public partial class AdminModule
 
 		if (ap.SelectedTab != previous)
 		{
+			ap.Input = ap.PreviousInput = null;
 			ap.SelectedTab.ResetHiddens();
 			Draw(player);
 		}
@@ -1598,8 +1625,21 @@ public partial class AdminModule
 				return button.Callback != null;
 
 			case Tab.OptionInput input:
-				input.Callback?.Invoke(ap, args);
-				return input.Callback != null;
+				if (!input.ReadOnly)
+				{
+					if (ap.Input != input)
+					{
+						ap.Input = input;
+						return true;
+					}
+					else
+					{
+						input.Callback?.Invoke(ap, args);
+						ap.Input = ap.PreviousInput = null;
+						return input.Callback != null;
+					}
+				}
+				return false;
 
 			case Tab.OptionEnum @enum:
 				@enum.Callback?.Invoke(ap, args.ElementAt(0).ToBool());
@@ -1684,10 +1724,24 @@ public partial class AdminModule
 				{
 					case "input":
 						{
-							var enumerable = args.Skip(1);
-							inputButton.Input.Callback?.Invoke(ap, enumerable.Count() == 0 ? EmptyElement : enumerable);
+							if (!inputButton.Input.ReadOnly)
+							{
+								if (ap.Input != inputButton.Input)
+								{
+									ap.Input = inputButton.Input;
+									return true;
+								}
+								else
+								{
+									ap.Input = ap.PreviousInput = null;
+									var enumerable = args.Skip(1);
+									inputButton.Input.Callback?.Invoke(ap, enumerable.Count() == 0 ? EmptyElement : enumerable);
+									return inputButton.Input.Callback != null;
+								}
+							}
+
+							return false;
 						}
-						return inputButton.Input.Callback != null;
 
 					case "button":
 						inputButton.Button.Callback?.Invoke(ap);
@@ -1754,6 +1808,8 @@ public partial class AdminModule
 		public int LastPressedRow;
 
 		public Tab.Option Tooltip;
+		public Tab.Option Input;
+		public Tab.Option PreviousInput;
 
 		internal Tab.OptionDropdown _selectedDropdown;
 		internal Page _selectedDropdownPage = new();
