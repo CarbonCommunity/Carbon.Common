@@ -20,11 +20,11 @@ namespace Carbon;
 public class HookCallerCommon
 {
 	public Dictionary<int, object[]> _argumentBuffer = new();
-	public Dictionary<uint, int> _hookTimeBuffer = new();
-	public Dictionary<uint, int> _hookTotalTimeBuffer = new();
+	public Dictionary<uint, double> _hookTimeBuffer = new();
+	public Dictionary<uint, double> _hookTotalTimeBuffer = new();
 	public Dictionary<uint, DateTime> _lastDeprecatedWarningAt = new();
 
-	public virtual void AppendHookTime(uint hook, int time) { }
+	public virtual void AppendHookTime(uint hook, double time) { }
 	public virtual void ClearHookTime(uint hook) { }
 
 	public virtual object[] AllocateBuffer(int count) => null;
@@ -86,7 +86,7 @@ public static class HookCaller
 
 	#endregion
 
-	public static int GetHookTime(uint hook)
+	public static double GetHookTime(uint hook)
 	{
 		if (!Caller._hookTimeBuffer.TryGetValue(hook, out var total))
 		{
@@ -95,7 +95,7 @@ public static class HookCaller
 
 		return total;
 	}
-	public static int GetHookTotalTime(uint hook)
+	public static double GetHookTotalTime(uint hook)
 	{
 		if (!Caller._hookTotalTimeBuffer.TryGetValue(hook, out var total))
 		{

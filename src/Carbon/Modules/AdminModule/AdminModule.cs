@@ -1139,7 +1139,7 @@ public partial class AdminModule
 				color: "0 0 0 0.75",
 				xMin: 0, xMax: 1, yMin: 0, yMax: 1,
 				needsCursor: true, destroyUi: PanelId, parent: ClientPanels.HudMenu);
-			
+
 			var shade = cui.CreatePanel(container, parent: PanelId, id: $"{PanelId}color",
 				color: "0 0 0 0.6",
 				xMin: 0.5f, xMax: 0.5f, yMin: 0.5f, yMax: 0.5f,
