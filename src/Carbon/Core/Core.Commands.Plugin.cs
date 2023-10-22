@@ -285,7 +285,7 @@ public partial class CorePlugin : CarbonPlugin
 			return;
 		}
 
-		using (var table = new StringTable("#", "Id", "Hook", "Time", "Memory", "Subscribed"))
+		using (var table = new StringTable("#", "Id", "Hook", "Time", "Memory", "Subscribed", "Async/Overrides"))
 		{
 			foreach (var hook in plugin.HookCache)
 			{
@@ -299,14 +299,16 @@ public partial class CorePlugin : CarbonPlugin
 
 				var hookId = HookStringPool.GetOrAdd(hookName);
 				var hookTime = hook.Value.Sum(x => x.HookTime);
-				var memoryUsage = hook.Value.Sum(x => x.MemoryUsage);
+				var hookMemoryUsage = hook.Value.Sum(x => x.MemoryUsage);
+				var hookCount = hook.Value.Count;
+				var hookAsyncCount = hook.Value.Count(x => x.IsAsync);
 
 				if (!plugin.Hooks.Contains(hookId))
 				{
 					continue;
 				}
 
-				table.AddRow(count, hookId, $"{hookName}", $"{hookTime:0}ms", $"{ByteEx.Format(memoryUsage, shortName: true).ToLower()}", !plugin.IgnoredHooks.Contains(hookId));
+				table.AddRow(count, hookId, $"{hookName}", $"{hookTime:0}ms", $"{ByteEx.Format(hookMemoryUsage, shortName: true).ToLower()}", !plugin.IgnoredHooks.Contains(hookId), $"{hookAsyncCount:n0}/{hookCount:n0}");
 
 				count++;
 			}
@@ -315,13 +317,19 @@ public partial class CorePlugin : CarbonPlugin
 
 			builder.AppendLine($"{plugin.Name} v{plugin.Version} by {plugin.Author}{(plugin.IsCorePlugin ? $" [core]" : string.Empty)}");
 			builder.AppendLine($"  Path:                   {plugin.FilePath}");
-			builder.AppendLine($"  Compile Time:           {plugin.CompileTime}ms");
+			builder.AppendLine($"  Compile Time:           {plugin.CompileTime}ms{(plugin.IsPrecompiled ? " [precompiled]" : string.Empty)}{(plugin.IsExtension ? " [ext]" : string.Empty)}");
 			builder.AppendLine($"  Uptime:                 {TimeEx.Format(plugin.Uptime, true).ToLower()}");
 			builder.AppendLine($"  Total Hook Time:        {plugin.TotalHookTime:0}ms");
 			builder.AppendLine($"  Total Memory Used:      {ByteEx.Format(plugin.TotalMemoryUsed, shortName: true).ToLower()}");
 			builder.AppendLine($"  Internal Hook Override: {plugin.InternalCallHookOverriden}");
 			builder.AppendLine($"  Has Conditionals:       {plugin.HasConditionals}");
 			builder.AppendLine($"  Mod Package:            {plugin.Package?.Name} ({plugin.Package?.Plugins.Count}){((plugin.Package?.IsCoreMod).GetValueOrDefault() ? $" [core]" : string.Empty)}");
+			builder.AppendLine($"  Processor:              {plugin.Processor.Name} [{plugin.Processor.Extension}]");
+
+			if (plugin is CarbonPlugin carbonPlugin)
+			{
+				builder.AppendLine($"  Carbon CUI:             {carbonPlugin.CuiHandler.Pooled:n0} pooled, {carbonPlugin.CuiHandler.Used:n0} used");
+			}
 
 			if (count == 1)
 			{

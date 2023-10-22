@@ -176,9 +176,16 @@ public partial class CorePlugin : CarbonPlugin
 				var hookName = current.Method.Name;
 
 				var hookTime = hook.Value.Sum(x => x.HookTime);
-				var memoryUsage = hook.Value.Sum(x => x.MemoryUsage);
+				var hookMemoryUsage = hook.Value.Sum(x => x.MemoryUsage);
+				var hookCount = hook.Value.Count;
+				var hookAsyncCount = hook.Value.Count(x => x.IsAsync);
 
-				table.AddRow(count, hookId, $"{hookName}", $"{hookTime:0}ms", $"{ByteEx.Format(memoryUsage, shortName: true).ToLower()}", !module.IgnoredHooks.Contains(hookId));
+				if (!module.Hooks.Contains(hookId))
+				{
+					continue;
+				}
+
+				table.AddRow(count, hookId, $"{hookName}", $"{hookTime:0}ms", $"{ByteEx.Format(hookMemoryUsage, shortName: true).ToLower()}", !module.IgnoredHooks.Contains(hookId), $"{hookAsyncCount:n0}/{hookCount:n0}");
 
 				count++;
 			}
