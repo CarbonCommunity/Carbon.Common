@@ -379,9 +379,18 @@ public struct CUI : IDisposable
 		{
 			foreach (var entry in _queue)
 			{
-				if (entry is CuiElement element) _elements.Add(element);
-				else if (entry is CuiElementContainer elementContainer) _containerPool.Add(elementContainer);
-				else SendToPool(entry as ICuiComponent);
+				if (entry is CuiElement element)
+				{
+					_elements.Add(element);
+				}
+				else if (entry is CuiElementContainer elementContainer)
+				{
+					_containerPool.Add(elementContainer);
+				}
+				else
+				{
+					SendToPool(entry as ICuiComponent);
+				}
 			}
 
 			_queue.Clear();
@@ -756,7 +765,10 @@ public struct CUI : IDisposable
 						Logger.Warn($"You're trying to update element '{pair.Element.Name}' (of parent '{pair.Element.Parent}') which doesn't allow updates. Ignoring.");
 						return;
 					}
-					else Add(pair.Element);
+					else
+					{
+						Add(pair.Element);
+					}
 				}
 			}
 			public void Add(Pair<string, CuiElement, CuiElement> pair)
