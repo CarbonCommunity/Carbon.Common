@@ -80,9 +80,10 @@ public class BaseHookable
 
 #if DEBUG
 	public HookTimeAverage HookTimeAverage { get; protected set; }
-	public HookTimeAverage MemoryAverage { get; protected set; }
+	public MemoryAverage MemoryAverage { get; protected set; }
 #endif
 
+	public double CurrentHookTime { get; internal set; }
 	public static long CurrentMemory => GC.GetTotalMemory(false);
 	public static int CurrentGcCount => GC.CollectionCount(0);
 	public bool HasGCCollected => _currentGcCount != CurrentGcCount;
@@ -136,7 +137,7 @@ public class BaseHookable
 			return;
 		}
 
-		var timeElapsed = stopwatch.Elapsed.TotalMilliseconds;
+		CurrentHookTime = stopwatch.Elapsed.TotalMilliseconds;
 		var memoryUsed = (CurrentMemory - _currentMemory).Clamp(0, long.MaxValue);
 
 #if DEBUG
@@ -147,9 +148,8 @@ public class BaseHookable
 		// }
 #endif
 
-		TotalHookTime += timeElapsed;
+		TotalHookTime += CurrentHookTime;
 		TotalMemoryUsed += memoryUsed;
-		stopwatch.Stop();
 		stopwatch.Reset();
 	}
 
