@@ -70,6 +70,7 @@ public class Build
 		public static readonly string Comment = @"[GIT_COMMENT]";
 		public static readonly string Date = @"[GIT_DATE]";
 
+		public static readonly string Tag = @"[GIT_TAG]";
 		public static readonly string HashShort = @"[GIT_HASH_SHORT]";
 		public static readonly string HashLong = @"[GIT_HASH_LONG]";
 

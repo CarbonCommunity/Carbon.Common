@@ -1,11 +1,9 @@
 ﻿/*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
-
-using Google.Protobuf.WellKnownTypes;
 
 namespace Carbon.Components;
 
@@ -17,10 +15,6 @@ public abstract class TimeAverageGeneric<T> : Dictionary<double, T>
 	}
 
 	public double Time { get; set; }
-	public T TotalValue { get; protected set; }
-	public T AverageValue { get; protected set; }
-	public T MinValue { get; protected set; }
-	public T MaxValue { get; protected set; }
 
 	public virtual void Increment(T value)
 	{
@@ -61,42 +55,19 @@ public class HookTimeAverage : TimeAverageGeneric<double>
 
 	public override double CalculateTotal()
 	{
-		using (TimeMeasure.New($"CalculateTotal<{typeof(double)}>"))
-		{
-			TotalValue = 0f;
-
-			foreach (var value in this)
-			{
-				TotalValue += value.Value;
-			}
-		}
-
-		return TotalValue;
+		return Count > 0 ? this.Sum(x => x.Value) : 0;
 	}
 	public override double CalculateAverage()
 	{
-		AverageValue = 0f;
-
-		var total = CalculateTotal();
-
-		if (total == 0)
-		{
-			return 0f;
-		}
-
-		return total / Count;
+		return Count > 0 ? this.Average(x => x.Value) : 0;
 	}
 	public override double CalculateMin()
 	{
-		MinValue = this.Min(x => x.Value);
-
-		return MinValue;
+		return Count > 0 ? this.Min(x => x.Value) : 0;
 	}
 	public override double CalculateMax()
 	{
-		MaxValue = this.Max(x => x.Value);
-
-		return MaxValue;
+		return Count > 0 ? this.Max(x => x.Value) : 0;
 	}
 }
 
@@ -106,49 +77,18 @@ public class MemoryAverage : TimeAverageGeneric<long>
 
 	public override long CalculateTotal()
 	{
-		Calibrate();
-
-		using (TimeMeasure.New($"CalculateTotal<{typeof(long)}>"))
-		{
-			TotalValue = 0;
-
-			foreach (var value in this)
-			{
-				TotalValue += value.Value;
-			}
-		}
-
-		return TotalValue;
+		return Count > 0 ? this.Sum(x => x.Value) : 0;
 	}
 	public override long CalculateAverage()
 	{
-		Calibrate();
-
-		AverageValue = 0;
-
-		var total = CalculateTotal();
-
-		if (total == 0)
-		{
-			return 0;
-		}
-
-		return total / Count;
+		return Count > 0 ? (long)this.Average(x => x.Value) : 0;
 	}
 	public override long CalculateMin()
 	{
-		Calibrate();
-
-		MinValue = this.Min(x => x.Value);
-
-		return MinValue;
+		return Count > 0 ? this.Min(x => x.Value) : 0;
 	}
 	public override long CalculateMax()
 	{
-		Calibrate();
-
-		MaxValue = this.Max(x => x.Value);
-
-		return MaxValue;
+		return Count > 0 ? this.Max(x => x.Value) : 0;
 	}
 }

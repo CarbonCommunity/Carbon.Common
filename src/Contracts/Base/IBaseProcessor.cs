@@ -15,9 +15,10 @@
 
 		void Prepare(string path);
 		void Prepare(string name, string path);
-		void Ignore(string file);
-		void Clear();
-		void ClearIgnore(string file);
+		void Ignore(string path);
+		bool Exists(string path);
+		void Clear(IEnumerable<string> except = null);
+		void ClearIgnore(string path);
 		bool IsBlacklisted(string path);
 		bool IncludeSubdirectories { get; set; }
 

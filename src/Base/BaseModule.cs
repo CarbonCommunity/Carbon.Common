@@ -3,7 +3,7 @@ using Defines = Carbon.Core.Defines;
 
 /*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -86,6 +86,8 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 
 		Community.Runtime.HookManager.LoadHooksFromType(Type);
 
+		BuildHookCache(BindingFlags.Instance | BindingFlags.NonPublic);
+
 		foreach (var method in Type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic))
 		{
 			if (Community.Runtime.HookManager.IsHookLoaded(method.Name))
@@ -125,14 +127,27 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 
 		if (!Config.Exists())
 		{
-			ModuleConfiguration = new Configuration { Config = Activator.CreateInstance<C>() };
-			if (EnabledByDefault) ModuleConfiguration.Enabled = true;
+			ModuleConfiguration = new Configuration
+			{
+				Config = Activator.CreateInstance<C>()
+			};
+
+			if (EnabledByDefault)
+			{
+				ModuleConfiguration.Enabled = true;
+			}
 			shouldSave = true;
 		}
 		else
 		{
-			try { ModuleConfiguration = Config.ReadObject<Configuration>(); }
-			catch (Exception exception) { Logger.Error($"Failed loading config. JSON file is corrupted and/or invalid.\n{exception.Message}"); }
+			try
+			{
+				ModuleConfiguration = Config.ReadObject<Configuration>();
+			}
+			catch (Exception exception)
+			{
+				Logger.Error($"Failed loading config. JSON file is corrupted and/or invalid.", exception);
+			}
 		}
 
 		ConfigInstance = ModuleConfiguration.Config;
@@ -147,8 +162,14 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 			}
 			else
 			{
-				try { DataInstance = Data.ReadObject<D>(); }
-				catch (Exception exception) { Logger.Error($"Failed loading data. JSON file is corrupted and/or invalid.\n{exception.Message}"); }
+				try
+				{
+					DataInstance = Data.ReadObject<D>();
+				}
+				catch (Exception exception)
+				{
+					Logger.Error($"Failed loading data. JSON file is corrupted and/or invalid.", exception);
+				}
 			}
 		}
 

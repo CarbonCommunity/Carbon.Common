@@ -20,15 +20,16 @@ namespace Carbon;
 public class HookCallerCommon
 {
 	public Dictionary<int, object[]> _argumentBuffer = new();
-	public Dictionary<uint, int> _hookTimeBuffer = new();
-	public Dictionary<uint, int> _hookTotalTimeBuffer = new();
+	public Dictionary<uint, double> _hookTimeBuffer = new();
+	public Dictionary<uint, double> _hookTotalTimeBuffer = new();
 	public Dictionary<uint, DateTime> _lastDeprecatedWarningAt = new();
 
-	public virtual void AppendHookTime(uint hook, int time) { }
+	public virtual void AppendHookTime(uint hook, double time) { }
 	public virtual void ClearHookTime(uint hook) { }
 
 	public virtual object[] AllocateBuffer(int count) => null;
-	public virtual object[] RescaleBuffer(object[] oldBuffer, int newScale) => null;
+	public virtual object[] RescaleBuffer(object[] oldBuffer, int newScale, BaseHookable.CachedHook hook) => null;
+	public virtual void ProcessDefaults(object[] buffer, BaseHookable.CachedHook hook) { }
 	public virtual void ClearBuffer(object[] buffer) { }
 
 	public virtual object CallHook<T>(T hookable, uint hookId, BindingFlags flags, object[] args, bool keepArgs = false) where T : BaseHookable => null;
@@ -85,7 +86,7 @@ public static class HookCaller
 
 	#endregion
 
-	public static int GetHookTime(uint hook)
+	public static double GetHookTime(uint hook)
 	{
 		if (!Caller._hookTimeBuffer.TryGetValue(hook, out var total))
 		{
@@ -94,7 +95,7 @@ public static class HookCaller
 
 		return total;
 	}
-	public static int GetHookTotalTime(uint hook)
+	public static double GetHookTotalTime(uint hook)
 	{
 		if (!Caller._hookTotalTimeBuffer.TryGetValue(hook, out var total))
 		{
@@ -1328,11 +1329,11 @@ public static class HookCaller
 		{
 			_classList = Pool.GetList<ClassDeclarationSyntax>();
 			isTemp = true;
-			FindPluginInfo(input, out @namespace, _classList);
+			FindPluginInfo(input, out @namespace, out _, out _, _classList);
 		}
 		else
 		{
-			FindPluginInfo(input, out @namespace, null);
+			FindPluginInfo(input, out @namespace, out _, out _, null);
 
 			namespaceIndex = classIndex = 0;
 		}
@@ -1353,21 +1354,6 @@ public static class HookCaller
 		{
 			Pool.FreeList(ref _classList);
 		}
-
-		// #region Handle partials
-//
-		// foreach (var subNamespace in input.Members.OfType<BaseNamespaceDeclarationSyntax>())
-		// {
-		// 	foreach (var subClass in subNamespace.Members.OfType<ClassDeclarationSyntax>())
-		// 	{
-		// 		if (subClass != @class && subClass.Modifiers.Any(SyntaxKind.PartialKeyword) && subClass.Identifier.ValueText == @class.Identifier.ValueText)
-		// 		{
-		// 			methodDeclarations.AddRange(subClass.ChildNodes().OfType<MethodDeclarationSyntax>());
-		// 		}
-		// 	}
-		// }
-//
-		// #endregion
 
 		var hookableMethods = new Dictionary<uint, List<MethodDeclarationSyntax>>();
 		var privateMethods0 = methodDeclarations.Where(md => (md.Modifiers.Count == 0 || md.Modifiers.All(modifier => !modifier.IsKind(SyntaxKind.PublicKeyword) && !modifier.IsKind(SyntaxKind.StaticKeyword)) || md.AttributeLists.Any(x => x.Attributes.Any(y => y.Name.ToString() == "HookMethod"))) && md.TypeParameterList == null);
@@ -1390,6 +1376,8 @@ public static class HookCaller
 		foreach (var group in hookableMethods)
 		{
 			methodContents += $"\t\t\t// {group.Value[0].Identifier.ValueText} aka {group.Key}\n\t\t\tcase {group.Key}:\n\t\t\t{{";
+
+			var overrideCount = 1;
 
 			for (int i = 0; i < group.Value.Count; i++)
 			{
@@ -1456,12 +1444,20 @@ public static class HookCaller
 				}
 
 				var validLengthCheck = group.Value.Min(y => y.ParameterList.Parameters.Count) != group.Value.Max(y => y.ParameterList.Parameters.Count);
-				methodContents += $"{(string.IsNullOrEmpty(conditional) ? string.Empty : $"\n#if {conditional}")}\t\t\t\n\t\t\t\t{(requiredParameterCount > 0 ? $"{(validLengthCheck ? $"if(args.Length == {method.ParameterList.Parameters.Count})" : string.Empty)}" : "")} {(requiredParameterCount > 0 && methodName != "OnServerInitialized" && validLengthCheck ? "{" : "")} {varText}{(string.IsNullOrEmpty(parameterText) ? string.Empty : $"if({parameterText}) {{")} {(method.ReturnType.ToString() != "void" ? "result = " : string.Empty)}{methodName}({string.Join(", ", parameters)}); {refSets} {(requiredParameterCount > 0 && methodName != "OnServerInitialized" && validLengthCheck ? "}" : "")}{(string.IsNullOrEmpty(parameterText) ? string.Empty : $"}}")}{(string.IsNullOrEmpty(conditional) ? string.Empty : $"\n#endif")}\n";
+				methodContents += $"{(string.IsNullOrEmpty(conditional) ? string.Empty : $"\n#if {conditional}")}\t\t\t\n\t\t\t\t" +
+					$"{(requiredParameterCount > 0 ? $"{(validLengthCheck ? $"if(args.Length >= {method.ParameterList.Parameters.Count})" : string.Empty)}" : "")} " +
+					$"{(requiredParameterCount > 0 && methodName != "OnServerInitialized" && validLengthCheck ? "{" : "")} {varText}" +
+					$"{(string.IsNullOrEmpty(parameterText) ? string.Empty : $"if({parameterText}) {{")} {(method.ReturnType.ToString() != "void" ? $"var result{overrideCount} = " : string.Empty)}" +
+					$"{methodName}({string.Join(", ", parameters)}); {refSets} {(method.ReturnType.ToString() != "void" ? $"if(result == null) {{ result = result{overrideCount}; }}" : string.Empty)} " +
+					$"{(requiredParameterCount > 0 && methodName != "OnServerInitialized" && validLengthCheck ? "}" : "")}" +
+					$"{(string.IsNullOrEmpty(parameterText) ? string.Empty : $"}}")}{(string.IsNullOrEmpty(conditional) ? string.Empty : $"\n#endif")}\n";
 
 				Array.Clear(parameters, 0, parameters.Length);
 				parameters = null;
 				parameters0 = null;
 				requiredParameters = null;
+
+				overrideCount++;
 			}
 
 			methodContents += "\t\t\t\tbreak;\n\t\t\t}\n";
@@ -1513,7 +1509,7 @@ public static class HookCaller
 		if (classes == null)
 		{
 			classes = Facepunch.Pool.GetList<ClassDeclarationSyntax>();
-			FindPluginInfo(input, out @namespace, classes);
+			FindPluginInfo(input, out @namespace, out _, out _, classes);
 
 			@class = classes[0];
 			Facepunch.Pool.FreeList(ref classes);
@@ -1524,7 +1520,9 @@ public static class HookCaller
 			@class = classes[0];
 		}
 
-		var source = @$"{input.Usings.Select(x => x.ToString()).ToString("\n")}
+		var usings = input.Usings.Concat(input.Members.OfType<BaseNamespaceDeclarationSyntax>().SelectMany(x => x.Usings));
+
+		var source = @$"{usings.Select(x => x.ToString()).ToString("\n")}
 
 namespace {@namespace.Name};
 
@@ -1553,22 +1551,30 @@ partial class {@class.Identifier.ValueText}
 #endif
 	}
 
-	public static bool FindPluginInfo(CompilationUnitSyntax input, out BaseNamespaceDeclarationSyntax @namespace, List<ClassDeclarationSyntax> classes)
+	public static bool FindPluginInfo(CompilationUnitSyntax input, out BaseNamespaceDeclarationSyntax @namespace, out int namespaceIndex, out int classIndex, List<ClassDeclarationSyntax> classes)
 	{
 		var @class = (ClassDeclarationSyntax)null;
 		@namespace = null;
+		namespaceIndex = 0;
+		classIndex = 0;
 
 		foreach (var ns in input.Members.OfType<BaseNamespaceDeclarationSyntax>())
 		{
-			foreach (var cls in ns.Members.OfType<ClassDeclarationSyntax>())
+			var nsClasses = ns.Members.OfType<ClassDeclarationSyntax>();
+
+			for(int i = 0; i < nsClasses.Count(); i++)
 			{
+				var cls = nsClasses.ElementAt(i);
+
 				if (cls.AttributeLists.Count > 0)
 				{
 					foreach(var attribute in cls.AttributeLists)
 					{
 						if (attribute.Attributes[0].Name is IdentifierNameSyntax nameSyntax && nameSyntax.Identifier.Text == "Info")
 						{
+							@namespaceIndex = input.Members.IndexOf(ns);
 							@namespace = ns;
+							classIndex = i;
 							@class = cls;
 							classes?.Insert(0, @class);
 						}
