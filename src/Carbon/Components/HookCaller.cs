@@ -1314,8 +1314,6 @@ public static class HookCaller
 
 	#region Generator
 
-	internal static List<ClassDeclarationSyntax> _classList = new();
-
 	public static void GenerateInternalCallHook(CompilationUnitSyntax input, out CompilationUnitSyntax output, out MethodDeclarationSyntax generatedMethod, out bool isPartial, List<ClassDeclarationSyntax> _classList = null)
 	{
 		var methodContents = "\n\tvar result = (object)null;\n\ttry\n\t{\n\t\tswitch(hook)\n\t\t{\n";
@@ -1522,7 +1520,7 @@ public static class HookCaller
 
 		var usings = input.Usings.Concat(input.Members.OfType<BaseNamespaceDeclarationSyntax>().SelectMany(x => x.Usings));
 
-		var source = @$"{usings.Select(x => x.ToString()).ToString("\n")}
+		var source = @$"{usings.Select(x => x.ToString()).Where(x => !x.Contains("=")).ToString("\n")}
 
 namespace {@namespace.Name};
 
