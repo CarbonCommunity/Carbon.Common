@@ -32,10 +32,15 @@ public static class CuiHelper
 
 	public static void DestroyActivePanelList(BasePlayer player, string[] except = null)
 	{
-		foreach (var element in GetActivePanelList(player).Where(x => except == null || except.Length == 0 ? true : !except.Any(y => x.StartsWith(y))))
+		var temp = Pool.GetList<string>();
+		temp.AddRange(GetActivePanelList(player));
+
+		foreach (var element in temp.Where(x => except == null || except.Length == 0 ? true : !except.Any(y => x.StartsWith(y))))
 		{
 			DestroyUi(player, element);
 		}
+
+		Pool.FreeList(ref temp);
 	}
 
 	public static string ToJson(List<CuiElement> elements, bool format = false)

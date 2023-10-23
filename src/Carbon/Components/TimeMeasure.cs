@@ -1,10 +1,12 @@
 ﻿/*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
 
+using System.Diagnostics;
+using Facepunch;
 namespace Carbon.Components;
 
 public struct TimeMeasure : IDisposable
@@ -13,7 +15,7 @@ public struct TimeMeasure : IDisposable
 	internal string _name;
 	internal string _warn;
 	internal int _miliseconds;
-	internal int _currentValue;
+	internal Stopwatch _watch;
 #endif
 
 	public static TimeMeasure New(string name, int miliseconds = 75, string warn = null)
@@ -23,7 +25,8 @@ public struct TimeMeasure : IDisposable
 		result._name = name;
 		result._warn = warn;
 		result._miliseconds = miliseconds;
-		result._currentValue = Environment.TickCount;
+		result._watch = Pool.Get<Stopwatch>();
+		result._watch.Start();
 		return result;
 #else
 		return default;
@@ -33,13 +36,16 @@ public struct TimeMeasure : IDisposable
 	public void Dispose()
 	{
 #if DEBUG
-		var difference = Environment.TickCount - _currentValue;
+		var milliseconds = _watch.ElapsedMilliseconds;
 
-		if (difference > _miliseconds)
+		if (milliseconds > _miliseconds)
 		{
 			Carbon.Logger.Warn(
-				$" {_name} took {difference:0}ms [abv {_miliseconds}]{(string.IsNullOrEmpty(_warn) ? "" : (": " + _warn))}");
+				$" {_name} took {milliseconds:0}ms [abv {_miliseconds}]{(string.IsNullOrEmpty(_warn) ? "" : (": " + _warn))}");
 		}
+
+		_watch.Reset();
+		Pool.Free(ref _watch);
 #endif
 	}
 }

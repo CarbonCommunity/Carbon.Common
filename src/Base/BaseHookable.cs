@@ -5,7 +5,7 @@ using Newtonsoft.Json;
 
 /*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -22,12 +22,16 @@ public class BaseHookable
 	public Dictionary<uint, List<CachedHook>> HookMethodAttributeCache = new();
 	public HashSet<uint> IgnoredHooks = new();
 
-	public struct CachedHook
+	public class CachedHook
 	{
 		public MethodInfo Method;
 		public Type[] Parameters;
+		public object[] DefaultParameterValues;
 		public bool IsByRef;
 		public bool IsAsync;
+
+		public double HookTime;
+		public double MemoryUsage;
 
 		public static CachedHook Make(MethodInfo method)
 		{
@@ -40,8 +44,9 @@ public class BaseHookable
 				IsAsync = method.ReturnType?.GetMethod("GetAwaiter") != null ||
 						  method.GetCustomAttribute<AsyncStateMachineAttribute>() != null,
 				Parameters = parameters.Select(x => x.ParameterType).ToArray(),
+				DefaultParameterValues = parameters.Select(x => x.DefaultValue).ToArray()
 			};
-			
+
 			return hook;
 		}
 	}
@@ -61,6 +66,7 @@ public class BaseHookable
 	[JsonProperty]
 	public double Uptime => _initializationTime.GetValueOrDefault();
 
+	public bool HasBuiltHookCache { get; internal set; }
 	public bool HasInitialized { get; internal set; }
 	public Type Type { get; internal set; }
 	public bool InternalCallHookOverriden { get; internal set; } = true;
@@ -74,9 +80,10 @@ public class BaseHookable
 
 #if DEBUG
 	public HookTimeAverage HookTimeAverage { get; protected set; }
-	public HookTimeAverage MemoryAverage { get; protected set; }
+	public MemoryAverage MemoryAverage { get; protected set; }
 #endif
 
+	public double CurrentHookTime { get; internal set; }
 	public static long CurrentMemory => GC.GetTotalMemory(false);
 	public static int CurrentGcCount => GC.CollectionCount(0);
 	public bool HasGCCollected => _currentGcCount != CurrentGcCount;
@@ -130,7 +137,7 @@ public class BaseHookable
 			return;
 		}
 
-		var timeElapsed = stopwatch.Elapsed.TotalMilliseconds;
+		CurrentHookTime = stopwatch.Elapsed.TotalMilliseconds;
 		var memoryUsed = (CurrentMemory - _currentMemory).Clamp(0, long.MaxValue);
 
 #if DEBUG
@@ -141,14 +148,81 @@ public class BaseHookable
 		// }
 #endif
 
-		TotalHookTime += timeElapsed;
+		TotalHookTime += CurrentHookTime;
 		TotalMemoryUsed += memoryUsed;
-		stopwatch.Stop();
 		stopwatch.Reset();
 	}
 
 #endregion
 
+	public virtual async ValueTask OnAsyncServerShutdown()
+	{
+		await Task.CompletedTask;
+	}
+
+	public void BuildHookCache(BindingFlags flag)
+	{
+		if (HasBuiltHookCache)
+		{
+			return;
+		}
+
+		var hooksPresent = Hooks.Count != 0;
+
+		HookCache.Clear();
+		HookMethodAttributeCache.Clear();
+
+		var methods = Type.GetMethods(flag);
+
+		foreach (var method in methods)
+		{
+			var id = HookStringPool.GetOrAdd(method.Name);
+
+			if (!hooksPresent)
+			{
+				if (Community.Runtime.HookManager.IsHookLoaded(method.Name) && !Hooks.Contains(id))
+				{
+					Hooks.Add(id);
+				}
+			}
+
+			if (!HookCache.TryGetValue(id, out var hooks))
+			{
+				HookCache.Add(id, hooks = new());
+			}
+
+			var hook = CachedHook.Make(method);
+
+			if (hooks.Count > 0 && hooks[0].Parameters.Length < hook.Parameters.Length)
+			{
+				hooks.Insert(0, hook);
+			}
+			else
+			{
+				hooks.Add(hook);
+			}
+
+			if (method.HasAttribute(typeof(HookMethodAttribute)))
+			{
+				if (!HookMethodAttributeCache.TryGetValue(id, out var hooks2))
+				{
+					HookMethodAttributeCache.Add(id, hooks2 = new());
+				}
+
+				if (hooks2.Count > 0 && hooks2[0].Parameters.Length < hook.Parameters.Length)
+				{
+					hooks2.Insert(0, hook);
+				}
+				else
+				{
+					hooks2.Add(hook);
+				}
+			}
+		}
+
+		HasBuiltHookCache = true;
+		Logger.Debug(Name, $"Built hook cache", 2);
+	}
 	public virtual object InternalCallHook(uint hook, object[] args)
 	{
 		InternalCallHookOverriden = false;

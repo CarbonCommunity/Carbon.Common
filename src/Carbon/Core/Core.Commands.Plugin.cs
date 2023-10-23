@@ -5,11 +5,12 @@
  *
  */
 
+using System.Text;
 namespace Carbon.Core;
 
 public partial class CorePlugin : CarbonPlugin
 {
-	[ConsoleCommand("reload", "Reloads all or specific mods / plugins. E.g 'c.reload *' to reload everything.")]
+	[ConsoleCommand("reload", "Reloads all or specific mods / plugins. E.g 'c.reload * <except[]>'' to reload everything.")]
 	[AuthLevel(2)]
 	private void Reload(ConsoleSystem.Arg arg)
 	{
@@ -21,7 +22,7 @@ public partial class CorePlugin : CarbonPlugin
 		switch (name)
 		{
 			case "*":
-				Community.Runtime.ReloadPlugins();
+				Community.Runtime.ReloadPlugins(arg.Args.Skip(1));
 				break;
 
 			default:
@@ -78,7 +79,7 @@ public partial class CorePlugin : CarbonPlugin
 		}
 	}
 
-	[ConsoleCommand("load", "Loads all mods and/or plugins. E.g 'c.load *' to load everything you've unloaded.")]
+	[ConsoleCommand("load", "Loads all mods and/or plugins. E.g 'c.load * <except[]>'' to load everything you've unloaded.")]
 	[AuthLevel(2)]
 	private void LoadPlugin(ConsoleSystem.Arg arg)
 	{
@@ -98,16 +99,21 @@ public partial class CorePlugin : CarbonPlugin
 				// Scripts
 				//
 				{
-					Community.Runtime.ScriptProcessor.IgnoreList.Clear();
+					var except = arg.Args.Skip(1);
+
+					Community.Runtime.ScriptProcessor.IgnoreList.RemoveAll(x => !except.Any() || except.Any(x.Contains));
 
 					foreach (var plugin in OrderedFiles)
 					{
-						if (Community.Runtime.ScriptProcessor.InstanceBuffer.ContainsKey(plugin.Key))
+						if (except.Any(plugin.Value.Contains) || Community.Runtime.ScriptProcessor.InstanceBuffer.ContainsKey(plugin.Key))
 						{
 							continue;
 						}
 
-						Community.Runtime.ScriptProcessor.Prepare(plugin.Key, plugin.Value);
+						if (!Community.Runtime.ScriptProcessor.Exists(plugin.Value))
+						{
+							Community.Runtime.ScriptProcessor.Prepare(plugin.Key, plugin.Value);
+						}
 					}
 					break;
 				}
@@ -118,7 +124,12 @@ public partial class CorePlugin : CarbonPlugin
 					if (!string.IsNullOrEmpty(path))
 					{
 						Community.Runtime.ScriptProcessor.ClearIgnore(path);
-						Community.Runtime.ScriptProcessor.Prepare(path);
+
+						if (!Community.Runtime.ScriptProcessor.Exists(path))
+						{
+							Community.Runtime.ScriptProcessor.Prepare(path);
+						}
+
 						return;
 					}
 
@@ -137,7 +148,7 @@ public partial class CorePlugin : CarbonPlugin
 		}
 	}
 
-	[ConsoleCommand("unload", "Unloads all mods and/or plugins. E.g 'c.unload *' to unload everything. They'll be marked as 'ignored'.")]
+	[ConsoleCommand("unload", "Unloads all mods and/or plugins. E.g 'c.unload * <except[]>' to unload everything. They'll be marked as 'ignored'.")]
 	[AuthLevel(2)]
 	private void UnloadPlugin(ConsoleSystem.Arg arg)
 	{
@@ -153,6 +164,8 @@ public partial class CorePlugin : CarbonPlugin
 		switch (name)
 		{
 			case "*":
+				var except = arg.Args.Skip(1);
+
 				//
 				// Scripts
 				//
@@ -164,11 +177,16 @@ public partial class CorePlugin : CarbonPlugin
 						tempList.Add(bufferInstance.Value.File);
 					}
 
-					Community.Runtime.ScriptProcessor.IgnoreList.Clear();
-					Community.Runtime.ScriptProcessor.Clear();
+					Community.Runtime.ScriptProcessor.IgnoreList.RemoveAll(x => !except.Any() || (except.Any() && !except.Any(x.Contains)));
+					Community.Runtime.ScriptProcessor.Clear(except);
 
 					foreach (var plugin in tempList)
 					{
+						if (except.Any(plugin.Contains))
+						{
+							continue;
+						}
+
 						Community.Runtime.ScriptProcessor.Ignore(plugin);
 					}
 				}
@@ -179,11 +197,16 @@ public partial class CorePlugin : CarbonPlugin
 				{
 					var tempList = Facepunch.Pool.GetList<string>();
 					tempList.AddRange(Community.Runtime.WebScriptProcessor.IgnoreList);
-					Community.Runtime.WebScriptProcessor.IgnoreList.Clear();
-					Community.Runtime.WebScriptProcessor.Clear();
+					Community.Runtime.WebScriptProcessor.IgnoreList.RemoveAll(x => !except.Any() || (except.Any() && !except.Any(x.Contains)));
+					Community.Runtime.WebScriptProcessor.Clear(except);
 
 					foreach (var plugin in tempList)
 					{
+						if (except.Any(plugin.Contains))
+						{
+							continue;
+						}
+
 						Community.Runtime.WebScriptProcessor.Ignore(plugin);
 					}
 					Facepunch.Pool.FreeList(ref tempList);
@@ -239,6 +262,86 @@ public partial class CorePlugin : CarbonPlugin
 					}
 					break;
 				}
+		}
+	}
+
+	[ConsoleCommand("plugininfo", "Prints advanced information about a currently loaded plugin. From hooks, hook times, hook memory usage and other things.")]
+	[AuthLevel(2)]
+	private void PluginInfo(ConsoleSystem.Arg arg)
+	{
+		if (!arg.HasArgs(1))
+		{
+			Logger.Warn("You must provide the name of a plugin to print plugin advanced information.");
+			return;
+		}
+
+		var name = arg.GetString(0);
+		var plugin = ModLoader.LoadedPackages.SelectMany(x => x.Plugins).FirstOrDefault(x => string.IsNullOrEmpty(x.FileName) ? x.Name == name : x.FileName.Contains(name));
+		var count = 1;
+
+		if (plugin == null)
+		{
+			arg.ReplyWith("Couldn't find that plugin.");
+			return;
+		}
+
+		using (var table = new StringTable("#", "Id", "Hook", "Time", "Memory", "Subscribed", "Async/Overrides"))
+		{
+			foreach (var hook in plugin.HookCache)
+			{
+				if (hook.Value.Count == 0)
+				{
+					continue;
+				}
+
+				var current = hook.Value[0];
+				var hookName = current.Method.Name;
+
+				var hookId = HookStringPool.GetOrAdd(hookName);
+				var hookTime = hook.Value.Sum(x => x.HookTime);
+				var hookMemoryUsage = hook.Value.Sum(x => x.MemoryUsage);
+				var hookCount = hook.Value.Count;
+				var hookAsyncCount = hook.Value.Count(x => x.IsAsync);
+
+				if (!plugin.Hooks.Contains(hookId))
+				{
+					continue;
+				}
+
+				table.AddRow(count, hookId, $"{hookName}", $"{hookTime:0}ms", $"{ByteEx.Format(hookMemoryUsage, shortName: true).ToLower()}", !plugin.IgnoredHooks.Contains(hookId), $"{hookAsyncCount:n0}/{hookCount:n0}");
+
+				count++;
+			}
+
+			var builder = new StringBuilder();
+
+			builder.AppendLine($"{plugin.Name} v{plugin.Version} by {plugin.Author}{(plugin.IsCorePlugin ? $" [core]" : string.Empty)}");
+			builder.AppendLine($"  Path:                   {plugin.FilePath}");
+			builder.AppendLine($"  Compile Time:           {plugin.CompileTime}ms{(plugin.IsPrecompiled ? " [precompiled]" : string.Empty)}{(plugin.IsExtension ? " [ext]" : string.Empty)}");
+			builder.AppendLine($"  Uptime:                 {TimeEx.Format(plugin.Uptime, true).ToLower()}");
+			builder.AppendLine($"  Total Hook Time:        {plugin.TotalHookTime:0}ms");
+			builder.AppendLine($"  Total Memory Used:      {ByteEx.Format(plugin.TotalMemoryUsed, shortName: true).ToLower()}");
+			builder.AppendLine($"  Internal Hook Override: {plugin.InternalCallHookOverriden}");
+			builder.AppendLine($"  Has Conditionals:       {plugin.HasConditionals}");
+			builder.AppendLine($"  Mod Package:            {plugin.Package?.Name} ({plugin.Package?.Plugins.Count}){((plugin.Package?.IsCoreMod).GetValueOrDefault() ? $" [core]" : string.Empty)}");
+			builder.AppendLine($"  Processor:              {plugin.Processor.Name} [{plugin.Processor.Extension}]");
+
+			if (plugin is CarbonPlugin carbonPlugin)
+			{
+				builder.AppendLine($"  Carbon CUI:             {carbonPlugin.CuiHandler.Pooled:n0} pooled, {carbonPlugin.CuiHandler.Used:n0} used");
+			}
+
+			if (count == 1)
+			{
+				builder.AppendLine($"No hooks found.");
+			}
+			else
+			{
+				builder.AppendLine($"Hooks:");
+				builder.AppendLine(table.ToStringMinimal());
+			}
+
+			arg.ReplyWith(builder.ToString());
 		}
 	}
 

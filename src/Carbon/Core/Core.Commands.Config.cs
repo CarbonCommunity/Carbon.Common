@@ -1,6 +1,6 @@
 ﻿/*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -83,11 +83,7 @@ public partial class CorePlugin : CarbonPlugin
 	[CommandVar("filenamecheck", "It checks if the file name and the plugin name matches. (only applies to scripts)")]
 	[AuthLevel(2)]
 	private bool FileNameCheck { get { return Community.Runtime.Config.FileNameCheck; } set { Community.Runtime.Config.FileNameCheck = value; Community.Runtime.SaveConfig(); } }
-
-	[CommandVar("entitymapbuffersize", "The entity map buffer size. Gets applied on Carbon reboot.")]
-	[AuthLevel(2)]
-	private int EntityMapBufferSize { get { return Community.Runtime.Config.EntityMapBufferSize; } set { Community.Runtime.Config.EntityMapBufferSize = value; Community.Runtime.SaveConfig(); } }
-
+	
 	[CommandVar("language", "Server language used by the Language API.")]
 	[AuthLevel(2)]
 	private string Language { get { return Community.Runtime.Config.Language; } set { Community.Runtime.Config.Language = value; Community.Runtime.SaveConfig(); } }
