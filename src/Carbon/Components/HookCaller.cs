@@ -1314,8 +1314,6 @@ public static class HookCaller
 
 	#region Generator
 
-	internal static List<ClassDeclarationSyntax> _classList = new();
-
 	public static void GenerateInternalCallHook(CompilationUnitSyntax input, out CompilationUnitSyntax output, out MethodDeclarationSyntax generatedMethod, out bool isPartial, List<ClassDeclarationSyntax> _classList = null)
 	{
 		var methodContents = "\n\tvar result = (object)null;\n\ttry\n\t{\n\t\tswitch(hook)\n\t\t{\n";
@@ -1348,7 +1346,7 @@ public static class HookCaller
 		isPartial = @class.Modifiers.Any(x => x.IsKind(SyntaxKind.PartialKeyword));
 
 		var methodDeclarations = new List<MethodDeclarationSyntax>();
-		methodDeclarations.AddRange(  _classList.SelectMany(x => x.ChildNodes()).OfType<MethodDeclarationSyntax>());
+		methodDeclarations.AddRange(_classList.SelectMany(x => x.ChildNodes()).OfType<MethodDeclarationSyntax>());
 
 		if (isTemp)
 		{
@@ -1430,7 +1428,7 @@ public static class HookCaller
 					var parameter = method.ParameterList.Parameters[o];
 					parameterIndex++;
 
-					if (parameter.Default == null && !parameter.Modifiers.Any(y => y.IsKind(SyntaxKind.OutKeyword)) && parameter.Type is not NullableTypeSyntax)
+					if (parameter.Default == null && !parameter.Modifiers.Any(y => y.IsKind(SyntaxKind.OutKeyword)) && parameter.Type is not NullableTypeSyntax && !(parameter.Type is ITypeSymbol symbol && symbol.IsValueType))
 					{
 						var type = parameter.Type.ToString().Replace("global::", string.Empty);
 						varText += $"var narg{parameterIndex}_{i} = args[{parameterIndex}] is {type};\nvar arg{parameterIndex}_{i} = narg{parameterIndex}_{i} ? ({type})(args[{parameterIndex}] ?? ({type})default) : ({type})default;\n";
@@ -1520,12 +1518,13 @@ public static class HookCaller
 			@class = classes[0];
 		}
 
-		var usings = input.Usings.Concat(input.Members.OfType<BaseNamespaceDeclarationSyntax>().SelectMany(x => x.Usings));
+		var usings = input.Usings;
+		var subUsings = @namespace.Usings;
 
 		var source = @$"{usings.Select(x => x.ToString()).ToString("\n")}
 
 namespace {@namespace.Name};
-
+{(subUsings.Any() ? $"\n{subUsings.Select(x => x.ToString()).ToString("\n")}" : string.Empty)}
 partial class {@class.Identifier.ValueText}
 {{
 	{method}
