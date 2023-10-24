@@ -130,10 +130,10 @@ public partial class ModalModule : CarbonModule<EmptyModuleConfig, EmptyModuleDa
 			var subText = $"<b><color=red>*</color></b>  {"Assign all required field values.".ToUpper().SpacedString(1)}" +
 				$"\n    {(IsValid() ? $"<b><color=green>{"The modal is valid.".ToUpper().SpacedString(1)}</color></b>" : $"<b><color=red>{"The modal has invalid fields.".ToUpper().SpacedString(1)}</color></b>")}" +
 				$"{(InvalidMessages != null ? $"\n{InvalidMessages.ToString("\n")}" : "")}";
-			cui.CreateText(container, panel, null, "1 1 1 1", subText.Trim(), 9, align: TextAnchor.LowerLeft, xMin: 0.05f, yMin: 0.05f);
+			cui.CreateText(container, panel, "1 1 1 1", subText.Trim(), 9, align: TextAnchor.LowerLeft, xMin: 0.05f, yMin: 0.05f);
 
-			var main = cui.CreatePanel(container, panel, null, "0 0 0 0", xMin: 0.1f, xMax: 0.9f, yMin: 0.2f, yMax: 0.9f);
-			cui.CreateText(container, main, null, "1 1 1 0.7", Title, 20, xMin: 0.025f, yMax: 0.985f, align: TextAnchor.UpperLeft);
+			var main = cui.CreatePanel(container, panel, "0 0 0 0", xMin: 0.1f, xMax: 0.9f, yMin: 0.2f, yMax: 0.9f);
+			cui.CreateText(container, main, "1 1 1 0.7", Title, 20, xMin: 0.025f, yMax: 0.985f, align: TextAnchor.UpperLeft);
 
 			var offset = 0f;
 			var spacing = 60f;
@@ -144,7 +144,7 @@ public partial class ModalModule : CarbonModule<EmptyModuleConfig, EmptyModuleDa
 			foreach (var field in pageContent)
 			{
 				var fieldPanel = cui.CreatePanel(container, content, null, "0 0 0 0.5", yMin: 0.8f, OyMin: offset, OyMax: offset);
-				cui.CreateText(container, fieldPanel, null, "1 1 1 1", $"<b>{field.Value.DisplayName.ToUpper().SpacedString(1)}</b>{(field.Value.IsRequired ? "  <b><color=red>*</color></b>" : "")}", 11, xMin: 0.03f, yMax: 0.85f, align: TextAnchor.UpperLeft);
+				cui.CreateText(container, fieldPanel, "1 1 1 1", $"<b>{field.Value.DisplayName.ToUpper().SpacedString(1)}</b>{(field.Value.IsRequired ? "  <b><color=red>*</color></b>" : "")}", 11, xMin: 0.03f, yMax: 0.85f, align: TextAnchor.UpperLeft);
 
 				var option = cui.CreatePanel(container, fieldPanel, null, $"0.1 0.1 0.1 {(field.Value.IsReadOnly ? "0.45" : "0.75")}", yMax: 0.55f);
 				var textColor = field.Value.IsReadOnly ? "1 1 1 0.15" : "1 1 1 1";
@@ -161,12 +161,12 @@ public partial class ModalModule : CarbonModule<EmptyModuleConfig, EmptyModuleDa
 					case Field.FieldTypes.Integer:
 					case Field.FieldTypes.ULong:
 						var value = field.Value.Value?.ToString();
-						cui.CreateProtectedInputField(container, option, null, textColor, value, 15, 256, false, xMin: 0.025f, align: TextAnchor.MiddleLeft, command: $"modal.action {field.Key}", needsKeyboard: true);
+						cui.CreateProtectedInputField(container, option, textColor, value, 15, 256, false, xMin: 0.025f, align: TextAnchor.MiddleLeft, command: $"modal.action {field.Key}", needsKeyboard: true);
 						break;
 
 					case Field.FieldTypes.Boolean:
-						cui.CreateProtectedButton(container, option, null, "0 0 0 0", "0 0 0 0", string.Empty, 0, command: $"modal.action {field.Key} {field.Value.Value}");
-						var toggle = cui.CreateProtectedButton(container, option, null, "0.1 0.1 0.1 0.8", "0 0 0 0", string.Empty, 0, xMin: 0.025f, xMax: 0.085f, yMin: 0.1f, yMax: 0.9f, command: $"modal.action {field.Key} {field.Value.Value}");
+						cui.CreateProtectedButton(container, option, "0 0 0 0", "0 0 0 0", string.Empty, 0, command: $"modal.action {field.Key} {field.Value.Value}");
+						var toggle = cui.CreateProtectedButton(container, option, "0.1 0.1 0.1 0.8", "0 0 0 0", string.Empty, 0, xMin: 0.025f, xMax: 0.085f, yMin: 0.1f, yMax: 0.9f, command: $"modal.action {field.Key} {field.Value.Value}");
 						if (field.Value.Value is bool booleanValue && booleanValue)
 						{
 							cui.CreateImage(container, toggle, null, "checkmark", textColor, 0.2f, xMax: 0.8f, yMin: 0.2f, yMax: 0.8f);
@@ -182,22 +182,22 @@ public partial class ModalModule : CarbonModule<EmptyModuleConfig, EmptyModuleDa
 						rustColor = $"R:{rustColorSplit[0].ToFloat() * 255:0}   G:{rustColorSplit[1].ToFloat() * 255:0}   B:{rustColorSplit[2].ToFloat() * 255:0}   A:{(rustColorSplit.Length == 4 ? rustColorSplit[3].ToFloat() : 1f) * 255:0}";
 						Array.Clear(rustColorSplit, 0, rustColorSplit.Length);
 
-						cui.CreateText(container, option, null, textColor, $"<b>{"HEX".SpacedString(1)}:</b>  {hexColor}", 12, xMin: 0.7f, align: TextAnchor.MiddleLeft);
-						cui.CreateText(container, option, null, textColor, $"<b>{"RUST".SpacedString(1)}:</b>  {rustColor}", 12, xMin: 0.115f, align: TextAnchor.MiddleLeft);
-						cui.CreateProtectedButton(container, option, null, hexColor, "0 0 0 0", string.Empty, 0, xMin: 0.025f, xMax: 0.085f, yMin: 0.1f, yMax: 0.9f, command: $"modal.action {field.Key}");
+						cui.CreateText(container, option, textColor, $"<b>{"HEX".SpacedString(1)}:</b>  {hexColor}", 12, xMin: 0.7f, align: TextAnchor.MiddleLeft);
+						cui.CreateText(container, option, textColor, $"<b>{"RUST".SpacedString(1)}:</b>  {rustColor}", 12, xMin: 0.115f, align: TextAnchor.MiddleLeft);
+						cui.CreateProtectedButton(container, option, hexColor, "0 0 0 0", string.Empty, 0, xMin: 0.025f, xMax: 0.085f, yMin: 0.1f, yMax: 0.9f, command: $"modal.action {field.Key}");
 						break;
 
 					case Field.FieldTypes.Enum:
 						var @enum = field.Value as EnumField;
-						cui.CreateText(container, option, null, textColor, @enum.Options[@enum.Value == null ? 0 : @enum.Value.ToString().ToInt()], 12, align: TextAnchor.MiddleCenter);
+						cui.CreateText(container, option, textColor, @enum.Options[@enum.Value == null ? 0 : @enum.Value.ToString().ToInt()], 12, align: TextAnchor.MiddleCenter);
 
-						cui.CreateProtectedButton(container, option, null, "0.1 0.1 0.1 0.75", "1 1 1 0.7", "<", 10, xMin: 0f, xMax: 0.5f, command: $"modal.action {field.Key} -");
-						cui.CreateProtectedButton(container, option, null, "0.1 0.1 0.1 0.75", "1 1 1 0.7", ">", 10, xMin: 0.5f, xMax: 1f, command: $"modal.action {field.Key} +");
+						cui.CreateProtectedButton(container, option, "0.1 0.1 0.1 0.75", "1 1 1 0.7", "<", 10, xMin: 0f, xMax: 0.5f, command: $"modal.action {field.Key} -");
+						cui.CreateProtectedButton(container, option, "0.1 0.1 0.1 0.75", "1 1 1 0.7", ">", 10, xMin: 0.5f, xMax: 1f, command: $"modal.action {field.Key} +");
 						break;
 
 					case Field.FieldTypes.Button:
 						var button = field.Value as ButtonField;
-						cui.CreateProtectedButton(container, option, null, "0.1 0.1 0.1 0.85", "1 1 1 0.7", button.ButtonName?.ToUpper().SpacedString(1), 10, command: $"modal.action {field.Key}");
+						cui.CreateProtectedButton(container, option, "0.1 0.1 0.1 0.85", "1 1 1 0.7", button.ButtonName?.ToUpper().SpacedString(1), 10, command: $"modal.action {field.Key}");
 						break;
 				}
 
@@ -209,16 +209,16 @@ public partial class ModalModule : CarbonModule<EmptyModuleConfig, EmptyModuleDa
 				offset -= spacing;
 			}
 
-			var buttons = cui.CreatePanel(container, panel, null, "0 0 0 0", xMin: 0.075f, xMax: 0.925f, yMin: 0.025f, yMax: 0.1f);
-			cui.CreateProtectedButton(container, buttons, null, "0.1 0.1 0.1 0.85", "1 1 1 0.7", "CANCEL".SpacedString(1), 10, xMin: 0.7f, xMax: 0.84f, command: "modal.cancel");
-			cui.CreateProtectedButton(container, buttons, null, IsValid() ? HexToRustColor("#7ebf37", 0.6f) : "0.1 0.1 0.1 0.85", "1 1 1 0.7", "CONFIRM".SpacedString(1), 10, xMin: 0.85f, command: "modal.confirm");
+			var buttons = cui.CreatePanel(container, panel, "0 0 0 0", xMin: 0.075f, xMax: 0.925f, yMin: 0.025f, yMax: 0.1f);
+			cui.CreateProtectedButton(container, buttons, "0.1 0.1 0.1 0.85", "1 1 1 0.7", "CANCEL".SpacedString(1), 10, xMin: 0.7f, xMax: 0.84f, command: "modal.cancel");
+			cui.CreateProtectedButton(container, buttons, IsValid() ? HexToRustColor("#7ebf37", 0.6f) : "0.1 0.1 0.1 0.85", "1 1 1 0.7", "CONFIRM".SpacedString(1), 10, xMin: 0.85f, command: "modal.confirm");
 
 			if (Pages > 0)
 			{
-				var pages = cui.CreatePanel(container, panel, null, "0 0 0 0", xMin: 0.1f, xMax: 0.9f, yMin: 0.15f, yMax: 0.2f);
-				cui.CreateText(container, pages, null, "1 1 1 0.7", $"{Page + 1:n0} / {Pages + 1:n0}", 10, xMin: 0.82f, xMax: 0.92f);
-				cui.CreateProtectedButton(container, pages, null, Page == 0 ? "0.2 0.2 0.2 0.6" : HexToRustColor("#7ebf37", 0.6f), "1 1 1 0.7", "<", 10, xMin: 0.82f, xMax: 0.90f, OxMin: -30, OxMax: -30, command: "modal.page -");
-				cui.CreateProtectedButton(container, pages, null, Page == Pages ? "0.2 0.2 0.2 0.6" : HexToRustColor("#7ebf37", 0.6f), "1 1 1 0.7", ">", 10, xMin: 0.92f, command: "modal.page +");
+				var pages = cui.CreatePanel(container, panel, "0 0 0 0", xMin: 0.1f, xMax: 0.9f, yMin: 0.15f, yMax: 0.2f);
+				cui.CreateText(container, pages, "1 1 1 0.7", $"{Page + 1:n0} / {Pages + 1:n0}", 10, xMin: 0.82f, xMax: 0.92f);
+				cui.CreateProtectedButton(container, pages, Page == 0 ? "0.2 0.2 0.2 0.6" : HexToRustColor("#7ebf37", 0.6f), "1 1 1 0.7", "<", 10, xMin: 0.82f, xMax: 0.90f, OxMin: -30, OxMax: -30, command: "modal.page -");
+				cui.CreateProtectedButton(container, pages, Page == Pages ? "0.2 0.2 0.2 0.6" : HexToRustColor("#7ebf37", 0.6f), "1 1 1 0.7", ">", 10, xMin: 0.92f, command: "modal.page +");
 			}
 		}
 
