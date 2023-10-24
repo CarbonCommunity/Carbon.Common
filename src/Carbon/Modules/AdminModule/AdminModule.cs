@@ -1373,41 +1373,20 @@ public partial class AdminModule
 
 						if (tab.Dialog != null)
 						{
-							if (ap.Player.serverInput.IsDown(BUTTON.SPRINT))
-							{
-								tab.Dialog.OnConfirm?.Invoke(ap);
-							}
-							else
-							{
-								var dialog = cui.CreatePanel(container, panels, "0.15 0.15 0.15 0.2", blur: true);
-								cui.CreatePanel(container, dialog, null, "0 0 0 0.9");
+							var dialog = cui.CreatePanel(container, panels, "0.15 0.15 0.15 0.2", blur: true);
+							cui.CreatePanel(container, dialog, "0 0 0 0.9");
 
-								cui.CreateText(container, dialog,
-									"1 1 1 1", tab.Dialog.Title, 20, yMin: 0.1f);
+							cui.CreateText(container, dialog,
+								"1 1 1 1", tab.Dialog.Title, 20, yMin: 0.1f);
 
-								cui.CreateText(container, dialog,
-									"1 1 1 0.4", "Confirm action".ToUpper().SpacedString(3), 10, yMin: 0.2f);
+							cui.CreateText(container, dialog,
+								"1 1 1 0.4", "Confirm action".ToUpper().SpacedString(3), 10, yMin: 0.2f);
 
-								cui.CreateText(container, dialog,
-									"1 1 1 0.2", "<color=red><b>*</b></color> Holding <b>[SPRINT]</b> next time you open this panel will automatically confirm it.", 8, xMin: 0.02f, yMin: 0.03f, align: TextAnchor.LowerLeft);
+							cui.CreateProtectedButton(container, dialog, "0.9 0.4 0.3 0.8", "1 1 1 0.7", "DECLINE".SpacedString(1), 10,
+								xMin: 0.4f, xMax: 0.49f, yMin: 0.425f, yMax: 0.475f, command: $"{PanelId}.dialogaction decline");
 
-								cui.CreateProtectedButton(container, dialog, "0.9 0.4 0.3 0.8", "1 1 1 0.7", "DECLINE".SpacedString(1), 10,
-									xMin: 0.4f, xMax: 0.49f, yMin: 0.425f, yMax: 0.475f, command: $"{PanelId}.dialogaction decline");
-
-								cui.CreateProtectedButton(container, dialog, "0.4 0.9 0.3 0.8", "1 1 1 0.7", "CONFIRM".SpacedString(1), 10,
-									xMin: 0.51f, xMax: 0.6f, yMin: 0.425f, yMax: 0.475f, command: $"{PanelId}.dialogaction confirm");
-
-								Community.Runtime.CorePlugin.timer.In(0.2f, () =>
-								{
-									if (ap.Player.serverInput.IsDown(BUTTON.SPRINT))
-									{
-										try { tab.Dialog.OnConfirm?.Invoke(ap); } catch { }
-										tab.Dialog = null;
-
-										Draw(player);
-									}
-								});
-							}
+							cui.CreateProtectedButton(container, dialog, "0.4 0.9 0.3 0.8", "1 1 1 0.7", "CONFIRM".SpacedString(1), 10,
+								xMin: 0.51f, xMax: 0.6f, yMin: 0.425f, yMax: 0.475f, command: $"{PanelId}.dialogaction confirm");
 						}
 					}
 					else
