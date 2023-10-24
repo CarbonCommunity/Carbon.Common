@@ -1,6 +1,6 @@
 ﻿/*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -86,14 +86,14 @@ public class ColorPickerModule : CarbonModule<EmptyModuleConfig, EmptyModuleData
 			xMin: 0, xMax: 1, yMin: 0, yMax: 1,
 			needsCursor: true, destroyUi: PanelId);
 
-		var color = cui.CreatePanel(container, parent: PanelId, id: PanelId + ".color",
+		var color = cui.CreatePanel(container,  PanelId,
 			color: "0 0 0 0.6",
 			xMin: 0.3f, xMax: 0.7f, yMin: 0.275f, yMax: 0.825f);
-		var main = cui.CreatePanel(container, parent: PanelId + ".color", id: PanelId + ".main",
+		var main = cui.CreatePanel(container, color,
 			color: "0 0 0 0.5",
 			blur: true);
 
-		cui.CreateText(container, parent: main,
+		cui.CreateText(container, main,
 			color: "1 1 1 0.8",
 			text: "<b>Color Picker</b>", 18,
 			xMin: 0f, yMin: 0.8f, xMax: 1f, yMax: 0.98f,
@@ -111,21 +111,21 @@ public class ColorPickerModule : CarbonModule<EmptyModuleConfig, EmptyModuleData
 		var topLeftColor = Color.red;
 		var bottomLeftColor = Color.yellow;
 
-		cui.CreateText(container, parent: main,
+		cui.CreateText(container, main,
 			color: "1 1 1 0.3",
 			text: "------------------------------------------------------------------------------------------------------------------------------------- BRIGHTNESS", 8,
 			xMin: 0f, xMax: 0.775f, yMin: 0.01f, yMax: 0.98f,
 			align: TextAnchor.LowerRight,
 			font: Handler.FontTypes.RobotoCondensedRegular);
 
-		cui.CreateText(container, parent: main,
+		cui.CreateText(container, main,
 			color: "1 1 1 0.3",
 			text: "SHADES ---------------", 8,
 			xMin: 0.805f, xMax: 1, yMin: 0.085f, yMax: 1f,
 			align: TextAnchor.LowerLeft,
 			font: Handler.FontTypes.RobotoCondensedRegular);
 
-		cui.CreateText(container, parent: main,
+		cui.CreateText(container, main,
 			color: "1 1 1 0.3",
 			text: "------------------- ALPHA", 8,
 			xMin: 0, xMax: 0.14f, yMin: 0.085f, yMax: 1f,
@@ -135,7 +135,7 @@ public class ColorPickerModule : CarbonModule<EmptyModuleConfig, EmptyModuleData
 		//
 		// Hex input field
 		//
-		var input = cui.CreatePanel(container, parent: main, "0.1 0.1 0.1 0.5",
+		var input = cui.CreatePanel(container, main, "0.1 0.1 0.1 0.5",
 			xMin: 0.805f, xMax: 0.94f, yMin: 0.085f, yMax: 0.15f, OyMin: -30, OyMax: -30);
 		cui.CreateProtectedInputField(container, input, "1 1 1 1", "#", 10, 0, false,
 			xMin: 0.075f, command: PanelId + ".pickhexcolor ", align: TextAnchor.MiddleLeft, needsKeyboard: true);
@@ -143,12 +143,12 @@ public class ColorPickerModule : CarbonModule<EmptyModuleConfig, EmptyModuleData
 		//
 		// Alpha input field
 		//
-		var alpha = cui.CreatePanel(container, parent: main, "0.1 0.1 0.1 0.5",
+		var alpha = cui.CreatePanel(container, main, "0.1 0.1 0.1 0.5",
 			xMin: 0.015f, xMax: 0.14f, yMin: 0.085f, yMax: 0.15f, OyMin: -30, OyMax: -30);
 		cui.CreateProtectedInputField(container, alpha, "1 1 1 1", $"{alphaValue}", 10, 0, false,
 			xMin: 0.075f, command: PanelId + ".pickalpha", align: TextAnchor.MiddleRight, needsKeyboard: true);
 
-		var picker = cui.CreatePanel(container, parent: main, id: PanelId + ".picker",
+		var picker = cui.CreatePanel(container, main, id: PanelId + ".picker",
 			color: "0 0 0 0",
 			xMin: 0.175f, xMax: 0.8f, yMin: 0.1f, yMax: 0.9f);
 
@@ -192,7 +192,7 @@ public class ColorPickerModule : CarbonModule<EmptyModuleConfig, EmptyModuleData
 
 		#endregion
 
-		cui.CreateProtectedButton(container, parent: main,
+		cui.CreateProtectedButton(container, main,
 			color: "0.6 0.2 0.2 0.9",
 			textColor: "1 0.5 0.5 1",
 			text: "X", 8,

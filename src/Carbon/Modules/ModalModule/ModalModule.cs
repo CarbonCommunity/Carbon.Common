@@ -1,6 +1,6 @@
 ﻿/*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -116,7 +116,7 @@ public partial class ModalModule : CarbonModule<EmptyModuleConfig, EmptyModuleDa
 			var color = cui.CreatePanel(container, parent: PanelId, id: PanelId + ".color",
 				color: "0 0 0 0.6",
 				xMin: PositionXMin, xMax: PositionXMax, yMin: PositionYMin, yMax: PositionYMax);
-			var main = cui.CreatePanel(container, parent: PanelId + ".color", id: PanelId + ".main",
+			var main = cui.CreatePanel(container, color, id: PanelId + ".main",
 				color: "0 0 0 0.5", blur: true);
 
 			_drawInternal(cui, container, main);
@@ -138,20 +138,20 @@ public partial class ModalModule : CarbonModule<EmptyModuleConfig, EmptyModuleDa
 			var offset = 0f;
 			var spacing = 60f;
 
-			var content = cui.CreatePanel(container, main, null, "0 0 0 0", xMin: 0, yMin: 0, OyMin: -35, OyMax: -35);
+			var content = cui.CreatePanel(container, main, "0 0 0 0", xMin: 0, yMin: 0, OyMin: -35, OyMax: -35);
 
 			var pageContent = Fields.Skip(Page * 4).Take(4);
 			foreach (var field in pageContent)
 			{
-				var fieldPanel = cui.CreatePanel(container, content, null, "0 0 0 0.5", yMin: 0.8f, OyMin: offset, OyMax: offset);
+				var fieldPanel = cui.CreatePanel(container, content, "0 0 0 0.5", yMin: 0.8f, OyMin: offset, OyMax: offset);
 				cui.CreateText(container, fieldPanel, "1 1 1 1", $"<b>{field.Value.DisplayName.ToUpper().SpacedString(1)}</b>{(field.Value.IsRequired ? "  <b><color=red>*</color></b>" : "")}", 11, xMin: 0.03f, yMax: 0.85f, align: TextAnchor.UpperLeft);
 
-				var option = cui.CreatePanel(container, fieldPanel, null, $"0.1 0.1 0.1 {(field.Value.IsReadOnly ? "0.45" : "0.75")}", yMax: 0.55f);
+				var option = cui.CreatePanel(container, fieldPanel, $"0.1 0.1 0.1 {(field.Value.IsReadOnly ? "0.45" : "0.75")}", yMax: 0.55f);
 				var textColor = field.Value.IsReadOnly ? "1 1 1 0.15" : "1 1 1 1";
 
 				if (field.Value.IsInvalid())
 				{
-					cui.CreatePanel(container, option, null, HexToRustColor("#b8302e", 0.5f));
+					cui.CreatePanel(container, option, HexToRustColor("#b8302e", 0.5f));
 				}
 
 				switch (field.Value.Type)
@@ -169,7 +169,7 @@ public partial class ModalModule : CarbonModule<EmptyModuleConfig, EmptyModuleDa
 						var toggle = cui.CreateProtectedButton(container, option, "0.1 0.1 0.1 0.8", "0 0 0 0", string.Empty, 0, xMin: 0.025f, xMax: 0.085f, yMin: 0.1f, yMax: 0.9f, command: $"modal.action {field.Key} {field.Value.Value}");
 						if (field.Value.Value is bool booleanValue && booleanValue)
 						{
-							cui.CreateImage(container, toggle, null, "checkmark", textColor, 0.2f, xMax: 0.8f, yMin: 0.2f, yMax: 0.8f);
+							cui.CreateImage(container, toggle, "checkmark", textColor, material: null, 0.2f, xMax: 0.8f, yMin: 0.2f, yMax: 0.8f);
 						}
 						break;
 

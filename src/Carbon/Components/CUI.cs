@@ -662,6 +662,7 @@ public struct CUI : IDisposable
 
 		public enum FontTypes
 		{
+			Arial,
 			RobotoCondensedBold, RobotoCondensedRegular,
 			PermanentMarker, DroidSansMono
 		}
