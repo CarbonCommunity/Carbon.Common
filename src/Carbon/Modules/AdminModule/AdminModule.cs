@@ -993,7 +993,7 @@ public partial class AdminModule
 	{
 		if (admin.Tooltip == tooltip)
 		{
-			var tip = cui.CreatePanel(container, parent, null, "#1a6498",
+			var tip = cui.CreatePanel(container, parent, "#1a6498",
 				xMin: 0.05f, xMax: ((float)admin.Tooltip.Tooltip.Length).Scale(1f, 78f, 0.1f, 0.79f), yMin: offset, yMax: offset + height);
 
 			cui.CreateText(container, tip, "#6bc0fc", admin.Tooltip.Tooltip, 10);
@@ -1307,15 +1307,12 @@ public partial class AdminModule
 										case Tab.OptionInputButton inputButton:
 											TabPanelInputButton(cui, container, panel, inputButton.Name, PanelId + $".callaction {i} {actualI}", inputButton.ButtonPriority, inputButton.Input, inputButton.Button, ap, rowHeight, rowIndex, option: inputButton);
 											HandleReveal(OptionWidth);
-											HandleInputHighlight(OptionWidth);
+											HandleInputHighlight(OptionWidth, 1f - inputButton.ButtonPriority, "input");
 											break;
 
 										case Tab.OptionColor color:
 											TabPanelColor(cui, container, panel, color.Name, color.Color?.Invoke() ?? "0.1 0.1 0.1 0.5", PanelId + $".callaction {i} {actualI}", rowHeight, rowIndex);
 											HandleReveal(OptionWidth);
-											break;
-
-										default:
 											break;
 									}
 
@@ -1334,14 +1331,14 @@ public partial class AdminModule
 											color: "0 0 0 0", textColor: "1 1 1 0.5", text: "REVEAL".SpacedString(1), 8, command: PanelId + $".callaction {i} {actualI}");
 									}
 
-									void HandleInputHighlight(float xMin)
+									void HandleInputHighlight(float xMin, float xMax = 0.98f, string command = null)
 									{
 										if (row == ap.Input) return;
 
 										cui.CreateProtectedButton(container, panel,
 											color: "0 0 0 0", "0 0 0 0", string.Empty, 0,
-											xMin: xMin, xMax: 0.98f, yMin: rowIndex, yMax: rowIndex + rowHeight,
-											command: PanelId + $".callaction {i} {actualI}");
+											xMin: xMin, xMax: xMax, yMin: rowIndex, yMax: rowIndex + rowHeight,
+											command: PanelId + $".callaction {i} {actualI} {command}");
 									}
 
 									#endregion
@@ -1604,19 +1601,20 @@ public partial class AdminModule
 				return button.Callback != null;
 
 			case Tab.OptionInput input:
-				if (!input.ReadOnly)
+				if (ap.Input != input)
 				{
-					if (ap.Input != input)
-					{
-						ap.Input = input;
-						return true;
-					}
-					else
+					ap.Input = input;
+					return true;
+				}
+				else
+				{
+					if (!input.ReadOnly)
 					{
 						input.Callback?.Invoke(ap, args);
-						ap.Input = ap.PreviousInput = null;
-						return input.Callback != null;
 					}
+
+					ap.Input = ap.PreviousInput = null;
+					return input.Callback != null;
 				}
 				return false;
 
@@ -1702,26 +1700,27 @@ public partial class AdminModule
 				switch (args.ElementAt(0))
 				{
 					case "input":
+					{
+						if (ap.Input != inputButton)
 						{
+							ap.Input = inputButton;
+							return true;
+						}
+						else
+						{
+							ap.Input = ap.PreviousInput = null;
+
 							if (!inputButton.Input.ReadOnly)
 							{
-								if (ap.Input != inputButton.Input)
-								{
-									ap.Input = inputButton.Input;
-									return true;
-								}
-								else
-								{
-									ap.Input = ap.PreviousInput = null;
-									var enumerable = args.Skip(1);
-									inputButton.Input.Callback?.Invoke(ap, enumerable.Count() == 0 ? EmptyElement : enumerable);
-									return inputButton.Input.Callback != null;
-								}
+								var enumerable = args.Skip(1);
+								inputButton.Input.Callback?.Invoke(ap, enumerable.Count() == 0 ? EmptyElement : enumerable);
 							}
 
-							return false;
+							return inputButton.Input.Callback != null;
 						}
 
+						return false;
+					}
 					case "button":
 						inputButton.Button.Callback?.Invoke(ap);
 						return inputButton.Button.Callback != null;
