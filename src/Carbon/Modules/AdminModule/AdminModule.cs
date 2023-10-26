@@ -1616,7 +1616,6 @@ public partial class AdminModule
 					ap.Input = ap.PreviousInput = null;
 					return input.Callback != null;
 				}
-				return false;
 
 			case Tab.OptionEnum @enum:
 				@enum.Callback?.Invoke(ap, args.ElementAt(0).ToBool());
@@ -1718,8 +1717,6 @@ public partial class AdminModule
 
 							return inputButton.Input.Callback != null;
 						}
-
-						return false;
 					}
 					case "button":
 						inputButton.Button.Callback?.Invoke(ap);
