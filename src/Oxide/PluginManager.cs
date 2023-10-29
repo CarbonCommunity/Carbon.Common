@@ -1,16 +1,23 @@
 ﻿/*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
+
+public delegate void PluginEvent(Plugin plugin);
 
 public class PluginManager
 {
 	public string ConfigPath => Defines.GetConfigsFolder();
 
+	public event PluginEvent OnPluginAdded;
+	public event PluginEvent OnPluginRemoved;
+
 	public bool AddPlugin(RustPlugin plugin)
 	{
+		OnPluginAdded?.Invoke(plugin);
+
 		if (!Community.Runtime.Plugins.Plugins.Any(x => x == plugin))
 		{
 			Community.Runtime.Plugins.Plugins.Add(plugin);
@@ -21,6 +28,8 @@ public class PluginManager
 	}
 	public bool RemovePlugin(RustPlugin plugin)
 	{
+		OnPluginRemoved?.Invoke(plugin);
+
 		if (Community.Runtime.Plugins.Plugins.Any(x => x == plugin))
 		{
 			Community.Runtime.Plugins.Plugins.Remove(plugin);
