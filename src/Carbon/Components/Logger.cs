@@ -4,7 +4,7 @@ using ILogger = API.Logger.ILogger;
 
 /*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -82,6 +82,12 @@ public sealed class Logger : ILogger
 		}
 
 		var textMessage = message?.ToString();
+
+		if (!ThreadEx.IsOnMainThread())
+		{
+			var thread = Thread.CurrentThread;
+			textMessage += $" [in thread {thread.Name}/{thread.ManagedThreadId}]";
+		}
 
 		switch (severity)
 		{
