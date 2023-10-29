@@ -41,7 +41,7 @@ public struct TimeMeasure : IDisposable
 		if (milliseconds > _miliseconds)
 		{
 			Carbon.Logger.Warn(
-				$" {_name} took {milliseconds:0}ms {(_miliseconds > 10 ? $"[abv {_miliseconds}]" : string.Empty)}{(string.IsNullOrEmpty(_warn) ? "" : (": " + _warn))}");
+				$" {_name} took {milliseconds:0}ms{(string.IsNullOrEmpty(_warn) ? "" : (": " + _warn))}");
 		}
 
 		_watch.Reset();
