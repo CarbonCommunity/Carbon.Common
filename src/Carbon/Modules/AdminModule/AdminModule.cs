@@ -53,6 +53,7 @@ public partial class AdminModule
 	const string CursorPanelId = "carbonmodularuicur";
 	const string SpectatePanelId = "carbonmodularuispectate";
 	const int AccessLevels = 3;
+	private const string OptionColor = "0.2 0.2 0.2 0.75";
 
 	public AdminModule()
 	{
@@ -451,10 +452,10 @@ public partial class AdminModule
 	{
 		var color = type switch
 		{
-			Tab.OptionButton.Types.Selected => "0.4 0.7 0.2 0.7",
-			Tab.OptionButton.Types.Warned => "0.8 0.7 0.2 0.7",
-			Tab.OptionButton.Types.Important => "0.97 0.2 0.1 0.7",
-			_ => "0.2 0.2 0.2 0.5",
+			Tab.OptionButton.Types.Selected => "0.4 0.7 0.2 0.75",
+			Tab.OptionButton.Types.Warned => "0.8 0.7 0.2 0.75",
+			Tab.OptionButton.Types.Important => "0.97 0.2 0.1 0.75",
+			_ => OptionColor
 		};
 
 		cui.CreateProtectedButton(container, parent: parent,
@@ -471,7 +472,7 @@ public partial class AdminModule
 		var toggleButtonScale = 0.94f;
 
 		var panel = cui.CreatePanel(container, parent,
-			color: "0.2 0.2 0.2 0",
+			color: Cache.CUI.BlankColor,
 			xMin: 0, xMax: 1f, yMin: offset, yMax: offset + height);
 
 		if (!string.IsNullOrEmpty(text))
@@ -489,7 +490,7 @@ public partial class AdminModule
 		}
 
 		var button = cui.CreateProtectedButton(container, parent,
-			color: "0.2 0.2 0.2 0.5",
+			color: OptionColor,
 			textColor: "1 1 1 0.5",
 			text: string.Empty, 11,
 			xMin: toggleButtonScale, xMax: 0.985f, yMin: offset, yMax: offset + height,
@@ -508,14 +509,14 @@ public partial class AdminModule
 	{
 		var color = type switch
 		{
-			Tab.OptionButton.Types.Selected => "0.4 0.7 0.2 0.7",
-			Tab.OptionButton.Types.Warned => "0.8 0.7 0.2 0.7",
-			Tab.OptionButton.Types.Important => "0.97 0.2 0.1 0.7",
-			_ => "0.2 0.2 0.2 0.5",
+			Tab.OptionButton.Types.Selected => "0.4 0.7 0.2 0.75",
+			Tab.OptionButton.Types.Warned => "0.8 0.7 0.2 0.75",
+			Tab.OptionButton.Types.Important => "0.97 0.2 0.1 0.75",
+			_ => OptionColor
 		};
 
 		var panel = cui.CreatePanel(container, parent,
-			color: "0.2 0.2 0.2 0",
+			color: Cache.CUI.BlankColor,
 			xMin: 0, xMax: 1f, yMin: offset, yMax: offset + height);
 
 		if (!string.IsNullOrEmpty(text))
@@ -565,14 +566,14 @@ public partial class AdminModule
 	{
 		var color = type switch
 		{
-			Tab.OptionButton.Types.Selected => "0.4 0.7 0.2 0.7",
-			Tab.OptionButton.Types.Warned => "0.8 0.7 0.2 0.7",
-			Tab.OptionButton.Types.Important => "0.97 0.2 0.1 0.7",
-			_ => "0.2 0.2 0.2 0.5",
+			Tab.OptionButton.Types.Selected => "0.4 0.7 0.2 0.75",
+			Tab.OptionButton.Types.Warned => "0.8 0.7 0.2 0.75",
+			Tab.OptionButton.Types.Important => "0.97 0.2 0.1 0.75",
+			_ => OptionColor
 		};
 
 		var panel = cui.CreatePanel(container, parent,
-			color: "0.2 0.2 0.2 0",
+			color: Cache.CUI.BlankColor,
 			xMin: 0, xMax: 1f, yMin: offset, yMax: offset + height);
 
 		if (!string.IsNullOrEmpty(text))
@@ -590,7 +591,7 @@ public partial class AdminModule
 		}
 
 		var inPanel = cui.CreatePanel(container, panel,
-			color: "0.2 0.2 0.2 0.5",
+			color: OptionColor,
 			xMin: OptionWidth, xMax: 0.985f, yMin: 0, yMax: 1);
 
 		cui.CreateText(container, inPanel,
@@ -623,7 +624,7 @@ public partial class AdminModule
 		var toggleButtonScale = 0.93f;
 
 		var panel = cui.CreatePanel(container, parent,
-			color: "0.2 0.2 0.2 0",
+			color: Cache.CUI.BlankColor,
 			xMin: 0, xMax: 1f, yMin: offset, yMax: offset + height);
 
 		if (!string.IsNullOrEmpty(text))
@@ -641,7 +642,7 @@ public partial class AdminModule
 		}
 
 		var button = cui.CreateProtectedButton(container, parent,
-			color: "0.2 0.2 0.2 0.5",
+			color: OptionColor,
 			textColor: "1 1 1 0.5",
 			text: string.Empty, 11,
 			xMin: toggleButtonScale, xMax: 0.985f, yMin: offset, yMax: offset + height,
@@ -662,11 +663,11 @@ public partial class AdminModule
 			Tab.OptionButton.Types.Selected => "0.4 0.7 0.2",
 			Tab.OptionButton.Types.Warned => "0.8 0.7 0.2",
 			Tab.OptionButton.Types.Important => "0.97 0.2 0.1",
-			_ => "0.2 0.2 0.2",
+			_ => "0.2 0.2 0.2 1",
 		};
 
 		var panel = cui.CreatePanel(container, parent,
-			color: "0.2 0.2 0.2 0",
+			color: Cache.CUI.BlankColor,
 			xMin: 0, xMax: 1f, yMin: offset, yMax: offset + height);
 
 		if (!string.IsNullOrEmpty(text))
@@ -679,12 +680,12 @@ public partial class AdminModule
 				font: Handler.FontTypes.RobotoCondensedRegular);
 
 			cui.CreatePanel(container, panel,
-				color: "0.2 0.2 0.2 0.5",
+				color: OptionColor,
 				xMin: 0, xMax: OptionWidth, yMin: 0, yMax: 0.015f);
 		}
 
 		var inPanel = cui.CreatePanel(container, panel,
-			color: "0.2 0.2 0.2 0.5",
+			color: OptionColor,
 			xMin: OptionWidth, xMax: 0.985f, yMin: 0, yMax: 1);
 
 		var icon = optionsIcons != null && index <= optionsIcons.Length - 1 ? optionsIcons[index] : null;
@@ -694,8 +695,8 @@ public partial class AdminModule
 		var iconYmax = 0.8f;
 
 		var button = cui.CreateProtectedButton(container, inPanel,
-			color: $"0.2 0.2 0.2 0.7",
-			textColor: "0 0 0 0",
+			color: OptionColor,
+			textColor: Cache.CUI.BlankColor,
 			text: string.Empty, 0,
 			xMin: 0f, xMax: 1f, yMin: 0, yMax: 1,
 			command: $"{command} false",
@@ -732,7 +733,7 @@ public partial class AdminModule
 
 				var subButton = cui.CreateProtectedButton(container, inPanel,
 					color: isSelected ? $"{color} 1" : "0.1 0.1 0.1 1",
-					textColor: "0 0 0 0",
+					textColor: Cache.CUI.BlankColor,
 					text: string.Empty, 0,
 					xMin: 0f, xMax: 1f, yMin: 0, yMax: 1,
 					OyMin: _offset, OyMax: _offset,
@@ -816,14 +817,14 @@ public partial class AdminModule
 	{
 		var color = type switch
 		{
-			Tab.OptionButton.Types.Selected => "0.4 0.7 0.2 0.7",
-			Tab.OptionButton.Types.Warned => "0.8 0.7 0.2 0.7",
-			Tab.OptionButton.Types.Important => "0.97 0.2 0.1 0.7",
-			_ => "0.2 0.2 0.2 0.5",
+			Tab.OptionButton.Types.Selected => "0.4 0.7 0.2 0.75",
+			Tab.OptionButton.Types.Warned => "0.8 0.7 0.2 0.75",
+			Tab.OptionButton.Types.Important => "0.97 0.2 0.1 0.75",
+			_ => OptionColor
 		};
 
 		var panel = cui.CreatePanel(container, parent,
-			color: "0.2 0.2 0.2 0",
+			color: Cache.CUI.BlankColor,
 			xMin: 0, xMax: 1f, yMin: offset, yMax: offset + height);
 
 		if (!string.IsNullOrEmpty(text))
@@ -856,7 +857,7 @@ public partial class AdminModule
 
 		for (int i = 0; i < cuts; i++)
 		{
-			cui.CreateProtectedButton(container, inPanel, "0 0 0 0", "0 0 0 0", string.Empty, 0,
+			cui.CreateProtectedButton(container, inPanel, Cache.CUI.BlankColor, Cache.CUI.BlankColor, string.Empty, 0,
 				xMin: currentOffset, xMax: currentOffset + offsetScale, yMin: 0, yMax: 1,
 				command: $"{command} {i}");
 
@@ -866,7 +867,7 @@ public partial class AdminModule
 	public void TabPanelButtonArray(CUI cui, CuiElementContainer container, string parent, string command, float spacing, float height, float offset, PlayerSession session, params Tab.OptionButton[] buttons)
 	{
 		var panel = cui.CreatePanel(container, parent,
-			color: "0.2 0.2 0.2 0",
+			color: Cache.CUI.BlankColor,
 			xMin: 0.015f, xMax: 0.985f, yMin: offset, yMax: offset + height);
 
 		var cuts = (1f / buttons.Length) - spacing;
@@ -877,10 +878,10 @@ public partial class AdminModule
 			var button = buttons[i];
 			var color = (button.Type == null ? Tab.OptionButton.Types.None : button.Type(session)) switch
 			{
-				Tab.OptionButton.Types.Selected => "0.4 0.7 0.2 0.7",
-				Tab.OptionButton.Types.Warned => "0.8 0.7 0.2 0.7",
-				Tab.OptionButton.Types.Important => "0.97 0.2 0.1 0.7",
-				_ => "0.2 0.2 0.2 0.5",
+				Tab.OptionButton.Types.Selected => "0.4 0.7 0.2 0.75",
+				Tab.OptionButton.Types.Warned => "0.8 0.7 0.2 0.75",
+				Tab.OptionButton.Types.Important => "0.97 0.2 0.1 0.75",
+				_ => OptionColor
 			};
 			cui.CreateProtectedButton(container, panel, color, "1 1 1 0.5", button.Name, 11,
 				xMin: currentOffset, xMax: currentOffset + cuts, yMin: 0, yMax: 1,
@@ -891,17 +892,17 @@ public partial class AdminModule
 	}
 	public void TabPanelInputButton(CUI cui, CuiElementContainer container, string parent, string text, string command, float buttonPriority, Tab.OptionInput input, Tab.OptionButton button, PlayerSession session, float height, float offset, Tab.Option option = null)
 	{
-		var color = "0.2 0.2 0.2 0.5";
+		var color = OptionColor;
 		var buttonColor = (button.Type == null ? Tab.OptionButton.Types.None : button.Type(null)) switch
 		{
-			Tab.OptionButton.Types.Selected => "0.4 0.7 0.2 0.7",
-			Tab.OptionButton.Types.Warned => "0.8 0.7 0.2 0.7",
-			Tab.OptionButton.Types.Important => "0.97 0.2 0.1 0.7",
-			_ => "0.2 0.2 0.2 0.5",
+			Tab.OptionButton.Types.Selected => "0.4 0.7 0.2 0.75",
+			Tab.OptionButton.Types.Warned => "0.8 0.7 0.2 0.75",
+			Tab.OptionButton.Types.Important => "0.97 0.2 0.1 0.75",
+			_ => OptionColor
 		};
 
 		var panel = cui.CreatePanel(container, parent,
-			color: "0.2 0.2 0.2 0",
+			color: Cache.CUI.BlankColor,
 			xMin: 0, xMax: 1f, yMin: offset, yMax: offset + height);
 
 		if (!string.IsNullOrEmpty(text))
@@ -961,7 +962,7 @@ public partial class AdminModule
 		var toggleButtonScale = 0.825f;
 
 		var panel = cui.CreatePanel(container, parent,
-			color: "0.2 0.2 0.2 0",
+			color: Cache.CUI.BlankColor,
 			xMin: 0, xMax: 1f, yMin: offset, yMax: offset + height);
 
 		if (!string.IsNullOrEmpty(text))
@@ -974,7 +975,7 @@ public partial class AdminModule
 				font: Handler.FontTypes.RobotoCondensedRegular);
 
 			cui.CreatePanel(container, panel,
-				color: "0.2 0.2 0.2 0.5",
+				color: OptionColor,
 				xMin: 0, xMax: toggleButtonScale, yMin: 0, yMax: 0.015f);
 		}
 
@@ -1001,7 +1002,7 @@ public partial class AdminModule
 
 		if (!string.IsNullOrEmpty(tooltip.Tooltip))
 		{
-			cui.CreateProtectedButton(container, parent, "0 0 0 0", "0 0 0 0", string.Empty, 0,
+			cui.CreateProtectedButton(container, parent, Cache.CUI.BlankColor, Cache.CUI.BlankColor, string.Empty, 0,
 				xMin: 0, xMax: OptionWidth, yMin: offset, yMax: offset + height,
 				command: $"{command} tooltip");
 		}
@@ -1194,7 +1195,7 @@ public partial class AdminModule
 				using (TimeMeasure.New($"{Name}.Panels/Overrides"))
 				{
 					var panels = cui.CreatePanel(container, main,
-						color: "0 0 0 0",
+						color: Cache.CUI.BlankColor,
 						xMin: 0.01f, xMax: 0.99f, yMin: 0.02f, yMax: tab != null && tab.Fullscreen ? 0.98f : 0.86f);
 
 					if (tab != null)
@@ -1328,7 +1329,7 @@ public partial class AdminModule
 											blur: true);
 
 										cui.CreateProtectedButton(container, blur,
-											color: "0 0 0 0", textColor: "1 1 1 0.5", text: "REVEAL".SpacedString(1), 8, command: PanelId + $".callaction {i} {actualI}");
+											color: Cache.CUI.BlankColor, textColor: "1 1 1 0.5", text: "REVEAL".SpacedString(1), 8, command: PanelId + $".callaction {i} {actualI}");
 									}
 
 									void HandleInputHighlight(float xMin, float xMax = 0.98f, string command = null)
@@ -1336,7 +1337,7 @@ public partial class AdminModule
 										if (row == ap.Input) return;
 
 										cui.CreateProtectedButton(container, panel,
-											color: "0 0 0 0", "0 0 0 0", string.Empty, 0,
+											color: Cache.CUI.BlankColor, Cache.CUI.BlankColor, string.Empty, 0,
 											xMin: xMin, xMax: xMax, yMin: rowIndex, yMax: rowIndex + rowHeight,
 											command: PanelId + $".callaction {i} {actualI} {command}");
 									}
@@ -1428,7 +1429,7 @@ public partial class AdminModule
 		using var cui = new CUI(Handler);
 
 		var container = cui.CreateContainer(CursorPanelId,
-			color: "0 0 0 0",
+			color: Cache.CUI.BlankColor,
 			xMin: 0, xMax: 0, yMin: 0, yMax: 0,
 			fadeIn: 0.005f,
 			needsCursor: true, destroyUi: CursorPanelId);
@@ -2342,7 +2343,7 @@ public partial class AdminModule
 
 		using var cui = new CUI(Singleton.Handler);
 		var container = cui.CreateContainer(SpectatePanelId, color: "0.1 0.1 0.1 0.8", needsCursor: false, parent: ClientPanels.Overlay);
-		var panel = cui.CreatePanel(container, SpectatePanelId, null, "0 0 0 0");
+		var panel = cui.CreatePanel(container, SpectatePanelId, null, Cache.CUI.BlankColor);
 		var item = target.GetItem();
 		cui.CreateText(container, panel,
 			color: "1 1 1 0.2",
