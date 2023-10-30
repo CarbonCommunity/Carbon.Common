@@ -846,12 +846,15 @@ public static class CUIStatics
 		image.FadeIn = fadeIn;
 		element.Components.Add(image);
 
-		var rect = cui.TakeFromPoolRect();
-		rect.AnchorMin = $"{xMin} {yMin}";
-		rect.AnchorMax = $"{xMax} {yMax}";
-		rect.OffsetMin = $"{OxMin} {OyMin}";
-		rect.OffsetMax = $"{OxMax} {OyMax}";
-		element.Components.Add(rect);
+		if (!update || (update && (xMin != 0 || xMax != 1 || yMin != 0 || yMax != 1)))
+		{
+			var rect = cui.TakeFromPoolRect();
+			rect.AnchorMin = $"{xMin} {yMin}";
+			rect.AnchorMax = $"{xMax} {yMax}";
+			rect.OffsetMin = $"{OxMin} {OyMin}";
+			rect.OffsetMax = $"{OxMax} {OyMax}";
+			element.Components.Add(rect);
+		}
 
 		if (needsCursor) element.Components.Add(cui.TakeFromPoolNeedsCursor());
 		if (needsKeyboard) element.Components.Add(cui.TakeFromPoolNeedsKeyboard());
@@ -883,12 +886,15 @@ public static class CUIStatics
 		label.VerticalOverflow = verticalOverflow;
 		element.Components.Add(label);
 
-		var rect = cui.TakeFromPoolRect();
-		rect.AnchorMin = $"{xMin} {yMin}";
-		rect.AnchorMax = $"{xMax} {yMax}";
-		rect.OffsetMin = $"{OxMin} {OyMin}";
-		rect.OffsetMax = $"{OxMax} {OyMax}";
-		element.Components.Add(rect);
+		if (!update || (update && (xMin != 0 || xMax != 1 || yMin != 0 || yMax != 1)))
+		{
+			var rect = cui.TakeFromPoolRect();
+			rect.AnchorMin = $"{xMin} {yMin}";
+			rect.AnchorMax = $"{xMax} {yMax}";
+			rect.OffsetMin = $"{OxMin} {OyMin}";
+			rect.OffsetMax = $"{OxMax} {OyMax}";
+			element.Components.Add(rect);
+		}
 
 		if (needsCursor) element.Components.Add(cui.TakeFromPoolNeedsCursor());
 		if (needsKeyboard) element.Components.Add(cui.TakeFromPoolNeedsKeyboard());
@@ -917,12 +923,15 @@ public static class CUIStatics
 		if (material != null) button.Material = material;
 		element.Components.Add(button);
 
-		var rect = cui.TakeFromPoolRect();
-		rect.AnchorMin = $"{xMin} {yMin}";
-		rect.AnchorMax = $"{xMax} {yMax}";
-		rect.OffsetMin = $"{OxMin} {OyMin}";
-		rect.OffsetMax = $"{OxMax} {OyMax}";
-		element.Components.Add(rect);
+		if (!update || (update && (xMin != 0 || xMax != 1 || yMin != 0 || yMax != 1)))
+		{
+			var rect = cui.TakeFromPoolRect();
+			rect.AnchorMin = $"{xMin} {yMin}";
+			rect.AnchorMax = $"{xMax} {yMax}";
+			rect.OffsetMin = $"{OxMin} {OyMin}";
+			rect.OffsetMax = $"{OxMax} {OyMax}";
+			element.Components.Add(rect);
+		}
 
 		if (needsCursor) element.Components.Add(cui.TakeFromPoolNeedsCursor());
 		if (needsKeyboard) element.Components.Add(cui.TakeFromPoolNeedsKeyboard());
@@ -948,7 +957,7 @@ public static class CUIStatics
 			prect.AnchorMax = "0.98 1";
 			textElement.Components.Add(prect);
 
-			container.Add(textElement);
+			if (!update) container?.Add(textElement);
 		}
 
 		if (outlineColor != null)
@@ -983,12 +992,15 @@ public static class CUIStatics
 		if (needsCursor) element.Components.Add(cui.TakeFromPoolNeedsCursor());
 		if (needsKeyboard && !inputField.ReadOnly) element.Components.Add(cui.TakeFromPoolNeedsKeyboard());
 
-		var rect = cui.TakeFromPoolRect();
-		rect.AnchorMin = $"{xMin} {yMin}";
-		rect.AnchorMax = $"{xMax} {yMax}";
-		rect.OffsetMin = $"{OxMin} {OyMin}";
-		rect.OffsetMax = $"{OxMax} {OyMax}";
-		element.Components.Add(rect);
+		if (!update || (update && (xMin != 0 || xMax != 1 || yMin != 0 || yMax != 1)))
+		{
+			var rect = cui.TakeFromPoolRect();
+			rect.AnchorMin = $"{xMin} {yMin}";
+			rect.AnchorMax = $"{xMax} {yMax}";
+			rect.OffsetMin = $"{OxMin} {OyMin}";
+			rect.OffsetMax = $"{OxMax} {OyMax}";
+			element.Components.Add(rect);
+		}
 
 		if (!update) container?.Add(element);
 		return new Pair<string, CuiElement>(id, element);
@@ -1006,12 +1018,15 @@ public static class CUIStatics
 		if (material != null) rawImage.Material = material;
 		element.Components.Add(rawImage);
 
-		var rect = cui.TakeFromPoolRect();
-		rect.AnchorMin = $"{xMin} {yMin}";
-		rect.AnchorMax = $"{xMax} {yMax}";
-		rect.OffsetMin = $"{OxMin} {OyMin}";
-		rect.OffsetMax = $"{OxMax} {OyMax}";
-		element.Components.Add(rect);
+		if (!update || (update && (xMin != 0 || xMax != 1 || yMin != 0 || yMax != 1)))
+		{
+			var rect = cui.TakeFromPoolRect();
+			rect.AnchorMin = $"{xMin} {yMin}";
+			rect.AnchorMax = $"{xMax} {yMax}";
+			rect.OffsetMin = $"{OxMin} {OyMin}";
+			rect.OffsetMax = $"{OxMax} {OyMax}";
+			element.Components.Add(rect);
+		}
 
 		if (needsCursor) element.Components.Add(cui.TakeFromPoolNeedsCursor());
 		if (needsKeyboard) element.Components.Add(cui.TakeFromPoolNeedsKeyboard());
@@ -1041,12 +1056,15 @@ public static class CUIStatics
 		if (material != null) simpleImage.Material = material;
 		element.Components.Add(simpleImage);
 
-		var rect = cui.TakeFromPoolRect();
-		rect.AnchorMin = $"{xMin} {yMin}";
-		rect.AnchorMax = $"{xMax} {yMax}";
-		rect.OffsetMin = $"{OxMin} {OyMin}";
-		rect.OffsetMax = $"{OxMax} {OyMax}";
-		element.Components.Add(rect);
+		if (!update || (update && (xMin != 0 || xMax != 1 || yMin != 0 || yMax != 1)))
+		{
+			var rect = cui.TakeFromPoolRect();
+			rect.AnchorMin = $"{xMin} {yMin}";
+			rect.AnchorMax = $"{xMax} {yMax}";
+			rect.OffsetMin = $"{OxMin} {OyMin}";
+			rect.OffsetMax = $"{OxMax} {OyMax}";
+			element.Components.Add(rect);
+		}
 
 		if (needsCursor) element.Components.Add(cui.TakeFromPoolNeedsCursor());
 		if (needsKeyboard) element.Components.Add(cui.TakeFromPoolNeedsKeyboard());
@@ -1075,12 +1093,15 @@ public static class CUIStatics
 		if (material != null) rawImage.Material = material;
 		element.Components.Add(rawImage);
 
-		var rect = cui.TakeFromPoolRect();
-		rect.AnchorMin = $"{xMin} {yMin}";
-		rect.AnchorMax = $"{xMax} {yMax}";
-		rect.OffsetMin = $"{OxMin} {OyMin}";
-		rect.OffsetMax = $"{OxMax} {OyMax}";
-		element.Components.Add(rect);
+		if (!update || (update && (xMin != 0 || xMax != 1 || yMin != 0 || yMax != 1)))
+		{
+			var rect = cui.TakeFromPoolRect();
+			rect.AnchorMin = $"{xMin} {yMin}";
+			rect.AnchorMax = $"{xMax} {yMax}";
+			rect.OffsetMin = $"{OxMin} {OyMin}";
+			rect.OffsetMax = $"{OxMax} {OyMax}";
+			element.Components.Add(rect);
+		}
 
 		if (needsCursor) element.Components.Add(cui.TakeFromPoolNeedsCursor());
 		if (needsKeyboard) element.Components.Add(cui.TakeFromPoolNeedsKeyboard());
@@ -1110,12 +1131,15 @@ public static class CUIStatics
 		if (material != null) rawImage.Material = material;
 		element.Components.Add(rawImage);
 
-		var rect = cui.TakeFromPoolRect();
-		rect.AnchorMin = $"{xMin} {yMin}";
-		rect.AnchorMax = $"{xMax} {yMax}";
-		rect.OffsetMin = $"{OxMin} {OyMin}";
-		rect.OffsetMax = $"{OxMax} {OyMax}";
-		element.Components.Add(rect);
+		if (!update || (update && (xMin != 0 || xMax != 1 || yMin != 0 || yMax != 1)))
+		{
+			var rect = cui.TakeFromPoolRect();
+			rect.AnchorMin = $"{xMin} {yMin}";
+			rect.AnchorMax = $"{xMax} {yMax}";
+			rect.OffsetMin = $"{OxMin} {OyMin}";
+			rect.OffsetMax = $"{OxMax} {OyMax}";
+			element.Components.Add(rect);
+		}
 
 		if (needsCursor) element.Components.Add(cui.TakeFromPoolNeedsCursor());
 		if (needsKeyboard) element.Components.Add(cui.TakeFromPoolNeedsKeyboard());
