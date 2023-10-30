@@ -18,7 +18,7 @@ public class PluginManager
 	{
 		OnPluginAdded?.Invoke(plugin);
 
-		if (!Community.Runtime.Plugins.Plugins.Any(x => x == plugin))
+		if (!Community.Runtime.Plugins.Plugins.Contains(plugin))
 		{
 			Community.Runtime.Plugins.Plugins.Add(plugin);
 			return true;
@@ -30,7 +30,7 @@ public class PluginManager
 	{
 		OnPluginRemoved?.Invoke(plugin);
 
-		if (Community.Runtime.Plugins.Plugins.Any(x => x == plugin))
+		if (Community.Runtime.Plugins.Plugins.Contains(plugin))
 		{
 			Community.Runtime.Plugins.Plugins.Remove(plugin);
 			return true;
