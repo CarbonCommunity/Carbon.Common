@@ -247,6 +247,8 @@ public static class ModLoader
 
 		ProcessCommands(type, plugin);
 
+		Interface.Oxide.RootPluginManager.AddPlugin(plugin);
+
 		Logger.Log($"Loaded plugin {plugin.ToString()} [{plugin.CompileTime:0}ms]");
 		return true;
 	}
@@ -270,6 +272,7 @@ public static class ModLoader
 		if (!premature)
 		{
 			Logger.Log($"Unloaded plugin {plugin.ToString()}");
+			Interface.Oxide.RootPluginManager.RemovePlugin(plugin);
 		}
 		return true;
 	}
