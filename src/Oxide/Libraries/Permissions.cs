@@ -19,13 +19,7 @@ public class Permission : Library
 		SQL = 1
 	}
 
-	public bool IsGlobal
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool IsGlobal => false;
 
 	public bool IsLoaded { get; set; }
 
