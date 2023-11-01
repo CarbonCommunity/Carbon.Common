@@ -335,7 +335,7 @@ namespace Oxide.Core.SQLite.Libraries
 			ExecuteNonQuery(sql, db, callback);
 		}
 
-		public void Shutdown()
+		public override void Shutdown()
 		{
 			_running = false;
 			_workevent.Set();

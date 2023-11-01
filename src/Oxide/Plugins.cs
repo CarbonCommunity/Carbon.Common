@@ -2,7 +2,7 @@
 
 /*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -13,7 +13,7 @@ public class Plugins : Library
 {
 	public PluginManager PluginManager { get; private set; } = new();
 
-	public bool IsGlobal => true;
+	public override bool IsGlobal => true;
 
 	public Plugins(PluginManager pluginmanager)
 	{

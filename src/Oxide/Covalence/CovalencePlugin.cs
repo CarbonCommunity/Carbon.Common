@@ -4,7 +4,7 @@ using Logger = Carbon.Logger;
 
 /*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -13,6 +13,8 @@ namespace Oxide.Plugins
 {
 	public class CovalencePlugin : RustPlugin
 	{
+		protected string game = "Rust";
+
 		public PlayerManager players = new();
 
 		public new RustServer server = new();
