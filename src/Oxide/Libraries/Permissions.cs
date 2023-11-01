@@ -245,7 +245,12 @@ public class Permission : Library
 
 		if (PermissionExists(name, owner))
 		{
-			Logger.Warn($"Duplicate permission registered '{name}' (by plugin '{owner.Name}')");
+			return;
+		}
+
+		if (PermissionExists(name))
+		{
+			Logger.Warn($"Trying to register permission '{name}' but already used by another plugin. (Requestee plugin '{owner.Name}')");
 			return;
 		}
 
