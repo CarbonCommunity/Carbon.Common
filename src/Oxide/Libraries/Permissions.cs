@@ -238,10 +238,19 @@ public class Permission : Library
 	{
 		if (string.IsNullOrEmpty(name)) return;
 
-		name = name.ToLower();
-		if (PermissionExists(name, null))
+		if (!name.IsLower())
 		{
-			Logger.Warn($"Duplicate permission registered '{name}' (by plugin '{owner.Name}')");
+			name = name.ToLower();
+		}
+
+		if (PermissionExists(name, owner))
+		{
+			return;
+		}
+
+		if (PermissionExists(name))
+		{
+			Logger.Warn($"Trying to register permission '{name}' but already used by another plugin. (Requestee plugin '{owner.Name}')");
 			return;
 		}
 
@@ -275,7 +284,12 @@ public class Permission : Library
 		{
 			return false;
 		}
-		name = name.ToLower();
+
+		if (!name.IsLower())
+		{
+			name = name.ToLower();
+		}
+
 		if (owner == null)
 		{
 			if (permset.Count > 0)
@@ -284,13 +298,15 @@ public class Permission : Library
 				{
 					return true;
 				}
+
 				if (name.EndsWith("*"))
 				{
 					name = name.TrimEnd(Star);
-					return permset.Values.SelectMany((HashSet<string> v) => v).Any((string p) => p.StartsWith(name));
+					return permset.Values.SelectMany(v => v).Any(p => p.StartsWith(name));
 				}
 			}
-			return permset.Values.Any((HashSet<string> v) => v.Contains(name));
+
+			return permset.Values.Any(v => v.Contains(name));
 		}
 
 		if (!permset.TryGetValue(owner, out var hashSet)) return false;
@@ -301,12 +317,14 @@ public class Permission : Library
 			{
 				return true;
 			}
+
 			if (name.EndsWith("*"))
 			{
 				name = name.TrimEnd(Star);
-				return hashSet.Any((string p) => p.StartsWith(name));
+				return hashSet.Any(p => p.StartsWith(name));
 			}
 		}
+
 		return hashSet.Contains(name);
 	}
 
@@ -365,8 +383,8 @@ public class Permission : Library
 		user.LastSeenNickname = player.displayName;
 
 		if (player.net != null && player.net.connection != null && player.net.connection.info != null)
-			user.Language = player.net.connection.info.GetString("global.language", "en");
-		else user.Language = "en";
+			user.Language = player.net.connection.info.GetString("global.language", Community.Runtime.Config.Language);
+		else user.Language = Community.Runtime.Config.Language;
 
 		if (!string.IsNullOrEmpty(Community.Runtime.Config.PlayerDefaultGroup))
 			AddUserGroup(player.UserIDString, Community.Runtime.Config.PlayerDefaultGroup);
@@ -493,7 +511,7 @@ public class Permission : Library
 	}
 	public virtual string[] GetPermissions()
 	{
-		return new HashSet<string>(permset.Values.SelectMany((HashSet<string> v) => v)).ToArray();
+		return new HashSet<string>(permset.Values.SelectMany(v => v)).ToArray();
 	}
 	public virtual string[] GetPermissions(BaseHookable hookable)
 	{
@@ -503,7 +521,11 @@ public class Permission : Library
 	{
 		if (string.IsNullOrEmpty(perm)) return EmptyStringArray;
 
-		perm = perm.ToLower();
+		if (!perm.IsLower())
+		{
+			perm = perm.ToLower();
+		}
+
 		var hashSet = Pool.Get<HashSet<string>>();
 		foreach (var keyValuePair in userdata.Where(keyValuePair => keyValuePair.Value.Perms.Contains(perm)))
 		{
@@ -511,6 +533,7 @@ public class Permission : Library
 		}
 
 		var result = hashSet.ToArray();
+		hashSet.Clear();
 		Pool.Free(ref hashSet);
 		return result;
 	}
@@ -518,7 +541,11 @@ public class Permission : Library
 	{
 		if (string.IsNullOrEmpty(perm)) return EmptyStringArray;
 
-		perm = perm.ToLower();
+		if (!perm.IsLower())
+		{
+			perm = perm.ToLower();
+		}
+
 		var hashSet = Pool.Get<HashSet<string>>();
 		foreach (KeyValuePair<string, GroupData> keyValuePair in groupdata)
 		{
@@ -528,6 +555,7 @@ public class Permission : Library
 			}
 		}
 		var result = hashSet.ToArray();
+		hashSet.Clear();
 		Pool.Free(ref hashSet);
 		return result;
 	}
@@ -549,14 +577,12 @@ public class Permission : Library
 			if (userData.Groups.Count <= 0) return;
 
 			userData.Groups.Clear();
-			return;
 		}
 		else
 		{
 			if (!userData.Groups.Remove(name.ToLower())) return;
 
 			HookCaller.CallStaticHook(2616322405, id, name);
-			return;
 		}
 	}
 	public virtual bool UserHasGroup(string id, string name)
@@ -607,26 +633,42 @@ public class Permission : Library
 	{
 		if (!GroupExists(group)) return EmptyStringArray;
 
-		group = group.ToLower();
+		if (!group.IsLower())
+		{
+			group = group.ToLower();
+		}
+
 		return (from u in userdata
-				where u.Value.Groups.Contains(@group)
-				select u.Key + " (" + u.Value.LastSeenNickname + ")").ToArray();
+		        where u.Value.Groups.Contains(@group)
+		        select u.Key + " (" + u.Value.LastSeenNickname + ")").ToArray();
 	}
 
 	public virtual string GetGroupTitle(string group)
 	{
 		if (!GroupExists(group)) return string.Empty;
 
-		if (!groupdata.TryGetValue(group.ToLower(), out var groupData))
+		if (!group.IsLower())
+		{
+			group = group.ToLower();
+		}
+
+		if (!groupdata.TryGetValue(group, out var groupData))
 		{
 			return string.Empty;
 		}
+
 		return groupData.Title;
 	}
 	public virtual int GetGroupRank(string group)
 	{
 		if (!GroupExists(group)) return 0;
-		if (!groupdata.TryGetValue(group.ToLower(), out var groupData)) return 0;
+
+		if (!group.IsLower())
+		{
+			group = group.ToLower();
+		}
+
+		if (!groupdata.TryGetValue(group, out var groupData)) return 0;
 
 		return groupData.Rank;
 	}
@@ -636,13 +678,18 @@ public class Permission : Library
 		if (!PermissionExists(perm, owner)) return false;
 
 		var data = GetUserData(id);
-		perm = perm.ToLower();
+
+		if (!perm.IsLower())
+		{
+			perm = perm.ToLower();
+		}
+
 		if (perm.EndsWith("*"))
 		{
 			HashSet<string> source;
 			if (owner == null)
 			{
-				source = new HashSet<string>(permset.Values.SelectMany((HashSet<string> v) => v));
+				source = new HashSet<string>(permset.Values.SelectMany(v => v));
 			}
 			else if (!permset.TryGetValue(owner, out source))
 			{
@@ -650,13 +697,13 @@ public class Permission : Library
 			}
 			if (perm.Equals("*"))
 			{
-				source.Aggregate(false, (bool c, string s) => c | data.Perms.Add(s));
+				source.Aggregate(false, (c, s) => c | data.Perms.Add(s));
 				return true;
 			}
 			perm = perm.TrimEnd(Star);
 			(from s in source
 			 where s.StartsWith(perm)
-			 select s).Aggregate(false, (bool c, string s) => c | data.Perms.Add(s));
+			 select s).Aggregate(false, (c, s) => c | data.Perms.Add(s));
 			return true;
 		}
 		else
@@ -672,13 +719,18 @@ public class Permission : Library
 		if (string.IsNullOrEmpty(perm)) return false;
 
 		var userData = GetUserData(id);
-		perm = perm.ToLower();
+
+		if (!perm.IsLower())
+		{
+			perm = perm.ToLower();
+		}
+
 		if (perm.EndsWith("*"))
 		{
 			if (!perm.Equals("*"))
 			{
 				perm = perm.TrimEnd(Star);
-				return userData.Perms.RemoveWhere((string s) => s.StartsWith(perm)) > 0;
+				return userData.Perms.RemoveWhere(s => s.StartsWith(perm)) > 0;
 			}
 			if (userData.Perms.Count <= 0) return false;
 
@@ -697,15 +749,24 @@ public class Permission : Library
 	{
 		if (!PermissionExists(perm, owner) || !GroupExists(name)) return false;
 
-		if (!groupdata.TryGetValue(name.ToLower(), out var data)) return false;
-		perm = perm.ToLower();
+		if (!name.IsLower())
+		{
+			name = name.ToLower();
+		}
+
+		if (!groupdata.TryGetValue(name, out var data)) return false;
+
+		if (!perm.IsLower())
+		{
+			perm = perm.ToLower();
+		}
 
 		if (perm.EndsWith("*"))
 		{
 			HashSet<string> source;
 			if (owner == null)
 			{
-				source = new HashSet<string>(permset.Values.SelectMany((HashSet<string> v) => v));
+				source = new HashSet<string>(permset.Values.SelectMany(v => v));
 			}
 			else if (!permset.TryGetValue(owner, out source))
 			{
@@ -713,13 +774,13 @@ public class Permission : Library
 			}
 			if (perm.Equals("*"))
 			{
-				source.Aggregate(false, (bool c, string s) => c | data.Perms.Add(s));
+				source.Aggregate(false, (c, s) => c | data.Perms.Add(s));
 				return true;
 			}
 			perm = perm.TrimEnd(Star).ToLower();
 			(from s in source
 			 where s.StartsWith(perm)
-			 select s).Aggregate(false, (bool c, string s) => c | data.Perms.Add(s));
+			 select s).Aggregate(false, (c, s) => c | data.Perms.Add(s));
 			return true;
 		}
 		else
@@ -734,15 +795,25 @@ public class Permission : Library
 	public virtual bool RevokeGroupPermission(string name, string perm)
 	{
 		if (!GroupExists(name) || string.IsNullOrEmpty(perm)) return false;
-		if (!groupdata.TryGetValue(name.ToLower(), out var groupData)) return false;
 
-		perm = perm.ToLower();
+		if (!name.IsLower())
+		{
+			name = name.ToLower();
+		}
+
+		if (!groupdata.TryGetValue(name, out var groupData)) return false;
+
+		if (!perm.IsLower())
+		{
+			perm = perm.ToLower();
+		}
+
 		if (perm.EndsWith("*"))
 		{
 			if (!perm.Equals("*"))
 			{
 				perm = perm.TrimEnd(Star).ToLower();
-				return groupData.Perms.RemoveWhere((string s) => s.StartsWith(perm)) > 0;
+				return groupData.Perms.RemoveWhere(s => s.StartsWith(perm)) > 0;
 			}
 			if (groupData.Perms.Count <= 0) return false;
 			groupData.Perms.Clear();
@@ -760,14 +831,19 @@ public class Permission : Library
 
 	public virtual bool CreateGroup(string group, string title, int rank)
 	{
-		if (GroupExists(group) || string.IsNullOrEmpty(group)) return false;
+		if (string.IsNullOrEmpty(group) || GroupExists(group)) return false;
 
 		var value = new GroupData
 		{
 			Title = title,
 			Rank = rank
 		};
-		group = group.ToLower();
+
+		if (!group.IsLower())
+		{
+			group = group.ToLower();
+		}
+
 		groupdata.Add(group, value);
 
 		// OnGroupCreated
@@ -778,22 +854,25 @@ public class Permission : Library
 	{
 		if (!GroupExists(group)) return false;
 
-		group = group.ToLower();
-		var flag = groupdata.Remove(group);
-		if (flag)
+		if (!group.IsLower())
 		{
-			foreach (var groupData in groupdata.Values)
-			{
-				if (groupData.ParentGroup != group) continue;
+			group = group.ToLower();
+		}
 
+		var removed = groupdata.Remove(group);
+
+		if (removed)
+		{
+			foreach (var groupData in groupdata.Values.Where(groupData => groupData.ParentGroup == group))
+			{
 				groupData.ParentGroup = string.Empty;
 			}
 		}
-		if (userdata.Values.Aggregate(false, (bool current, UserData userData) => current | userData.Groups.Remove(group)))
+		if (userdata.Values.Aggregate(false, (current, userData) => current | userData.Groups.Remove(group)))
 		{
 			SaveUsers();
 		}
-		if (flag)
+		if (removed)
 		{
 			// OnGroupDeleted
 			HookCaller.CallStaticHook(3899174310, group);
@@ -804,7 +883,11 @@ public class Permission : Library
 	public virtual bool SetGroupTitle(string group, string title)
 	{
 		if (!GroupExists(group)) return false;
-		group = group.ToLower();
+
+		if (!group.IsLower())
+		{
+			group = group.ToLower();
+		}
 
 		if (!groupdata.TryGetValue(group, out var groupData)) return false;
 		if (groupData.Title == title) return true;
@@ -817,7 +900,12 @@ public class Permission : Library
 	public virtual bool SetGroupRank(string group, int rank)
 	{
 		if (!GroupExists(group)) return false;
-		group = group.ToLower();
+
+		if (!group.IsLower())
+		{
+			group = group.ToLower();
+		}
+
 		if (!groupdata.TryGetValue(group, out var groupData)) return false;
 		if (groupData.Rank == rank) return true;
 		groupData.Rank = rank;
@@ -830,7 +918,12 @@ public class Permission : Library
 	public virtual string GetGroupParent(string group)
 	{
 		if (!GroupExists(group)) return string.Empty;
-		group = group.ToLower();
+
+		if (!group.IsLower())
+		{
+			group = group.ToLower();
+		}
+
 		if (groupdata.TryGetValue(group, out var groupData))
 		{
 			return groupData.ParentGroup;
@@ -840,7 +933,11 @@ public class Permission : Library
 	public virtual bool SetGroupParent(string group, string parent)
 	{
 		if (!GroupExists(group)) return false;
-		group = group.ToLower();
+
+		if (!group.IsLower())
+		{
+			group = group.ToLower();
+		}
 
 		if (!groupdata.TryGetValue(group, out var groupData)) return false;
 
@@ -849,9 +946,13 @@ public class Permission : Library
 			groupData.ParentGroup = null;
 			return true;
 		}
-		if (!GroupExists(parent) || group.Equals(parent.ToLower())) return false;
 
-		parent = parent.ToLower();
+		if (!parent.IsLower())
+		{
+			parent = parent.ToLower();
+		}
+
+		if (!GroupExists(parent) || group.Equals(parent)) return false;
 
 		if (!string.IsNullOrEmpty(groupData.ParentGroup) && groupData.ParentGroup.Equals(parent)) return true;
 		if (HasCircularParent(group, parent)) return false;
@@ -868,16 +969,32 @@ public class Permission : Library
 		{
 			return false;
 		}
-		var hashSet = new HashSet<string>
+
+		var hashSet = Pool.Get<HashSet<string>>();
+		hashSet.Add(group);
+		hashSet.Add(parent);
+
+		void Cleanup()
 		{
-			group,
-			parent
-		};
+			hashSet.Clear();
+			Pool.Free(ref hashSet);
+		}
+
 		while (!string.IsNullOrEmpty(groupData.ParentGroup))
 		{
-			if (!hashSet.Add(groupData.ParentGroup)) return true;
-			if (!groupdata.TryGetValue(groupData.ParentGroup, out groupData)) return false;
+			if (!hashSet.Add(groupData.ParentGroup))
+			{
+				Cleanup();
+				return true;
+			}
+			if (!groupdata.TryGetValue(groupData.ParentGroup, out groupData))
+			{
+				Cleanup();
+				return false;
+			}
 		}
+
+		Cleanup();
 		return false;
 	}
 }
