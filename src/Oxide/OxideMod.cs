@@ -5,6 +5,7 @@
  *
  */
 
+using System.Collections.Concurrent;
 using Oxide.Plugins;
 using Logger = Carbon.Logger;
 
@@ -170,7 +171,7 @@ public class OxideMod
 		};
 	}
 
-	internal static Dictionary<string, object> _libraryCache = new();
+	internal static ConcurrentDictionary<string, object> _libraryCache = new();
 
 	public T GetLibrary<T>(string name = null) where T : Library
 	{
@@ -194,7 +195,7 @@ public class OxideMod
 				catch { }
 			}
 
-			_libraryCache.Add(name, instance);
+			_libraryCache.TryAdd(name, instance);
 		}
 
 		return instance as T;
