@@ -40,7 +40,7 @@ public class Library : IDisposable
 				if (libraryFunction == null)
 					continue;
 			}
-			catch (TypeLoadException ex)
+			catch (TypeLoadException)
 			{
 				continue;
 			}
@@ -63,7 +63,7 @@ public class Library : IDisposable
 				if (libraryProperty == null)
 					continue;
 			}
-			catch (TypeLoadException ex)
+			catch (TypeLoadException)
 			{
 				continue;
 			}
