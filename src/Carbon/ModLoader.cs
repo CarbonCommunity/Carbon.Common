@@ -612,12 +612,7 @@ public static class ModLoader
 
 	internal static ModPackage GetPackage(string name)
 	{
-		foreach (var mod in LoadedPackages)
-		{
-			if (mod.Name.StartsWith(name, StringComparison.OrdinalIgnoreCase)) return mod;
-		}
-
-		return null;
+		return LoadedPackages.FirstOrDefault(mod => mod.Name.StartsWith(name, StringComparison.OrdinalIgnoreCase));
 	}
 
 	public static List<ModPackage> LoadedPackages = new();
