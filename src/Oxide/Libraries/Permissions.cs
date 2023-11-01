@@ -378,8 +378,8 @@ public class Permission : Library
 		user.LastSeenNickname = player.displayName;
 
 		if (player.net != null && player.net.connection != null && player.net.connection.info != null)
-			user.Language = player.net.connection.info.GetString("global.language", "en");
-		else user.Language = "en";
+			user.Language = player.net.connection.info.GetString("global.language", Community.Runtime.Config.Language);
+		else user.Language = Community.Runtime.Config.Language;
 
 		if (!string.IsNullOrEmpty(Community.Runtime.Config.PlayerDefaultGroup))
 			AddUserGroup(player.UserIDString, Community.Runtime.Config.PlayerDefaultGroup);
@@ -506,7 +506,7 @@ public class Permission : Library
 	}
 	public virtual string[] GetPermissions()
 	{
-		return new HashSet<string>(permset.Values.SelectMany((HashSet<string> v) => v)).ToArray();
+		return new HashSet<string>(permset.Values.SelectMany(v => v)).ToArray();
 	}
 	public virtual string[] GetPermissions(BaseHookable hookable)
 	{
@@ -808,7 +808,7 @@ public class Permission : Library
 			if (!perm.Equals("*"))
 			{
 				perm = perm.TrimEnd(Star).ToLower();
-				return groupData.Perms.RemoveWhere((string s) => s.StartsWith(perm)) > 0;
+				return groupData.Perms.RemoveWhere(s => s.StartsWith(perm)) > 0;
 			}
 			if (groupData.Perms.Count <= 0) return false;
 			groupData.Perms.Clear();
@@ -863,7 +863,7 @@ public class Permission : Library
 				groupData.ParentGroup = string.Empty;
 			}
 		}
-		if (userdata.Values.Aggregate(false, (bool current, UserData userData) => current | userData.Groups.Remove(group)))
+		if (userdata.Values.Aggregate(false, (current, userData) => current | userData.Groups.Remove(group)))
 		{
 			SaveUsers();
 		}
@@ -964,7 +964,7 @@ public class Permission : Library
 		{
 			return false;
 		}
-		
+
 		var hashSet = Pool.Get<HashSet<string>>();
 		hashSet.Add(group);
 		hashSet.Add(parent);
