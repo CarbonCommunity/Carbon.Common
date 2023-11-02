@@ -154,7 +154,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			var resultList = Facepunch.Pool.GetList<Plugin>();
 			var customList = Facepunch.Pool.GetList<Plugin>();
 
-			using (TimeMeasure.New("GetPluginsFromVendor", 1))
+			using (TimeMeasure.New("GetPluginsFromVendor"))
 			{
 				try
 				{

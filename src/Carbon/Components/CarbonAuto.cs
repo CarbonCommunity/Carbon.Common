@@ -35,7 +35,7 @@ public class CarbonAuto : API.Abstracts.CarbonAuto
 	}
 	public override bool IsChanged()
 	{
-		using (TimeMeasure.New("CarbonAuto.IsChanged", 100))
+		using (TimeMeasure.New("CarbonAuto.IsChanged"))
 		{
 			var core = Community.Runtime.CorePlugin;
 
@@ -64,7 +64,7 @@ public class CarbonAuto : API.Abstracts.CarbonAuto
 	}
 	public override void Save()
 	{
-		using (TimeMeasure.New("CarbonAuto.Save", 100))
+		using (TimeMeasure.New("CarbonAuto.Save"))
 		{
 			try
 			{
@@ -102,7 +102,7 @@ public class CarbonAuto : API.Abstracts.CarbonAuto
 	}
 	public override void Load()
 	{
-		using (TimeMeasure.New("CarbonAuto.Load", 100))
+		using (TimeMeasure.New("CarbonAuto.Load"))
 		{
 			try
 			{
