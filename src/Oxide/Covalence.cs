@@ -2,7 +2,7 @@
 
 /*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -473,23 +473,6 @@ namespace Oxide.Core.Libraries.Covalence
 
 namespace Carbon.Oxide
 {
-	public interface IPlayerManager
-	{
-		IEnumerable<IPlayer> All { get; }
-		IEnumerable<IPlayer> Connected { get; }
-
-		IPlayer FindPlayerById(string id);
-		IPlayer FindPlayerByObj(object obj);
-		IPlayer FindPlayer(string partialNameOrId);
-		IEnumerable<IPlayer> FindPlayers(string partialNameOrId);
-	}
-
-	public interface ICovalence
-	{
-		IPlayerManager Players { get; }
-		IServer Server { get; }
-	}
-
 	public class Element
 	{
 		private Element(ElementType type, object val)
@@ -532,6 +515,23 @@ namespace Carbon.Oxide
 
 namespace Oxide.Core.Libraries.Covalence
 {
+	public interface IPlayerManager
+	{
+		IEnumerable<IPlayer> All { get; }
+		IEnumerable<IPlayer> Connected { get; }
+
+		IPlayer FindPlayerById(string id);
+		IPlayer FindPlayerByObj(object obj);
+		IPlayer FindPlayer(string partialNameOrId);
+		IEnumerable<IPlayer> FindPlayers(string partialNameOrId);
+	}
+
+	public interface ICovalence
+	{
+		IPlayerManager Players { get; }
+		IServer Server { get; }
+	}
+
 	public interface IServer
 	{
 		string Name { get; set; }

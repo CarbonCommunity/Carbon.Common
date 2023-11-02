@@ -1,10 +1,11 @@
 ﻿/*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
 
+using System.Collections.Concurrent;
 using Oxide.Plugins;
 using Logger = Carbon.Logger;
 
@@ -170,7 +171,7 @@ public class OxideMod
 		};
 	}
 
-	internal static Dictionary<string, object> _libraryCache = new();
+	internal static ConcurrentDictionary<string, object> _libraryCache = new();
 
 	public T GetLibrary<T>(string name = null) where T : Library
 	{
@@ -194,7 +195,7 @@ public class OxideMod
 				catch { }
 			}
 
-			_libraryCache.Add(name, instance);
+			_libraryCache.TryAdd(name, instance);
 		}
 
 		return instance as T;
@@ -210,7 +211,7 @@ public class OxideMod
 	/// </summary>
 	/// <param name="message"></param>
 	public void LogDebug(string message, params object[] args)
-		=> Logger.Debug(string.Format(message, args));
+		=> Logger.Debug(args != null && args.Length > 0 ? string.Format(message, args) : message);
 
 	/// <summary>
 	/// Outputs to the game's console a message with severity level 'ERROR'.
@@ -219,7 +220,7 @@ public class OxideMod
 	/// <param name="message"></param>
 	/// <param name="args"></param>
 	public void LogError(string message, params object[] args)
-		=> Logger.Error(string.Format(message, args));
+		=> Logger.Error(args != null && args.Length > 0 ? string.Format(message, args) : message);
 
 	/// <summary>
 	/// Outputs to the game's console a message with severity level 'ERROR'.
@@ -237,7 +238,7 @@ public class OxideMod
 	/// <param name="message"></param>
 	/// <param name="args"></param>
 	public void LogInfo(string message, params object[] args)
-		=> Logger.Log(string.Format(message, args));
+		=> Logger.Log(args != null && args.Length > 0 ? string.Format(message, args) : message);
 
 	/// <summary>
 	/// Outputs to the game's console a message with severity level 'WARNING'.
@@ -246,7 +247,7 @@ public class OxideMod
 	/// <param name="message"></param>
 	/// <param name="args"></param>
 	public void LogWarning(string message, params object[] args)
-		=> Logger.Warn(string.Format(message, args));
+		=> Logger.Warn(args != null && args.Length > 0 ? string.Format(message, args) : message);
 
 	/// <summary>
 	/// Outputs to the game's console a message with severity level 'WARNING'.
@@ -254,8 +255,8 @@ public class OxideMod
 	/// </summary>
 	/// <param name="message"></param>
 	/// <param name="args"></param>
-	public void PrintWarning(string format, params object[] args)
-		=> Logger.Warn(string.Format(format, args));
+	public void PrintWarning(string message, params object[] args)
+		=> Logger.Warn(args != null && args.Length > 0 ? string.Format(message, args) : message);
 
 	/// <summary>
 	/// Outputs to the game's console a message with severity level 'ERROR'.
@@ -263,8 +264,8 @@ public class OxideMod
 	/// </summary>
 	/// <param name="message"></param>
 	/// <param name="args"></param>
-	public void PrintError(string format, params object[] args)
-		=> Logger.Error(string.Format(format, args));
+	public void PrintError(string message, params object[] args)
+		=> Logger.Error(args != null && args.Length > 0 ? string.Format(message, args) : message);
 
 	#endregion
 }

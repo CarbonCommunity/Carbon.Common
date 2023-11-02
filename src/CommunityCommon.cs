@@ -49,6 +49,9 @@ public class Community
 	public IEventManager Events
 	{ get => _eventManager.Value; }
 
+	public ICompatManager Compat
+	{ get => _compatManager.Value; }
+
 	private readonly Lazy<IAnalyticsManager> _analyticsManager
 		= new(GameObject.GetComponent<IAnalyticsManager>);
 
@@ -63,6 +66,9 @@ public class Community
 
 	private readonly Lazy<IEventManager> _eventManager
 		= new(GameObject.GetComponent<IEventManager>);
+
+	private readonly Lazy<ICompatManager> _compatManager
+		= new(GameObject.GetComponent<ICompatManager>);
 
 #if EXPERIMENTAL
 	public IThreadManager Threads
