@@ -18,7 +18,7 @@ public struct TimeMeasure : IDisposable
 	internal Stopwatch _watch;
 #endif
 
-	public static TimeMeasure New(string name, int miliseconds = 75, string warn = null)
+	public static TimeMeasure New(string name, int miliseconds = 100, string warn = null)
 	{
 #if DEBUG
 		var result = default(TimeMeasure);
@@ -41,7 +41,7 @@ public struct TimeMeasure : IDisposable
 		if (milliseconds > _miliseconds)
 		{
 			Carbon.Logger.Warn(
-				$" {_name} took {milliseconds:0}ms [abv {_miliseconds}]{(string.IsNullOrEmpty(_warn) ? "" : (": " + _warn))}");
+				$" {_name} took {milliseconds:0}ms{(string.IsNullOrEmpty(_warn) ? "" : (": " + _warn))}");
 		}
 
 		_watch.Reset();

@@ -79,14 +79,14 @@ public class DatePickerModule : CarbonModule<EmptyModuleConfig, EmptyModuleData>
 			xMin: 0, xMax: 1, yMin: 0, yMax: 1,
 			needsCursor: true, destroyUi: PanelId);
 
-		var color = cui.CreatePanel(container, parent: PanelId, null,
+		var color = cui.CreatePanel(container, parent: PanelId,
 			color: "0 0 0 0.6",
 			xMin: 0.3f, xMax: 0.7f, yMin: 0.275f, yMax: 0.825f);
-		var main = cui.CreatePanel(container, parent: color, null,
+		var main = cui.CreatePanel(container, parent: color,
 			color: "0 0 0 0.5",
 			blur: true);
 
-		cui.CreateText(container, parent: main, id: null,
+		cui.CreateText(container, parent: main,
 			color: "1 1 1 0.8",
 			text: "<b>Date Picker</b>", 18,
 			xMin: 0f, yMin: 0.8f, xMax: 1f, yMax: 0.98f,
@@ -104,16 +104,16 @@ public class DatePickerModule : CarbonModule<EmptyModuleConfig, EmptyModuleData>
 		var topLeftColor = Color.red;
 		var bottomLeftColor = Color.yellow;
 
-		var year = cui.CreatePanel(container, main, null,
+		var year = cui.CreatePanel(container, main,
 			color: "1 1 1 0.1",
 			xMin: 0.15f, xMax: 0.85f, yMin: 0.86f, yMax: 0.92f);
-		cui.CreateProtectedInputField(container, year, null, "1 1 1 0.7", $"{Year}", 10, 4, false, command: PanelId + $".action yearchange ");
-		cui.CreateProtectedButton(container, year, null, "1 1 1 0.2", "1 1 1 0.7", "<", 8,
+		cui.CreateProtectedInputField(container, year, "1 1 1 0.7", $"{Year}", 10, 4, false, command: PanelId + $".action yearchange ");
+		cui.CreateProtectedButton(container, year, "1 1 1 0.2", "1 1 1 0.7", "<", 8,
 			xMin: 0f, xMax: 0.1f, command: PanelId + $".action yearappend -1");
-		cui.CreateProtectedButton(container, year, null, "1 1 1 0.2", "1 1 1 0.7", ">", 8,
+		cui.CreateProtectedButton(container, year, "1 1 1 0.2", "1 1 1 0.7", ">", 8,
 			xMin: 0.9f, xMax: 1f, command: PanelId + $".action yearappend 1");
 
-		var months = cui.CreatePanel(container, parent: main, null,
+		var months = cui.CreatePanel(container, parent: main,
 			color: "0 0 0 0",
 			xMin: 0.15f, xMax: 0.85f, yMin: 0.71f, yMax: 0.85f);
 		var monthHeight = 1f;
@@ -121,8 +121,12 @@ public class DatePickerModule : CarbonModule<EmptyModuleConfig, EmptyModuleData>
 		var monthWidth = 1f / (Months.Length / 2);
 		for (float i = 0; i < Months.Length; i++)
 		{
-			cui.CreateProtectedButton(container, months, null, $"1 1 1 {(Month == i + 1 ? 0.2 : 0.1)}", "1 1 1 0.7", Months[(int)i], 8,
-				monthOffset, monthOffset + monthWidth, monthHeight - 0.5f, monthHeight, command: PanelId + $".action monthchange {i + 1}");
+			cui.CreateProtectedButton(container, months,
+				color: $"1 1 1 {(Month == i + 1 ? 0.2 : 0.1)}",
+				textColor: "1 1 1 0.7",
+				text: Months[(int)i], size: 8,
+				xMin: monthOffset, xMax: monthOffset + monthWidth,
+				yMin: monthHeight - 0.5f, yMax: monthHeight, command: PanelId + $".action monthchange {i + 1}");
 			monthOffset += monthWidth;
 
 			if (i == (Months.Length - 1) / 2)
@@ -132,7 +136,7 @@ public class DatePickerModule : CarbonModule<EmptyModuleConfig, EmptyModuleData>
 			}
 		}
 
-		var days = cui.CreatePanel(container, parent: main, null,
+		var days = cui.CreatePanel(container, parent: main,
 			color: "0 0 0 0",
 			xMin: 0.15f, xMax: 0.85f, yMin: 0.15f, yMax: 0.7f);
 		var totalDaysInMonth = DateTime.DaysInMonth(Year, Month);
@@ -142,7 +146,9 @@ public class DatePickerModule : CarbonModule<EmptyModuleConfig, EmptyModuleData>
 		var daysHeightOffset = 1f;
 		for (float i = 0; i < totalDaysInMonth; i++)
 		{
-			cui.CreateProtectedButton(container, days, null, $"1 1 1 {(Day == i + 1 ? 0.2 : 0.05)}", "1 1 1 0.7", $"{i + 1}", 8, daysOffset, daysOffset + dayWidth, daysHeightOffset - daysHeight, daysHeightOffset, command: PanelId + $".action daychange {i + 1}");
+			cui.CreateProtectedButton(container, days, $"1 1 1 {(Day == i + 1 ? 0.2 : 0.05)}", "1 1 1 0.7", $"{i + 1}", 8,
+				xMin: daysOffset, xMax: daysOffset + dayWidth,
+				yMin: daysHeightOffset - daysHeight, yMax: daysHeightOffset, command: PanelId + $".action daychange {i + 1}");
 			daysOffset += dayWidth;
 
 			if ((i + 1) % 7 == 0)
@@ -154,14 +160,14 @@ public class DatePickerModule : CarbonModule<EmptyModuleConfig, EmptyModuleData>
 
 		#endregion
 
-		cui.CreateProtectedButton(container, parent: main, id: null,
+		cui.CreateProtectedButton(container, parent: main,
 			color: "0.2 0.6 0.2 0.5",
 			textColor: "0.5 1 0.5 1",
 			text: "NOW", 9,
 			xMin: 0.9f, xMax: 0.95f, yMin: 0.95f, yMax: 0.99f,
 			command: PanelId + ".action reset");
 
-		cui.CreateProtectedButton(container, parent: main, id: null,
+		cui.CreateProtectedButton(container, parent: main,
 			color: "0.6 0.2 0.2 0.9",
 			textColor: "1 0.5 0.5 1",
 			text: "X", 8,
@@ -169,7 +175,7 @@ public class DatePickerModule : CarbonModule<EmptyModuleConfig, EmptyModuleData>
 			command: PanelId + ".close",
 			font: Handler.FontTypes.DroidSansMono);
 
-		cui.CreateProtectedButton(container, main, null, "0.3 1 0.3 0.2", "0.8 1 0.8 1", "CONFIRM".SpacedString(1), 8,
+		cui.CreateProtectedButton(container, main, "0.3 1 0.3 0.2", "0.8 1 0.8 1", "CONFIRM".SpacedString(1), 8,
 			xMin: 0.4f, xMax: 0.6f, yMin: 0.05f, yMax: 0.12f,
 			command: PanelId + $".action confirm");
 
