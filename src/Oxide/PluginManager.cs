@@ -9,42 +9,41 @@ public delegate void PluginEvent(Plugin plugin);
 
 public class PluginManager
 {
+	internal const string COMPAT_WARN = "Compatibility purposes";
+
 	public string ConfigPath => Defines.GetConfigsFolder();
 
 	public event PluginEvent OnPluginAdded;
 	public event PluginEvent OnPluginRemoved;
 
+	[Obsolete(COMPAT_WARN)]
 	public bool AddPlugin(RustPlugin plugin)
 	{
 		OnPluginAdded?.Invoke(plugin);
 
-		if (!Community.Runtime.Plugins.Plugins.Contains(plugin))
+		if (plugin.Package != null && !plugin.Package.Plugins.Contains(plugin))
 		{
-			Community.Runtime.Plugins.Plugins.Add(plugin);
+			plugin.Package.Plugins.Add(plugin);
 			return true;
 		}
 
 		return false;
 	}
+	[Obsolete(COMPAT_WARN)]
 	public bool RemovePlugin(RustPlugin plugin)
 	{
 		OnPluginRemoved?.Invoke(plugin);
-
-		if (Community.Runtime.Plugins.Plugins.Contains(plugin))
-		{
-			Community.Runtime.Plugins.Plugins.Remove(plugin);
-			return true;
-		}
-
-		return false;
+		return plugin.Package?.Plugins.RemoveAll(x => x == plugin) > 0;
 	}
 
+	[Obsolete(COMPAT_WARN)]
 	public Plugin GetPlugin(string name)
 	{
 		if (name == "RustCore") return Community.Runtime.CorePlugin;
 
 		return Community.Runtime.Plugins.Plugins.FirstOrDefault(x => x.Name == name);
 	}
+	[Obsolete(COMPAT_WARN)]
 	public IEnumerable<Plugin> GetPlugins()
 	{
 		return Community.Runtime.Plugins.Plugins.AsEnumerable();
