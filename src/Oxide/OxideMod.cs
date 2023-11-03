@@ -6,6 +6,8 @@
  */
 
 using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
+using Oxide.Core.Extensions;
 using Oxide.Plugins;
 using Logger = Carbon.Logger;
 
@@ -26,6 +28,7 @@ public class OxideMod
 	public string LangDirectory { get; private set; }
 	public string LogDirectory { get; private set; }
 	public string TempDirectory { get; private set; }
+	public string ExtensionDirectory { get; private set; }
 
 	public bool IsShuttingDown { get; private set; }
 
@@ -47,6 +50,7 @@ public class OxideMod
 		LogDirectory = Defines.GetLogsFolder();
 		PluginDirectory = Defines.GetScriptFolder();
 		TempDirectory = Defines.GetTempFolder();
+		ExtensionDirectory = Defines.GetExtensionsFolder();
 
 		DataFileSystem = new DataFileSystem(DataDirectory);
 		RootPluginManager = new PluginManager();
@@ -199,6 +203,20 @@ public class OxideMod
 		}
 
 		return instance as T;
+	}
+
+	public Extension GetExtension(string name = null)
+	{
+		return null;
+	}
+
+	public void LoadExtension(string name)
+	{
+	}
+
+	public void LoadAllPlugins(bool init = false)
+	{
+
 	}
 
 	public static readonly VersionNumber Version = new(_assemblyVersion.Major, _assemblyVersion.Minor, _assemblyVersion.Build);

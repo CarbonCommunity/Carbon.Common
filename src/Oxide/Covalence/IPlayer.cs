@@ -30,7 +30,7 @@ namespace Oxide.Game.Rust.Libraries.Covalence
 
 		public CommandType LastCommand { get; set; }
 
-		public string Name { get; set; }
+		public string Name { get; set; } = string.Empty;
 
 		public string Id { get; set; } = "server_console";
 
