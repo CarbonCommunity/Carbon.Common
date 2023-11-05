@@ -1438,7 +1438,7 @@ public static class HookCaller
 
 				if (!string.IsNullOrEmpty(parameterText))
 				{
-					parameterText = parameterText.Substring(0, parameterText.Length - 3);
+					parameterText = parameterText[..^3];
 				}
 
 				var validLengthCheck = group.Value.Min(y => y.ParameterList.Parameters.Count) != group.Value.Max(y => y.ParameterList.Parameters.Count);
