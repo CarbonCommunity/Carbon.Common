@@ -54,9 +54,10 @@ public static class HookCaller
 {
 	public static HookCallerCommon Caller { get; set; }
 
+	public static List<Conflict> ConflictCache = new(10);
+
 	#region Internals
 
-	internal static List<Conflict> _conflictCache = new(10);
 	internal static Conflict _defaultConflict = new();
 
 	public static readonly string[] InternalHooks = new string[]
@@ -123,7 +124,7 @@ public static class HookCaller
 			if (methodResult == null) continue;
 
 			result = methodResult;
-			ResultOverride(hookable);
+			ResultOverride(hookable, hookId, result);
 		}
 
 		foreach (var plugin in ModLoader.LoadedPackages.SelectMany(mod => mod.Plugins))
@@ -132,11 +133,10 @@ public static class HookCaller
 			{
 				var methodResult = Caller.CallHook(plugin, hookId, flags: flag, args: array, keepArgs);
 
-				if (methodResult != null)
-				{
-					result = methodResult;
-					ResultOverride(plugin);
-				}
+				if (methodResult == null) continue;
+
+				result = methodResult;
+				ResultOverride(plugin, hookId, result);
 			}
 			catch (Exception ex)
 			{
@@ -145,40 +145,9 @@ public static class HookCaller
 				Logger.Error($"Failed to call hook '{readableHook}' on plugin '{plugin.Name} v{plugin.Version}'", exception); }
 		}
 
-		ConflictCheck();
-
-		_conflictCache.Clear();
+		ConflictCheck(ref result, hookId);
 
 		if (array != null && !keepArgs) Array.Clear(array, 0, array.Length);
-
-		void ResultOverride(BaseHookable hookable)
-		{
-			_conflictCache.Add(Conflict.Make(hookable, hookId, result));
-		}
-		void ConflictCheck()
-		{
-			var differentResults = false;
-
-			if (_conflictCache.Count <= 1) return;
-
-			var localResult = _conflictCache[0].Result;
-			var priorityConflict = _defaultConflict;
-
-			foreach (Conflict conflict in _conflictCache.Where(conflict => conflict.Result?.ToString() != localResult?.ToString()))
-			{
-				differentResults = true;
-			}
-
-			if (differentResults)
-			{
-				Carbon.Logger.Warn($"Hook conflict while calling '{hookId}':\n  {_conflictCache.Select(x => $"{x.Hookable.Name} {x.Hookable.Version} [{x.Result}]").ToString(", ", " and ")}");
-				localResult = priorityConflict.Result;
-			}
-
-			if (localResult != null)
-			{
-				result = localResult;
-			}		}
 
 		return result;
 	}
@@ -199,6 +168,28 @@ public static class HookCaller
 		}
 
 		return CallStaticHook(oldHookId, flag, args);
+	}
+
+	public static void ResultOverride(BaseHookable hookable, uint hookId, object result)
+	{
+		ConflictCache.Add(Conflict.Make(hookable, hookId, result));
+	}
+	public static void ConflictCheck(ref object result, uint hookId)
+	{
+		if (ConflictCache.Count <= 1) return;
+
+		var localResult = result = ConflictCache[0].Result;
+		var priorityConflict = _defaultConflict;
+		var differentResults =  ConflictCache.Any(conflict => conflict.Result != null && localResult != null && conflict.Result.ToString() != localResult.ToString());
+
+		if (differentResults)
+		{
+			var readableHook = HookStringPool.GetOrAdd(hookId);
+			Logger.Warn($"Hook conflict while calling '{readableHook}[{hookId}]': {ConflictCache.Where(x => x.Result != null).Select(x => $"{x.Hookable.Name} {x.Hookable.Version} [{x.Result}]").ToString(", ", " and ")}");
+			result = priorityConflict.Result;
+		}
+
+		ConflictCache.Clear();
 	}
 
 	#region Hook Overrides
