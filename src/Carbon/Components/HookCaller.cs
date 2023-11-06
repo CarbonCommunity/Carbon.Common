@@ -58,8 +58,6 @@ public static class HookCaller
 
 	#region Internals
 
-	internal static Conflict _defaultConflict = new();
-
 	public static readonly string[] InternalHooks = new string[]
 	{
 		"OnPluginLoaded",
@@ -179,14 +177,13 @@ public static class HookCaller
 		if (ConflictCache.Count <= 1) return;
 
 		var localResult = result = ConflictCache[0].Result;
-		var priorityConflict = _defaultConflict;
 		var differentResults =  ConflictCache.Any(conflict => conflict.Result != null && localResult != null && conflict.Result.ToString() != localResult.ToString());
 
 		if (differentResults)
 		{
 			var readableHook = HookStringPool.GetOrAdd(hookId);
-			Logger.Warn($"Hook conflict while calling '{readableHook}[{hookId}]': {ConflictCache.Where(x => x.Result != null).Select(x => $"{x.Hookable.Name} {x.Hookable.Version} [{x.Result}]").ToString(", ", " and ")}");
-			result = priorityConflict.Result;
+			Logger.Warn($" Hook conflict while calling '{readableHook}[{hookId}]': {ConflictCache.Where(x => x.Result != null).Select(x => $"{x.Hookable.Name} {x.Hookable.Version} [{x.Result}]").ToString(", ", " and ")}");
+			result = null;
 		}
 
 		ConflictCache.Clear();
