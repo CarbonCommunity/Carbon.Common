@@ -114,45 +114,35 @@ public static class HookCaller
 		var result = (object)null;
 		var array = args == null ? null : keepArgs ? args : args.ToArray();
 
-		for (int i = 0; i < Community.Runtime.ModuleProcessor.Modules.Count; i++)
+		foreach (var hookable in Community.Runtime.ModuleProcessor.Modules)
 		{
-			var hookable = Community.Runtime.ModuleProcessor.Modules[i];
-
 			if (hookable is IModule modules && !modules.GetEnabled()) continue;
 
 			var methodResult = Caller.CallHook(hookable, hookId, flags: flag, args: array, keepArgs);
 
-			if (methodResult != null)
-			{
-				result = methodResult;
-				ResultOverride(hookable);
-			}
+			if (methodResult == null) continue;
+
+			result = methodResult;
+			ResultOverride(hookable);
 		}
 
-		for (int i = 0; i < ModLoader.LoadedPackages.Count; i++)
+		foreach (var plugin in ModLoader.LoadedPackages.SelectMany(mod => mod.Plugins))
 		{
-			var mod = ModLoader.LoadedPackages[i];
-
-			for (int x = 0; x < mod.Plugins.Count; x++)
+			try
 			{
-				var plugin = mod.Plugins[x];
+				var methodResult = Caller.CallHook(plugin, hookId, flags: flag, args: array, keepArgs);
 
-				try
+				if (methodResult != null)
 				{
-					var methodResult = Caller.CallHook(plugin, hookId, flags: flag, args: array, keepArgs);
-
-					if (methodResult != null)
-					{
-						result = methodResult;
-						ResultOverride(plugin);
-					}
+					result = methodResult;
+					ResultOverride(plugin);
 				}
-				catch (Exception ex)
-				{
-					var exception = ex.InnerException ?? ex;
-					var readableHook = HookStringPool.GetOrAdd(hookId);
-					Logger.Error($"Failed to call hook '{readableHook}' on plugin '{plugin.Name} v{plugin.Version}'", exception); }
 			}
+			catch (Exception ex)
+			{
+				var exception = ex.InnerException ?? ex;
+				var readableHook = HookStringPool.GetOrAdd(hookId);
+				Logger.Error($"Failed to call hook '{readableHook}' on plugin '{plugin.Name} v{plugin.Version}'", exception); }
 		}
 
 		ConflictCheck();
@@ -169,27 +159,26 @@ public static class HookCaller
 		{
 			var differentResults = false;
 
-			if (_conflictCache.Count > 1)
+			if (_conflictCache.Count <= 1) return;
+
+			var localResult = _conflictCache[0].Result;
+			var priorityConflict = _defaultConflict;
+
+			foreach (Conflict conflict in _conflictCache.Where(conflict => conflict.Result?.ToString() != localResult?.ToString()))
 			{
-				var localResult = _conflictCache[0].Result;
-				var priorityConflict = _defaultConflict;
-
-				for(int i = 0; i < _conflictCache.Count; i++)
-				{
-					var conflict = _conflictCache[i];
-
-					if (conflict.Result?.ToString() != localResult?.ToString())
-					{
-						differentResults = true;
-					}
-				}
-
-				localResult = priorityConflict.Result;
-				if (differentResults && Community.Runtime.Config.HigherPriorityHookWarns) Carbon.Logger.Warn($"Hook conflict while calling '{hookId}':\n  {_conflictCache.Select(x => $"{x.Hookable.Name} {x.Hookable.Version} [{x.Result}]").ToString(", ", " and ")}");
-
-				result = localResult;
+				differentResults = true;
 			}
-		}
+
+			if (differentResults)
+			{
+				Carbon.Logger.Warn($"Hook conflict while calling '{hookId}':\n  {_conflictCache.Select(x => $"{x.Hookable.Name} {x.Hookable.Version} [{x.Result}]").ToString(", ", " and ")}");
+				localResult = priorityConflict.Result;
+			}
+
+			if (localResult != null)
+			{
+				result = localResult;
+			}		}
 
 		return result;
 	}
