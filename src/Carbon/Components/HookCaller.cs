@@ -113,8 +113,10 @@ public static class HookCaller
 		var result = (object)null;
 		var array = args == null ? null : keepArgs ? args : args.ToArray();
 
-		foreach (var hookable in Community.Runtime.ModuleProcessor.Modules)
+		for(int i = 0; i < Community.Runtime.ModuleProcessor.Modules.Count; i++)
 		{
+			var hookable = Community.Runtime.ModuleProcessor.Modules[i];
+
 			if (hookable is IModule modules && !modules.GetEnabled()) continue;
 
 			var methodResult = Caller.CallHook(hookable, hookId, flags: flag, args: array, keepArgs);
@@ -125,24 +127,32 @@ public static class HookCaller
 			ResultOverride(hookable, hookId, result);
 		}
 
-		foreach (var plugin in ModLoader.LoadedPackages.SelectMany(mod => mod.Plugins))
+		for (int i = 0; i < ModLoader.LoadedPackages.Count; i++)
 		{
-			try
+			var package = ModLoader.LoadedPackages[i];
+
+			for(int o = 0; o < package.Plugins.Count; i++)
 			{
-				var methodResult = Caller.CallHook(plugin, hookId, flags: flag, args: array, keepArgs);
+				var plugin = package.Plugins[i];
 
-				if (methodResult == null) continue;
+				try
+				{
+					var methodResult = Caller.CallHook(plugin, hookId, flags: flag, args: array, keepArgs);
 
-				result = methodResult;
-				ResultOverride(plugin, hookId, result);
+					if (methodResult == null) continue;
+
+					result = methodResult;
+					ResultOverride(plugin, hookId, result);
+				}
+				catch (Exception ex)
+				{
+					var exception = ex.InnerException ?? ex;
+					var readableHook = HookStringPool.GetOrAdd(hookId);
+					Logger.Error($"Failed to call hook '{readableHook}' on plugin '{plugin.Name} v{plugin.Version}'", exception);
+				}
 			}
-			catch (Exception ex)
-			{
-				var exception = ex.InnerException ?? ex;
-				var readableHook = HookStringPool.GetOrAdd(hookId);
-				Logger.Error($"Failed to call hook '{readableHook}' on plugin '{plugin.Name} v{plugin.Version}'", exception); }
 		}
-
+		
 		ConflictCheck(ref result, hookId);
 
 		if (array != null && !keepArgs) Array.Clear(array, 0, array.Length);
