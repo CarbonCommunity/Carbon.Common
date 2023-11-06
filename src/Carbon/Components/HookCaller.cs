@@ -54,8 +54,6 @@ public static class HookCaller
 {
 	public static HookCallerCommon Caller { get; set; }
 
-	public static List<Conflict> ConflictCache = new(10);
-
 	#region Internals
 
 	public static readonly string[] InternalHooks = new string[]
@@ -112,6 +110,7 @@ public static class HookCaller
 
 		var result = (object)null;
 		var array = args == null ? null : keepArgs ? args : args.ToArray();
+		var conflicts = Pool.GetList<Conflict>();
 
 		for(int i = 0; i < Community.Runtime.ModuleProcessor.Modules.Count; i++)
 		{
@@ -124,7 +123,7 @@ public static class HookCaller
 			if (methodResult == null) continue;
 
 			result = methodResult;
-			ResultOverride(hookable, hookId, result);
+			ResultOverride(conflicts, hookable, hookId, result);
 		}
 
 		for (int i = 0; i < ModLoader.LoadedPackages.Count; i++)
@@ -142,7 +141,7 @@ public static class HookCaller
 					if (methodResult == null) continue;
 
 					result = methodResult;
-					ResultOverride(plugin, hookId, result);
+					ResultOverride(conflicts, plugin, hookId, result);
 				}
 				catch (Exception ex)
 				{
@@ -153,9 +152,11 @@ public static class HookCaller
 			}
 		}
 
-		ConflictCheck(ref result, hookId);
+		ConflictCheck(conflicts, ref result, hookId);
 
 		if (array != null && !keepArgs) Array.Clear(array, 0, array.Length);
+
+		Pool.FreeList(ref conflicts);
 
 		return result;
 	}
@@ -178,25 +179,23 @@ public static class HookCaller
 		return CallStaticHook(oldHookId, flag, args);
 	}
 
-	public static void ResultOverride(BaseHookable hookable, uint hookId, object result)
+	public static void ResultOverride(List<Conflict> conflicts, BaseHookable hookable, uint hookId, object result)
 	{
-		ConflictCache.Add(Conflict.Make(hookable, hookId, result));
+		conflicts.Add(Conflict.Make(hookable, hookId, result));
 	}
-	public static void ConflictCheck(ref object result, uint hookId)
+	public static void ConflictCheck(List<Conflict> conflicts, ref object result, uint hookId)
 	{
-		if (ConflictCache.Count <= 1) return;
+		if (conflicts.Count <= 1) return;
 
-		var localResult = result = ConflictCache[0].Result;
-		var differentResults =  ConflictCache.Any(conflict => conflict.Result != null && localResult != null && conflict.Result.ToString() != localResult.ToString());
+		var localResult = result = conflicts[0].Result;
+		var differentResults =  conflicts.Any(conflict => conflict.Result != null && localResult != null && conflict.Result.ToString() != localResult.ToString());
 
 		if (differentResults)
 		{
 			var readableHook = HookStringPool.GetOrAdd(hookId);
-			Logger.Warn($" Hook conflict while calling '{readableHook}[{hookId}]': {ConflictCache.Where(x => x.Result != null).Select(x => $"{x.Hookable.Name} {x.Hookable.Version} [{x.Result}]").ToString(", ", " and ")}");
+			Logger.Warn($" Hook conflict while calling '{readableHook}[{hookId}]': {conflicts.Where(x => x.Result != null).Select(x => $"{x.Hookable.Name} {x.Hookable.Version} [{x.Result}]").ToString(", ", " and ")}");
 			result = null;
 		}
-
-		ConflictCache.Clear();
 	}
 
 	#region Hook Overrides
