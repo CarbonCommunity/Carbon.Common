@@ -131,9 +131,9 @@ public static class HookCaller
 		{
 			var package = ModLoader.LoadedPackages[i];
 
-			for(int o = 0; o < package.Plugins.Count; i++)
+			for(int o = 0; o < package.Plugins.Count; o++)
 			{
-				var plugin = package.Plugins[i];
+				var plugin = package.Plugins[o];
 
 				try
 				{
@@ -152,7 +152,7 @@ public static class HookCaller
 				}
 			}
 		}
-		
+
 		ConflictCheck(ref result, hookId);
 
 		if (array != null && !keepArgs) Array.Clear(array, 0, array.Length);
