@@ -244,23 +244,30 @@ public class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModule
 		{
 			Scale = scale
 		};
-		thread.ImageUrls.AddRange(urls);
-		_queue.Add(thread);
-
-		if (!@override)
+		try
 		{
-			foreach (var url in urls)
+			thread.ImageUrls.AddRange(urls);
+			_queue.Add(thread);
+
+			if (!@override)
 			{
-				if (GetImage(url, scale, true) != 0) thread.ImageUrls.Remove(url);
+				foreach (var url in urls)
+				{
+					if (GetImage(url, scale, true) != 0) thread.ImageUrls.Remove(url);
+				}
+			}
+			else
+			{
+				foreach (var url in thread.ImageUrls)
+				{
+					DeleteImage(url, 0);
+					if (scale != 0f) DeleteImage(url, scale);
+				}
 			}
 		}
-		else
+		catch (Exception ex)
 		{
-			foreach (var url in thread.ImageUrls)
-			{
-				DeleteImage(url, 0);
-				if (scale != 0f) DeleteImage(url, scale);
-			}
+			Logger.Error($"Failed processing queue batch", ex);
 		}
 
 		if (ConfigInstance.PrintInitializedBatchLogs && thread.ImageUrls.Count > 0) Puts($"Added {thread.ImageUrls.Count:n0} to the queue (scale: {(scale == 0 ? "default" : $"{scale:0.0}")})...");
@@ -285,13 +292,19 @@ public class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModule
 
 		Community.Runtime.CorePlugin.timer.In(ConfigInstance.TimeoutPerUrl * urls.Length, () =>
 		{
-			if (!thread._disposed)
+			if (thread._disposed) return;
+
+			try
 			{
 				thread.DisposalSave();
 				onComplete?.Invoke(thread.Result);
 				if (ConfigInstance.PrintCompletedBatchLogs && thread.Result.Count > 0) Puts($"Completed queue of {thread.Result.Count:n0} urls (scale: {(scale == 0 ? "default" : $"{scale:0.0}")}).");
 				thread.Dispose();
 				_queue.Remove(thread);
+			}
+			catch (Exception ex)
+			{
+				Logger.Error($"Failed timeout process", ex);
 			}
 		});
 	}
