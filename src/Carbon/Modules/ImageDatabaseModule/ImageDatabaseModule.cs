@@ -467,10 +467,10 @@ public class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModule
 
 		public override void Start()
 		{
-			base.Start();
-
 			_webRequests = new WebRequests();
 			foreach (var url in ImageUrls) { _urlQueue.Enqueue(url); }
+
+			base.Start();
 		}
 		public override void ThreadFunction()
 		{
