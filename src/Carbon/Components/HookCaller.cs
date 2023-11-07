@@ -181,6 +181,8 @@ public static class HookCaller
 
 	public static void ResultOverride(List<Conflict> conflicts, BaseHookable hookable, uint hookId, object result)
 	{
+		if (result == null) return;
+
 		conflicts.Add(Conflict.Make(hookable, hookId, result));
 	}
 	public static void ConflictCheck(List<Conflict> conflicts, ref object result, uint hookId)
@@ -188,13 +190,13 @@ public static class HookCaller
 		if (conflicts.Count <= 1) return;
 
 		var localResult = result = conflicts[0].Result;
-		var differentResults =  conflicts.Any(conflict => conflict.Result != null && localResult != null && conflict.Result.ToString() != localResult.ToString());
+		var differentResults =  conflicts.Any(conflict => localResult != null && conflict.Result.ToString() != localResult.ToString());
 
 		if (differentResults)
 		{
 			var readableHook = HookStringPool.GetOrAdd(hookId);
-			Logger.Warn($" Hook conflict while calling '{readableHook}[{hookId}]': {conflicts.Where(x => x.Result != null).Select(x => $"{x.Hookable.Name} {x.Hookable.Version} [{x.Result}]").ToString(", ", " and ")}");
-			result = null;
+			Logger.Warn($" Hook conflict while calling '{readableHook}[{hookId}]': {conflicts.Select(x => $"{x.Hookable.Name} {x.Hookable.Version} [{x.Result}]").ToString(", ", " and ")}");
+			result = conflicts[^1].Result;
 		}
 	}
 
