@@ -2343,7 +2343,7 @@ public partial class AdminModule
 
 		using var cui = new CUI(Singleton.Handler);
 		var container = cui.CreateContainer(SpectatePanelId, color: "0.1 0.1 0.1 0.8", needsCursor: false, parent: ClientPanels.Overlay);
-		var panel = cui.CreatePanel(container, SpectatePanelId, null, Cache.CUI.BlankColor);
+		var panel = cui.CreatePanel(container, SpectatePanelId, Cache.CUI.BlankColor);
 		var item = target.GetItem();
 		cui.CreateText(container, panel,
 			color: "1 1 1 0.2",

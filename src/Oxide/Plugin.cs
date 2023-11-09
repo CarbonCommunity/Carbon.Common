@@ -137,11 +137,14 @@ namespace Oxide.Core.Plugins
 			{
 				using (TimeMeasure.New($"IUnload.UnprocessHooks on '{this}'"))
 				{
-					foreach (var hook in Hooks)
+					if (Hooks != null)
 					{
-						Community.Runtime.HookManager.Unsubscribe(HookStringPool.GetOrAdd(hook), FileName);
+						foreach (var hook in Hooks)
+						{
+							Community.Runtime.HookManager.Unsubscribe(HookStringPool.GetOrAdd(hook), FileName);
+						}
+						Carbon.Logger.Debug(Name, $"Unprocessed hooks");
 					}
-					Carbon.Logger.Debug(Name, $"Unprocessed hooks");
 				}
 			}
 			catch (Exception ex)
@@ -172,45 +175,8 @@ namespace Oxide.Core.Plugins
 			{
 				Logger.Error($"Failed calling Plugin.IUnload.Disposal on {this}", ex);
 			}
-
-			try
-			{
-				using (TimeMeasure.New($"IUnload.UnloadRequirees on '{this}'"))
-				{
-					var mods = Pool.GetList<ModLoader.ModPackage>();
-					mods.AddRange(ModLoader.LoadedPackages);
-					var plugins = Pool.GetList<Plugin>();
-
-					foreach (var mod in ModLoader.LoadedPackages)
-					{
-						plugins.Clear();
-						plugins.AddRange(mod.Plugins);
-
-						foreach (var plugin in plugins)
-						{
-							if (plugin.Requires != null && plugin.Requires.Contains(this))
-							{
-								switch (plugin.Processor)
-								{
-									case IScriptProcessor script:
-										Logger.Warn($" [{Name}] Unloading '{plugin.ToString()}' because parent '{ToString()}' has been unloaded.");
-										ModLoader.AddPendingRequiree(this, plugin);
-										plugin.Processor.Get<IScriptProcessor.IScript>(plugin.FileName)?.Dispose();
-										break;
-								}
-							}
-						}
-					}
-
-					Pool.FreeList(ref mods);
-					Pool.FreeList(ref plugins);
-				}
-			}
-			catch (Exception ex)
-			{
-				Logger.Error($"Failed calling Plugin.IUnload.UnloadRequirees on {this}", ex);
-			}
 		}
+
 		internal bool InternalApplyPluginReferences()
 		{
 			if (PluginReferences == null) return true;
@@ -269,6 +235,53 @@ namespace Oxide.Core.Plugins
 			}
 
 			return true;
+		}
+		internal bool IUnloadDependantPlugins()
+		{
+			try
+			{
+				using (TimeMeasure.New($"IUnload.UnloadRequirees on '{this}'"))
+				{
+					var mods = Pool.GetList<ModLoader.ModPackage>();
+					mods.AddRange(ModLoader.LoadedPackages);
+					var plugins = Pool.GetList<Plugin>();
+
+					foreach (var mod in ModLoader.LoadedPackages)
+					{
+						plugins.Clear();
+						plugins.AddRange(mod.Plugins);
+
+						foreach (Plugin plugin in plugins.Where(plugin => plugin.Requires != null && plugin.Requires.Contains(this)))
+						{
+							switch (plugin.Processor)
+							{
+								case IScriptProcessor script:
+									Logger.Warn($" [{Name}] Unloading '{plugin.ToString()}' because parent '{ToString()}' has been unloaded.");
+									ModLoader.AddPendingRequiree(this, plugin);
+
+									script.Get<IScriptProcessor.IScript>(plugin.FileName)?.Dispose();
+
+									if (plugin is RustPlugin rustPlugin)
+									{
+										ModLoader.UninitializePlugin(rustPlugin);
+									}
+
+									break;
+							}
+						}
+					}
+
+					Pool.FreeList(ref mods);
+					Pool.FreeList(ref plugins);
+				}
+
+				return true;
+			}
+			catch (Exception ex)
+			{
+				Logger.Error($"Failed calling Plugin.IUnload.UnloadRequirees on {this}", ex);
+				return false;
+			}
 		}
 
 		public static void InternalApplyAllPluginReferences()

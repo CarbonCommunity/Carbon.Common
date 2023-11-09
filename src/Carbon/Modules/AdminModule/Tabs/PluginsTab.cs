@@ -868,7 +868,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				{
 					try
 					{
-						var name = Path.GetFileNameWithoutExtension(plugin.File);
+						var name = Path.GetFileName(plugin.File);
 						plugin.Owned = auth.User != null && auth.User.OwnedFiles.Contains(plugin.Id);
 
 						foreach (var existentPlugin in plugins)
@@ -1364,7 +1364,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 				foreach (var plugin in FetchedPlugins)
 				{
-					var name = plugin.File.Substring(0, plugin.File.IndexOf(".cs"));
+					var name = Path.GetFileName(plugin.File);
 
 					foreach (var existentPlugin in plugins)
 					{

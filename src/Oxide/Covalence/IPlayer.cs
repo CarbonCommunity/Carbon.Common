@@ -11,6 +11,8 @@ namespace Oxide.Game.Rust.Libraries.Covalence
 {
 	public class RustPlayer : IPlayer
 	{
+		internal const string _ipPattern = @":{1}[0-9]{1}\d*";
+
 		public object Object { get; set; }
 
 		public BasePlayer BasePlayer => Object as BasePlayer;
@@ -34,7 +36,7 @@ namespace Oxide.Game.Rust.Libraries.Covalence
 
 		public string Id { get; set; } = "server_console";
 
-		public string Address => BasePlayer?.Connection?.ipaddress;
+		public string Address => BasePlayer?.Connection == null ? null : Regex.Replace(BasePlayer.Connection.ipaddress, _ipPattern, string.Empty);
 
 		public int Ping => BasePlayer == null ? 0 : Network.Net.sv.GetAveragePing(BasePlayer.Connection);
 

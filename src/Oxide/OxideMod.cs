@@ -97,7 +97,7 @@ public class OxideMod
 	{
 		var path = CorePlugin.GetPluginPath(name);
 
-		Community.Runtime.ScriptProcessor.Prepare(name, path);
+		Community.Runtime.ScriptProcessor.Prepare(path.Key, path.Value);
 	}
 
 	public void ReloadPlugin(string name)

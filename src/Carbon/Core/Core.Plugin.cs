@@ -36,14 +36,14 @@ public partial class CorePlugin : CarbonPlugin
 		}
 	}
 
-	public static string GetPluginPath(string shortName)
+	public static KeyValuePair<string, string> GetPluginPath(string shortName)
 	{
 		foreach (var file in OrderedFiles)
 		{
-			if (file.Key == shortName) return file.Value;
+			if (file.Key.Equals(shortName, StringComparison.InvariantCultureIgnoreCase)) return new KeyValuePair<string, string>(file.Key, file.Value);
 		}
 
-		return null;
+		return default;
 	}
 
 	public override bool IInit()
