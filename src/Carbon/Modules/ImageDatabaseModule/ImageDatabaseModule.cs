@@ -482,8 +482,13 @@ public class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModule
 				_client.Credentials = CredentialCache.DefaultCredentials;
 				_client.Proxy = null;
 
-				_client.DownloadDataCompleted += (object sender, DownloadDataCompletedEventArgs e) =>
+				_client.DownloadDataCompleted += (_, e) =>
 				{
+					if (e.Error != null)
+					{
+						return;
+					}
+
 					_processed++;
 					Result.Add(new QueuedThreadResult
 					{
@@ -499,7 +504,6 @@ public class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModule
 
 			while (_processed != ImageUrls.Count)
 			{
-				continue;
 			}
 
 			_client.Dispose();
