@@ -2343,7 +2343,7 @@ public partial class AdminModule
 
 		using var cui = new CUI(Singleton.Handler);
 		var container = cui.CreateContainer(SpectatePanelId, color: "0.1 0.1 0.1 0.8", needsCursor: false, parent: ClientPanels.Overlay);
-		var panel = cui.CreatePanel(container, SpectatePanelId, null, Cache.CUI.BlankColor);
+		var panel = cui.CreatePanel(container, SpectatePanelId, Cache.CUI.BlankColor);
 		var item = target.GetItem();
 		cui.CreateText(container, panel,
 			color: "1 1 1 0.2",
@@ -2729,9 +2729,9 @@ public partial class AdminModule
 
 		internal void InfoTemplate(CUI cui, Tab tab, CuiElementContainer container, string panel, PlayerSession ap, string title, string content, string hint)
 		{
-			cui.CreateImage(container, panel, null, "carbonws", "0 0 0 0.1", xMin: 0.75f, xMax: 0.95f, yMin: 0.875f, yMax: 0.95f);
+			cui.CreateImage(container, panel, "carbonws", "0 0 0 0.1", xMin: 0.75f, xMax: 0.95f, yMin: 0.875f, yMax: 0.95f);
 
-			var mainTitle = cui.CreatePanel(container, panel, null, "0 0 0 0.5", xMin: 0.05f, xMax: ((float)title.Length).Scale(0, 7, 0.075f, 0.18f), yMin: 0.875f, yMax: 0.95f);
+			var mainTitle = cui.CreatePanel(container, panel, "0 0 0 0.5", xMin: 0.05f, xMax: ((float)title.Length).Scale(0, 7, 0.075f, 0.18f), yMin: 0.875f, yMax: 0.95f);
 			cui.CreateText(container, mainTitle,
 				color: "1 1 1 1", text: $"<b>{title.ToUpper()}</b>", 25, align: TextAnchor.MiddleCenter, fadeIn: 2f);
 

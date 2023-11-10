@@ -56,9 +56,6 @@ public static class HookCaller
 
 	#region Internals
 
-	internal static List<Conflict> _conflictCache = new(10);
-	internal static Conflict _defaultConflict = new();
-
 	public static readonly string[] InternalHooks = new string[]
 	{
 		"OnPluginLoaded",
@@ -113,8 +110,9 @@ public static class HookCaller
 
 		var result = (object)null;
 		var array = args == null ? null : keepArgs ? args : args.ToArray();
+		var conflicts = Pool.GetList<Conflict>();
 
-		for (int i = 0; i < Community.Runtime.ModuleProcessor.Modules.Count; i++)
+		for(int i = 0; i < Community.Runtime.ModuleProcessor.Modules.Count; i++)
 		{
 			var hookable = Community.Runtime.ModuleProcessor.Modules[i];
 
@@ -122,74 +120,43 @@ public static class HookCaller
 
 			var methodResult = Caller.CallHook(hookable, hookId, flags: flag, args: array, keepArgs);
 
-			if (methodResult != null)
-			{
-				result = methodResult;
-				ResultOverride(hookable);
-			}
+			if (methodResult == null) continue;
+
+			result = methodResult;
+			ResultOverride(conflicts, hookable, hookId, result);
 		}
 
 		for (int i = 0; i < ModLoader.LoadedPackages.Count; i++)
 		{
-			var mod = ModLoader.LoadedPackages[i];
+			var package = ModLoader.LoadedPackages[i];
 
-			for (int x = 0; x < mod.Plugins.Count; x++)
+			for(int o = 0; o < package.Plugins.Count; o++)
 			{
-				var plugin = mod.Plugins[x];
+				var plugin = package.Plugins[o];
 
 				try
 				{
 					var methodResult = Caller.CallHook(plugin, hookId, flags: flag, args: array, keepArgs);
 
-					if (methodResult != null)
-					{
-						result = methodResult;
-						ResultOverride(plugin);
-					}
+					if (methodResult == null) continue;
+
+					result = methodResult;
+					ResultOverride(conflicts, plugin, hookId, result);
 				}
 				catch (Exception ex)
 				{
 					var exception = ex.InnerException ?? ex;
 					var readableHook = HookStringPool.GetOrAdd(hookId);
-					Logger.Error($"Failed to call hook '{readableHook}' on plugin '{plugin.Name} v{plugin.Version}'", exception); }
+					Logger.Error($"Failed to call hook '{readableHook}' on plugin '{plugin.Name} v{plugin.Version}'", exception);
+				}
 			}
 		}
 
-		ConflictCheck();
-
-		_conflictCache.Clear();
+		ConflictCheck(conflicts, ref result, hookId);
 
 		if (array != null && !keepArgs) Array.Clear(array, 0, array.Length);
 
-		void ResultOverride(BaseHookable hookable)
-		{
-			_conflictCache.Add(Conflict.Make(hookable, hookId, result));
-		}
-		void ConflictCheck()
-		{
-			var differentResults = false;
-
-			if (_conflictCache.Count > 1)
-			{
-				var localResult = _conflictCache[0].Result;
-				var priorityConflict = _defaultConflict;
-
-				for(int i = 0; i < _conflictCache.Count; i++)
-				{
-					var conflict = _conflictCache[i];
-
-					if (conflict.Result?.ToString() != localResult?.ToString())
-					{
-						differentResults = true;
-					}
-				}
-
-				localResult = priorityConflict.Result;
-				if (differentResults && Community.Runtime.Config.HigherPriorityHookWarns) Carbon.Logger.Warn($"Hook conflict while calling '{hookId}':\n  {_conflictCache.Select(x => $"{x.Hookable.Name} {x.Hookable.Version} [{x.Result}]").ToString(", ", " and ")}");
-
-				result = localResult;
-			}
-		}
+		Pool.FreeList(ref conflicts);
 
 		return result;
 	}
@@ -210,6 +177,27 @@ public static class HookCaller
 		}
 
 		return CallStaticHook(oldHookId, flag, args);
+	}
+
+	public static void ResultOverride(List<Conflict> conflicts, BaseHookable hookable, uint hookId, object result)
+	{
+		if (result == null) return;
+
+		conflicts.Add(Conflict.Make(hookable, hookId, result));
+	}
+	public static void ConflictCheck(List<Conflict> conflicts, ref object result, uint hookId)
+	{
+		if (conflicts.Count <= 1) return;
+
+		var localResult = result = conflicts[0].Result;
+		var differentResults =  conflicts.Any(conflict => localResult != null && conflict.Result.ToString() != localResult.ToString());
+
+		if (differentResults)
+		{
+			var readableHook = HookStringPool.GetOrAdd(hookId);
+			Logger.Warn($" Hook conflict while calling '{readableHook}[{hookId}]': {conflicts.Select(x => $"{x.Hookable.Name} {x.Hookable.Version} [{x.Result}]").ToString(", ", " and ")}");
+			result = conflicts[^1].Result;
+		}
 	}
 
 	#region Hook Overrides
@@ -1438,7 +1426,7 @@ public static class HookCaller
 
 				if (!string.IsNullOrEmpty(parameterText))
 				{
-					parameterText = parameterText.Substring(0, parameterText.Length - 3);
+					parameterText = parameterText[..^3];
 				}
 
 				var validLengthCheck = group.Value.Min(y => y.ParameterList.Parameters.Count) != group.Value.Max(y => y.ParameterList.Parameters.Count);
