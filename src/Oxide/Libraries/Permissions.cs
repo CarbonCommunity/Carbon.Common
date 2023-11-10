@@ -59,7 +59,7 @@ public class Permission : Library
 		var needsUserSave = false;
 		var needsGroupSave = false;
 
-		userdata = (ProtoStorage.Load<Dictionary<string, UserData>>("oxide.users") ?? new Dictionary<string, UserData>());
+		userdata = (ProtoStorage.Load<Dictionary<string, UserData>>("oxide.users") ?? new Dictionary<string, UserData>(StringComparer.OrdinalIgnoreCase));
 		{
 			var validatedUsers = new Dictionary<string, UserData>(StringComparer.OrdinalIgnoreCase);
 			var groupSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);

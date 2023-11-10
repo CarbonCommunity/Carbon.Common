@@ -21,7 +21,16 @@ public class Defines
 		GetLogsFolder();
 		GetLangFolder();
 		GetReportsFolder();
-		OsEx.Folder.DeleteContents(GetTempFolder());
+
+		try
+		{
+			OsEx.Folder.DeleteContents(GetTempFolder());
+		}
+		catch (Exception ex)
+		{
+			Logger.Warn($"Failed clearing up the temporary folder. ({ex.Message})\n{ex.StackTrace}");
+		}
+
 		Logger.Log("Loaded folders");
 	}
 

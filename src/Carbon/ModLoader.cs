@@ -254,6 +254,13 @@ public static class ModLoader
 	}
 	public static bool UninitializePlugin(RustPlugin plugin, bool premature = false)
 	{
+		if (!premature && !plugin.IsLoaded)
+		{
+			return true;
+		}
+
+		plugin.IUnloadDependantPlugins();
+
 		if (!premature)
 		{
 			plugin.CallHook("Unload");
