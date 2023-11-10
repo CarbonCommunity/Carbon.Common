@@ -28,10 +28,10 @@ public partial class CorePlugin : CarbonPlugin
 			default:
 				var path = GetPluginPath(name);
 
-				if (!string.IsNullOrEmpty(path))
+				if (!string.IsNullOrEmpty(path.Value))
 				{
-					Community.Runtime.ScriptProcessor.ClearIgnore(path);
-					Community.Runtime.ScriptProcessor.Prepare(name, path);
+					Community.Runtime.ScriptProcessor.ClearIgnore(path.Value);
+					Community.Runtime.ScriptProcessor.Prepare(path.Key, path.Value);
 					return;
 				}
 
@@ -121,15 +121,10 @@ public partial class CorePlugin : CarbonPlugin
 			default:
 				{
 					var path = GetPluginPath(name);
-					if (!string.IsNullOrEmpty(path))
+					if (!string.IsNullOrEmpty(path.Value))
 					{
-						Community.Runtime.ScriptProcessor.ClearIgnore(path);
-
-						if (!Community.Runtime.ScriptProcessor.Exists(path))
-						{
-							Community.Runtime.ScriptProcessor.Prepare(path);
-						}
-
+						Community.Runtime.ScriptProcessor.ClearIgnore(path.Value);
+						Community.Runtime.ScriptProcessor.Prepare(path.Key, path.Value);
 						return;
 					}
 
@@ -216,10 +211,10 @@ public partial class CorePlugin : CarbonPlugin
 			default:
 				{
 					var path = GetPluginPath(name);
-					if (!string.IsNullOrEmpty(path))
+					if (!string.IsNullOrEmpty(path.Value))
 					{
-						Community.Runtime.ScriptProcessor.Ignore(path);
-						Community.Runtime.WebScriptProcessor.Ignore(path);
+						Community.Runtime.ScriptProcessor.Ignore(path.Value);
+						Community.Runtime.WebScriptProcessor.Ignore(path.Value);
 					}
 
 					var pluginFound = false;
@@ -232,7 +227,7 @@ public partial class CorePlugin : CarbonPlugin
 
 						foreach (var plugin in plugins)
 						{
-							if (plugin.Name == name)
+							if (plugin.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase))
 							{
 								pluginFound = true;
 
@@ -253,7 +248,7 @@ public partial class CorePlugin : CarbonPlugin
 
 					if (!pluginFound)
 					{
-						if (string.IsNullOrEmpty(path)) Logger.Warn($"Plugin {name} was not found or was typed incorrectly.");
+						if (string.IsNullOrEmpty(path.Value)) Logger.Warn($"Plugin {name} was not found or was typed incorrectly.");
 						else Logger.Warn($"Plugin {name} was not loaded but was marked as ignored.");
 					}
 					else if (pluginPrecompiled)
@@ -435,21 +430,18 @@ public partial class CorePlugin : CarbonPlugin
 						var plugins = Facepunch.Pool.GetList<RustPlugin>();
 						plugins.AddRange(mod.Plugins);
 
-						foreach (var plugin in plugins)
+						foreach (var plugin in plugins.Where(plugin => plugin.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase)))
 						{
-							if (plugin.Name == name)
-							{
-								pluginFound = true;
+							pluginFound = true;
 
-								if (plugin.IsPrecompiled)
-								{
-									pluginPrecompiled = true;
-								}
-								else
-								{
-									plugin.ProcessorProcess?.Dispose();
-									mod.Plugins.Remove(plugin);
-								}
+							if (plugin.IsPrecompiled)
+							{
+								pluginPrecompiled = true;
+							}
+							else
+							{
+								plugin.ProcessorProcess?.Dispose();
+								mod.Plugins.Remove(plugin);
 							}
 						}
 
@@ -458,18 +450,18 @@ public partial class CorePlugin : CarbonPlugin
 
 					if (!pluginFound)
 					{
-						if (string.IsNullOrEmpty(path)) Logger.Warn($"Plugin {name} was not found or was typed incorrectly.");
+						if (string.IsNullOrEmpty(path.Value)) Logger.Warn($"Plugin {name} was not found or was typed incorrectly.");
 						else Logger.Warn($"Plugin {name} was not loaded but was marked as ignored.");
 
 						return;
 					}
 					else if (pluginPrecompiled)
 					{
-						Logger.Warn($"Plugin {name} is a precompiled plugin which can only be unloaded/uninstalled programmatically.");
+						Logger.Warn($"Plugin {path.Key} is a precompiled plugin which can only be unloaded/uninstalled programmatically.");
 						return;
 					}
 
-					OsEx.File.Move(path, Path.Combine(Defines.GetScriptBackupFolder(), Path.GetFileName(path)));
+					OsEx.File.Move(path.Value, Path.Combine(Defines.GetScriptBackupFolder(), Path.GetFileName(path.Value)));
 					break;
 				}
 		}

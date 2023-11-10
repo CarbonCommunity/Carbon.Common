@@ -18,9 +18,9 @@ public class PluginManager
 	{
 		OnPluginAdded?.Invoke(plugin);
 
-		if (!Community.Runtime.Plugins.Plugins.Contains(plugin))
+		if (plugin.Package != null && !plugin.Package.Plugins.Contains(plugin))
 		{
-			Community.Runtime.Plugins.Plugins.Add(plugin);
+			plugin.Package.Plugins.Add(plugin);
 			return true;
 		}
 
@@ -29,14 +29,7 @@ public class PluginManager
 	public bool RemovePlugin(RustPlugin plugin)
 	{
 		OnPluginRemoved?.Invoke(plugin);
-
-		if (Community.Runtime.Plugins.Plugins.Contains(plugin))
-		{
-			Community.Runtime.Plugins.Plugins.Remove(plugin);
-			return true;
-		}
-
-		return false;
+		return plugin.Package?.Plugins.RemoveAll(x => x == plugin) > 0;
 	}
 
 	public Plugin GetPlugin(string name)

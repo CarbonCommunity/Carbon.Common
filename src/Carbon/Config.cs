@@ -17,7 +17,6 @@ public class Config
 	public SearchOption ScriptWatcherOption { get; set; } = SearchOption.TopDirectoryOnly;
 	public bool FileNameCheck { get; set; } = true;
 	public bool IsModded { get; set; } = true;
-	public bool HigherPriorityHookWarns { get; set; } = false;
 	public string PlayerDefaultGroup { get; set; } = "default";
 	public string AdminDefaultGroup { get; set; } = "admin";
 	public int LogFileMode { get; set; } = 2;

@@ -2,19 +2,25 @@
 
 /*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
 
 namespace Oxide.Core.Libraries;
 
-[ProtoContract(ImplicitFields = ImplicitFields.AllFields)]
+[ProtoContract]
 public class UserData
 {
+	[ProtoMember(2)]
 	public string LastSeenNickname { get; set; } = "Unnamed";
-	public string Language { get; set; } = "en";
 
-	public HashSet<string> Perms { get; set; } = new HashSet<string>();
-	public HashSet<string> Groups { get; set; } = new HashSet<string>();
+	[ProtoMember(3)]
+	public HashSet<string> Perms { get; set; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+	[ProtoMember(1)]
+	public HashSet<string> Groups { get; set; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+	[ProtoMember(50)]
+	public string Language { get; set; } = "en";
 }

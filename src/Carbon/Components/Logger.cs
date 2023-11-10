@@ -86,7 +86,7 @@ public sealed class Logger : ILogger
 		if (!ThreadEx.IsOnMainThread())
 		{
 			var thread = Thread.CurrentThread;
-			textMessage += $" [in thread {thread.Name}/{thread.ManagedThreadId}]";
+			textMessage += $" [{thread.Name}|{thread.ManagedThreadId}]";
 		}
 
 		switch (severity)
