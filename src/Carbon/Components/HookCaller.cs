@@ -1460,7 +1460,7 @@ public static class HookCaller
 					{
 						var type = parameter.Type.ToString().Replace("global::", string.Empty);
 						varText += $"var narg{parameterIndex}_{i} = args[{parameterIndex}] is {type} or null;\nvar arg{parameterIndex}_{i} = narg{parameterIndex}_{i} ? ({type})(args[{parameterIndex}] ?? ({type})default) : ({type})default;\n";
-						parameterText += !IsUnmanagedType(type) ? $"narg{parameterIndex}_{i} && " : $"(narg{parameterIndex}_{i} || args[{parameterIndex}] == null) && ";
+						parameterText += !IsUnmanagedType(parameter.Type) ? $"narg{parameterIndex}_{i} && " : $"(narg{parameterIndex}_{i} || args[{parameterIndex}] == null) && ";
 					}
 				}
 
@@ -1702,13 +1702,9 @@ partial class {@class.Identifier.ValueText}
 		return @class != null;
 	}
 
-	public static bool IsUnmanagedType(string type)
+	public static bool IsUnmanagedType(TypeSyntax type)
 	{
-		return type switch
-		{
-			"string" or "int" or "uint" or "long" or "ulong" or "bool" => true,
-			_ => false,
-		};
+		return type is ITypeSymbol symbol && symbol.IsUnmanagedType;
 	}
 
 	#endregion
