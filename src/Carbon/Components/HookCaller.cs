@@ -1340,7 +1340,9 @@ public static class HookCaller
 
 	internal static char[] _underscoreChar = new [] { '_' };
 	internal static char[] _dotChar = new [] { '.' };
+	internal static string[] _operatorsStrings = new [] { "&&", "||" };
 	internal static string _ifDirective = "#if";
+	internal static string _elifDirective = "#elif";
 
 	public static void GenerateInternalCallHook(CompilationUnitSyntax input, out CompilationUnitSyntax output, out MethodDeclarationSyntax generatedMethod, out bool isPartial, List<ClassDeclarationSyntax> _classList = null)
 	{
@@ -1584,52 +1586,63 @@ partial class {@class.Identifier.ValueText}
 
 		foreach (var directive in directives)
 		{
-			var processedDirective = directive.Replace(_ifDirective, string.Empty).Trim();
+			var processedDirective = directive.Replace(_ifDirective, string.Empty).Replace(_elifDirective, string.Empty).Trim();
 
-			using var split = TemporaryArray<string>.New(processedDirective.Split(_underscoreChar));
+			using var subdirectives = TemporaryArray<string>.New(processedDirective.Split(_operatorsStrings, StringSplitOptions.RemoveEmptyEntries));
 
-			if (split.Length < 5)
+			foreach (var subdirective in subdirectives.Array)
 			{
-				continue;
-			}
+				var processedSubdirective = subdirective.Trim();
 
-			var mode = split.Array[0];
-			var type = split.Array[1];
+				using var split = TemporaryArray<string>.New(processedSubdirective.Split(_underscoreChar));
 
-			var expected = new VersionNumber(split.Array[2].ToInt(), split.Array[3].ToInt(), split.Array[4].ToInt());
-
-			switch (mode)
-			{
-				case "RUST":
+				if (split.Length < 3)
 				{
-					var current = new VersionNumber(Rust.Protocol.network, Rust.Protocol.save, Rust.Protocol.report);
-
-					if ((type == "ABV" && current > expected) ||
-						(type == "BLW" && current < expected) ||
-						(type == "IS" && current == expected))
-					{
-						conditionals.Add(processedDirective);
-					}
-
-					break;
+					continue;
 				}
 
-				case "CARBON":
+				var mode = split.Get(0);
+				var type = split.Get(1);
+
+				var major = split.Get(2).ToInt();
+				var minor = split.Get(3).ToInt();
+				var patch = split.Get(4).ToInt();
+				var expected = new VersionNumber(major, minor, patch);
+
+				switch (mode)
 				{
-					using var protocol = TemporaryArray<string>.New(Community.Runtime.Analytics.Protocol.Split(_dotChar));
-
-					var current = new VersionNumber(protocol.Array[0].ToInt(), protocol.Array[1].ToInt(), protocol.Array[2].ToInt());
-
-					if ((type == "ABV" && current > expected) ||
-						(type == "BLW" && current < expected) ||
-						(type == "IS" && current == expected))
+					case "RUST":
 					{
-						conditionals.Add(processedDirective);
+						var current = new VersionNumber(Rust.Protocol.network, Rust.Protocol.save, Rust.Protocol.report);
+
+						if ((type.Equals("ABV") && current > expected) ||
+							(type.Equals("BLW") && current < expected) ||
+							(type.Equals("IS") && current == expected))
+						{
+							conditionals.Add(processedSubdirective);
+						}
+
+						break;
 					}
 
-					break;
+					case "CARBON":
+					{
+						using var protocol = TemporaryArray<string>.New(Community.Runtime.Analytics.Protocol.Split(_dotChar));
+
+						var current = new VersionNumber(protocol.Get(0).ToInt(), protocol.Get(1).ToInt(), protocol.Get(2).ToInt());
+
+						if ((type.Equals("ABV") && current > expected) ||
+							(type.Equals("BLW") && current < expected) ||
+							(type.Equals("IS") && current == expected))
+						{
+							conditionals.Add(processedSubdirective);
+						}
+
+						break;
+					}
 				}
 			}
+
 		}
 
 		IEnumerable<string> GetDirectives()
@@ -1643,20 +1656,20 @@ partial class {@class.Identifier.ValueText}
 
 				var node = child.AsNode();
 
-				if (node != null && node.IsKind(SyntaxKind.IfDirectiveTrivia))
+				if (node != null && (node.IsKind(SyntaxKind.IfDirectiveTrivia) || node.IsKind(SyntaxKind.ElifDirectiveTrivia)))
 				{
 					var element = node.GetFirstDirective();
 
 					if (element != null)
 					{
-						yield return ((IfDirectiveTriviaSyntax)element).GetText().ToString();
+						yield return element.GetText().ToString();
 					}
 				}
 				else
 				{
-					foreach (var element in child.AsToken().LeadingTrivia.Where(x => x.IsDirective && x.IsKind(SyntaxKind.IfDirectiveTrivia)).Select(x => x.GetStructure()))
+					foreach (var element in child.AsToken().LeadingTrivia.Where(x => x.IsDirective && (x.IsKind(SyntaxKind.IfDirectiveTrivia) || x.IsKind(SyntaxKind.ElifDirectiveTrivia))).Select(x => x.GetStructure()))
 					{
-						yield return ((IfDirectiveTriviaSyntax)element).GetText().ToString();
+						yield return element.GetText().ToString();
 					}
 				}
 			}
