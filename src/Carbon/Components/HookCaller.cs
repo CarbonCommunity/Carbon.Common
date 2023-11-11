@@ -1338,6 +1338,10 @@ public static class HookCaller
 
 	#region Generator
 
+	internal static char[] _underscoreChar = new [] { '_' };
+	internal static char[] _dotChar = new [] { '.' };
+	internal static string _ifDirective = "#if";
+
 	public static void GenerateInternalCallHook(CompilationUnitSyntax input, out CompilationUnitSyntax output, out MethodDeclarationSyntax generatedMethod, out bool isPartial, List<ClassDeclarationSyntax> _classList = null)
 	{
 		var methodContents = "\n\tvar result = (object)null;\n\ttry\n\t{\n\t\tswitch(hook)\n\t\t{\n";
@@ -1572,6 +1576,91 @@ partial class {@class.Identifier.ValueText}
 			path = $"{fileName}/Internal";
 			output = CSharpSyntaxTree.ParseText(source, options, path, Encoding.UTF8).GetCompilationUnitRoot();
 #endif
+	}
+
+	public static void HandleVersionConditionals(CompilationUnitSyntax input, List<string> conditionals)
+	{
+		var directives = GetDirectives();
+
+		foreach (var directive in directives)
+		{
+			var processedDirective = directive.Replace(_ifDirective, string.Empty).Trim();
+
+			using var split = TemporaryArray<string>.New(processedDirective.Split(_underscoreChar));
+
+			if (split.Length < 5)
+			{
+				continue;
+			}
+
+			var mode = split.Array[0];
+			var type = split.Array[1];
+
+			var expected = new VersionNumber(split.Array[2].ToInt(), split.Array[3].ToInt(), split.Array[4].ToInt());
+
+			switch (mode)
+			{
+				case "RUST":
+				{
+					var current = new VersionNumber(Rust.Protocol.network, Rust.Protocol.save, Rust.Protocol.report);
+
+					if ((type == "ABV" && current > expected) ||
+						(type == "BLW" && current < expected) ||
+						(type == "IS" && current == expected))
+					{
+						conditionals.Add(processedDirective);
+					}
+
+					break;
+				}
+
+				case "CARBON":
+				{
+					using var protocol = TemporaryArray<string>.New(Community.Runtime.Analytics.Protocol.Split(_dotChar));
+
+					var current = new VersionNumber(protocol.Array[0].ToInt(), protocol.Array[1].ToInt(), protocol.Array[2].ToInt());
+
+					if ((type == "ABV" && current > expected) ||
+						(type == "BLW" && current < expected) ||
+						(type == "IS" && current == expected))
+					{
+						conditionals.Add(processedDirective);
+					}
+
+					break;
+				}
+			}
+		}
+
+		IEnumerable<string> GetDirectives()
+		{
+			foreach (var child in input.DescendantNodesAndTokensAndSelf())
+			{
+				if (!child.ContainsDirectives)
+				{
+					continue;
+				}
+
+				var node = child.AsNode();
+
+				if (node != null && node.IsKind(SyntaxKind.IfDirectiveTrivia))
+				{
+					var element = node.GetFirstDirective();
+
+					if (element != null)
+					{
+						yield return ((IfDirectiveTriviaSyntax)element).GetText().ToString();
+					}
+				}
+				else
+				{
+					foreach (var element in child.AsToken().LeadingTrivia.Where(x => x.IsDirective && x.IsKind(SyntaxKind.IfDirectiveTrivia)).Select(x => x.GetStructure()))
+					{
+						yield return ((IfDirectiveTriviaSyntax)element).GetText().ToString();
+					}
+				}
+			}
+		}
 	}
 
 	public static bool FindPluginInfo(CompilationUnitSyntax input, out BaseNamespaceDeclarationSyntax @namespace, out int namespaceIndex, out int classIndex, List<ClassDeclarationSyntax> classes)
