@@ -1608,7 +1608,7 @@ partial class {@class.Identifier.ValueText}
 						(type == "BLW" && current < expected) ||
 						(type == "IS" && current == expected))
 					{
-						conditionals.Add(directive);
+						conditionals.Add(processedDirective);
 					}
 
 					break;
@@ -1624,7 +1624,7 @@ partial class {@class.Identifier.ValueText}
 						(type == "BLW" && current < expected) ||
 						(type == "IS" && current == expected))
 					{
-						conditionals.Add(directive);
+						conditionals.Add(processedDirective);
 					}
 
 					break;
