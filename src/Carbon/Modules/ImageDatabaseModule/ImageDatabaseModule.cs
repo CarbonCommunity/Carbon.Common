@@ -94,11 +94,12 @@ public class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModule
 	{
 		base.OnServerInit(initial);
 
-		if (Validate())
-		{
-			Save();
-			LoadDefaultImages();
-		}
+		if(!initial) return;
+
+		if (!Validate()) return;
+
+		Save();
+		LoadDefaultImages();
 
 	}
 	public override void OnServerSaved()

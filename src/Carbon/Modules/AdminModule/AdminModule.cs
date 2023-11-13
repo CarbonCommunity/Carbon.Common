@@ -81,6 +81,8 @@ public partial class AdminModule
 	{
 		base.OnServerInit(initial);
 
+		if (!initial) return;
+		
 		ImageDatabase = GetModule<ImageDatabaseModule>();
 		ColorPicker = GetModule<ColorPickerModule>();
 		DatePicker = GetModule<DatePickerModule>();
