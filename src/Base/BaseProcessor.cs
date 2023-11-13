@@ -70,7 +70,7 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 			Watcher.EnableRaisingEvents = true;
 		}
 
-		Logger.Log($" Initialized {IndexedType?.Name} processor...");
+		Logger.Log($" Initialized {(IndexedType?.Name ?? Name)} processor...");
 	}
 	public virtual void OnDestroy()
 	{

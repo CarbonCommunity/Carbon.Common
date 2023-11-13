@@ -1,4 +1,5 @@
 ﻿using API.Commands;
+using Mysqlx.Session;
 using Network;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -76,9 +77,9 @@ public partial class AdminModule
 		return HandleEnableNeedsKeyboard(GetPlayerSession(player));
 	}
 
-	public override void OnServerInit()
+	public override void OnServerInit(bool initial)
 	{
-		base.OnServerInit();
+		base.OnServerInit(initial);
 
 		ImageDatabase = GetModule<ImageDatabaseModule>();
 		ColorPicker = GetModule<ColorPickerModule>();
@@ -99,9 +100,9 @@ public partial class AdminModule
 
 		Application.logMessageReceived += OnLog;
 	}
-	public override void OnPostServerInit()
+	public override void OnPostServerInit(bool initial)
 	{
-		base.OnPostServerInit();
+		base.OnPostServerInit(initial);
 
 		GenerateTabs();
 	}
@@ -2390,19 +2391,21 @@ public partial class AdminModule
 		internal JObject Entry { get; set; }
 		internal Action<PlayerSession, JObject> OnSave, OnSaveAndReload, OnCancel;
 		internal const string Spacing = " ";
+		internal string[] Blacklist;
 
 		public ConfigEditor(string id, string name, RustPlugin plugin, Action<PlayerSession, Tab> onChange = null) : base(id, name, plugin, onChange)
 		{
 		}
 
-		public static ConfigEditor Make(string json, Action<PlayerSession, JObject> onCancel, Action<PlayerSession, JObject> onSave, Action<PlayerSession, JObject> onSaveAndReload)
+		public static ConfigEditor Make(string json, Action<PlayerSession, JObject> onCancel, Action<PlayerSession, JObject> onSave, Action<PlayerSession, JObject> onSaveAndReload, string[] blacklist = null)
 		{
 			var tab = new ConfigEditor("configeditor", "Config Editor", Community.Runtime.CorePlugin)
 			{
 				Entry = JObject.Parse(json),
 				OnSave = onSave,
 				OnSaveAndReload = onSaveAndReload,
-				OnCancel = onCancel
+				OnCancel = onCancel,
+				Blacklist = blacklist
 			};
 
 			tab._draw();
@@ -2431,6 +2434,11 @@ public partial class AdminModule
 		}
 		internal void _recurseBuild(string name, JToken token, int level, int column, bool removeButtons = false)
 		{
+			if (Blacklist != null && Enumerable.Contains(Blacklist, name))
+			{
+				return;
+			}
+
 			switch (token)
 			{
 				case JArray array:
@@ -2899,7 +2907,7 @@ public partial class AdminModule
 		var module = FindModule(arg.GetString(0));
 		var moduleConfigFile = Path.Combine(Core.Defines.GetModulesFolder(), module.Name, "config.json");
 		ap.SelectedTab = ConfigEditor.Make(OsEx.File.ReadText(moduleConfigFile),
-			(ap, jobject) =>
+			(ap, _) =>
 			{
 				SetTab(ap.Player, SetupWizard.Make());
 				Draw(ap.Player);

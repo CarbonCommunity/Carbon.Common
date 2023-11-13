@@ -330,7 +330,7 @@ public partial class CorePlugin : CarbonPlugin
 
 			var permissions = plugin.permission.GetPermissions(plugin);
 			builder.AppendLine($"  Permissions:            {(permissions.Length > 0 ? permissions.ToString("\n                          ") : "N/A")}");
-			
+
 			builder.AppendLine(string.Empty);
 
 			if (count == 1)
