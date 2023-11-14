@@ -2,7 +2,7 @@
 
 /*
 *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -68,6 +68,11 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			return tab;
 		}
 
+		internal static string[] _configBlacklist = new[]
+		{
+			"Version"
+		};
+
 		internal static void DrawModuleSettings(Tab tab, BaseModule module)
 		{
 			tab.ClearColumn(1);
@@ -101,7 +106,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 						Singleton.SetTab(ap.Player, "modules");
 						Singleton.Draw(ap.Player);
-					}, null);
+					}, null, _configBlacklist);
 			});
 		}
 	}
