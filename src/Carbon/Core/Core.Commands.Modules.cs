@@ -100,15 +100,15 @@ public partial class CorePlugin : CarbonPlugin
 		try
 		{
 			module.Load();
+
+			if (module.GetEnabled()) module.OnEnableStatus();
+
+			arg.ReplyWith($"Reloaded '{module.Name}' module config.");
 		}
 		catch (Exception ex)
 		{
-
+			Logger.Error($"Failed module Load for {module.Name} [Reload Request]", ex);
 		}
-
-		if (module.GetEnabled()) module.OnEnableStatus();
-
-		arg.ReplyWith($"Reloaded '{module.Name}' module config.");
 	}
 
 	[ConsoleCommand("modules", "Prints a list of all available modules.")]
