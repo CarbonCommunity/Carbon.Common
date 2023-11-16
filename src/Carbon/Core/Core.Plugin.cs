@@ -128,7 +128,7 @@ public partial class CorePlugin : CarbonPlugin
 					ConVar.Server.maxplayers = _originalMaxPlayers;
 				}
 
-				pluginCheck.Destroy();
+				pluginCheck?.Destroy();
 				pluginCheck = null;
 			}
 		});

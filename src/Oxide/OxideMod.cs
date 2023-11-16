@@ -33,7 +33,7 @@ public class OxideMod
 	public bool IsShuttingDown { get; private set; }
 
 	internal static readonly Version _assemblyVersion = Assembly.GetExecutingAssembly().GetName().Version;
-	internal List<Extensions.Extension> _extensions = new();
+	internal List<Extension> _extensions = new();
 
 	public float Now => UnityEngine.Time.realtimeSinceStartup;
 
@@ -70,7 +70,7 @@ public class OxideMod
 				break;
 		}
 
-		_extensions.Add(new Extensions.Extension { Name = "Rust", Author = "Carbon Community LTD", Branch = "none", Filename = "Carbon.dll", Version = new VersionNumber(1, 0, 0) });
+		_extensions.Add(new Extension { Name = "Rust", Author = "Carbon Community LTD", Branch = "none", Filename = "Carbon.dll", Version = new VersionNumber(1, 0, 0) });
 	}
 
 	public void NextTick(Action callback)
@@ -123,7 +123,7 @@ public class OxideMod
 		}
 	}
 
-	public IEnumerable<Extensions.Extension> GetAllExtensions()
+	public IEnumerable<Extension> GetAllExtensions()
 	{
 		return _extensions;
 	}
@@ -183,10 +183,10 @@ public class OxideMod
 
 		if (type == typeof(Permission)) return Community.Runtime.CorePlugin.permission as T;
 		else if (type == typeof(Lang)) return Community.Runtime.CorePlugin.lang as T;
-		else if (type == typeof(Game.Rust.Libraries.Command)) return Community.Runtime.CorePlugin.cmd as T;
+		else if (type == typeof(Command)) return Community.Runtime.CorePlugin.cmd as T;
 		else if (type == typeof(Game.Rust.Libraries.Rust)) return Community.Runtime.CorePlugin.rust as T;
-		else if (type == typeof(Oxide.Core.Libraries.WebRequests)) return Community.Runtime.CorePlugin.webrequest as T;
-		else if (type == typeof(Oxide.Plugins.Timers)) return Community.Runtime.CorePlugin.timer as T;
+		else if (type == typeof(WebRequests)) return Community.Runtime.CorePlugin.webrequest as T;
+		else if (type == typeof(Timers)) return Community.Runtime.CorePlugin.timer as T;
 
 		name ??= type.Name;
 
