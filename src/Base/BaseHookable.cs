@@ -256,21 +256,15 @@ public class BaseHookable
 
 	public void SubscribeAll(Func<string, bool> condition = null)
 	{
-		foreach (var hook in Hooks)
+		foreach (var name in Hooks.Select(hook => HookStringPool.GetOrAdd(hook)).Where(name => condition == null || condition(name)))
 		{
-			var name = HookStringPool.GetOrAdd(hook);
-			if (condition != null && !condition(name)) continue;
-
 			Subscribe(name);
 		}
 	}
 	public void UnsubscribeAll(Func<string, bool> condition = null)
 	{
-		foreach (var hook in Hooks)
+		foreach (var name in Hooks.Select(hook => HookStringPool.GetOrAdd(hook)).Where(name => condition == null || condition(name)))
 		{
-			var name = HookStringPool.GetOrAdd(hook);
-			if (condition != null && !condition(name)) continue;
-
 			Unsubscribe(name);
 		}
 	}

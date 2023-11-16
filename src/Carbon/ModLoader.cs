@@ -560,6 +560,11 @@ public static class ModLoader
 		temp.Clear();
 		Facepunch.Pool.FreeList(ref temp);
 
+		if (ConVar.Global.skipAssetWarmup_crashes)
+		{
+			Community.Runtime.MarkServerInitialized(true);
+		}
+
 		if (Community.IsServerInitialized)
 		{
 			var counter = 0;
@@ -593,7 +598,7 @@ public static class ModLoader
 
 			foreach (var plugin in Community.Runtime.ModuleProcessor.Modules)
 			{
-				if (plugin is IModule module && (!module.GetEnabled() || plugin.HasInitialized)) continue;
+				if (plugin is IModule module && !module.GetEnabled()) continue;
 
 				try
 				{
