@@ -2345,7 +2345,7 @@ public partial class AdminModule
 		player.spectateFilter = targetPlayer != null ? targetPlayer.UserIDString : target.net.ID.ToString();
 
 		using var cui = new CUI(Singleton.Handler);
-		var container = cui.CreateContainer(SpectatePanelId, color: "0.1 0.1 0.1 0.8", needsCursor: false, parent: ClientPanels.Overlay);
+		var container = cui.CreateContainer(SpectatePanelId, color: Cache.CUI.BlankColor, needsCursor: false, parent: ClientPanels.Overlay);
 		var panel = cui.CreatePanel(container, SpectatePanelId, Cache.CUI.BlankColor);
 		var item = target.GetItem();
 		cui.CreateText(container, panel,
