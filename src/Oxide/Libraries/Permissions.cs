@@ -362,7 +362,7 @@ public class Permission : Library
 
 		foreach (var user in userdata)
 		{
-			if (user.Value != null && user.Key == id || (!string.IsNullOrEmpty(user.Value.LastSeenNickname) && user.Value.LastSeenNickname.Contains(id)))
+			if (user.Value != null && user.Key == id || (!string.IsNullOrEmpty(user.Value.LastSeenNickname) && user.Value.LastSeenNickname.Equals(id, StringComparison.InvariantCultureIgnoreCase)))
 				return new KeyValuePair<string, UserData>(user.Key, user.Value);
 		}
 
