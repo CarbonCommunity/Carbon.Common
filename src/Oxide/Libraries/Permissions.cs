@@ -570,6 +570,11 @@ public class Permission : Library
 		{
 			if (userData.Groups.Count <= 0) return;
 
+			foreach (var group in userData.Groups)
+			{
+				HookCaller.CallStaticHook(2616322405, id, group);
+			}
+
 			userData.Groups.Clear();
 		}
 		else
