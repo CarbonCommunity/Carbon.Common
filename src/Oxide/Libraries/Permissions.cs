@@ -559,6 +559,7 @@ public class Permission : Library
 		if (!GroupExists(name)) return;
 		if (!GetUserData(id).Groups.Add(name.ToLower())) return;
 
+		// OnUserGroupRemoved
 		HookCaller.CallStaticHook(3469176166, id, name);
 	}
 	public virtual void RemoveUserGroup(string id, string name)
@@ -570,12 +571,19 @@ public class Permission : Library
 		{
 			if (userData.Groups.Count <= 0) return;
 
+			foreach (var group in userData.Groups)
+			{
+				// OnUserGroupRemoved
+				HookCaller.CallStaticHook(2616322405, id, group);
+			}
+
 			userData.Groups.Clear();
 		}
 		else
 		{
 			if (!userData.Groups.Remove(name.ToLower())) return;
 
+			// OnUserGroupRemoved
 			HookCaller.CallStaticHook(2616322405, id, name);
 		}
 	}
@@ -704,6 +712,7 @@ public class Permission : Library
 		{
 			if (!data.Perms.Add(perm)) return false;
 
+			// OnUserPermissionGranted
 			HookCaller.CallStaticHook(593143994, id, perm);
 			return true;
 		}
