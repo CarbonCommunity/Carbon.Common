@@ -699,13 +699,28 @@ public class Permission : Library
 			}
 			if (perm.Equals("*"))
 			{
-				source.Aggregate(false, (c, s) => c | data.Perms.Add(s));
+				source.Aggregate(false, (c, s) =>
+				{
+					if (!(c | data.Perms.Add(s))) return false;
+					// OnUserPermissionGranted
+					HookCaller.CallStaticHook(593143994, id, s);
+					return true;
+
+				});
 				return true;
 			}
 			perm = perm.TrimEnd(Star);
+
 			(from s in source
 			 where s.StartsWith(perm)
-			 select s).Aggregate(false, (c, s) => c | data.Perms.Add(s));
+			 select s).Aggregate(false, (c, s) =>
+			{
+				if (!(c | data.Perms.Add(s))) return false;
+				// OnUserPermissionGranted
+				HookCaller.CallStaticHook(593143994, id, s);
+				return true;
+
+			});
 			return true;
 		}
 		else
@@ -733,7 +748,13 @@ public class Permission : Library
 			if (!perm.Equals("*"))
 			{
 				perm = perm.TrimEnd(Star);
-				return userData.Perms.RemoveWhere(s => s.StartsWith(perm)) > 0;
+				return userData.Perms.RemoveWhere(s =>
+				{
+					if (!s.StartsWith(perm)) return false;
+					// OnUserPermissionRevoked
+					HookCaller.CallStaticHook(1216290467, id, s);
+					return true;
+				}) > 0;
 			}
 			if (userData.Perms.Count <= 0) return false;
 
@@ -744,6 +765,7 @@ public class Permission : Library
 		{
 			if (!userData.Perms.Remove(perm)) return false;
 
+			// OnUserPermissionRevoked
 			HookCaller.CallStaticHook(1216290467, id, perm);
 			return true;
 		}
@@ -777,13 +799,25 @@ public class Permission : Library
 			}
 			if (perm.Equals("*"))
 			{
-				source.Aggregate(false, (c, s) => c | data.Perms.Add(s));
+				source.Aggregate(false, (c, s) =>
+				{
+					if (!(c | data.Perms.Add(s))) return false;
+					// OnGroupPermissionGranted
+					HookCaller.CallStaticHook(2569513351, name, perm);
+					return true;
+				});
 				return true;
 			}
 			perm = perm.TrimEnd(Star).ToLower();
 			(from s in source
 			 where s.StartsWith(perm)
-			 select s).Aggregate(false, (c, s) => c | data.Perms.Add(s));
+			 select s).Aggregate(false, (c, s) =>
+			{
+				if (!(c | data.Perms.Add(s))) return false;
+				// OnGroupPermissionGranted
+				HookCaller.CallStaticHook(2569513351, name, perm);
+				return true;
+			});
 			return true;
 		}
 		else
@@ -816,9 +850,23 @@ public class Permission : Library
 			if (!perm.Equals("*"))
 			{
 				perm = perm.TrimEnd(Star).ToLower();
-				return groupData.Perms.RemoveWhere(s => s.StartsWith(perm)) > 0;
+				return groupData.Perms.RemoveWhere(s =>
+				{
+					if (!s.StartsWith(perm)) return false;
+					// OnGroupPermissionRevoked
+					HookCaller.CallStaticHook(858041166, name, s);
+					return true;
+
+				}) > 0;
 			}
 			if (groupData.Perms.Count <= 0) return false;
+
+			foreach (var permission in groupData.Perms)
+			{
+				// OnGroupPermissionRevoked
+				HookCaller.CallStaticHook(858041166, name, permission);
+			}
+
 			groupData.Perms.Clear();
 			return true;
 		}
