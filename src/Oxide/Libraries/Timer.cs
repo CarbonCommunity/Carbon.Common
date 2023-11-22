@@ -79,10 +79,11 @@ public class Timers : Library
 				action?.Invoke();
 				timer.TimesTriggered++;
 			}
-			catch (Exception ex) { Plugin.LogError($"Timer {time}s has failed:", ex); }
-
-			timer.Destroy();
-			Pool.Free(ref timer);
+			catch (Exception ex)
+			{
+				Plugin.LogError($"Timer {time}s has failed:", ex);
+				timer.Destroy();
+			}
 		});
 
 		timer.Delay = time;
@@ -117,7 +118,6 @@ public class Timers : Library
 				Plugin.LogError($"Timer {time}s has failed:", ex);
 
 				timer.Destroy();
-				Pool.Free(ref timer);
 			}
 		});
 
@@ -147,15 +147,13 @@ public class Timers : Library
 
 				if (times == 0 || timer.TimesTriggered < times) return;
 
-				timer.Destroy();
-				Pool.Free(ref timer);
+				// timer.Destroy();
 			}
 			catch (Exception ex)
 			{
 				Plugin.LogError($"Timer {time}s has failed:", ex);
 
 				timer.Destroy();
-				Pool.Free(ref timer);
 			}
 		});
 
@@ -309,17 +307,13 @@ public class Timer : Library, IDisposable, Pool.IPooled
 
 	public void Reset(float delay = -1f, int repetitions = 1)
 	{
+		Destroyed = false;
 		Repetitions = repetitions;
 		Delay = delay;
 
-		if (Destroyed)
-		{
-			Logger.Warn($"You cannot restart a timer that has been destroyed.");
-			return;
-		}
-
 		if (Timers.Processor != null)
 		{
+			Process.Cancel();
 			Timers.Processor.CancelProcess(Process.Id);
 		}
 
@@ -368,6 +362,9 @@ public class Timer : Library, IDisposable, Pool.IPooled
 		}
 
 		Plugin?.timer?._timers.Remove(this);
+
+		var self = this;
+		Pool.Free(ref self);
 
 		return true;
 	}
