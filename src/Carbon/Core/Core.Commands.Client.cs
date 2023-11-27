@@ -11,6 +11,6 @@ public partial class CorePlugin : CarbonPlugin
 {
 	public void OnTerrainInitialized()
 	{
-		Carbon.Client.NoMap.TerrainPostprocess();
+		Carbon.Client.Client.TerrainPostprocess();
 	}
 }

@@ -1,33 +1,37 @@
 ﻿/*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
 
 namespace Carbon.Client;
 
-public struct NoMap
+public struct Client
 {
+	public const int PROTOCOL = 100;
+
 	public const string MAP_URL = "https://carbonmod.gg/assets/content/blank.map";
 
-	public static bool Enabled => CommandLineEx.GetArgumentExists("+nomap");
+	public static bool NomapEnabled => CommandLineEx.GetArgumentExists("+carbon.nomap");
+	public static bool ClientEnabled => CommandLineEx.GetArgumentExists("+carbon.client");
 
 	public static void Init()
 	{
-		if (!Enabled)
+		if (NomapEnabled)
 		{
-			return;
+			ConVar.Server.levelurl = MAP_URL;
+			ProcessConVars();
 		}
 
-		ConVar.Server.levelurl = MAP_URL;
-
-		ProcessConVars();
-		ProcessPatches();
+		if (ClientEnabled)
+		{
+			ProcessPatches();
+		}
 	}
 	public static void TerrainPostprocess()
 	{
-		if (!Enabled)
+		if (!NomapEnabled)
 		{
 			return;
 		}
@@ -37,14 +41,10 @@ public struct NoMap
 	public static void ProcessConVars()
 	{
 		ConVar.Spawn.max_density = 0;
+		ConVar.Server.events = false;
 	}
 	public static void ProcessPatches()
 	{
-		if (!Enabled)
-		{
-			return;
-		}
-
 		Community.Runtime.CarbonClientManager.ApplyPatch();
 	}
 }
