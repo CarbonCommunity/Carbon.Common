@@ -9,8 +9,6 @@ namespace Carbon.Client;
 
 public struct Client
 {
-	public const int PROTOCOL = 100;
-
 	public const string MAP_URL = "https://carbonmod.gg/assets/content/blank.map";
 
 	public static bool NomapEnabled => CommandLineEx.GetArgumentExists("+carbon.nomap");
