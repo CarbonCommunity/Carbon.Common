@@ -25,6 +25,8 @@ public struct Client
 
 		if (ClientEnabled)
 		{
+			CorePlugin.RecoilOverrider.Initialize();
+
 			ProcessPatches();
 		}
 	}
