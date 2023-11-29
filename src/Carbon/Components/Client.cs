@@ -13,6 +13,7 @@ public struct Client
 
 	public static bool NomapEnabled => CommandLineEx.GetArgumentExists("+carbon.nomap");
 	public static bool ClientEnabled => CommandLineEx.GetArgumentExists("+carbon.client");
+	public static bool OldRecoil => Community.Runtime != null && Community.Runtime.CorePlugin is CorePlugin core && core.OldRecoil;
 
 	public static void Init()
 	{
