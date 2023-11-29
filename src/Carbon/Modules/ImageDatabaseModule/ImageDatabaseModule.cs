@@ -90,15 +90,16 @@ public class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModule
 		Facepunch.Pool.FreeList(ref toDelete);
 	}
 
-	public override void OnServerInit()
+	public override void OnServerInit(bool initial)
 	{
-		base.OnServerInit();
+		base.OnServerInit(initial);
 
-		if (Validate())
-		{
-			Save();
-			LoadDefaultImages();
-		}
+		if(!initial) return;
+
+		if (!Validate()) return;
+
+		Save();
+		LoadDefaultImages();
 
 	}
 	public override void OnServerSaved()
