@@ -128,7 +128,7 @@ public partial class CorePlugin : CarbonPlugin
 					ConVar.Server.maxplayers = _originalMaxPlayers;
 				}
 
-				pluginCheck.Destroy();
+				pluginCheck?.Destroy();
 				pluginCheck = null;
 			}
 		});
@@ -138,11 +138,6 @@ public partial class CorePlugin : CarbonPlugin
 		CarbonAuto.Init();
 		API.Abstracts.CarbonAuto.Singleton.Load();
 #endif
-
-		if (ConVar.Global.skipAssetWarmup_crashes)
-		{
-			Community.Runtime.MarkServerInitialized(true);
-		}
 	}
 	private void OnServerSave()
 	{

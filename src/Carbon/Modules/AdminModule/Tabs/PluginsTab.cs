@@ -1420,7 +1420,16 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				{
 					var list = JObject.Parse(data);
 
-					FetchPage(0, (list["last_page"]?.ToString().ToInt()).GetValueOrDefault(), callback);
+					var totalPages = list["last_page"]?.ToString().ToInt();
+
+					if (totalPages == 0)
+					{
+						Logger.Warn($"[{Type}] Endpoint seems to be down. Will retry gathering plugin metadata again later...");
+						list = null;
+						return;
+					}
+
+					FetchPage(0, totalPages.GetValueOrDefault(), callback);
 					list = null;
 				}, Community.Runtime.CorePlugin);
 			}

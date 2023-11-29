@@ -2,7 +2,7 @@
 
 /*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -233,6 +233,11 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 				tab.AddInput(column, "Prefab", ap => multiSelection ? MultiselectionReplacement : $"{entity.PrefabName}", null);
 				tab.AddInput(column, "Flags", ap => multiSelection ? MultiselectionReplacement : entity.flags == 0 ? "None" : $"{entity.flags}", null);
+				tab.AddInput(column, "Skin", ap => multiSelection ? MultiselectionReplacement : entity.skinID.ToString(), callback: (session, enumerable) =>
+				{
+					entity.skinID = enumerable.ToString(" ").ToUlong();
+					entity.SendNetworkUpdate();
+				});
 				tab.AddButton(column, "Edit Flags", ap => { DrawEntitySettings(tab, 0, ap); DrawEntityFlags(tab, ap, 1); });
 				tab.AddInput(column, "Position", ap => multiSelection ? MultiselectionReplacement : $"{entity.transform.position}", null);
 				tab.AddInput(column, "Rotation", ap => multiSelection ? MultiselectionReplacement : $"{entity.transform.rotation}", null);
