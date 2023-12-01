@@ -101,7 +101,7 @@ public partial class AdminModule
 		{
 			RegisterPermission($"adminmodule.accesslevel{i}");
 		}
-TriggerParent
+
 		if (!_logRegistration)
 		{
 			Application.logMessageReceived += OnLog;
