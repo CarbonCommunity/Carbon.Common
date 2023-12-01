@@ -56,6 +56,8 @@ public partial class AdminModule
 	const int AccessLevels = 3;
 	private const string OptionColor = "0.2 0.2 0.2 0.75";
 
+	internal bool _logRegistration;
+
 	public AdminModule()
 	{
 		Singleton = this;
@@ -82,7 +84,7 @@ public partial class AdminModule
 		base.OnServerInit(initial);
 
 		if (!initial) return;
-		
+
 		ImageDatabase = GetModule<ImageDatabaseModule>();
 		ColorPicker = GetModule<ColorPickerModule>();
 		DatePicker = GetModule<DatePickerModule>();
@@ -99,8 +101,12 @@ public partial class AdminModule
 		{
 			RegisterPermission($"adminmodule.accesslevel{i}");
 		}
-
-		Application.logMessageReceived += OnLog;
+TriggerParent
+		if (!_logRegistration)
+		{
+			Application.logMessageReceived += OnLog;
+			_logRegistration = true;
+		}
 	}
 	public override void OnPostServerInit(bool initial)
 	{
