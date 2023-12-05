@@ -238,7 +238,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					{
 						using var cui = new CUI(Singleton.Handler);
 						var container = cui.CreateContainer("blindingpanel", "0 0 0 1", needsCursor: true, needsKeyboard: Singleton.HandleEnableNeedsKeyboard(ap));
-						cui.CreateClientImage(container, "blindingpanel", null, "https://carbonmod.gg/assets/media/cui/bsod.png", "1 1 1 1");
+						cui.CreateClientImage(container, "blindingpanel", "https://carbonmod.gg/assets/media/cui/bsod.png", "1 1 1 1");
 						cui.Send(container, player);
 						BlindedPlayers.Add(player);
 						ShowInfo(tab, ap, player);

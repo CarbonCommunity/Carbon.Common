@@ -1390,7 +1390,9 @@ public static class HookCaller
 
 		foreach (var method in privateMethods)
 		{
-			var methodName = method.Identifier.ValueText;
+			var hookMethod = method.AttributeLists.Select(x => x.Attributes.FirstOrDefault(x => x.Name.ToString() == "HookMethod")).FirstOrDefault();
+			var methodName = hookMethod != null ? hookMethod.ArgumentList.Arguments[0].ToString().Replace("\"", string.Empty) : method.Identifier.ValueText;
+
 			var id = HookStringPool.GetOrAdd(methodName);
 
 			if (!hookableMethods.TryGetValue(id, out var list))
