@@ -225,6 +225,12 @@ public class Timers : Library
 					continue;
 				}
 
+				if (process.Timer.TimesTriggered > process.Timer.Repetitions)
+				{
+					Dispose();
+					continue;
+				}
+
 				if (!process.IsExpired()) continue;
 
 				ExpiredQueue.Enqueue(process);
@@ -261,7 +267,7 @@ public class Timers : Library
 				Process process = default;
 				process.Id = NextId;
 				process.Timer = timer;
-				process.DueTime = Now + timer.Delay;
+				process.UpdateNewTime();
 
 				return process;
 			}
