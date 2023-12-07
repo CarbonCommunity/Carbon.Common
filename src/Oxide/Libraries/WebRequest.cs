@@ -4,7 +4,7 @@ using Logger = Carbon.Logger;
 
 /*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -172,6 +172,7 @@ public class WebRequests : Library
 				_client.Headers.Add("User-Agent", Community.Runtime.Analytics.UserAgent);
 				_client.Credentials = CredentialCache.DefaultCredentials;
 				_client.Proxy = null;
+				_client.Encoding = Encoding.UTF8;
 
 				switch (Method)
 				{
@@ -396,6 +397,11 @@ public class WebRequests : Library
 		{
 			public int StatusCode { get; private set; }
 
+			public Client()
+			{
+				Encoding = Encoding.UTF8;
+			}
+
 			protected override WebResponse GetWebResponse(System.Net.WebRequest request, IAsyncResult result)
 			{
 				var response = base.GetWebResponse(request, result);
@@ -422,6 +428,7 @@ public class WebRequests : Library
 
 				var request = base.GetWebRequest(address) as HttpWebRequest;
 
+				request.AutomaticDecompression = DecompressionMethods.GZip;
 				request.ServicePoint.BindIPEndPointDelegate = (servicePoint, remoteEndPoint, retryCount) =>
 				{
 					return new IPEndPoint(IPAddress.Parse(Community.Runtime.Config.WebRequestIp), 0);

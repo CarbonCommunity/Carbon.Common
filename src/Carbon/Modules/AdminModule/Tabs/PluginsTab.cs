@@ -634,11 +634,14 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 						}
 					}
 
-					if (isAdmin || selectedPlugin.Owned || !selectedPlugin.IsPaid() || selectedPlugin.IsInstalled())
+					if (vendor is not Local)
 					{
-						var button = cui.CreateProtectedButton(container, mainPanel, buttonColor, "0 0 0 0", string.Empty, 0, xMin: 0.48f, xMax: scale, yMin: 0.175f, yMax: 0.235f, align: TextAnchor.MiddleRight, command: selectedPlugin.IsBusy ? "" : $"pluginbrowser.interact {callMode} {selectedPlugin.Id}");
-						cui.CreateText(container, button, "1 1 1 0.7", status, 11, xMax: 0.88f, align: TextAnchor.MiddleRight);
-						cui.CreateImage(container, button, icon, elementColor, xMin: 0.1f, xMax: 0.3f, yMin: 0.2f, yMax: 0.8f);
+						if (isAdmin || selectedPlugin.Owned || !selectedPlugin.IsPaid() || selectedPlugin.IsInstalled())
+						{
+							var button = cui.CreateProtectedButton(container, mainPanel, buttonColor, "0 0 0 0", string.Empty, 0, xMin: 0.48f, xMax: scale, yMin: 0.175f, yMax: 0.235f, align: TextAnchor.MiddleRight, command: selectedPlugin.IsBusy ? "" : $"pluginbrowser.interact {callMode} {selectedPlugin.Id}");
+							cui.CreateText(container, button, "1 1 1 0.7", status, 11, xMax: 0.88f, align: TextAnchor.MiddleRight);
+							cui.CreateImage(container, button, icon, elementColor, xMin: 0.1f, xMax: 0.3f, yMin: 0.2f, yMax: 0.8f);
+						}
 					}
 					if (selectedPlugin.IsInstalled())
 					{
@@ -1420,7 +1423,16 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				{
 					var list = JObject.Parse(data);
 
-					FetchPage(0, (list["last_page"]?.ToString().ToInt()).GetValueOrDefault(), callback);
+					var totalPages = list["last_page"]?.ToString().ToInt();
+
+					if (totalPages == 0)
+					{
+						Logger.Warn($"[{Type}] Endpoint seems to be down. Will retry gathering plugin metadata again later...");
+						list = null;
+						return;
+					}
+
+					FetchPage(0, totalPages.GetValueOrDefault(), callback);
 					list = null;
 				}, Community.Runtime.CorePlugin);
 			}

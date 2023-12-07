@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using API.Assembly;
 using Carbon.Base.Interfaces;
 
 /*
@@ -95,10 +96,19 @@ public partial class CorePlugin : CarbonPlugin
 		}
 
 		if (module.GetEnabled()) module.SetEnabled(false);
-		module.Load();
-		if (module.GetEnabled()) module.OnEnableStatus();
 
-		arg.ReplyWith($"Reloaded '{module.Name}' module config.");
+		try
+		{
+			module.Load();
+
+			if (module.GetEnabled()) module.OnEnableStatus();
+
+			arg.ReplyWith($"Reloaded '{module.Name}' module config.");
+		}
+		catch (Exception ex)
+		{
+			Logger.Error($"Failed module Load for {module.Name} [Reload Request]", ex);
+		}
 	}
 
 	[ConsoleCommand("modules", "Prints a list of all available modules.")]
@@ -136,6 +146,22 @@ public partial class CorePlugin : CarbonPlugin
 		arg.ReplyWith(print.Write(StringTable.FormatTypes.None));
 	}
 
+	[ConsoleCommand("modulesmanaged", "Prints a list of all currently loaded extensions.")]
+	[AuthLevel(2)]
+	private void ModulesManaged(ConsoleSystem.Arg arg)
+	{
+		using var body = new StringTable("#", "Module", "Type");
+		var count = 1;
+
+		foreach (var mod in Community.Runtime.AssemblyEx.Modules.Loaded)
+		{
+			body.AddRow($"{count:n0}", Path.GetFileNameWithoutExtension(mod.Value.Key), mod.Key.FullName);
+			count++;
+		}
+
+		arg.ReplyWith(body.Write(StringTable.FormatTypes.None));
+	}
+
 	[ConsoleCommand("moduleinfo", "Prints advanced information about a currently loaded module. From hooks, hook times, hook memory usage and other things.")]
 	[AuthLevel(2)]
 	private void ModuleInfo(ConsoleSystem.Arg arg)
@@ -156,7 +182,7 @@ public partial class CorePlugin : CarbonPlugin
 			return;
 		}
 
-		using (var table = new StringTable("#", "Id", "Hook", "Time", "Memory", "Subscribed"))
+		using (var table = new StringTable("#", "Id", "Hook", "Time", "Memory", "Subscribed", "Async/Overrides"))
 		{
 			foreach (var hook in module.HookCache)
 			{
@@ -205,5 +231,32 @@ public partial class CorePlugin : CarbonPlugin
 
 			arg.ReplyWith(builder.ToString());
 		}
+	}
+
+	[ConsoleCommand("reloadmodules", "Fully reloads all modules.")]
+	[AuthLevel(2)]
+	private void ReloadModules(ConsoleSystem.Arg arg)
+	{
+		Community.Runtime.AssemblyEx.Modules.Watcher.TriggerAll(WatcherChangeTypes.Changed);
+	}
+
+	[ConsoleCommand("reloadmodule", "Reloads a currently loaded module assembly entirely.")]
+	[AuthLevel(2)]
+	private void ReloadModule(ConsoleSystem.Arg arg)
+	{
+		if (!arg.HasArgs(1)) return;
+
+		var hookable = Community.Runtime.ModuleProcessor.Modules.FirstOrDefault(x => x.Name == arg.Args[0]);
+		var module = hookable.To<IModule>();
+
+		if (module == null)
+		{
+			arg.ReplyWith($"Couldn't find that module.");
+			return;
+		}
+
+		module.Reload();
+
+		arg.ReplyWith($"Reloaded '{module.Name}' module.");
 	}
 }

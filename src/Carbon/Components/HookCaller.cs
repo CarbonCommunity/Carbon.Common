@@ -1338,6 +1338,12 @@ public static class HookCaller
 
 	#region Generator
 
+	internal static char[] _underscoreChar = new [] { '_' };
+	internal static char[] _dotChar = new [] { '.' };
+	internal static string[] _operatorsStrings = new [] { "&&", "||" };
+	internal static string _ifDirective = "#if";
+	internal static string _elifDirective = "#elif";
+
 	public static void GenerateInternalCallHook(CompilationUnitSyntax input, out CompilationUnitSyntax output, out MethodDeclarationSyntax generatedMethod, out bool isPartial, List<ClassDeclarationSyntax> _classList = null)
 	{
 		var methodContents = "\n\tvar result = (object)null;\n\ttry\n\t{\n\t\tswitch(hook)\n\t\t{\n";
@@ -1384,7 +1390,9 @@ public static class HookCaller
 
 		foreach (var method in privateMethods)
 		{
-			var methodName = method.Identifier.ValueText;
+			var hookMethod = method.AttributeLists.Select(x => x.Attributes.FirstOrDefault(x => x.Name.ToString() == "HookMethod")).FirstOrDefault();
+			var methodName = hookMethod != null ? hookMethod.ArgumentList.Arguments[0].ToString().Replace("\"", string.Empty) : method.Identifier.ValueText;
+
 			var id = HookStringPool.GetOrAdd(methodName);
 
 			if (!hookableMethods.TryGetValue(id, out var list))
@@ -1456,7 +1464,7 @@ public static class HookCaller
 					{
 						var type = parameter.Type.ToString().Replace("global::", string.Empty);
 						varText += $"var narg{parameterIndex}_{i} = args[{parameterIndex}] is {type} or null;\nvar arg{parameterIndex}_{i} = narg{parameterIndex}_{i} ? ({type})(args[{parameterIndex}] ?? ({type})default) : ({type})default;\n";
-						parameterText += !IsUnmanagedType(type) ? $"narg{parameterIndex}_{i} && " : $"(narg{parameterIndex}_{i} || args[{parameterIndex}] == null) && ";
+						parameterText += !IsUnmanagedType(parameter.Type) ? $"narg{parameterIndex}_{i} && " : $"(narg{parameterIndex}_{i} || args[{parameterIndex}] == null) && ";
 					}
 				}
 
@@ -1574,6 +1582,102 @@ partial class {@class.Identifier.ValueText}
 #endif
 	}
 
+	public static void HandleVersionConditionals(CompilationUnitSyntax input, List<string> conditionals)
+	{
+		var directives = GetDirectives();
+
+		foreach (var directive in directives)
+		{
+			var processedDirective = directive.Replace(_ifDirective, string.Empty).Replace(_elifDirective, string.Empty).Trim();
+
+			using var subdirectives = TemporaryArray<string>.New(processedDirective.Split(_operatorsStrings, StringSplitOptions.RemoveEmptyEntries));
+
+			foreach (var subdirective in subdirectives.Array)
+			{
+				var processedSubdirective = subdirective.Trim();
+
+				using var split = TemporaryArray<string>.New(processedSubdirective.Split(_underscoreChar));
+
+				if (split.Length < 3)
+				{
+					continue;
+				}
+
+				var mode = split.Get(0);
+				var type = split.Get(1);
+
+				var major = split.Get(2).ToInt();
+				var minor = split.Get(3).ToInt();
+				var patch = split.Get(4).ToInt();
+				var expected = new VersionNumber(major, minor, patch);
+
+				switch (mode)
+				{
+					case "RUST":
+					{
+						var current = new VersionNumber(Rust.Protocol.network, Rust.Protocol.save, Rust.Protocol.report);
+
+						if ((type.Equals("ABV") && current > expected) ||
+							(type.Equals("BLW") && current < expected) ||
+							(type.Equals("IS") && current == expected))
+						{
+							conditionals.Add(processedSubdirective);
+						}
+
+						break;
+					}
+
+					case "CARBON":
+					{
+						using var protocol = TemporaryArray<string>.New(Community.Runtime.Analytics.Protocol.Split(_dotChar));
+
+						var current = new VersionNumber(protocol.Get(0).ToInt(), protocol.Get(1).ToInt(), protocol.Get(2).ToInt());
+
+						if ((type.Equals("ABV") && current > expected) ||
+							(type.Equals("BLW") && current < expected) ||
+							(type.Equals("IS") && current == expected))
+						{
+							conditionals.Add(processedSubdirective);
+						}
+
+						break;
+					}
+				}
+			}
+
+		}
+
+		IEnumerable<string> GetDirectives()
+		{
+			foreach (var child in input.DescendantNodesAndTokensAndSelf())
+			{
+				if (!child.ContainsDirectives)
+				{
+					continue;
+				}
+
+				var node = child.AsNode();
+
+				if (node != null && (node.IsKind(SyntaxKind.IfDirectiveTrivia) || node.IsKind(SyntaxKind.ElifDirectiveTrivia)))
+				{
+					var element = node.GetFirstDirective();
+
+					if (element != null)
+					{
+						yield return element.GetText().ToString();
+					}
+				}
+				else
+				{
+					foreach (var element in child.AsToken().LeadingTrivia.Where(x => x.IsDirective && (x.IsKind(SyntaxKind.IfDirectiveTrivia) || x.IsKind(SyntaxKind.ElifDirectiveTrivia))).Select(x => x.GetStructure()))
+					{
+						yield return element.GetText().ToString();
+					}
+				}
+			}
+		}
+	}
+
 	public static bool FindPluginInfo(CompilationUnitSyntax input, out BaseNamespaceDeclarationSyntax @namespace, out int namespaceIndex, out int classIndex, List<ClassDeclarationSyntax> classes)
 	{
 		var @class = (ClassDeclarationSyntax)null;
@@ -1613,13 +1717,9 @@ partial class {@class.Identifier.ValueText}
 		return @class != null;
 	}
 
-	public static bool IsUnmanagedType(string type)
+	public static bool IsUnmanagedType(TypeSyntax type)
 	{
-		return type switch
-		{
-			"string" or "int" or "uint" or "long" or "ulong" or "bool" => true,
-			_ => false,
-		};
+		return type is ITypeSymbol symbol && symbol.IsUnmanagedType;
 	}
 
 	#endregion

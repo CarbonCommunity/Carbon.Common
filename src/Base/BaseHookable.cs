@@ -220,6 +220,33 @@ public class BaseHookable
 			}
 		}
 
+		var methodAttributes = Type.GetMethods(flag | BindingFlags.Public);
+
+		foreach (var method in methodAttributes)
+		{
+			var methodAttribute = method.GetCustomAttribute<HookMethodAttribute>();
+
+			if (methodAttribute == null) continue;
+
+			var id = HookStringPool.GetOrAdd(string.IsNullOrEmpty(methodAttribute.Name) ? method.Name : methodAttribute.Name);
+
+			if (!HookMethodAttributeCache.TryGetValue(id, out var hooks2))
+			{
+				HookMethodAttributeCache.Add(id, hooks2 = new());
+			}
+
+			var hook = CachedHook.Make(method);
+
+			if (hooks2.Count > 0 && hooks2[0].Parameters.Length < hook.Parameters.Length)
+			{
+				hooks2.Insert(0, hook);
+			}
+			else
+			{
+				hooks2.Add(hook);
+			}
+		}
+
 		HasBuiltHookCache = true;
 		Logger.Debug(Name, $"Built hook cache", 2);
 	}
@@ -256,21 +283,15 @@ public class BaseHookable
 
 	public void SubscribeAll(Func<string, bool> condition = null)
 	{
-		foreach (var hook in Hooks)
+		foreach (var name in Hooks.Select(hook => HookStringPool.GetOrAdd(hook)).Where(name => condition == null || condition(name)))
 		{
-			var name = HookStringPool.GetOrAdd(hook);
-			if (condition != null && !condition(name)) continue;
-
 			Subscribe(name);
 		}
 	}
 	public void UnsubscribeAll(Func<string, bool> condition = null)
 	{
-		foreach (var hook in Hooks)
+		foreach (var name in Hooks.Select(hook => HookStringPool.GetOrAdd(hook)).Where(name => condition == null || condition(name)))
 		{
-			var name = HookStringPool.GetOrAdd(hook);
-			if (condition != null && !condition(name)) continue;
-
 			Unsubscribe(name);
 		}
 	}

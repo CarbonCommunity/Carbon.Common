@@ -2,7 +2,7 @@
 
 /*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -64,7 +64,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				if (!string.IsNullOrEmpty(filter) && !(player.displayName.ToLower().Contains(filter.ToLower()) || player.UserIDString.Contains(filter))) return;
 			}
 
-			tab.AddButton(0, $"{player.displayName}", aap =>
+			tab.AddButton(0, $"{player.displayName}", _ =>
 			{
 				ap.SetStorage(tab, "playerfilterpl", player);
 				ShowInfo(tab, ap, player);
@@ -73,20 +73,20 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		public static void ShowInfo(Tab tab, PlayerSession aap, BasePlayer player)
 		{
 			tab.ClearColumn(1);
-			
+
 			tab.AddName(1, $"Player Information", TextAnchor.MiddleLeft);
-			tab.AddInput(1, "Name", ap => player.displayName, (ap, args) =>
+			tab.AddInput(1, "Name", _ => player.displayName, (_, args) =>
 			{
 				player.AsIPlayer().Rename(args.ToString(" "));
 			});
-			tab.AddInput(1, "Steam ID", ap => player.UserIDString, null);
-			tab.AddInput(1, "Net ID", ap => $"{player.net?.ID}", null);
-			tab.AddInput(1, "IP", ap => $"{player.net?.connection?.ipaddress}", null, hidden: true);
+			tab.AddInput(1, "Steam ID", _ => player.UserIDString, null);
+			tab.AddInput(1, "Net ID", _ => $"{player.net?.ID}", null);
+			tab.AddInput(1, "IP", _ => $"{player.net?.connection?.ipaddress}", null, hidden: true);
 			try
 			{
 				var position = player.transform.position;
-				tab.AddInput(1, "Position", ap => $"{player.transform.position}", null);
-				tab.AddInput(1, "Rotation", ap => $"{player.transform.rotation}", null);
+				tab.AddInput(1, "Position", _ => $"{player.transform.position}", null);
+				tab.AddInput(1, "Rotation", _ => $"{player.transform.rotation}", null);
 			}
 			catch { }
 
@@ -103,18 +103,18 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 						ap.SetStorage(tab, "player", player.UserIDString);
 						PermissionsTab.GeneratePlayers(perms, permission, ap);
 						PermissionsTab.GeneratePlugins(perms, ap, permission, permission.FindUser(player.UserIDString), null);
-					}, (ap) => Singleton.HasAccessLevel(player, 3) ? Tab.OptionButton.Types.None : Tab.OptionButton.Types.Important);
+					}, (_) => Singleton.HasAccessLevel(player, 3) ? Tab.OptionButton.Types.None : Tab.OptionButton.Types.Important);
 				}
 			}
 
 			if (Singleton.HasAccessLevel(aap.Player, 2))
 			{
-				tab.AddButtonArray(1, new Tab.OptionButton("Kick", ap =>
+				tab.AddButtonArray(1, new Tab.OptionButton("Kick", _ =>
 				{
 					Singleton.Modal.Open(aap.Player, $"Kick {player.displayName}", new Dictionary<string, ModalModule.Modal.Field>
 					{
 						["reason"] = ModalModule.Modal.Field.Make("Reason", ModalModule.Modal.Field.FieldTypes.String, @default: "Stop doing that.")
-					}, onConfirm: (p, m) =>
+					}, onConfirm: (_, m) =>
 					{
 						player.Kick(m.Get<string>("reason"));
 					});
@@ -123,11 +123,11 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					Singleton.Modal.Open(aap.Player, $"Ban {player.displayName}", new Dictionary<string, ModalModule.Modal.Field>
 					{
 						["reason"] = ModalModule.Modal.Field.Make("Reason", ModalModule.Modal.Field.FieldTypes.String, @default: "Stop doing that."),
-						["until"] = ModalModule.Modal.ButtonField.MakeButton("Until", "Select Date", m =>
+						["until"] = ModalModule.Modal.ButtonField.MakeButton("Until", "Select Date", _ =>
 						{
 							Core.NextTick(() => Singleton.DatePicker.Draw(ap.Player, date => ap.SetStorage(tab, "date", date)));
 						})
-					}, onConfirm: (p, m) =>
+					}, onConfirm: (_, m) =>
 					{
 						var date = ap.GetStorage(tab, "date", DateTime.UtcNow.AddYears(100));
 						var now = DateTime.UtcNow;
@@ -143,7 +143,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 			tab.AddButtonArray(1,
 				new Tab.OptionButton("TeleportTo", ap => { ap.Player.Teleport(player.transform.position); }),
-				new Tab.OptionButton("Teleport2Me", ap =>
+				new Tab.OptionButton("Teleport2Me", _ =>
 				{
 					tab.CreateDialog($"Are you sure about that?", ap =>
 					{
@@ -176,9 +176,9 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 						ap.Player.ClientRPCPlayer(null, ap.Player, "RPC_OpenLootPanel", "player_corpse");
 					});
 				}),
-				new Tab.OptionButton("Respawn", ap =>
+				new Tab.OptionButton("Respawn", _ =>
 				{
-					tab.CreateDialog($"Are you sure about that?", ap =>
+					tab.CreateDialog($"Are you sure about that?", _ =>
 					{
 						player.Hurt(player.MaxHealth());
 						player.Respawn();
@@ -188,18 +188,18 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 			tab.AddName(1, "Inventory Lock");
 			tab.AddButtonArray(1,
-				new Tab.OptionButton("Main", ap =>
+				new Tab.OptionButton("Main", _ =>
 				{
 					player.inventory.containerMain.SetLocked(!player.inventory.containerMain.IsLocked());
-				}, ap => player.inventory.containerMain.IsLocked() ? Tab.OptionButton.Types.Important : Tab.OptionButton.Types.None),
-				new Tab.OptionButton("Belt", ap =>
+				}, _ => player.inventory.containerMain.IsLocked() ? Tab.OptionButton.Types.Important : Tab.OptionButton.Types.None),
+				new Tab.OptionButton("Belt", _ =>
 				{
 					player.inventory.containerBelt.SetLocked(!player.inventory.containerBelt.IsLocked());
-				}, ap => player.inventory.containerBelt.IsLocked() ? Tab.OptionButton.Types.Important : Tab.OptionButton.Types.None),
-				new Tab.OptionButton("Wear", ap =>
+				}, _ => player.inventory.containerBelt.IsLocked() ? Tab.OptionButton.Types.Important : Tab.OptionButton.Types.None),
+				new Tab.OptionButton("Wear", _ =>
 				{
 					player.inventory.containerWear.SetLocked(!player.inventory.containerWear.IsLocked());
-				}, ap => player.inventory.containerWear.IsLocked() ? Tab.OptionButton.Types.Important : Tab.OptionButton.Types.None));
+				}, _ => player.inventory.containerWear.IsLocked() ? Tab.OptionButton.Types.Important : Tab.OptionButton.Types.None));
 
 			if (Singleton.HasTab("entities"))
 			{
@@ -228,17 +228,17 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				{
 					StopSpectating(ap.Player);
 					ShowInfo(tab, ap, player);
-				}, ap => Tab.OptionButton.Types.Selected);
+				}, _ => Tab.OptionButton.Types.Selected);
 			}
 			if (!BlindedPlayers.Contains(player))
 			{
-				tab.AddButton(1, "Blind Player", ap =>
+				tab.AddButton(1, "Blind Player", _ =>
 				{
 					tab.CreateDialog("Are you sure you want to blind the player?", ap =>
 					{
 						using var cui = new CUI(Singleton.Handler);
 						var container = cui.CreateContainer("blindingpanel", "0 0 0 1", needsCursor: true, needsKeyboard: Singleton.HandleEnableNeedsKeyboard(ap));
-						cui.CreateClientImage(container, "blindingpanel", null, "https://carbonmod.gg/assets/media/cui/bsod.png", "1 1 1 1");
+						cui.CreateClientImage(container, "blindingpanel", "https://carbonmod.gg/assets/media/cui/bsod.png", "1 1 1 1");
 						cui.Send(container, player);
 						BlindedPlayers.Add(player);
 						ShowInfo(tab, ap, player);
@@ -255,17 +255,37 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					cui.Destroy("blindingpanel", player);
 					BlindedPlayers.Remove(player);
 					ShowInfo(tab, ap, player);
-				}, ap => Tab.OptionButton.Types.Selected);
+				}, _ => Tab.OptionButton.Types.Selected);
 			}
 
 			tab.AddName(1, "Stats");
-			tab.AddName(1, "Combat", TextAnchor.MiddleLeft);
-			tab.AddRange(1, "Health", 0, player.MaxHealth(), ap => player.health, (ap, value) => player.SetHealth(value), ap => $"{player.health:0}");
+			tab.AddName(1, "Combat");
+			tab.AddRange(1, "Health", 0, player.MaxHealth(), _ => player.health, (_, value) => player.SetHealth(value), _ => $"{player.health:0}");
 
-			tab.AddRange(1, "Thirst", 0, player.metabolism.hydration.max, ap => player.metabolism.hydration.value, (ap, value) => player.metabolism.hydration.SetValue(value), ap => $"{player.metabolism.hydration.value:0}");
-			tab.AddRange(1, "Hunger", 0, player.metabolism.calories.max, ap => player.metabolism.calories.value, (ap, value) => player.metabolism.calories.SetValue(value), ap => $"{player.metabolism.calories.value:0}");
-			tab.AddRange(1, "Radiation", 0, player.metabolism.radiation_poison.max, ap => player.metabolism.radiation_poison.value, (ap, value) => player.metabolism.radiation_poison.SetValue(value), ap => $"{player.metabolism.radiation_poison.value:0}");
-			tab.AddRange(1, "Bleeding", 0, player.metabolism.bleeding.max, ap => player.metabolism.bleeding.value, (ap, value) => player.metabolism.bleeding.SetValue(value), ap => $"{player.metabolism.bleeding.value:0}");
+			tab.AddRange(1, "Thirst", 0, player.metabolism.hydration.max, _ => player.metabolism.hydration.value, (_, value) => player.metabolism.hydration.SetValue(value), _ => $"{player.metabolism.hydration.value:0}");
+			tab.AddRange(1, "Hunger", 0, player.metabolism.calories.max, _ => player.metabolism.calories.value, (_, value) => player.metabolism.calories.SetValue(value), _ => $"{player.metabolism.calories.value:0}");
+			tab.AddRange(1, "Radiation", 0, player.metabolism.radiation_poison.max, _ => player.metabolism.radiation_poison.value, (_, value) => player.metabolism.radiation_poison.SetValue(value), _ => $"{player.metabolism.radiation_poison.value:0}");
+			tab.AddRange(1, "Bleeding", 0, player.metabolism.bleeding.max, _ => player.metabolism.bleeding.value, (_, value) => player.metabolism.bleeding.SetValue(value), _ => $"{player.metabolism.bleeding.value:0}");
+
+			tab.AddName(1, "Crafting");
+
+			var queue = player.inventory.crafting.queue.Where(x => !x.cancelled);
+			foreach (var craft in queue)
+			{
+				tab.AddInputButton(1, $"{craft.blueprint.targetItem.displayName.english} (x{craft.amount}, {TimeEx.Format(craft.endTime - UnityEngine.Time.realtimeSinceStartup)})", 0.1f,
+					new Tab.OptionInput(null, _ => $"<size=8>{craft.takenItems.Select(x => $"{x.info.displayName.english} x {x.amount}").ToString(", ")}</size>", 0, true, null),
+					new Tab.OptionButton("X", TextAnchor.MiddleCenter, ap =>
+					{
+						player.inventory.crafting.CancelTask(craft.taskUID, true);
+						ShowInfo(tab, ap, player);
+					}, _ => Tab.OptionButton.Types.Important));
+			}
+
+			if (!queue.Any())
+			{
+				tab.AddText(1, "No crafts.", 8, "1 1 1 0.5");
+			}
+
 		}
 	}
 }
