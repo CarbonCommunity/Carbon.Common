@@ -1,6 +1,6 @@
 ﻿/*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -72,6 +72,16 @@ public static class MathEx
 		var newValue = (oldValue - oldMin) * newRange / oldRange + newMin;
 
 		return newValue;
+	}
+
+	public static int RoundUpToNearest(this int value, int nearest)
+	{
+		if (value % nearest == 0)
+		{
+			return value;
+		}
+
+		return ((value / nearest) * nearest) + nearest;
 	}
 
 	public static string ToHex(this int value)

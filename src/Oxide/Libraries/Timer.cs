@@ -142,6 +142,15 @@ public class Timers : Library
 
 		timer = null;
 	}
+	public void DestroyAll()
+	{
+		foreach (var timer in _timers)
+		{
+			timer.Destroy();
+		}
+
+		_timers.Clear();
+	}
 }
 
 public class Timer : Library, IDisposable
@@ -181,7 +190,7 @@ public class Timer : Library, IDisposable
 			Persistence.CancelInvoke(Callback);
 			Persistence.CancelInvokeFixedTime(Callback);
 		}
-		
+
 		if (Repetitions == 1)
 		{
 			Callback = new Action(() =>
