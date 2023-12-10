@@ -25,7 +25,9 @@ public readonly struct CUI : IDisposable
 		Overlay,
 		Hud,
 		HudMenu,
-		Under
+		Under,
+		LoadingBG,
+		LoadingFG
 	}
 	public string GetClientPanel(ClientPanels panel)
 	{
@@ -34,6 +36,8 @@ public readonly struct CUI : IDisposable
 			ClientPanels.Hud => "Hud",
 			ClientPanels.HudMenu => "Hud.Menu",
 			ClientPanels.Under => "Under",
+			ClientPanels.LoadingBG => "Loading.BG",
+			ClientPanels.LoadingFG => "Loading.FG",
 			_ => "Overlay",
 		};
 	}
