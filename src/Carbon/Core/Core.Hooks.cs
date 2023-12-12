@@ -1,6 +1,6 @@
 ﻿/*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -32,7 +32,6 @@ public partial class CorePlugin : CarbonPlugin
 		// OnUserConnected
 		HookCaller.CallStaticHook(1971459992, player.AsIPlayer());
 
-		Community.Runtime.CarbonClientManager.OnConnected(player.Connection);
 	}
 
 	private object IOnUserApprove(Connection connection)
@@ -53,6 +52,8 @@ public partial class CorePlugin : CarbonPlugin
 			ConnectionAuth.Reject(connection, (obj4 is string) ? obj4.ToString() : "Connection was rejected", null);
 			return true;
 		}
+
+		Community.Runtime.CarbonClientManager.OnConnected(connection);
 
 		// OnUserApprove
 		if (HookCaller.CallStaticHook(1855397793, connection) != null)

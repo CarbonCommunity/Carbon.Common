@@ -1,6 +1,6 @@
 ﻿/*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -14,7 +14,7 @@ public class FileLogger : IDisposable
 	/// <summary>
 	/// By default, each log file gets split when it reaches exactly 2.5MB in file size and sent in the archive folder.
 	/// </summary>
-	public int SplitSize { get; set; } = (int)(2.5f * 1000000f);
+	public int SplitSize { get; set; }
 
 	public bool HasInit { get; private set; }
 
@@ -66,6 +66,7 @@ public class FileLogger : IDisposable
 
 		HasInit = true;
 
+		SplitSize = (int)(Community.Runtime.Config.LogSplitSize * 1000000f);
 		_file = new StreamWriter(path, append: true);
 	}
 	public virtual void Dispose()
