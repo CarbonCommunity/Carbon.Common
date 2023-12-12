@@ -245,6 +245,8 @@ public class Community
 
 		Config.ConditionalCompilationSymbols = Config.ConditionalCompilationSymbols.Distinct().ToList();
 
+		Logger.CoreLog.SplitSize = (int)(Community.Runtime.Config.LogSplitSize * 1000000f);
+
 		if (needsSave) SaveConfig();
 	}
 
