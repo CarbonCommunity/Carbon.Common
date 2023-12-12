@@ -88,6 +88,10 @@ public partial class CorePlugin : CarbonPlugin
 	[AuthLevel(2)]
 	private bool BypassAdminCooldowns { get { return Community.Runtime.Config.BypassAdminCooldowns; } set { Community.Runtime.Config.BypassAdminCooldowns = value; Community.Runtime.SaveConfig(); } }
 
+	[CommandVar("logsplitsize", "The size for each log (in megabytes) required for it to be split into separate chunks.")]
+	[AuthLevel(2)]
+	private double LogSplitSize { get { return Community.Runtime.Config.LogSplitSize; } set { Community.Runtime.Config.LogSplitSize = value; Community.Runtime.SaveConfig(); } }
+
 #if DEBUG
 	[CommandVar("plugintrackingtime", "Plugin average time value for memory and hook time tracking. [DEBUG]")]
 	[AuthLevel(2)]

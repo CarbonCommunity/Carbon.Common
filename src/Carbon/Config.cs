@@ -23,6 +23,7 @@ public class Config
 	public int LogVerbosity { get; set; } = 0;
 	public bool BypassAdminCooldowns { get; set; } = false;
 	public float PluginTrackingTime { get; set; } = 60f;
+	public double LogSplitSize { get; set; } = 2.5;
 	public string ScriptDebuggingOrigin = string.Empty;
 	public bool UnityStacktrace { get; set; } =
 #if DEBUG
