@@ -270,8 +270,8 @@ public partial class CorePlugin : CarbonPlugin
 			return;
 		}
 
-		var name = arg.GetString(0);
-		var plugin = ModLoader.LoadedPackages.SelectMany(x => x.Plugins).FirstOrDefault(x => string.IsNullOrEmpty(x.FileName) ? x.Name == name : x.FileName.Contains(name));
+		var name = arg.GetString(0).ToLower();
+		var plugin = ModLoader.LoadedPackages.SelectMany(x => x.Plugins).FirstOrDefault(x => string.IsNullOrEmpty(x.FileName) ? x.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase) : x.FileName.Contains(name, CompareOptions.OrdinalIgnoreCase));
 		var count = 1;
 
 		if (plugin == null)
@@ -389,7 +389,7 @@ public partial class CorePlugin : CarbonPlugin
 
 						foreach (var plugin in plugins)
 						{
-							if (plugin.Name == name)
+							if (plugin.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase))
 							{
 								plugin.ILoadConfig();
 								plugin.Load();
