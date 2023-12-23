@@ -11,7 +11,7 @@ public struct Client
 {
 	public const string MAP_URL = "https://carbonmod.gg/assets/content/blank.map";
 
-	public static bool NomapEnabled => Community.Runtime.ClientConfig.Enabled;
+	public static bool NomapEnabled => Community.Runtime.ClientConfig.Environment.NoMap;
 	public static bool ClientEnabled => Community.Runtime.ClientConfig.Enabled;
 	public static bool OldRecoil => Community.Runtime != null && Community.Runtime.ClientConfig.Gameplay.UseOldRecoil;
 
