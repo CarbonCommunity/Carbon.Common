@@ -11,9 +11,9 @@ public struct Client
 {
 	public const string MAP_URL = "https://carbonmod.gg/assets/content/blank.map";
 
-	public static bool NomapEnabled => CommandLineEx.GetArgumentExists("+carbon.nomap");
-	public static bool ClientEnabled => CommandLineEx.GetArgumentExists("+carbon.client");
-	public static bool OldRecoil => Community.Runtime != null && Community.Runtime.CorePlugin is CorePlugin core && core.OldRecoil;
+	public static bool NomapEnabled => Community.Runtime.ClientConfig.Enabled;
+	public static bool ClientEnabled => Community.Runtime.ClientConfig.Enabled;
+	public static bool OldRecoil => Community.Runtime != null && Community.Runtime.ClientConfig.Gameplay.UseOldRecoil;
 
 	public static void Init()
 	{

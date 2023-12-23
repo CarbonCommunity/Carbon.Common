@@ -91,22 +91,20 @@ public partial class CorePlugin : CarbonPlugin
 		}
 	}
 
-	private bool _useOldRecoil;
-
 	[CommandVar("oldrecoil", "Used by Carbon (client) servers. Any Carbon client that joins will use old properties version of recoil.")]
 	[AuthLevel(2)]
 	internal bool OldRecoil
 	{
 		get
 		{
-			return _useOldRecoil;
+			return Community.Runtime.ClientConfig.Gameplay.UseOldRecoil;
 		}
 		set
 		{
-			if (_useOldRecoil == value) return;
-			_useOldRecoil = value;
+			if (Community.Runtime.ClientConfig.Gameplay.UseOldRecoil == value) return;
+			Community.Runtime.ClientConfig.Gameplay.UseOldRecoil = value;
 
-			if (_useOldRecoil)
+			if (Community.Runtime.ClientConfig.Gameplay.UseOldRecoil)
 			{
 				RecoilOverrider.ApplyOldRecoil();
 			}
