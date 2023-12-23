@@ -160,7 +160,7 @@ public struct StringTable : IDisposable
 		columnLengths = null;
 
 		builder.AppendLine(columnHeaders);
-		builder.AppendLine(divider);
+		// builder.AppendLine(divider);
 
 		foreach(var item in results)
 		{

@@ -72,60 +72,33 @@ public partial class CorePlugin : CarbonPlugin
 		PoolEx.FreeStringBuilder(ref builder);
 	}
 
-	[ConsoleCommand("client.addons_add", "Attempts to add a new addon to the addons list if not already existent.")]
+	[ConsoleCommand("client.stats", "Prints a list of useful statistic information of Carbon Client performance.")]
 	[AuthLevel(2)]
-	private void ClientAddonsAdd(ConsoleSystem.Arg args)
+	private void ClientStats(ConsoleSystem.Arg args)
 	{
-		var addonUrl = args.GetString(0);
-		var addonEnabled = args.GetBool(1, true);
+		using var table = new StringTable("Addons", "Assets", "Spawnable Prefabs", "Prefabs (Custom)", "Prefabs (Rust)", "Entities");
 
-		if (Community.Runtime.ClientConfig.Addons.Any(x =>
-			    x.Url.Equals(addonUrl, StringComparison.InvariantCultureIgnoreCase)))
-		{
-			args.ReplyWith("Addon with that URL already in the list.");
-		}
-		else
-		{
-			Community.Runtime.ClientConfig.Addons.Add(new ClientConfig.AddonEntry
-			{
-				Url = addonUrl,
-				Enabled = addonEnabled
-			});
-			Community.Runtime.SaveClientConfig();
+		table.AddRow(
+			Community.Runtime.CarbonClientManager.AddonCount.ToString("n0"),
+			Community.Runtime.CarbonClientManager.AssetCount.ToString("n0"),
+			Community.Runtime.CarbonClientManager.SpawnablePrefabsCount.ToString("n0"),
+			Community.Runtime.CarbonClientManager.PrefabsCount.ToString("n0"),
+			Community.Runtime.CarbonClientManager.RustPrefabsCount.ToString("n0"),
+			Community.Runtime.CarbonClientManager.EntityCount.ToString("n0"));
 
-			args.ReplyWith("Addon added to the list.");
-		}
+		args.ReplyWith(table.ToStringMinimal());
 	}
 
-	[ConsoleCommand("client.addons_del", "Attempts to remove an addon from the addons list if exists.")]
+	[ConsoleCommand("client.addons_reinstall", "Unloads all currently loaded addons then reloads them relative to the config changes. (Options: async [bool|true])")]
 	[AuthLevel(2)]
-	private void ClientAddonsDel(ConsoleSystem.Arg args)
-	{
-		var addonUrl = args.GetString(0);
-
-		if (Community.Runtime.ClientConfig.Addons.RemoveAll(x =>
-			    x.Url.Equals(addonUrl, StringComparison.InvariantCultureIgnoreCase)) > 0)
-		{
-			Community.Runtime.SaveClientConfig();
-
-			args.ReplyWith("Addon removed from the list.");
-		}
-		else
-		{
-			args.ReplyWith("Could not find addon with that URL.");
-		}
-	}
-
-	[ConsoleCommand("client.addons_restart", "Unloads all currently loaded addons then reloads them relative to the config changes. (Options: async [bool])")]
-	[AuthLevel(2)]
-	private void ClientAddonsRestart(ConsoleSystem.Arg args)
+	private void ClientAddonsReinstall(ConsoleSystem.Arg args)
 	{
 		if (!ClientEnabledCheck())
 		{
 			return;
 		}
 
-		ReloadCarbonClientAddons(args.GetBool(0, false));
+		ReloadCarbonClientAddons(args.GetBool(0, true));
 	}
 
 	[ConsoleCommand("client.addons_uninstall", "Unloads all currently loaded addons then reloads them relative to the config changes.")]
@@ -144,7 +117,6 @@ public partial class CorePlugin : CarbonPlugin
 	{
 		var urls = Community.Runtime.ClientConfig.Addons.Where(x => x.Enabled).Select(x => x.Url).ToArray();
 
-		Logger.Log("HERE WE GO");
 		Community.Runtime.CarbonClientManager.UninstallAddons();
 
 		if (async)
