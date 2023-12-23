@@ -274,6 +274,8 @@ public class Community
 			needsSave = true;
 		}
 
+		ClientConfig.RefreshNetworkables();
+
 		if(needsSave) SaveClientConfig();
 	}
 

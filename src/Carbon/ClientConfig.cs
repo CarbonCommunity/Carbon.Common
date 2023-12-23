@@ -5,6 +5,7 @@
  *
  */
 
+using Newtonsoft.Json;
 using UnityEngine.Serialization;
 
 namespace Carbon.Client;
@@ -16,6 +17,18 @@ public class ClientConfig
 	public EnvironmentOptions Environment = new();
 	public GameplayOptions Gameplay = new();
 	public List<AddonEntry> Addons = new();
+
+	[JsonIgnore, NonSerialized] public string[] NetworkableAddons;
+
+	public void RefreshNetworkables()
+	{
+		if (NetworkableAddons != null)
+		{
+			Array.Clear(NetworkableAddons, 0, NetworkableAddons.Length);
+		}
+
+		NetworkableAddons = Community.Runtime.ClientConfig.Addons.Where(x => x.Enabled).Select(x => x.Url).ToArray();
+	}
 
 	[Serializable]
 	public class AddonEntry
