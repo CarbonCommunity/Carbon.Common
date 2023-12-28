@@ -115,17 +115,15 @@ public partial class CorePlugin : CarbonPlugin
 
 	public void ReloadCarbonClientAddons(bool async = false)
 	{
-		var urls = Community.Runtime.ClientConfig.Addons.Where(x => x.Enabled).Select(x => x.Url).ToArray();
-
 		Community.Runtime.CarbonClientManager.UninstallAddons();
 
 		if (async)
 		{
-			Community.Runtime.CarbonClientManager.InstallAddonsAsync(urls);
+			Community.Runtime.CarbonClientManager.InstallAddonsAsync(Community.Runtime.ClientConfig.NetworkableAddons);
 		}
 		else
 		{
-			Community.Runtime.CarbonClientManager.InstallAddons(urls);
+			Community.Runtime.CarbonClientManager.InstallAddons(Community.Runtime.ClientConfig.NetworkableAddons);
 		}
 	}
 }
