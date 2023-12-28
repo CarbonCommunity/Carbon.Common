@@ -17,4 +17,16 @@ public partial class CorePlugin : CarbonPlugin
 	{
 		Community.Runtime.CarbonClientManager.SendRequestToPlayer(client.Connection);
 	}
+
+	private void OnClientAddonsDownload(ICarbonClient client)
+	{
+		Puts($"{client.Connection} is downloading addons");
+		client.IsDownloadingAddons = true;
+	}
+
+	private void OnClientAddonsFinalized(ICarbonClient client)
+	{
+		Puts($"{client.Connection} finished downloading addons");
+		client.IsDownloadingAddons = false;
+	}
 }
