@@ -6,6 +6,8 @@
  */
 
 using System.Text;
+using API.Commands;
+
 namespace Carbon.Core;
 
 public partial class CorePlugin : CarbonPlugin
@@ -345,6 +347,67 @@ public partial class CorePlugin : CarbonPlugin
 
 			arg.ReplyWith(builder.ToString());
 		}
+	}
+
+	[ConsoleCommand("plugincmds", "Prints a full list of chat and console commands for a specific plugin.")]
+	[AuthLevel(2)]
+	private void PluginCmds(ConsoleSystem.Arg arg)
+	{
+		if (!arg.HasArgs(1))
+		{
+			Logger.Warn("You must provide the name of a plugin to print plugin command information.");
+			return;
+		}
+
+		var name = arg.GetString(0).ToLower();
+		var plugin = ModLoader.LoadedPackages.SelectMany(x => x.Plugins).FirstOrDefault(x => string.IsNullOrEmpty(x.FileName) ? x.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase) : x.FileName.Contains(name, CompareOptions.OrdinalIgnoreCase));
+
+		if (plugin == null)
+		{
+			arg.ReplyWith("Couldn't find that plugin.");
+			return;
+		}
+
+		var builder = PoolEx.GetStringBuilder();
+		var count = 1;
+
+		using (var table = new StringTable("", "Chat Commands"))
+		{
+			foreach (var command in Community.Runtime.CommandManager.Chat.Where(x => x.Reference == plugin).Distinct())
+			{
+				if (command.HasFlag(CommandFlags.Protected) || command.HasFlag(CommandFlags.Hidden))
+				{
+					continue;
+				}
+
+				table.AddRow(string.Empty, command.Name);
+
+				count++;
+			}
+
+			builder.AppendLine(table.ToStringMinimal());
+		}
+
+		using (var table = new StringTable("", "Console Commands"))
+		{
+			count = 1;
+			foreach (var command in Community.Runtime.CommandManager.ClientConsole.Where(x => x.Reference == plugin))
+			{
+				if (command.HasFlag(CommandFlags.Protected) || command.HasFlag(CommandFlags.Hidden))
+				{
+					continue;
+				}
+
+				table.AddRow(string.Empty, command.Name);
+
+				count++;
+			}
+
+			builder.AppendLine(table.ToStringMinimal());
+		}
+
+		arg.ReplyWith(builder.ToString());
+		PoolEx.FreeStringBuilder(ref builder);
 	}
 
 	[ConsoleCommand("reloadconfig", "Reloads a plugin's config file. This might have unexpected results, use cautiously.")]
