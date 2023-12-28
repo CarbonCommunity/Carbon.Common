@@ -95,9 +95,8 @@ public class CuiButtonComponent : ICuiComponent, ICuiColor
 	[JsonProperty("sprite", NullValueHandling = NullValueHandling.Ignore)]
 	public string Sprite { get; set; } = "Assets/Content/UI/UI.Background.Tile.psd";
 
-	[DefaultValue("Assets/Icons/IconMaterial.mat")]
 	[JsonProperty("material")]
-	public string Material { get; set; } = "Assets/Icons/IconMaterial.mat";
+	public string Material { get; set; }
 
 	[DefaultValue("1 1 1 1")]
 	[JsonProperty("color", NullValueHandling = NullValueHandling.Ignore, DefaultValueHandling = DefaultValueHandling.Ignore)]
