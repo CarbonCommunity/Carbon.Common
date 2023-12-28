@@ -136,6 +136,18 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 						player.AsIPlayer().Ban(m.Get<string>("reason"), then);
 					});
+				}), new Tab.OptionButton(player.IsSleeping() ? "End Sleep" : "Sleep", ap =>
+				{
+					if (player.IsSleeping())
+					{
+						player.EndSleeping();
+					}
+					else
+					{
+						player.StartSleeping();
+					}
+
+					ShowInfo(tab, ap, player);
 				}));
 			}
 
