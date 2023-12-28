@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 /*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -365,13 +365,13 @@ public class CuiRectTransformComponent : ICuiComponent
 	[JsonProperty("anchormax", NullValueHandling = NullValueHandling.Ignore, DefaultValueHandling = DefaultValueHandling.Ignore)]
 	public string AnchorMax { get; set; } = "1 1";
 
-	[DefaultValue("0 0")]
-	[JsonProperty("offsetmin", NullValueHandling = NullValueHandling.Ignore, DefaultValueHandling = DefaultValueHandling.Ignore)]
-	public string OffsetMin { get; set; } = "0 0";
+	// [DefaultValue("0 0")]
+	[JsonProperty("offsetmin")]
+	public string OffsetMin { get; set; }
 
-	[DefaultValue("1 1")]
+	// [DefaultValue("1 1")]
 	[JsonProperty("offsetmax")]
-	public string OffsetMax { get; set; } = "1 1";
+	public string OffsetMax { get; set; }
 }
 public class CuiCountdownComponent : ICuiComponent
 {
