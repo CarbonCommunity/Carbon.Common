@@ -161,14 +161,12 @@ namespace Oxide.Core.Plugins
 					Hooks?.Clear();
 					HookMethods?.Clear();
 					PluginReferences?.Clear();
-					HookMethodAttributeCache?.Clear();
 
 					IgnoredHooks = null;
 					HookCache = null;
 					Hooks = null;
 					HookMethods = null;
 					PluginReferences = null;
-					HookMethodAttributeCache = null;
 				}
 			}
 			catch (Exception ex)

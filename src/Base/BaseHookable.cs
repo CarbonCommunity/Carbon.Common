@@ -19,7 +19,6 @@ public class BaseHookable
 	public List<PluginReferenceAttribute> PluginReferences;
 
 	public Dictionary<uint, List<CachedHook>> HookCache = new();
-	public Dictionary<uint, List<CachedHook>> HookMethodAttributeCache = new();
 	public HashSet<uint> IgnoredHooks = new();
 
 	public class CachedHook
@@ -170,7 +169,6 @@ public class BaseHookable
 		var hooksPresent = Hooks.Count != 0;
 
 		HookCache.Clear();
-		HookMethodAttributeCache.Clear();
 
 		var methods = Type.GetMethods(flag);
 
@@ -201,22 +199,32 @@ public class BaseHookable
 			{
 				hooks.Add(hook);
 			}
+		}
 
-			if (method.HasAttribute(typeof(HookMethodAttribute)))
+		var methodAttributes = Type.GetMethods(flag | BindingFlags.Public);
+
+		foreach (var method in methodAttributes)
+		{
+			var methodAttribute = method.GetCustomAttribute<HookMethodAttribute>();
+
+			if (methodAttribute == null) continue;
+
+			var id = HookStringPool.GetOrAdd(string.IsNullOrEmpty(methodAttribute.Name) ? method.Name : methodAttribute.Name);
+
+			if (!HookCache.TryGetValue(id, out var hooks2))
 			{
-				if (!HookMethodAttributeCache.TryGetValue(id, out var hooks2))
-				{
-					HookMethodAttributeCache.Add(id, hooks2 = new());
-				}
+				HookCache.Add(id, hooks2 = new());
+			}
 
-				if (hooks2.Count > 0 && hooks2[0].Parameters.Length < hook.Parameters.Length)
-				{
-					hooks2.Insert(0, hook);
-				}
-				else
-				{
-					hooks2.Add(hook);
-				}
+			var hook = CachedHook.Make(method);
+
+			if (hooks2.Count > 0 && hooks2[0].Parameters.Length < hook.Parameters.Length)
+			{
+				hooks2.Insert(0, hook);
+			}
+			else
+			{
+				hooks2.Add(hook);
 			}
 		}
 

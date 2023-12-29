@@ -308,6 +308,8 @@ public partial class AdminModule
 	private void OnPlayerDisconnected(BasePlayer player)
 	{
 		if (PlayersTab.BlindedPlayers.Contains(player)) PlayersTab.BlindedPlayers.Remove(player);
+
+		StopSpectating(player);
 	}
 
 	private bool CanAccess(BasePlayer player)
@@ -2972,7 +2974,6 @@ public class AdminData
 		public string EditableInputHighlight = "0.259 0.529 0.961";
 		public float OptionNameOpacity = 0.7f;
 		public float TitleUnderlineOpacity = 0.9f;
-
 	}
 }
 

@@ -33,24 +33,33 @@ public class FileLogger : IDisposable
 
 		var path = Path.Combine(Defines.GetLogsFolder(), $"{Name}.log");
 		var archiveFolder = Path.Combine(Defines.GetLogsFolder(), "archive");
+		var backupFailed = false;
 		OsEx.Folder.Create(archiveFolder);
 
 		if (backup && OsEx.File.Exists(path))
 		{
-			var backupPath = Path.Combine(archiveFolder, $"{Name}.backup.{DateTime.Now:yyyy.MM.dd}.log");
-			var logContent = OsEx.File.ReadText(path);
+			try
+			{
+				var backupPath = Path.Combine(archiveFolder, $"{Name}.backup.{DateTime.Now:yyyy.MM.dd}.log");
+				var logContent = OsEx.File.ReadText(path);
 
-			if (OsEx.File.Exists(backupPath))
-			{
-				File.AppendAllText(backupPath, logContent);
+				if (OsEx.File.Exists(backupPath))
+				{
+					File.AppendAllText(backupPath, logContent);
+				}
+				else
+				{
+					OsEx.File.Create(backupPath, logContent);
+				}
 			}
-			else
+			catch (Exception ex)
 			{
-				OsEx.File.Create(backupPath, logContent);
+				backupFailed = true;
+				Debug.LogError($"Failed backing up the current log file. Most likely because it's in use. ({ex.Message})\n{ex.StackTrace}");
 			}
 		}
 
-		if (archive)
+		if (archive && !backupFailed)
 		{
 			if (OsEx.File.Exists(path))
 			{
@@ -58,11 +67,18 @@ public class FileLogger : IDisposable
 			}
 		}
 
-		try
+		if (!backupFailed)
 		{
-			File.Delete(path);
+			try
+			{
+				File.Delete(path);
+			}
+			catch { }
 		}
-		catch { }
+		else
+		{
+			path = Path.Combine(Defines.GetLogsFolder(), $"{Name}_locked.log");
+		}
 
 		HasInit = true;
 
