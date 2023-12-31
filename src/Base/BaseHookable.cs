@@ -211,20 +211,25 @@ public class BaseHookable
 
 			var id = HookStringPool.GetOrAdd(string.IsNullOrEmpty(methodAttribute.Name) ? method.Name : methodAttribute.Name);
 
-			if (!HookCache.TryGetValue(id, out var hooks2))
+			if (!HookCache.TryGetValue(id, out var hooks))
 			{
-				HookCache.Add(id, hooks2 = new());
+				HookCache.Add(id, hooks = new());
+			}
+
+			if(hooks.Any(x => x.Method == method))
+			{
+				continue;
 			}
 
 			var hook = CachedHook.Make(method);
 
-			if (hooks2.Count > 0 && hooks2[0].Parameters.Length < hook.Parameters.Length)
+			if (hooks.Count > 0 && hooks[0].Parameters.Length < hook.Parameters.Length)
 			{
-				hooks2.Insert(0, hook);
+				hooks.Insert(0, hook);
 			}
 			else
 			{
-				hooks2.Add(hook);
+				hooks.Add(hook);
 			}
 		}
 
