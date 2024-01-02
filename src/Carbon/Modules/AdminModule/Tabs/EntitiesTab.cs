@@ -222,7 +222,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					tab.AddInputButton(column, "Owner", 0.3f,
 						new Tab.OptionInput(null, ap => $"{entity.OwnerID}", 0, false, (ap, args) =>
 						{
-							entity.OwnerID = args.ToString(string.Empty).ToUlong();
+							var id = args.ToString(string.Empty).ToUlong();
+							DoAll<BaseEntity>(e => e.OwnerID = id);
 
 							DrawEntities(tab, ap);
 							DrawEntitySettings(tab, 1, ap);
