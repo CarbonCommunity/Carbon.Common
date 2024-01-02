@@ -86,7 +86,6 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			{
 				var position = player.transform.position;
 				tab.AddInput(1, "Position", _ => $"{player.transform.position}", null);
-				tab.AddInput(1, "Rotation", _ => $"{player.transform.rotation}", null);
 			}
 			catch { }
 
