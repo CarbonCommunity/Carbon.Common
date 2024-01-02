@@ -212,7 +212,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 						}));
 				}
 
-				tab.AddInput(column, "Id", ap => multiSelection ? MultiselectionReplacement : $"{entity.net.ID} [{entity.GetType().FullName}]", null);
+				tab.AddInput(column, "Id", ap => multiSelection ? MultiselectionReplacement : $"{entity.net.ID} [<b>{entity.GetType().FullName}</b>]", null);
 				tab.AddInput(column, "Name", ap => multiSelection ? MultiselectionReplacement : $"{entity.ShortPrefabName}", null);
 
 				if (!multiSelection)
@@ -220,7 +220,13 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					var ownerPlayer = BasePlayer.FindByID(entity.OwnerID);
 
 					tab.AddInputButton(column, "Owner", 0.3f,
-						new Tab.OptionInput(null, ap => $"{(entity.OwnerID.IsSteamId() ? $"{(ownerPlayer == null ? entity.OwnerID.ToString() : ownerPlayer.displayName)}" : "None")}", 0, true, null),
+						new Tab.OptionInput(null, ap => $"{entity.OwnerID}", 0, false, (ap, args) =>
+						{
+							entity.OwnerID = args.ToString(string.Empty).ToUlong();
+
+							DrawEntities(tab, ap);
+							DrawEntitySettings(tab, 1, ap);
+						}),
 						new Tab.OptionButton("Select", ap =>
 						{
 							if (owner == null) return;
@@ -240,7 +246,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				});
 				tab.AddButton(column, "Edit Flags", ap => { DrawEntitySettings(tab, 0, ap); DrawEntityFlags(tab, ap, 1); });
 				tab.AddInput(column, "Position", ap => multiSelection ? MultiselectionReplacement : $"{entity.transform.position}", null);
-				tab.AddInput(column, "Rotation", ap => multiSelection ? MultiselectionReplacement : $"{entity.ServerRotation}", null);
+				tab.AddInput(column, "Rotation", ap => multiSelection ? MultiselectionReplacement : $"{entity.ServerRotation.eulerAngles}", null);
 
 				if (sameTypeSelection)
 				{
