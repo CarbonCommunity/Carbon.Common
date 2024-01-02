@@ -473,7 +473,9 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				{
 					if (!string.IsNullOrEmpty(groupFilter) && !group.Contains(groupFilter)) continue;
 
-					tab.AddButton(1, $"{group}", instance2 =>
+					var data = permission.GetGroupData(group);
+
+					tab.AddButton(1, string.IsNullOrEmpty(data.Title) ? $"{group}" : $"{data.Title} ({group})", instance2 =>
 					{
 						ap.SetStorage(tab, "group", group);
 						ap.ClearStorage(tab, "plugin");

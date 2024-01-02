@@ -240,7 +240,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				});
 				tab.AddButton(column, "Edit Flags", ap => { DrawEntitySettings(tab, 0, ap); DrawEntityFlags(tab, ap, 1); });
 				tab.AddInput(column, "Position", ap => multiSelection ? MultiselectionReplacement : $"{entity.transform.position}", null);
-				tab.AddInput(column, "Rotation", ap => multiSelection ? MultiselectionReplacement : $"{entity.transform.rotation}", null);
+				tab.AddInput(column, "Rotation", ap => multiSelection ? MultiselectionReplacement : $"{entity.ServerRotation}", null);
 
 				if (sameTypeSelection)
 				{
@@ -334,6 +334,18 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 									player.AsIPlayer().Ban(m.Get<string>("reason"), then);
 								});
+							}), new Tab.OptionButton(player.IsSleeping() ? "End Sleep" : "Sleep", ap =>
+							{
+								if (player.IsSleeping())
+								{
+									player.EndSleeping();
+								}
+								else
+								{
+									player.StartSleeping();
+								}
+
+								DrawEntitySettings(tab, 1, ap);
 							}));
 						}
 						tab.AddButtonArray(column,
