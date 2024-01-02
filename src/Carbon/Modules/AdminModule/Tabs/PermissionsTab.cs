@@ -21,9 +21,16 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 			var tab = new Tab("permissions", "Permissions", Community.Runtime.CorePlugin, (ap, tab) =>
 			{
+				ap.SetStorage(tab, "groupedit", false);
+
 				tab.ClearColumn(1);
 				tab.ClearColumn(2);
 				tab.ClearColumn(3);
+				ap.Clear();
+
+				ap.SetStorage(tab, "pluginedit", false);
+				ap.SetStorage(tab, "option", 0);
+
 				GeneratePlayers(tab, permission, ap);
 			}, 3);
 
@@ -92,11 +99,13 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					Singleton.Modal.Open(ap.Player, "Create New User", new()
 					{
 						["steamid"] = ModalModule.Modal.Field.Make("Steam ID", ModalModule.Modal.Field.FieldTypes.String, true, customIsInvalid: field => !field.Get<string>().IsSteamId() ? "Not a valid Steam ID." : permission.UserExists(field.Get<string>()) ? "User with the same Steam ID already exists." : string.Empty),
-						["displayname"] = ModalModule.Modal.Field.Make("Display Name", ModalModule.Modal.Field.FieldTypes.String)
+						["displayname"] = ModalModule.Modal.Field.Make("Display Name", ModalModule.Modal.Field.FieldTypes.String),
+						["language"] = ModalModule.Modal.Field.Make("Language", ModalModule.Modal.Field.FieldTypes.String)
 					}, (pl, mod) =>
 					{
 						var user = permission.GetUserData(mod.Get<string>("steamid"));
 						user.LastSeenNickname = mod.Get<string>("displayname");
+						user.Language = mod.Get<string>("language");
 
 						GeneratePlayers(tab, perms, ap);
 					});
