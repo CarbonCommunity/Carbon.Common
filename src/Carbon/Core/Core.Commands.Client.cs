@@ -133,21 +133,4 @@ public partial class CorePlugin : CarbonPlugin
 			Community.Runtime.CarbonClientManager.NetworkClientConfiguration(Community.Runtime.ClientConfig.Client);
 		}
 	}
-
-	[CommandVar("playergravity", "Used by Carbon (client) servers. Any Carbon client that joins will use this value for player gravity.")]
-	[AuthLevel(2)]
-	internal float PlayerGravity
-	{
-		get
-		{
-			return Community.Runtime.ClientConfig.Client.PlayerGravity;
-		}
-		set
-		{
-			if (Community.Runtime.ClientConfig.Client.PlayerGravity == value) return;
-			Community.Runtime.ClientConfig.Client.PlayerGravity = value;
-
-			Community.Runtime.CarbonClientManager.NetworkClientConfiguration(Community.Runtime.ClientConfig.Client);
-		}
-	}
 }

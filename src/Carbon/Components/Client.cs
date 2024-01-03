@@ -36,7 +36,6 @@ public struct Client
 		}
 
 		Logger.Log($" C4C: Carbon Client ready.");
-
 	}
 	public static void TerrainPostprocess()
 	{
