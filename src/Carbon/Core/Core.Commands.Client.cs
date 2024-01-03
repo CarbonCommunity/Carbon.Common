@@ -97,14 +97,14 @@ public partial class CorePlugin : CarbonPlugin
 	{
 		get
 		{
-			return Community.Runtime.ClientConfig.Gameplay.UseOldRecoil;
+			return Community.Runtime.ClientConfig.Client.UseOldRecoil;
 		}
 		set
 		{
-			if (Community.Runtime.ClientConfig.Gameplay.UseOldRecoil == value) return;
-			Community.Runtime.ClientConfig.Gameplay.UseOldRecoil = value;
+			if (Community.Runtime.ClientConfig.Client.UseOldRecoil == value) return;
+			Community.Runtime.ClientConfig.Client.UseOldRecoil = value;
 
-			if (Community.Runtime.ClientConfig.Gameplay.UseOldRecoil)
+			if (Community.Runtime.ClientConfig.Client.UseOldRecoil)
 			{
 				RecoilOverrider.ApplyOldRecoil();
 			}
@@ -113,7 +113,26 @@ public partial class CorePlugin : CarbonPlugin
 				RecoilOverrider.RestoreOriginals();
 			}
 
-			Community.Runtime.CarbonClientManager.NetworkOldRecoil(value);
+			Community.Runtime.CarbonClientManager.NetworkClientConfiguration(Community.Runtime.ClientConfig.Client);
+			Community.Runtime.SaveClientConfig();
+		}
+	}
+
+	[CommandVar("clientgravity", "Used by Carbon (client) servers. Any Carbon client that joins will use this value for gravity.")]
+	[AuthLevel(2)]
+	internal float ClientGravity
+	{
+		get
+		{
+			return Community.Runtime.ClientConfig.Client.ClientGravity;
+		}
+		set
+		{
+			if (Community.Runtime.ClientConfig.Client.ClientGravity == value) return;
+			Community.Runtime.ClientConfig.Client.ClientGravity = value;
+
+			Community.Runtime.CarbonClientManager.NetworkClientConfiguration(Community.Runtime.ClientConfig.Client);
+			Community.Runtime.SaveClientConfig();
 		}
 	}
 }

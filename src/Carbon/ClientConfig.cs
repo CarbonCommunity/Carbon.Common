@@ -5,6 +5,7 @@
  *
  */
 
+using Carbon.SDK.Client;
 using Newtonsoft.Json;
 using UnityEngine.Serialization;
 
@@ -15,19 +16,19 @@ public class ClientConfig
 {
 	public bool Enabled = false;
 	public EnvironmentOptions Environment = new();
-	public GameplayOptions Gameplay = new();
+	public ClientOptions Client = new();
 	public List<AddonEntry> Addons = new();
 
-	[JsonIgnore, NonSerialized] public string[] NetworkableAddons;
+	[JsonIgnore, NonSerialized] public string[] NetworkedAddonsCache;
 
-	public void RefreshNetworkables()
+	public void RefreshNetworkedAddons()
 	{
-		if (NetworkableAddons != null)
+		if (NetworkedAddonsCache != null)
 		{
-			Array.Clear(NetworkableAddons, 0, NetworkableAddons.Length);
+			Array.Clear(NetworkedAddonsCache, 0, NetworkedAddonsCache.Length);
 		}
 
-		NetworkableAddons = Community.Runtime.ClientConfig.Addons.Where(x => x.Enabled).Select(x => x.Url).ToArray();
+		NetworkedAddonsCache = Community.Runtime.ClientConfig.Addons.Where(x => x.Enabled).Select(x => x.Url).ToArray();
 	}
 
 	[Serializable]
@@ -43,11 +44,5 @@ public class ClientConfig
 	public class EnvironmentOptions
 	{
 		public bool NoMap = false;
-	}
-
-	[Serializable]
-	public class GameplayOptions
-	{
-		public bool UseOldRecoil = false;
 	}
 }
