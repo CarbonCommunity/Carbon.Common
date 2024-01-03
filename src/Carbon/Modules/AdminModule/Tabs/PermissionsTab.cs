@@ -186,6 +186,22 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					{
 						ap.SetStorage(tab, "groupedit", !groupEdit);
 						GeneratePlugins(tab, ap, permission, player, null);
+					}),
+					new Tab.OptionButton("Edit User", (ap2) =>
+					{
+						Singleton.Modal.Open(ap.Player, "Edit User", new()
+						{
+							["steamid"] = ModalModule.Modal.Field.Make("Steam ID", ModalModule.Modal.Field.FieldTypes.String, required: false, @default: player.Key, isReadOnly: true),
+							["displayname"] = ModalModule.Modal.Field.Make("Display Name", ModalModule.Modal.Field.FieldTypes.String, @default: player.Value.LastSeenNickname, required: true),
+							["language"] = ModalModule.Modal.Field.Make("Language", ModalModule.Modal.Field.FieldTypes.String, @default: player.Value.Language, required: true)
+						}, (pl, mod) =>
+						{
+							var user = permission.GetUserData(player.Key);
+							user.LastSeenNickname = mod.Get<string>("displayname");
+							user.Language = mod.Get<string>("language");
+
+							GeneratePlayers(tab, permission, ap);
+						});
 					}));
 			}
 			else
