@@ -119,11 +119,11 @@ public partial class CorePlugin : CarbonPlugin
 
 		if (async)
 		{
-			Community.Runtime.CarbonClientManager.InstallAddonsAsync(Community.Runtime.ClientConfig.NetworkableAddons);
+			Community.Runtime.CarbonClientManager.InstallAddonsAsync(Community.Runtime.ClientConfig.NetworkedAddonsCache);
 		}
 		else
 		{
-			Community.Runtime.CarbonClientManager.InstallAddons(Community.Runtime.ClientConfig.NetworkableAddons);
+			Community.Runtime.CarbonClientManager.InstallAddons(Community.Runtime.ClientConfig.NetworkedAddonsCache);
 		}
 	}
 }

@@ -25,7 +25,7 @@ public partial class CorePlugin : CarbonPlugin
 
 		Logger.Log($" C4C Editor: Received request to load addon from '{args.GetString(0)}'");
 
-		Community.Runtime.ClientConfig.RefreshNetworkables();
+		Community.Runtime.ClientConfig.RefreshNetworkedAddons();
 
 		ReloadCarbonClientAddons(true);
 	}
