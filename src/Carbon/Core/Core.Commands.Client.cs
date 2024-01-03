@@ -114,6 +114,7 @@ public partial class CorePlugin : CarbonPlugin
 			}
 
 			Community.Runtime.CarbonClientManager.NetworkClientConfiguration(Community.Runtime.ClientConfig.Client);
+			Community.Runtime.SaveClientConfig();
 		}
 	}
 
@@ -131,6 +132,7 @@ public partial class CorePlugin : CarbonPlugin
 			Community.Runtime.ClientConfig.Client.ClientGravity = value;
 
 			Community.Runtime.CarbonClientManager.NetworkClientConfiguration(Community.Runtime.ClientConfig.Client);
+			Community.Runtime.SaveClientConfig();
 		}
 	}
 }
