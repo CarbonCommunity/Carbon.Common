@@ -91,7 +91,7 @@ public partial class CorePlugin : CarbonPlugin
 		}
 	}
 
-	[CommandVar("oldrecoil", "Used by Carbon (client) servers. Any Carbon client that joins will use old properties version of recoil.")]
+	[CommandVar("client.oldrecoil", "Used by Carbon (client) servers. Any Carbon client that joins will use old properties version of recoil.")]
 	[AuthLevel(2)]
 	internal bool OldRecoil
 	{
@@ -118,7 +118,7 @@ public partial class CorePlugin : CarbonPlugin
 		}
 	}
 
-	[CommandVar("clientgravity", "Used by Carbon (client) servers. Any Carbon client that joins will use this value for gravity.")]
+	[CommandVar("client.gravity", "Used by Carbon (client) servers. Any Carbon client that joins will use this value for gravity.")]
 	[AuthLevel(2)]
 	internal float ClientGravity
 	{
