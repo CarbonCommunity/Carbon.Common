@@ -4,6 +4,7 @@ using API.Commands;
 using API.Contracts;
 using API.Events;
 using API.Hooks;
+using Carbon.Client;
 using Facepunch;
 using Newtonsoft.Json;
 using Carbon.Extensions;
@@ -109,6 +110,9 @@ public class Community
 	public static bool IsConfigReady => Runtime != null && Runtime.Config != null;
 
 	public Config Config
+	{ get; set; }
+
+	public Carbon.Client.ClientConfig ClientConfig
 	{ get; set; }
 
 	public RustPlugin CorePlugin
@@ -250,11 +254,43 @@ public class Community
 		if (needsSave) SaveConfig();
 	}
 
+	public void LoadClientConfig()
+	{
+		var needsSave = false;
+
+		if (!OsEx.File.Exists(Defines.GetClientConfigFile()))
+		{
+			ClientConfig ??= new();
+			needsSave = true;
+		}
+		else
+		{
+			ClientConfig = JsonConvert.DeserializeObject<ClientConfig>(OsEx.File.ReadText(Defines.GetClientConfigFile()));
+		}
+
+		if (ClientConfig.Addons.Count == 0)
+		{
+			ClientConfig.Addons.Add(new ClientConfig.AddonEntry { Url = "http//", Enabled = false });
+			needsSave = true;
+		}
+
+		ClientConfig.RefreshNetworkedAddons();
+
+		if(needsSave) SaveClientConfig();
+	}
+
 	public void SaveConfig()
 	{
 		if (Config == null) Config = new Config();
 
 		OsEx.File.Create(Defines.GetConfigFile(), JsonConvert.SerializeObject(Config, Formatting.Indented));
+	}
+
+	public void SaveClientConfig()
+	{
+		if (ClientConfig == null) ClientConfig = new ClientConfig();
+
+		OsEx.File.Create(Defines.GetClientConfigFile(), JsonConvert.SerializeObject(ClientConfig, Formatting.Indented));
 	}
 
 	#endregion
