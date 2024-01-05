@@ -103,10 +103,10 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 						["language"] = ModalModule.Modal.Field.Make("Language", ModalModule.Modal.Field.FieldTypes.String)
 					}, (pl, mod) =>
 					{
-						var user = permission.GetUserData(mod.Get<string>("steamid"));
+						var user = permission.GetUserData(mod.Get<string>("steamid"), addIfNotExisting: true);
 						user.LastSeenNickname = mod.Get<string>("displayname");
 						user.Language = mod.Get<string>("language");
-
+						
 						GeneratePlayers(tab, perms, ap);
 					});
 				}, ap => Tab.OptionButton.Types.None));
