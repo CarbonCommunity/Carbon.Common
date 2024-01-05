@@ -22,7 +22,7 @@ public partial class CorePlugin : CarbonPlugin
 		// OnEntityTakeDamage
 		if (HookCaller.CallStaticHook(2713007450, basePlayer, hitInfo) != null)
 		{
-			return true;
+			return Cache.True;
 		}
 
 		_isPlayerTakingDamage = true;
@@ -31,11 +31,12 @@ public partial class CorePlugin : CarbonPlugin
 		{
 			basePlayer.OnAttacked(hitInfo);
 		}
-		finally { }
+		finally
+		{
+			_isPlayerTakingDamage = false;
+		}
 
-		_isPlayerTakingDamage = false;
-
-		return true;
+		return Cache.True;
 	}
 	private object IOnBasePlayerHurt(BasePlayer basePlayer, HitInfo hitInfo)
 	{
