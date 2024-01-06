@@ -114,47 +114,6 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					tab.AddDropdown(1, Singleton.GetPhrase("logverbosity", ap.Player.UserIDString), ap => Config.LogVerbosity, (ap, index) => { Config.LogVerbosity = index; Community.Runtime.SaveConfig(); }, LogVerbosity);
 					tab.AddDropdown(1, Singleton.GetPhrase("logseverity", ap.Player.UserIDString), ap => (int)Config.LogSeverity, (ap, index) => { Config.LogSeverity = (API.Logger.Severity)index; Community.Runtime.SaveConfig(); }, Enum.GetNames(typeof(API.Logger.Severity)));
 
-					tab.AddName(1, Singleton.GetPhrase("conditionals", ap.Player.UserIDString), TextAnchor.MiddleLeft);
-
-					for(int i = 0; i < Config.ConditionalCompilationSymbols.Count; i++)
-					{
-						var index = i;
-						var symbol = Config.ConditionalCompilationSymbols[i];
-
-						tab.AddInputButton(1, string.Empty, 0.075f,
-							new Tab.OptionInput(null, ap => symbol, 0, false,
-							(ap, args) =>
-							{
-								Config.ConditionalCompilationSymbols[index] = args.ToString(string.Empty).ToUpper().Trim();
-								Refresh(tab, ap);
-								Community.Runtime.SaveConfig();
-							}),
-							new Tab.OptionButton("X", ap =>
-							{
-								Config.ConditionalCompilationSymbols.RemoveAt(index);
-								Refresh(tab, ap);
-								Community.Runtime.SaveConfig();
-							}, ap => Tab.OptionButton.Types.Important));
-					}
-
-					tab.AddInputButton(1, string.Empty, 0.075f,
-						new Tab.OptionInput(null, ap => ap.GetStorage<string>(tab, "conditional"), 0, false,
-							(ap, args) =>
-							{
-								ap.SetStorage(tab, "conditional", args.ToString(string.Empty).ToUpper().Trim());
-							}),
-						new Tab.OptionButton("+", ap =>
-						{
-							var value = ap.GetStorage<string>(tab, "conditional");
-							if (!string.IsNullOrEmpty(value))
-							{
-								Config.ConditionalCompilationSymbols.Add(value);
-								ap.SetStorage(tab, "conditional", string.Empty);
-								Refresh(tab, ap);
-								Community.Runtime.SaveConfig();
-							}
-						}, ap => Tab.OptionButton.Types.Selected));
-
 					tab.AddName(1, Singleton.GetPhrase("misc", ap.Player.UserIDString), TextAnchor.MiddleLeft);
 					tab.AddInput(1, Singleton.GetPhrase("serverlang", ap.Player.UserIDString), ap => Config.Language, (ap, args) => { Config.Language = args.ToString(" "); Community.Runtime.SaveConfig(); });
 					tab.AddInput(1, Singleton.GetPhrase("webreqip", ap.Player.UserIDString), ap => Config.WebRequestIp, (ap, args) =>
@@ -204,6 +163,47 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					tab.AddName(1, Singleton.GetPhrase("permissions", ap.Player.UserIDString), TextAnchor.MiddleLeft);
 					tab.AddInput(1, Singleton.GetPhrase("playerdefgroup", ap.Player.UserIDString), ap => Config.PlayerDefaultGroup, (ap, args) => { Config.PlayerDefaultGroup = args.ToString(string.Empty); Community.Runtime.SaveConfig(); });
 					tab.AddInput(1, Singleton.GetPhrase("admindefgroup", ap.Player.UserIDString), ap => Config.AdminDefaultGroup, (ap, args) => { Config.AdminDefaultGroup = args.ToString(string.Empty); Community.Runtime.SaveConfig(); });
+
+					tab.AddName(1, Singleton.GetPhrase("conditionals", ap.Player.UserIDString), TextAnchor.MiddleLeft);
+
+					for(int i = 0; i < Config.ConditionalCompilationSymbols.Count; i++)
+					{
+						var index = i;
+						var symbol = Config.ConditionalCompilationSymbols[i];
+
+						tab.AddInputButton(1, string.Empty, 0.075f,
+							new Tab.OptionInput(null, ap => symbol, 0, false,
+								(ap, args) =>
+								{
+									Config.ConditionalCompilationSymbols[index] = args.ToString(string.Empty).ToUpper().Trim();
+									Refresh(tab, ap);
+									Community.Runtime.SaveConfig();
+								}),
+							new Tab.OptionButton("X", ap =>
+							{
+								Config.ConditionalCompilationSymbols.RemoveAt(index);
+								Refresh(tab, ap);
+								Community.Runtime.SaveConfig();
+							}, ap => Tab.OptionButton.Types.Important));
+					}
+
+					tab.AddInputButton(1, string.Empty, 0.075f,
+						new Tab.OptionInput(null, ap => ap.GetStorage<string>(tab, "conditional"), 0, false,
+							(ap, args) =>
+							{
+								ap.SetStorage(tab, "conditional", args.ToString(string.Empty).ToUpper().Trim());
+							}),
+						new Tab.OptionButton("+", ap =>
+						{
+							var value = ap.GetStorage<string>(tab, "conditional");
+							if (!string.IsNullOrEmpty(value))
+							{
+								Config.ConditionalCompilationSymbols.Add(value);
+								ap.SetStorage(tab, "conditional", string.Empty);
+								Refresh(tab, ap);
+								Community.Runtime.SaveConfig();
+							}
+						}, ap => Tab.OptionButton.Types.Selected));
 
 					tab.AddName(1, Singleton.GetPhrase("debugging", ap.Player.UserIDString), TextAnchor.MiddleLeft);
 					tab.AddInput(1, Singleton.GetPhrase("scriptdebugorigin", ap.Player.UserIDString), ap => Config.ScriptDebuggingOrigin, (ap, args) => { Config.ScriptDebuggingOrigin = args.ToString(string.Empty); Community.Runtime.SaveConfig(); }, Singleton.GetPhrase("scriptdebugorigin_help", ap.Player.UserIDString));
