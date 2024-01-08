@@ -434,12 +434,11 @@ public class CuiButton
 }
 public class CuiElement
 {
-	[DefaultValue("AddUI CreatedPanel")]
 	[JsonProperty("name")]
-	public string Name { get; set; } = "AddUI CreatedPanel";
+	public string Name { get; set; }
 
 	[JsonProperty("parent")]
-	public string Parent { get; set; } = "Hud";
+	public string Parent { get; set; }
 
 	[JsonProperty("components")]
 	public List<ICuiComponent> Components { get; } = new List<ICuiComponent>();
