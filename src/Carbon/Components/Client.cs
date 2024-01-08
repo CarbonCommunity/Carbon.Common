@@ -35,7 +35,14 @@ public struct Client
 			ProcessPatches();
 		}
 
-		Logger.Log($" C4C: Carbon Client ready.");
+		if (Config.Enabled)
+		{
+			Logger.Log($" C4C: Carbon Client ready.");
+		}
+		else
+		{
+			Logger.Log($" C4C: Carbon Client disabled.");
+		}
 	}
 	public static void TerrainPostprocess()
 	{
