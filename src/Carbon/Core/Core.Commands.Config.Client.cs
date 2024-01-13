@@ -50,9 +50,23 @@ public partial class CorePlugin : CarbonPlugin
 		arg.ReplyWith("Saved Carbon Client config.");
 	}
 
-	[CommandVar("client.enabled", "Enable this if the server is Carbon client-enabled server. [Only applies on server restart]")]
+	[CommandVar("client.enabled",
+		"Enable this if the server is Carbon client-enabled server. [Only applies on server restart]")]
 	[AuthLevel(2)]
-	private bool ClientEnabled { get { return Community.Runtime.ClientConfig.Enabled; } set { Community.Runtime.ClientConfig.Enabled = value; Community.Runtime.SaveClientConfig(); } }
+	private bool ClientEnabled
+	{
+		get { return Community.Runtime.ClientConfig.Enabled; }
+		set
+		{
+			Community.Runtime.ClientConfig.Enabled = value;
+			Community.Runtime.SaveClientConfig();
+
+			if (value)
+			{
+				ConVar.Server.secure = false;
+			}
+		}
+	}
 
 	[ConsoleCommand("client.addons", "Prints a list of the currently available addons.")]
 	[AuthLevel(2)]
