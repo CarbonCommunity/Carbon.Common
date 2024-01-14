@@ -11,28 +11,42 @@ public struct Client
 {
 	public const string MAP_URL = "https://carbonmod.gg/assets/content/blank.map";
 
-	public static bool NomapEnabled => CommandLineEx.GetArgumentExists("+carbon.nomap");
-	public static bool ClientEnabled => CommandLineEx.GetArgumentExists("+carbon.client");
-	public static bool OldRecoil => Community.Runtime != null && Community.Runtime.CorePlugin is CorePlugin core && core.OldRecoil;
+	public static ClientConfig Config => Community.Runtime.ClientConfig;
 
 	public static void Init()
 	{
-		if (NomapEnabled)
+		if (Config.Enabled)
+		{
+			Logger.Warn($" C4C: Carbon Client enabled @ protocol {Protocol.VERSION}.");
+		}
+
+		if (Config.Environment.NoMap)
 		{
 			ConVar.Server.levelurl = MAP_URL;
 			ProcessConVars();
+
+			Logger.Log($" C4C: NoMap enabled.");
 		}
 
-		if (ClientEnabled)
+		if (Config.Enabled)
 		{
 			CorePlugin.RecoilOverrider.Initialize();
 
 			ProcessPatches();
 		}
+
+		if (Config.Enabled)
+		{
+			Logger.Log($" C4C: Carbon Client ready.");
+		}
+		else
+		{
+			Logger.Log($" C4C: Carbon Client disabled.");
+		}
 	}
 	public static void TerrainPostprocess()
 	{
-		if (!NomapEnabled)
+		if (!Config.Environment.NoMap)
 		{
 			return;
 		}

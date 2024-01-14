@@ -86,7 +86,6 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			{
 				var position = player.transform.position;
 				tab.AddInput(1, "Position", _ => $"{player.transform.position}", null);
-				tab.AddInput(1, "Rotation", _ => $"{player.transform.rotation}", null);
 			}
 			catch { }
 
@@ -136,6 +135,18 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 						player.AsIPlayer().Ban(m.Get<string>("reason"), then);
 					});
+				}), new Tab.OptionButton(player.IsSleeping() ? "End Sleep" : "Sleep", ap =>
+				{
+					if (player.IsSleeping())
+					{
+						player.EndSleeping();
+					}
+					else
+					{
+						player.StartSleeping();
+					}
+
+					ShowInfo(tab, ap, player);
 				}));
 			}
 
