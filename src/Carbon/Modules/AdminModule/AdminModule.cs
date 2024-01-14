@@ -273,6 +273,7 @@ public partial class AdminModule
 		if (!ConfigInstance.DisableEntitiesTab) RegisterTab(EntitiesTab.Get());
 		RegisterTab(PermissionsTab.Get());
 		RegisterTab(ModulesTab.Get());
+		RegisterTab(EnvironmentTab.Get());
 		if (!ConfigInstance.DisablePluginsTab) RegisterTab(PluginsTab.Get());
 	}
 

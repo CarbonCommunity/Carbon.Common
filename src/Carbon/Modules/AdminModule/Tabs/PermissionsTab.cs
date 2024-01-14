@@ -106,7 +106,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 						var user = permission.GetUserData(mod.Get<string>("steamid"), addIfNotExisting: true);
 						user.LastSeenNickname = mod.Get<string>("displayname");
 						user.Language = mod.Get<string>("language");
-						
+
 						GeneratePlayers(tab, perms, ap);
 					});
 				}, ap => Tab.OptionButton.Types.None));
@@ -494,7 +494,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					});
 				}, (_instance) => Tab.OptionButton.Types.Warned);
 
-				foreach (var group in permission.GetGroups())
+				foreach (var group in permission.GetGroups().OrderBy(x => permission.GetGroupData(x).Rank))
 				{
 					if (!string.IsNullOrEmpty(groupFilter) && !group.Contains(groupFilter)) continue;
 
