@@ -276,6 +276,11 @@ public class Community
 
 		ClientConfig.RefreshNetworkedAddons();
 
+		if (ClientConfig.Enabled)
+		{
+			ConVar.Server.secure = false;
+		}
+
 		if(needsSave) SaveClientConfig();
 	}
 
