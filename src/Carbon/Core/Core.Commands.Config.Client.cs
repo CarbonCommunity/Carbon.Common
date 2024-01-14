@@ -127,7 +127,7 @@ public partial class CorePlugin : CarbonPlugin
 		Community.Runtime.CarbonClientManager.UninstallAddons();
 	}
 
-	public void ReloadCarbonClientAddons(bool async = false)
+	public static void ReloadCarbonClientAddons(bool async = false)
 	{
 		Community.Runtime.CarbonClientManager.UninstallAddons();
 
