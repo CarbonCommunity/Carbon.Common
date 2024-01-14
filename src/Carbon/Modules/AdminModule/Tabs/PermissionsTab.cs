@@ -21,9 +21,16 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 			var tab = new Tab("permissions", "Permissions", Community.Runtime.CorePlugin, (ap, tab) =>
 			{
+				ap.SetStorage(tab, "groupedit", false);
+
 				tab.ClearColumn(1);
 				tab.ClearColumn(2);
 				tab.ClearColumn(3);
+				ap.Clear();
+
+				ap.SetStorage(tab, "pluginedit", false);
+				ap.SetStorage(tab, "option", 0);
+
 				GeneratePlayers(tab, permission, ap);
 			}, 3);
 
@@ -92,11 +99,13 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					Singleton.Modal.Open(ap.Player, "Create New User", new()
 					{
 						["steamid"] = ModalModule.Modal.Field.Make("Steam ID", ModalModule.Modal.Field.FieldTypes.String, true, customIsInvalid: field => !field.Get<string>().IsSteamId() ? "Not a valid Steam ID." : permission.UserExists(field.Get<string>()) ? "User with the same Steam ID already exists." : string.Empty),
-						["displayname"] = ModalModule.Modal.Field.Make("Display Name", ModalModule.Modal.Field.FieldTypes.String)
+						["displayname"] = ModalModule.Modal.Field.Make("Display Name", ModalModule.Modal.Field.FieldTypes.String),
+						["language"] = ModalModule.Modal.Field.Make("Language", ModalModule.Modal.Field.FieldTypes.String)
 					}, (pl, mod) =>
 					{
-						var user = permission.GetUserData(mod.Get<string>("steamid"));
+						var user = permission.GetUserData(mod.Get<string>("steamid"), addIfNotExisting: true);
 						user.LastSeenNickname = mod.Get<string>("displayname");
+						user.Language = mod.Get<string>("language");
 
 						GeneratePlayers(tab, perms, ap);
 					});
@@ -177,6 +186,22 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					{
 						ap.SetStorage(tab, "groupedit", !groupEdit);
 						GeneratePlugins(tab, ap, permission, player, null);
+					}),
+					new Tab.OptionButton("Edit User", (ap2) =>
+					{
+						Singleton.Modal.Open(ap.Player, "Edit User", new()
+						{
+							["steamid"] = ModalModule.Modal.Field.Make("Steam ID", ModalModule.Modal.Field.FieldTypes.String, required: false, @default: player.Key, isReadOnly: true),
+							["displayname"] = ModalModule.Modal.Field.Make("Display Name", ModalModule.Modal.Field.FieldTypes.String, @default: player.Value.LastSeenNickname, required: true),
+							["language"] = ModalModule.Modal.Field.Make("Language", ModalModule.Modal.Field.FieldTypes.String, @default: player.Value.Language, required: true)
+						}, (pl, mod) =>
+						{
+							var user = permission.GetUserData(player.Key);
+							user.LastSeenNickname = mod.Get<string>("displayname");
+							user.Language = mod.Get<string>("language");
+
+							GeneratePlayers(tab, permission, ap);
+						});
 					}));
 			}
 			else
@@ -469,11 +494,13 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					});
 				}, (_instance) => Tab.OptionButton.Types.Warned);
 
-				foreach (var group in permission.GetGroups())
+				foreach (var group in permission.GetGroups().OrderBy(x => permission.GetGroupData(x).Rank))
 				{
 					if (!string.IsNullOrEmpty(groupFilter) && !group.Contains(groupFilter)) continue;
 
-					tab.AddButton(1, $"{group}", instance2 =>
+					var data = permission.GetGroupData(group);
+
+					tab.AddButton(1, string.IsNullOrEmpty(data.Title) ? $"{group}" : $"{data.Title} ({group})", instance2 =>
 					{
 						ap.SetStorage(tab, "group", group);
 						ap.ClearStorage(tab, "plugin");

@@ -66,6 +66,11 @@ public class Defines
 		_initializeCommandLine();
 		return Path.Combine(GetRootFolder(), "config.json");
 	}
+	public static string GetClientConfigFile()
+	{
+		_initializeCommandLine();
+		return Path.Combine(GetRootFolder(), "config_client.json");
+	}
 	public static string GetCarbonAutoFile()
 	{
 		_initializeCommandLine();

@@ -105,9 +105,12 @@ public class OxideMod
 		LoadPlugin(name);
 	}
 
-	public void UnloadPlugin(string name)
+	public bool UnloadPlugin(string name)
 	{
+		var isValid = Community.Runtime.ScriptProcessor.InstanceBuffer.ContainsKey(name);
 		Community.Runtime.ScriptProcessor.Remove(name);
+
+		return isValid;
 	}
 
 	public void OnSave()

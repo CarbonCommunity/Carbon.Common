@@ -70,10 +70,6 @@ public class CarbonAuto : API.Abstracts.CarbonAuto
 			{
 				Refresh();
 
-				var type = typeof(CorePlugin);
-				var flags = BindingFlags.Instance | BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public;
-				var fields = type.GetFields(flags);
-				var properties = type.GetProperties(flags);
 				var core = Community.Runtime.CorePlugin;
 
 				using var sb = new StringBody();

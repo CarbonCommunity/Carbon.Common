@@ -487,7 +487,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			cui.CreateImage(container, reloadButton, "reload", "1 1 1 0.4", xMin: 0.225f, xMax: 0.775f, yMin: 0.25f, yMax: 0.75f);
 
 			if (TagFilter.Contains("peanus")) cui.CreateClientImage(container, grid, "https://media.discordapp.net/attachments/1078801277565272104/1085062151221293066/15ox1d_1.jpg?width=827&height=675", "1 1 1 1", xMax: 0.8f);
-			if (TagFilter.Contains("banan")) cui.CreateClientImage(container, grid, "https://cf-images.us-east-1.prod.boltdns.net/v1/static/507936866/2cd498e2-da08-4305-a86e-f9711ac41615/eac8316f-0061-40ed-b289-aac0bab35da0/1280x720/match/image.jpg", "1 1 1 1", xMax: 0.8f);
+			if (TagFilter.Contains("banan")) cui.CreateClientImage(container, grid, "https://upload.wikimedia.org/wikipedia/commons/2/23/Banan.jpg", "1 1 1 1", xMax: 0.8f);
 
 			var selectedPlugin = ap.GetStorage<Plugin>(tab, "selectedplugin");
 			if (selectedPlugin != null)

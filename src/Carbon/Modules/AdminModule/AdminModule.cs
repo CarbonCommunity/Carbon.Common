@@ -206,6 +206,8 @@ public partial class AdminModule
 				["watchers"] = "Watchers",
 				["scriptwatchers"] = "Script Watchers",
 				["scriptwatchers_help"] = "When disabled, you must load/unload plugins manually with 'c.load' or 'c.unload'.",
+				["zipscriptwatchers"] = "ZIP Script Watchers",
+				["zipscriptwatchers_help"] = "When disabled, you must load/unload plugins manually with 'c.load' or 'c.unload'.",
 				["scriptwatchersoption"] = "Script Watchers Option",
 				["scriptwatchersoption_help"] = "Indicates wether the script watcher (whenever enabled) listens to the 'carbon/plugins' folder only, or its subfolders.",
 				["filenamecheck"] = "File Name Check",
@@ -218,7 +220,17 @@ public partial class AdminModule
 				["serverlang"] = "Server Language",
 				["webreqip"] = "WebRequest IP",
 				["permmode"] = "Permission Mode",
-				["nocontent"] = "There are no options available.\nSelect a sub-tab to populate this area (if available)."
+				["nocontent"] = "There are no options available.\nSelect a sub-tab to populate this area (if available).",
+				["consoleinfo"] = "Show Console Info",
+				["consoleinfo_help"] = "Show the Windows-only Carbon information at the bottom of the console.",
+				["playerdefgroup"] = "Player Default Group",
+				["admindefgroup"] = "Admin Default Group",
+				["permissions"] = "Permissions",
+				["debugging"] = "Debugging",
+				["scriptdebugorigin"] = "Script Debugging Origin",
+				["scriptdebugorigin_help"] = "Whenever a debugger is attached on server boot, the compiler will replace the debugging origin of the plugin file.",
+				["conditionals"] = "Conditionals"
+
 			}
 		};
 	}
@@ -261,6 +273,7 @@ public partial class AdminModule
 		if (!ConfigInstance.DisableEntitiesTab) RegisterTab(EntitiesTab.Get());
 		RegisterTab(PermissionsTab.Get());
 		RegisterTab(ModulesTab.Get());
+		RegisterTab(EnvironmentTab.Get());
 		if (!ConfigInstance.DisablePluginsTab) RegisterTab(PluginsTab.Get());
 	}
 
@@ -308,6 +321,8 @@ public partial class AdminModule
 	private void OnPlayerDisconnected(BasePlayer player)
 	{
 		if (PlayersTab.BlindedPlayers.Contains(player)) PlayersTab.BlindedPlayers.Remove(player);
+
+		StopSpectating(player);
 	}
 
 	private bool CanAccess(BasePlayer player)
@@ -2353,10 +2368,17 @@ public partial class AdminModule
 		using var cui = new CUI(Singleton.Handler);
 		var container = cui.CreateContainer(SpectatePanelId, color: Cache.CUI.BlankColor, needsCursor: false, parent: ClientPanels.Overlay);
 		var panel = cui.CreatePanel(container, SpectatePanelId, Cache.CUI.BlankColor);
-		var item = target.GetItem();
-		cui.CreateText(container, panel,
-			color: "1 1 1 0.2",
-			text: $"YOU'RE SPECTATING ".SpacedString(1, false) + $"<b>{(targetPlayer == null ? item != null ? item.info.displayName.english.ToUpper().SpacedString(1) : target.ShortPrefabName.ToUpper().SpacedString(1) : targetPlayer.displayName.ToUpper().SpacedString(1))}</b>", 15);
+
+		if (Singleton.ConfigInstance.SpectatingInfoOverlay)
+		{
+			var item = target.GetItem();
+			cui.CreateText(container, panel,
+				color: "1 1 1 0.2",
+				text: $"YOU'RE SPECTATING ".SpacedString(1, false) +
+				      $"<b>{(targetPlayer == null ? item != null ? item.info.displayName.english.ToUpper().SpacedString(1) : target.ShortPrefabName.ToUpper().SpacedString(1) : targetPlayer.displayName.ToUpper().SpacedString(1))}</b>",
+				15);
+		}
+
 		cui.CreateProtectedButton(container, panel,
 			color: "#1c6aa0", textColor: "1 1 1 0.7",
 			text: "END SPECTATE".SpacedString(1), 10,
@@ -2959,6 +2981,7 @@ public class AdminConfig
 	public int MinimumAuthLevel = 2;
 	public bool DisableEntitiesTab = true;
 	public bool DisablePluginsTab = false;
+	public bool SpectatingInfoOverlay = true;
 }
 public class AdminData
 {
@@ -2972,7 +2995,6 @@ public class AdminData
 		public string EditableInputHighlight = "0.259 0.529 0.961";
 		public float OptionNameOpacity = 0.7f;
 		public float TitleUnderlineOpacity = 0.9f;
-
 	}
 }
 

@@ -336,7 +336,7 @@ public static class ModLoader
 		return recursive && IsValidPlugin(type.BaseType, recursive);
 	}
 
-	public static void ProcessCommands(Type type, BaseHookable hookable = null, BindingFlags flags = BindingFlags.NonPublic | BindingFlags.Instance, string prefix = null)
+	public static void ProcessCommands(Type type, BaseHookable hookable = null, BindingFlags flags = BindingFlags.NonPublic | BindingFlags.Instance, string prefix = null, bool hidden = false)
 	{
 		var methods = type.GetMethods(flags);
 		var fields = type.GetFields(flags | BindingFlags.Public);
@@ -363,19 +363,19 @@ public static class ModLoader
 				foreach (var commandName in command.Names)
 				{
 					var name = string.IsNullOrEmpty(prefix) ? commandName : $"{prefix}.{commandName}";
-					Community.Runtime.CorePlugin.cmd.AddChatCommand(name, hookable, method, help: string.Empty, reference: method, permissions: ps, groups: gs, authLevel: authLevel, cooldown: cooldownTime, silent: true);
-					Community.Runtime.CorePlugin.cmd.AddConsoleCommand(name, hookable, method, help: string.Empty, reference: method, permissions: ps, groups: gs, authLevel: authLevel, cooldown: cooldownTime, silent: true);
+					Community.Runtime.CorePlugin.cmd.AddChatCommand(name, hookable, method, help: string.Empty, reference: method, permissions: ps, groups: gs, authLevel: authLevel, cooldown: cooldownTime, isHidden: hidden, silent: true);
+					Community.Runtime.CorePlugin.cmd.AddConsoleCommand(name, hookable, method, help: string.Empty, reference: method, permissions: ps, groups: gs, authLevel: authLevel, cooldown: cooldownTime, isHidden: hidden, silent: true);
 				}
 			}
 
 			if (chatCommand != null)
 			{
-				Community.Runtime.CorePlugin.cmd.AddChatCommand(string.IsNullOrEmpty(prefix) ? chatCommand.Name : $"{prefix}.{chatCommand.Name}", hookable, method, help: chatCommand.Help, reference: method, permissions: ps, groups: gs, authLevel: authLevel, cooldown: cooldownTime, silent: true);
+				Community.Runtime.CorePlugin.cmd.AddChatCommand(string.IsNullOrEmpty(prefix) ? chatCommand.Name : $"{prefix}.{chatCommand.Name}", hookable, method, help: chatCommand.Help, reference: method, permissions: ps, groups: gs, authLevel: authLevel, cooldown: cooldownTime, isHidden: hidden, silent: true);
 			}
 
 			if (consoleCommand != null)
 			{
-				Community.Runtime.CorePlugin.cmd.AddConsoleCommand(string.IsNullOrEmpty(prefix) ? consoleCommand.Name : $"{prefix}.{consoleCommand.Name}", hookable, method, help: consoleCommand.Help, reference: method, permissions: ps, groups: gs, authLevel: authLevel, cooldown: cooldownTime, silent: true);
+				Community.Runtime.CorePlugin.cmd.AddConsoleCommand(string.IsNullOrEmpty(prefix) ? consoleCommand.Name : $"{prefix}.{consoleCommand.Name}", hookable, method, help: consoleCommand.Help, reference: method, permissions: ps, groups: gs, authLevel: authLevel, cooldown: cooldownTime, isHidden: hidden, silent: true);
 			}
 
 			if (protectedCommand != null)
@@ -457,7 +457,7 @@ public static class ModLoader
 					if (value != null && var.Protected) value = new string('*', value.ToString().Length);
 
 					Community.LogCommand($"{command}: \"{value}\"", player);
-				}, help: var.Help, reference: field, permissions: ps, groups: gs, authLevel: authLevel, cooldown: cooldownTime, @protected: var.Protected, silent: true);
+				}, help: var.Help, reference: field, permissions: ps, groups: gs, authLevel: authLevel, cooldown: cooldownTime, @protected: var.Protected, isHidden: hidden, silent: true);
 			}
 		}
 
@@ -523,7 +523,7 @@ public static class ModLoader
 					if (value != null && var.Protected) value = new string('*', value.ToString().Length);
 
 					Community.LogCommand($"{command}: \"{value}\"", player);
-				}, help: var.Help, reference: property, permissions: ps, groups: gs, authLevel: authLevel, cooldown: cooldownTime, @protected: var.Protected, silent: true);
+				}, help: var.Help, reference: property, permissions: ps, groups: gs, authLevel: authLevel, cooldown: cooldownTime, @protected: var.Protected, isHidden: hidden, silent: true);
 			}
 		}
 
