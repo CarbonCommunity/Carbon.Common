@@ -123,9 +123,9 @@ public partial class AdminModule
 		Unsubscribe("OnEntityVisibilityCheck");
 		Unsubscribe("OnEntityDistanceCheck");
 
-		for (int i = 0; i <= AccessLevels.Length; i++)
+		foreach (var level in AccessLevels)
 		{
-			RegisterPermission($"adminmodule.{AccessLevels[i]}");
+			RegisterPermission($"adminmodule.{level}");
 		}
 
 		if (!_logRegistration)
