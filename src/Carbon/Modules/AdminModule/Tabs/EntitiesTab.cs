@@ -309,7 +309,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 						tab.AddInput(column, "Steam ID", ap => multiSelection ? MultiselectionReplacement : player.UserIDString);
 						tab.AddInput(column, "IP", ap => multiSelection ? MultiselectionReplacement : $"{player.net?.connection?.ipaddress}", null, hidden: true);
 
-						if (!multiSelection && Singleton.HasAccessLevel(ap3?.Player, 2))
+						if (!multiSelection && Singleton.HasAccess(ap3?.Player, 2))
 						{
 							tab.AddButtonArray(1, new Tab.OptionButton("Kick", ap =>
 							{

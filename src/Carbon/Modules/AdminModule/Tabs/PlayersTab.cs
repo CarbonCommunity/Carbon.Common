@@ -34,7 +34,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		{
 			tab.ClearColumn(0);
 
-			if (Singleton.HasAccessLevel(ap.Player, 1))
+			if (Singleton.HasAccess(ap.Player, 1))
 			{
 				tab.AddInput(0, "Search", ap => ap?.GetStorage<string>(tab, "playerfilter"), (ap2, args) => { ap2.SetStorage(tab, "playerfilter", args.ToString(" ")); RefreshPlayers(tab, ap2); });
 
@@ -89,7 +89,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			}
 			catch { }
 
-			if (Singleton.HasAccessLevel(aap.Player, 3))
+			if (Singleton.HasAccess(aap.Player, 3))
 			{
 				tab.AddName(1, $"Permissions", TextAnchor.MiddleLeft);
 				{
@@ -102,11 +102,11 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 						ap.SetStorage(tab, "player", player.UserIDString);
 						PermissionsTab.GeneratePlayers(perms, permission, ap);
 						PermissionsTab.GeneratePlugins(perms, ap, permission, permission.FindUser(player.UserIDString), null);
-					}, (_) => Singleton.HasAccessLevel(player, 3) ? Tab.OptionButton.Types.None : Tab.OptionButton.Types.Important);
+					}, (_) => Singleton.HasAccess(player, 3) ? Tab.OptionButton.Types.None : Tab.OptionButton.Types.Important);
 				}
 			}
 
-			if (Singleton.HasAccessLevel(aap.Player, 2))
+			if (Singleton.HasAccess(aap.Player, 2))
 			{
 				tab.AddButtonArray(1, new Tab.OptionButton("Kick", _ =>
 				{
