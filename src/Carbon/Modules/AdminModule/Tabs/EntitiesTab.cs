@@ -7,6 +7,7 @@
  *
  */
 
+using Facepunch;
 using Network;
 using StringEx = Carbon.Extensions.StringEx;
 
@@ -33,7 +34,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 		public static Tab Get()
 		{
-			var tab = new Tab("entities", "Entities", Community.Runtime.CorePlugin, (ap, tab2) => { tab2.ClearColumn(1); ResetSelection(tab2, ap); DrawEntities(tab2, ap); }, 2);
+			var tab = new Tab("entities", "Entities", Community.Runtime.CorePlugin, (ap, tab2) => { tab2.ClearColumn(1); ResetSelection(tab2, ap); DrawEntities(tab2, ap); }, "entities.use");
 			tab.AddColumn(0);
 			tab.AddColumn(1);
 
@@ -189,7 +190,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				var player = entity as BasePlayer;
 				var owner = BasePlayer.FindByID(entity.OwnerID);
 
-				if (player != ap3?.Player)
+				if (player != ap3?.Player && Singleton.HasAccess(ap3.Player, "entities.kill_entity"))
 				{
 					tab.AddButtonArray(column,
 						new Tab.OptionButton("Kill", ap =>
@@ -217,10 +218,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 				if (!multiSelection)
 				{
-					var ownerPlayer = BasePlayer.FindByID(entity.OwnerID);
-
 					tab.AddInputButton(column, "Owner", 0.3f,
-						new Tab.OptionInput(null, ap => $"{entity.OwnerID}", 0, false, (ap, args) =>
+						new Tab.OptionInput(null, ap => $"{entity.OwnerID}", 0, !Singleton.HasAccess(ap3.Player, "entities.owner_change"), (ap, args) =>
 						{
 							var id = args.ToString(string.Empty).ToUlong();
 							DoAll<BaseEntity>(e => e.OwnerID = id);
@@ -274,7 +273,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 					if (entity is StorageContainer storage)
 					{
-						if (!multiSelection)
+						if (!multiSelection && Singleton.HasAccess(ap3.Player, "entities.loot_entity"))
 						{
 							tab.AddButton(column, "Loot Container", ap =>
 							{
@@ -309,38 +308,47 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 						tab.AddInput(column, "Steam ID", ap => multiSelection ? MultiselectionReplacement : player.UserIDString);
 						tab.AddInput(column, "IP", ap => multiSelection ? MultiselectionReplacement : $"{player.net?.connection?.ipaddress}", null, hidden: true);
 
-						if (!multiSelection && Singleton.HasAccess(ap3?.Player, 2))
+						if (!multiSelection && (Singleton.HasPermission(ap3?.Player, "carbon.cmod") || player.userID.IsSteamId()))
 						{
 							tab.AddButtonArray(1, new Tab.OptionButton("Kick", ap =>
 							{
-								Singleton.Modal.Open(ap.Player, $"Kick {player.displayName}", new Dictionary<string, ModalModule.Modal.Field>
-								{
-									["reason"] = ModalModule.Modal.Field.Make("Reason", ModalModule.Modal.Field.FieldTypes.String, @default: "Stop doing that.")
-								}, onConfirm: (p, m) =>
-								{
-									player.Kick(m.Get<string>("reason"));
-								});
+								Singleton.Modal.Open(ap.Player, $"Kick {player.displayName}",
+									new Dictionary<string, ModalModule.Modal.Field>
+									{
+										["reason"] = ModalModule.Modal.Field.Make("Reason",
+											ModalModule.Modal.Field.FieldTypes.String, @default: "Stop doing that.")
+									}, onConfirm: (p, m) =>
+									{
+										player.Kick(m.Get<string>("reason"));
+									});
 							}), new Tab.OptionButton("Ban", ap =>
 							{
-								Singleton.Modal.Open(ap.Player, $"Ban {player.displayName}", new Dictionary<string, ModalModule.Modal.Field>
-								{
-									["reason"] = ModalModule.Modal.Field.Make("Reason", ModalModule.Modal.Field.FieldTypes.String, @default: "Stop doing that."),
-									["until"] = ModalModule.Modal.ButtonField.MakeButton("Until", "Select Date", m =>
+								Singleton.Modal.Open(ap.Player, $"Ban {player.displayName}",
+									new Dictionary<string, ModalModule.Modal.Field>
 									{
-										Core.NextTick(() => Singleton.DatePicker.Draw(ap.Player, date => ap.SetStorage(tab, "date", date)));
-									})
-								}, onConfirm: (p, m) =>
-								{
-									var date = ap.GetStorage(tab, "date", DateTime.UtcNow.AddYears(100));
-									var now = DateTime.UtcNow;
-									date = new DateTime(date.Year, date.Month, date.Day, now.Hour, now.Minute, now.Second, DateTimeKind.Utc);
+										["reason"] =
+											ModalModule.Modal.Field.Make("Reason",
+												ModalModule.Modal.Field.FieldTypes.String,
+												@default: "Stop doing that."),
+										["until"] = ModalModule.Modal.ButtonField.MakeButton("Until", "Select Date",
+											m =>
+											{
+												Core.NextTick(() => Singleton.DatePicker.Draw(ap.Player,
+													date => ap.SetStorage(tab, "date", date)));
+											})
+									}, onConfirm: (p, m) =>
+									{
+										var date = ap.GetStorage(tab, "date", DateTime.UtcNow.AddYears(100));
+										var now = DateTime.UtcNow;
+										date = new DateTime(date.Year, date.Month, date.Day, now.Hour, now.Minute,
+											now.Second, DateTimeKind.Utc);
 
-									if (now <= date) date = DateTime.UtcNow.AddYears(100);
+										if (now <= date) date = DateTime.UtcNow.AddYears(100);
 
-									var then = now - date;
+										var then = now - date;
 
-									player.AsIPlayer().Ban(m.Get<string>("reason"), then);
-								});
+										player.AsIPlayer().Ban(m.Get<string>("reason"), then);
+									});
 							}), new Tab.OptionButton(player.IsSleeping() ? "End Sleep" : "Sleep", ap =>
 							{
 								if (player.IsSleeping())
@@ -355,8 +363,13 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 								DrawEntitySettings(tab, 1, ap);
 							}));
 						}
-						tab.AddButtonArray(column,
-							new Tab.OptionButton("Loot", ap =>
+						else tab.AddText(1, $"You need 'carbon.cmod' permission to kick, ban or make a player to sleep.", 17, "white");
+
+						var temp = Pool.GetList<Tab.OptionButton>();
+
+						if (Singleton.HasAccess(ap3.Player, "entities.loot_players"))
+						{
+							temp.Add(new Tab.OptionButton("Loot", ap =>
 							{
 								if (multiSelection) return;
 
@@ -381,8 +394,12 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 									ap.Player.ClientRPCPlayer(null, ap.Player, "RPC_OpenLootPanel", "player_corpse");
 								});
-							}),
-							new Tab.OptionButton("Respawn", ap =>
+							}));
+						}
+
+						if (Singleton.HasAccess(ap3.Player, "entities.respawn_players"))
+						{
+							temp.Add( new Tab.OptionButton("Respawn", ap =>
 							{
 								tab.CreateDialog($"Are you sure about that?", ap =>
 								{
@@ -394,21 +411,41 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 									});
 								}, null);
 							}));
+						}
 
-						tab.AddName(1, "Inventory Lock");
-						tab.AddButtonArray(1,
-							new Tab.OptionButton("Main", ap =>
-							{
-								player.inventory.containerMain.SetLocked(!player.inventory.containerMain.IsLocked());
-							}, ap => player.inventory.containerMain.IsLocked() ? Tab.OptionButton.Types.Important : Tab.OptionButton.Types.None),
-							new Tab.OptionButton("Belt", ap =>
-							{
-								player.inventory.containerBelt.SetLocked(!player.inventory.containerBelt.IsLocked());
-							}, ap => player.inventory.containerBelt.IsLocked() ? Tab.OptionButton.Types.Important : Tab.OptionButton.Types.None),
-							new Tab.OptionButton("Wear", ap =>
-							{
-								player.inventory.containerWear.SetLocked(!player.inventory.containerWear.IsLocked());
-							}, ap => player.inventory.containerWear.IsLocked() ? Tab.OptionButton.Types.Important : Tab.OptionButton.Types.None));
+						tab.AddButtonArray(column, temp.ToArray());
+
+						Pool.FreeList(ref temp);
+
+						if (Singleton.HasAccess(ap3.Player, "entities.inventory_management"))
+						{
+							tab.AddName(1, "Inventory Lock");
+							tab.AddButtonArray(1,
+								new Tab.OptionButton("Main", ap =>
+									{
+										player.inventory.containerMain.SetLocked(!player.inventory.containerMain
+											.IsLocked());
+									},
+									ap => player.inventory.containerMain.IsLocked()
+										? Tab.OptionButton.Types.Important
+										: Tab.OptionButton.Types.None),
+								new Tab.OptionButton("Belt", ap =>
+									{
+										player.inventory.containerBelt.SetLocked(!player.inventory.containerBelt
+											.IsLocked());
+									},
+									ap => player.inventory.containerBelt.IsLocked()
+										? Tab.OptionButton.Types.Important
+										: Tab.OptionButton.Types.None),
+								new Tab.OptionButton("Wear", ap =>
+									{
+										player.inventory.containerWear.SetLocked(!player.inventory.containerWear
+											.IsLocked());
+									},
+									ap => player.inventory.containerWear.IsLocked()
+										? Tab.OptionButton.Types.Important
+										: Tab.OptionButton.Types.None));
+						}
 
 						tab.AddInput(column, "PM", null, (ap, args) =>
 						{

@@ -55,7 +55,21 @@ public partial class AdminModule
 	const string SpectatePanelId = "carbonmodularuispectate";
 	readonly string[] AccessLevels = new[]
 	{
-		"wizard"
+		"wizard",
+		"carbon.use",
+		"carbon.server_settings",
+		"carbon.server_config",
+		"carbon.server_info",
+		"carbon.server_console",
+		"entities.use",
+		"entities.kill_entity",
+		"entities.loot_entity",
+		"entities.loot_players",
+		"entities.respawn_players",
+		"entities.blind_players",
+		"entities.spectate_players",
+		"entities.inventory_management",
+		"entities.owner_change"
 	};
 	private const string OptionColor = "0.2 0.2 0.2 0.75";
 
