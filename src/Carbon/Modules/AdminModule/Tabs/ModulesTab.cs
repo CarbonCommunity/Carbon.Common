@@ -18,16 +18,21 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		public static Tab Get()
 		{
 			var tab = (Tab)null;
-			void Draw()
+			void Draw(PlayerSession ap)
 			{
 				tab.AddColumn(0, true);
 				tab.AddColumn(1, true);
 
+				tab.AddInput(0, "Search", null, (ap, args) =>
+				{
+					ap.SetStorage(tab, "search", args.ToString(" "));
+				});
+
 				tab.AddName(0, "Core Modules");
-				Generate(x => x.ForceEnabled);
+				Generate(x => x.ForceEnabled && (ap.HasStorage(tab, "search") ? x.Name.ToLower().Contains(ap.GetStorage<string>(tab, "search" ).ToLower()) : true));
 
 				tab.AddName(0, "Other Modules");
-				Generate(x => !x.ForceEnabled);
+				Generate(x => !x.ForceEnabled && (ap.HasStorage(tab, "search") ? x.Name.ToLower().Contains(ap.GetStorage<string>(tab, "search" ).ToLower()) : true));
 
 				void Generate(Func<BaseModule, bool> condition)
 				{
@@ -41,8 +46,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 								new Tab.OptionButton(hookable.Name, ap =>
 								{
 									ap.SetStorage(tab, "selectedmodule", module);
-									Draw();
-									DrawModuleSettings(tab, module);
+									Draw(ap);
+									DrawModuleSettings(tab, module, ap);
 								}, type: ap => ap.GetStorage<BaseModule>(tab, "selectedmodule") == module ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.None),
 								new Tab.OptionButton($"{(module.ForceEnabled ? "Always Enabled" : module.GetEnabled() ? "Enabled" : "Disabled")}", ap =>
 								{
@@ -51,18 +56,18 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 									module.SetEnabled(!module.GetEnabled());
 									module.Save();
 									ap.SetStorage(tab, "selectedmodule", module);
-									Draw();
-									DrawModuleSettings(tab, module);
+									Draw(ap);
+									DrawModuleSettings(tab, module, ap);
 								}, type: ap => module.ForceEnabled ? Tab.OptionButton.Types.Warned : module.GetEnabled() ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.None));
 						}
 					}
 				}
 			}
 
-			tab = new Tab("modules", "Modules", Community.Runtime.CorePlugin, access: 3, onChange: (ap, tab) =>
+			tab = new Tab("modules", "Modules", Community.Runtime.CorePlugin, access: "modules.use", onChange: (ap, tab) =>
 			{
 				ap.ClearStorage(tab, "selectedmodule");
-				Draw();
+				Draw(ap);
 			});
 
 			return tab;
@@ -73,7 +78,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			"Version"
 		};
 
-		internal static void DrawModuleSettings(Tab tab, BaseModule module)
+		internal static void DrawModuleSettings(Tab tab, BaseModule module, PlayerSession ap)
 		{
 			tab.ClearColumn(1);
 
@@ -82,32 +87,35 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 			if (!module.ForceEnabled)
 			{
-				tab.AddToggle(1, "Enabled", ap2 => { module.SetEnabled(!module.GetEnabled()); module.Save(); DrawModuleSettings(tab, module); }, ap2 => module.GetEnabled());
+				tab.AddToggle(1, "Enabled", ap2 => { module.SetEnabled(!module.GetEnabled()); module.Save(); DrawModuleSettings(tab, module, ap); }, ap2 => module.GetEnabled());
 			}
 
 			tab.AddButtonArray(1,
 				new Tab.OptionButton("Save", ap => { module.Save(); }),
 				new Tab.OptionButton("Load", ap => { module.Load(); }));
 
-			tab.AddButton(1, "Edit Config", ap =>
+			if (Singleton.HasAccess(ap.Player, "modules.config_edit"))
 			{
-				var moduleConfigFile = Path.Combine(Core.Defines.GetModulesFolder(), module.Name, "config.json");
-				ap.SelectedTab = ConfigEditor.Make(OsEx.File.ReadText(moduleConfigFile),
-					(ap, jobject) =>
-					{
-						Singleton.SetTab(ap.Player, "modules");
-						Singleton.Draw(ap.Player);
-					},
-					(ap, jobject) =>
-					{
-						OsEx.File.Create(moduleConfigFile, jobject.ToString(Formatting.Indented));
-						module.SetEnabled(false);
-						module.Load();
+				tab.AddButton(1, "Edit Config", ap =>
+				{
+					var moduleConfigFile = Path.Combine(Core.Defines.GetModulesFolder(), module.Name, "config.json");
+					ap.SelectedTab = ConfigEditor.Make(OsEx.File.ReadText(moduleConfigFile),
+						(ap, jobject) =>
+						{
+							Singleton.SetTab(ap.Player, "modules");
+							Singleton.Draw(ap.Player);
+						},
+						(ap, jobject) =>
+						{
+							OsEx.File.Create(moduleConfigFile, jobject.ToString(Formatting.Indented));
+							module.SetEnabled(false);
+							module.Load();
 
-						Singleton.SetTab(ap.Player, "modules");
-						Singleton.Draw(ap.Player);
-					}, null, _configBlacklist);
-			});
+							Singleton.SetTab(ap.Player, "modules");
+							Singleton.Draw(ap.Player);
+						}, null, _configBlacklist);
+				});
+			}
 		}
 	}
 }

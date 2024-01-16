@@ -7,6 +7,7 @@
  *
  */
 
+using API.Abstracts;
 using Facepunch;
 using Network;
 using StringEx = Carbon.Extensions.StringEx;
@@ -253,7 +254,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					if (!multiSelection)
 					{
 						tab.AddButtonArray(column,
-							new Tab.OptionButton("TeleportTo", ap => { ap.Player.Teleport(entity.transform.position); }),
+							new Tab.OptionButton("TeleportTo",
+								ap => { ap.Player.Teleport(entity.transform.position); }),
 							new Tab.OptionButton("Teleport2Me", ap =>
 							{
 								tab.CreateDialog($"Are you sure about that?", ap =>
@@ -304,11 +306,16 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 					if (entity is BasePlayer)
 					{
-						tab.AddInput(column, "Display Name", ap => multiSelection ? MultiselectionReplacement : player.displayName);
-						tab.AddInput(column, "Steam ID", ap => multiSelection ? MultiselectionReplacement : player.UserIDString);
-						tab.AddInput(column, "IP", ap => multiSelection ? MultiselectionReplacement : $"{player.net?.connection?.ipaddress}", null, hidden: true);
+						tab.AddInput(column, "Display Name",
+							ap => multiSelection ? MultiselectionReplacement : player.displayName);
+						tab.AddInput(column, "Steam ID",
+							ap => multiSelection ? MultiselectionReplacement : player.UserIDString);
+						tab.AddInput(column, "IP",
+							ap => multiSelection ? MultiselectionReplacement : $"{player.net?.connection?.ipaddress}",
+							null, hidden: true);
 
-						if (!multiSelection && (Singleton.HasPermission(ap3?.Player, "carbon.cmod") || player.userID.IsSteamId()))
+						if (!multiSelection && (Singleton.HasPermission(ap3?.Player, "carbon.cmod") ||
+						                        player.userID.IsSteamId()))
 						{
 							tab.AddButtonArray(1, new Tab.OptionButton("Kick", ap =>
 							{
@@ -363,7 +370,9 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 								DrawEntitySettings(tab, 1, ap);
 							}));
 						}
-						else tab.AddText(1, $"You need 'carbon.cmod' permission to kick, ban or make a player to sleep.", 17, "white");
+						else
+							tab.AddText(1, $"You need 'carbon.cmod' permission to kick, ban or make a player to sleep.",
+								17, "white");
 
 						var temp = Pool.GetList<Tab.OptionButton>();
 
@@ -399,7 +408,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 						if (Singleton.HasAccess(ap3.Player, "entities.respawn_players"))
 						{
-							temp.Add( new Tab.OptionButton("Respawn", ap =>
+							temp.Add(new Tab.OptionButton("Respawn", ap =>
 							{
 								tab.CreateDialog($"Are you sure about that?", ap =>
 								{
@@ -455,7 +464,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 							});
 						});
 
-						if (!multiSelection && ap3 != null)
+						if (!multiSelection && ap3 != null && Singleton.HasAccess(ap3.Player, "entities.blind_players"))
 						{
 							if (!PlayersTab.BlindedPlayers.Contains(player))
 							{
@@ -464,11 +473,13 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 									tab.CreateDialog("Are you sure you want to blind the player?", ap =>
 									{
 										using var cui = new CUI(Singleton.Handler);
-										var container = cui.CreateContainer("blindingpanel", "0 0 0 1", needsCursor: true, needsKeyboard: Singleton.HandleEnableNeedsKeyboard(ap));
-										cui.CreateClientImage(container, "blindingpanel", "https://carbonmod.gg/assets/media/cui/bsod.png", "1 1 1 1");
+										var container = cui.CreateContainer("blindingpanel", "0 0 0 1",
+											needsCursor: true, needsKeyboard: Singleton.HandleEnableNeedsKeyboard(ap));
+										cui.CreateClientImage(container, "blindingpanel",
+											"https://carbonmod.gg/assets/media/cui/bsod.png", "1 1 1 1");
 										cui.Send(container, player);
 										PlayersTab.BlindedPlayers.Add(player);
-										EntitiesTab.SelectEntity(tab, ap, entity);
+										SelectEntity(tab, ap, entity);
 										DrawEntitySettings(tab, column, ap3);
 
 										if (ap.Player == player) Core.timer.In(1, () => { Singleton.Close(player); });
@@ -489,23 +500,31 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 						}
 					}
 
-					if (!multiSelection && ap3.Player != player && (ap3.Player.spectateFilter != player?.UserIDString && ap3.Player.spectateFilter != entity.net.ID.ToString()))
+					if (Singleton.HasAccess(ap3.Player, "entities.spectate_players"))
 					{
-						tab.AddButton(1, "Spectate", ap =>
+						if (!multiSelection && ap3.Player != player &&
+						    (ap3.Player.spectateFilter != player?.UserIDString &&
+						     ap3.Player.spectateFilter != entity.net.ID.ToString()))
 						{
-							StartSpectating(ap.Player, entity);
-							SelectEntity(tab, ap, entity);
-							DrawEntitySettings(tab, column, ap3);
-						});
-					}
-					if (!multiSelection && !string.IsNullOrEmpty(ap3.Player.spectateFilter) && (ap3.Player.UserIDString == player?.UserIDString || ap3.Player.spectateFilter == entity.net.ID.ToString()))
-					{
-						tab.AddButton(1, "End Spectating", ap =>
+							tab.AddButton(1, "Spectate", ap =>
+							{
+								StartSpectating(ap.Player, entity);
+								SelectEntity(tab, ap, entity);
+								DrawEntitySettings(tab, column, ap3);
+							});
+						}
+
+						if (!multiSelection && !string.IsNullOrEmpty(ap3.Player.spectateFilter) &&
+						    (ap3.Player.UserIDString == player?.UserIDString ||
+						     ap3.Player.spectateFilter == entity.net.ID.ToString()))
 						{
-							StopSpectating(ap.Player);
-							SelectEntity(tab, ap, entity);
-							DrawEntitySettings(tab, column, ap3);
-						}, ap => Tab.OptionButton.Types.Selected);
+							tab.AddButton(1, "End Spectating", ap =>
+							{
+								StopSpectating(ap.Player);
+								SelectEntity(tab, ap, entity);
+								DrawEntitySettings(tab, column, ap3);
+							}, ap => Tab.OptionButton.Types.Selected);
+						}
 					}
 
 					if (!multiSelection && entity.parentEntity.IsValid(true)) tab.AddButton(column, $"Parent: {entity.parentEntity.Get(true)}", ap => { DrawEntities(tab, ap); SelectEntity(tab, ap, entity.parentEntity.Get(true)); DrawEntitySettings(tab, 1, ap); });

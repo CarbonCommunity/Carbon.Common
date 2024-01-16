@@ -69,7 +69,10 @@ public partial class AdminModule
 		"entities.blind_players",
 		"entities.spectate_players",
 		"entities.inventory_management",
-		"entities.owner_change"
+		"entities.owner_change",
+		"environment.use",
+		"modules.use",
+		"modules.config_edit"
 	};
 	private const string OptionColor = "0.2 0.2 0.2 0.75";
 

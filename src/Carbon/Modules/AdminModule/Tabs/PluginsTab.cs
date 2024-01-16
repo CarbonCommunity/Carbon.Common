@@ -570,7 +570,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					command: "pluginbrowser.deselectplugin",
 					font: CUI.Handler.FontTypes.DroidSansMono);
 
-				if (Singleton.HasAccess(ap.Player, 3))
+				if (Singleton.HasAccessLevel(ap.Player, 3))
 				{
 					var buttonColor = string.Empty;
 					var elementColor = string.Empty;
@@ -2034,7 +2034,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 	{
 		var player = args.Player();
 
-		if (!Singleton.HasAccess(player, 3)) return;
+		if (!Singleton.HasAccessLevel(player, 3)) return;
 
 		var ap = Singleton.GetPlayerSession(player);
 		var tab = Singleton.GetTab(ap.Player);
