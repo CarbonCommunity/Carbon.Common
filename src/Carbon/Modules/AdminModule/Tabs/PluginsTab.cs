@@ -2224,12 +2224,12 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			var dataPath = Path.Combine(Defines.GetDataFolder(), $"vendordata_{id}.db");
 			OsEx.File.Delete(dataPath);
 
-			if (vendor is IVendorStored stored && !stored.Load())
+			if (vendor is PluginsTab.IVendorStored stored && !stored.Load())
 			{
 				vendor.FetchList(vendor => vendor.Refresh());
 				vendor.Refresh();
 			}
-			if (vendor is IVendorAuthenticated auth)
+			if (vendor is PluginsTab.IVendorAuthenticated auth)
 			{
 				auth.RefreshUser(ap);
 			}
@@ -2338,7 +2338,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					auth.User = null;
 					vendor2.Refresh();
 					Singleton.Draw(args.Player());
-					if (vendor2 is IVendorStored store) store.Save();
+					if (vendor2 is PluginsTab.IVendorStored store) store.Save();
 				}, null);
 			}
 			else
@@ -2441,7 +2441,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		var dataPath = Path.Combine(Defines.GetDataFolder(), $"vendordata_{id}.db");
 		OsEx.File.Delete(dataPath);
 
-		if (vendor is IVendorStored stored && !stored.Load())
+		if (vendor is PluginsTab.IVendorStored stored && !stored.Load())
 		{
 			vendor.FetchList(vendor => vendor.Refresh());
 			vendor.Refresh();

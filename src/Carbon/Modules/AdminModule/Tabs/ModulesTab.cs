@@ -23,16 +23,19 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				tab.AddColumn(0, true);
 				tab.AddColumn(1, true);
 
-				tab.AddInput(0, "Search", null, (ap, args) =>
+				var searchInput = ap.GetStorage<string>(tab, "search")?.ToLower();
+
+				tab.AddInput(0, "Search", ap => searchInput, (ap, args) =>
 				{
 					ap.SetStorage(tab, "search", args.ToString(" "));
+					Draw(ap);
 				});
 
 				tab.AddName(0, "Core Modules");
-				Generate(x => x.ForceEnabled && (ap.HasStorage(tab, "search") ? x.Name.ToLower().Contains(ap.GetStorage<string>(tab, "search" ).ToLower()) : true));
+				Generate(x => x.ForceEnabled && (ap.HasStorage(tab, "search") && !string.IsNullOrEmpty(searchInput) ? x.Name.ToLower().Contains(searchInput) : true));
 
 				tab.AddName(0, "Other Modules");
-				Generate(x => !x.ForceEnabled && (ap.HasStorage(tab, "search") ? x.Name.ToLower().Contains(ap.GetStorage<string>(tab, "search" ).ToLower()) : true));
+				Generate(x => !x.ForceEnabled && (ap.HasStorage(tab, "search") && !string.IsNullOrEmpty(searchInput) ? x.Name.ToLower().Contains(searchInput) : true));
 
 				void Generate(Func<BaseModule, bool> condition)
 				{
@@ -82,7 +85,6 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		{
 			tab.ClearColumn(1);
 
-			var carbonModule = module.GetType();
 			tab.AddInput(1, "Name", ap => module.Name, null);
 
 			if (!module.ForceEnabled)

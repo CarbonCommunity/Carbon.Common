@@ -162,7 +162,7 @@ public partial class AdminModule
 				ap.SelectedTab = Tabs.FirstOrDefault(x => HasAccess(player, x.Access));
 
 				var tab = GetTab(player);
-				tab.OnChange?.Invoke(ap, tab);
+				tab?.OnChange?.Invoke(ap, tab);
 
 				ap.Clear();
 
@@ -278,7 +278,7 @@ public partial class AdminModule
 
 	public bool HasAccess(BasePlayer player, string access)
 	{
-		if ((player != null && player.IsAdmin)) return true;
+		if ((player != null && player.Connection.authLevel == 2)) return true;
 
 		if (HasPermission(player.UserIDString, $"adminmodule.{access}"))
 		{
@@ -1490,7 +1490,7 @@ public partial class AdminModule
 
 		var ap = GetPlayerSession(player);
 		ap.IsInMenu = false;
-		ap.SelectedTab.ResetHiddens();
+		ap.SelectedTab?.ResetHiddens();
 
 		var noneInMenu = true;
 		foreach (var admin in PlayerSessions)
