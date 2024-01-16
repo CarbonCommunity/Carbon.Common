@@ -63,16 +63,22 @@ public partial class AdminModule
 		"carbon.server_console",
 		"entities.use",
 		"entities.kill_entity",
+		"entities.tp_entity",
 		"entities.loot_entity",
 		"entities.loot_players",
 		"entities.respawn_players",
 		"entities.blind_players",
 		"entities.spectate_players",
-		"entities.inventory_management",
 		"entities.owner_change",
 		"environment.use",
 		"modules.use",
-		"modules.config_edit"
+		"modules.config_edit",
+		"permissions.use",
+		"players.use",
+		"players.inventory_management",
+		"players.craft_queue",
+		"plugins.use",
+		"plugins.setup"
 	};
 	private const string OptionColor = "0.2 0.2 0.2 0.75";
 

@@ -104,7 +104,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			{
 				ap.SetStorage(t, "selectedplugin", (Plugin)null);
 				LocalInstance?.Refresh();
-			}, 2)
+			}, "plugins.use")
 			{
 				Override = (t, cui, container, parent, ap) => Draw(cui, container, parent, t, ap)
 			};
@@ -570,7 +570,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					command: "pluginbrowser.deselectplugin",
 					font: CUI.Handler.FontTypes.DroidSansMono);
 
-				if (Singleton.HasAccessLevel(ap.Player, 3))
+				if (Singleton.HasAccess(ap.Player, "plugins.setup"))
 				{
 					var buttonColor = string.Empty;
 					var elementColor = string.Empty;
@@ -2034,7 +2034,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 	{
 		var player = args.Player();
 
-		if (!Singleton.HasAccessLevel(player, 3)) return;
+		if (!Singleton.HasAccess(player, "plugins.setup")) return;
 
 		var ap = Singleton.GetPlayerSession(player);
 		var tab = Singleton.GetTab(ap.Player);

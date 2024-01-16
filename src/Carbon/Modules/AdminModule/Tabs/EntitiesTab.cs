@@ -251,7 +251,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 				if (sameTypeSelection)
 				{
-					if (!multiSelection)
+					if (!multiSelection && Singleton.HasAccess(ap3.Player, "entities.tp_entity"))
 					{
 						tab.AddButtonArray(column,
 							new Tab.OptionButton("TeleportTo",
@@ -426,7 +426,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 						Pool.FreeList(ref temp);
 
-						if (Singleton.HasAccess(ap3.Player, "entities.inventory_management"))
+						if (Singleton.HasAccess(ap3.Player, "players.inventory_management"))
 						{
 							tab.AddName(1, "Inventory Lock");
 							tab.AddButtonArray(1,
