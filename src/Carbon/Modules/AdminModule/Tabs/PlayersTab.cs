@@ -22,7 +22,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			{
 				tab.ClearColumn(1);
 				RefreshPlayers(tab, instance);
-			}, 1);
+			}, "players.use");
 
 			players.AddColumn(0);
 			players.AddColumn(1);
@@ -34,27 +34,32 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		{
 			tab.ClearColumn(0);
 
-			if (Singleton.HasAccessLevel(ap.Player, 1))
+			tab.AddInput(0, "Search", ap => ap?.GetStorage<string>(tab, "playerfilter"), (ap2, args) =>
 			{
-				tab.AddInput(0, "Search", ap => ap?.GetStorage<string>(tab, "playerfilter"), (ap2, args) => { ap2.SetStorage(tab, "playerfilter", args.ToString(" ")); RefreshPlayers(tab, ap2); });
+				ap2.SetStorage(tab, "playerfilter", args.ToString(" "));
+				RefreshPlayers(tab, ap2);
+			});
 
-				var onlinePlayers = BasePlayer.allPlayerList.Where(x => x.userID.IsSteamId() && x.IsConnected).OrderBy(x => x.Connection?.connectionTime);
-				tab.AddName(0, $"Online ({onlinePlayers.Count():n0})");
-				foreach (var player in onlinePlayers)
-				{
-					AddPlayer(tab, ap, player);
-				}
-				if (onlinePlayers.Count() == 0) tab.AddText(0, "No online players found.", 10, "1 1 1 0.4");
-
-				var offlinePlayers = BasePlayer.allPlayerList.Where(x => x.userID.IsSteamId() && !x.IsConnected);
-				tab.AddName(0, $"Offline ({offlinePlayers.Count():n0})");
-				foreach (var player in offlinePlayers)
-				{
-					AddPlayer(tab, ap, player);
-				}
-				if (offlinePlayers.Count() == 0) tab.AddText(0, "No offline players found.", 10, "1 1 1 0.4");
+			var onlinePlayers = BasePlayer.allPlayerList.Where(x => x.userID.IsSteamId() && x.IsConnected)
+				.OrderBy(x => x.Connection?.connectionTime);
+			tab.AddName(0, $"Online ({onlinePlayers.Count():n0})");
+			foreach (var player in onlinePlayers)
+			{
+				AddPlayer(tab, ap, player);
 			}
+
+			if (onlinePlayers.Count() == 0) tab.AddText(0, "No online players found.", 10, "1 1 1 0.4");
+
+			var offlinePlayers = BasePlayer.allPlayerList.Where(x => x.userID.IsSteamId() && !x.IsConnected);
+			tab.AddName(0, $"Offline ({offlinePlayers.Count():n0})");
+			foreach (var player in offlinePlayers)
+			{
+				AddPlayer(tab, ap, player);
+			}
+
+			if (offlinePlayers.Count() == 0) tab.AddText(0, "No offline players found.", 10, "1 1 1 0.4");
 		}
+
 		public static void AddPlayer(Tab tab, PlayerSession ap, BasePlayer player)
 		{
 			if (ap != null)
@@ -89,7 +94,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			}
 			catch { }
 
-			if (Singleton.HasAccessLevel(aap.Player, 3))
+			if (Singleton.HasPermission(aap.Player, "permissions.use"))
 			{
 				tab.AddName(1, $"Permissions", TextAnchor.MiddleLeft);
 				{
@@ -102,11 +107,11 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 						ap.SetStorage(tab, "player", player.UserIDString);
 						PermissionsTab.GeneratePlayers(perms, permission, ap);
 						PermissionsTab.GeneratePlugins(perms, ap, permission, permission.FindUser(player.UserIDString), null);
-					}, (_) => Singleton.HasAccessLevel(player, 3) ? Tab.OptionButton.Types.None : Tab.OptionButton.Types.Important);
+					}, (_) => Tab.OptionButton.Types.Important);
 				}
 			}
 
-			if (Singleton.HasAccessLevel(aap.Player, 2))
+			if (Singleton.HasPermission(aap.Player, "carbon.cmod"))
 			{
 				tab.AddButtonArray(1, new Tab.OptionButton("Kick", _ =>
 				{
@@ -149,68 +154,88 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					ShowInfo(tab, ap, player);
 				}));
 			}
+			else tab.AddText(1, $"You need 'carbon.cmod' permission to kick, ban or make a player to sleep.",
+				17, "white");
 
 			tab.AddName(1, $"Actions", TextAnchor.MiddleLeft);
 
-			tab.AddButtonArray(1,
-				new Tab.OptionButton("TeleportTo", ap => { ap.Player.Teleport(player.transform.position); }),
-				new Tab.OptionButton("Teleport2Me", _ =>
-				{
-					tab.CreateDialog($"Are you sure about that?", ap =>
+			if (Singleton.HasAccess(aap.Player, "entities.tp_entity"))
+			{
+				tab.AddButtonArray(1,
+					new Tab.OptionButton("TeleportTo", ap => { ap.Player.Teleport(player.transform.position); }),
+					new Tab.OptionButton("Teleport2Me", _ =>
 					{
-						player.Teleport(ap.Player.transform.position);
-					}, null);
-				}));
+						tab.CreateDialog($"Are you sure about that?", ap =>
+						{
+							player.Teleport(ap.Player.transform.position);
+						}, null);
+					}));
+			}
 
-			tab.AddButtonArray(1,
-				new Tab.OptionButton("Loot", ap =>
-				{
-					EntitiesTab.LastContainerLooter = ap;
-					ap.SetStorage(tab, "lootedent", player);
-					EntitiesTab.SendEntityToPlayer(ap.Player, player);
-
-					Core.timer.In(0.2f, () => Singleton.Close(ap.Player));
-					Core.timer.In(0.5f, () =>
+			if (Singleton.HasAccess(aap.Player, "entities.loot_players"))
+			{
+				tab.AddButtonArray(1,
+					new Tab.OptionButton("Loot", ap =>
 					{
+						EntitiesTab.LastContainerLooter = ap;
+						ap.SetStorage(tab, "lootedent", player);
 						EntitiesTab.SendEntityToPlayer(ap.Player, player);
 
-						ap.Player.inventory.loot.Clear();
-						ap.Player.inventory.loot.PositionChecks = false;
-						ap.Player.inventory.loot.entitySource = RelationshipManager.ServerInstance;
-						ap.Player.inventory.loot.itemSource = null;
-						ap.Player.inventory.loot.AddContainer(player.inventory.containerMain);
-						ap.Player.inventory.loot.AddContainer(player.inventory.containerWear);
-						ap.Player.inventory.loot.AddContainer(player.inventory.containerBelt);
-						ap.Player.inventory.loot.MarkDirty();
-						ap.Player.inventory.loot.SendImmediate();
+						Core.timer.In(0.2f, () => Singleton.Close(ap.Player));
+						Core.timer.In(0.5f, () =>
+						{
+							EntitiesTab.SendEntityToPlayer(ap.Player, player);
 
-						ap.Player.ClientRPCPlayer(null, ap.Player, "RPC_OpenLootPanel", "player_corpse");
-					});
-				}),
-				new Tab.OptionButton("Respawn", _ =>
-				{
-					tab.CreateDialog($"Are you sure about that?", _ =>
+							ap.Player.inventory.loot.Clear();
+							ap.Player.inventory.loot.PositionChecks = false;
+							ap.Player.inventory.loot.entitySource = RelationshipManager.ServerInstance;
+							ap.Player.inventory.loot.itemSource = null;
+							ap.Player.inventory.loot.AddContainer(player.inventory.containerMain);
+							ap.Player.inventory.loot.AddContainer(player.inventory.containerWear);
+							ap.Player.inventory.loot.AddContainer(player.inventory.containerBelt);
+							ap.Player.inventory.loot.MarkDirty();
+							ap.Player.inventory.loot.SendImmediate();
+
+							ap.Player.ClientRPCPlayer(null, ap.Player, "RPC_OpenLootPanel", "player_corpse");
+						});
+					}),
+					new Tab.OptionButton("Respawn", _ =>
 					{
-						player.Hurt(player.MaxHealth());
-						player.Respawn();
-						player.EndSleeping();
-					}, null);
-				}));
+						tab.CreateDialog($"Are you sure about that?", _ =>
+						{
+							player.Hurt(player.MaxHealth());
+							player.Respawn();
+							player.EndSleeping();
+						}, null);
+					}));
+			}
 
-			tab.AddName(1, "Inventory Lock");
-			tab.AddButtonArray(1,
-				new Tab.OptionButton("Main", _ =>
-				{
-					player.inventory.containerMain.SetLocked(!player.inventory.containerMain.IsLocked());
-				}, _ => player.inventory.containerMain.IsLocked() ? Tab.OptionButton.Types.Important : Tab.OptionButton.Types.None),
-				new Tab.OptionButton("Belt", _ =>
-				{
-					player.inventory.containerBelt.SetLocked(!player.inventory.containerBelt.IsLocked());
-				}, _ => player.inventory.containerBelt.IsLocked() ? Tab.OptionButton.Types.Important : Tab.OptionButton.Types.None),
-				new Tab.OptionButton("Wear", _ =>
-				{
-					player.inventory.containerWear.SetLocked(!player.inventory.containerWear.IsLocked());
-				}, _ => player.inventory.containerWear.IsLocked() ? Tab.OptionButton.Types.Important : Tab.OptionButton.Types.None));
+			if (Singleton.HasAccess(aap.Player, "players.inventory_management"))
+			{
+				tab.AddName(1, "Inventory Lock");
+				tab.AddButtonArray(1,
+					new Tab.OptionButton("Main", _ =>
+						{
+							player.inventory.containerMain.SetLocked(!player.inventory.containerMain.IsLocked());
+						},
+						_ => player.inventory.containerMain.IsLocked()
+							? Tab.OptionButton.Types.Important
+							: Tab.OptionButton.Types.None),
+					new Tab.OptionButton("Belt", _ =>
+						{
+							player.inventory.containerBelt.SetLocked(!player.inventory.containerBelt.IsLocked());
+						},
+						_ => player.inventory.containerBelt.IsLocked()
+							? Tab.OptionButton.Types.Important
+							: Tab.OptionButton.Types.None),
+					new Tab.OptionButton("Wear", _ =>
+						{
+							player.inventory.containerWear.SetLocked(!player.inventory.containerWear.IsLocked());
+						},
+						_ => player.inventory.containerWear.IsLocked()
+							? Tab.OptionButton.Types.Important
+							: Tab.OptionButton.Types.None));
+			}
 
 			if (Singleton.HasTab("entities"))
 			{
@@ -233,40 +258,52 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					ShowInfo(tab, ap, player);
 				});
 			}
-			if (!string.IsNullOrEmpty(aap.Player.spectateFilter) && (aap.Player.UserIDString == player.UserIDString || aap.Player.spectateFilter == player.UserIDString))
+
+			if (Singleton.HasAccess(aap.Player, "entities.spectate_players"))
 			{
-				tab.AddButton(1, "End Spectating", ap =>
+				if (!string.IsNullOrEmpty(aap.Player.spectateFilter) &&
+				    (aap.Player.UserIDString == player.UserIDString ||
+				     aap.Player.spectateFilter == player.UserIDString))
 				{
-					StopSpectating(ap.Player);
-					ShowInfo(tab, ap, player);
-				}, _ => Tab.OptionButton.Types.Selected);
+					tab.AddButton(1, "End Spectating", ap =>
+					{
+						StopSpectating(ap.Player);
+						ShowInfo(tab, ap, player);
+					}, _ => Tab.OptionButton.Types.Selected);
+				}
 			}
-			if (!BlindedPlayers.Contains(player))
+
+			if (Singleton.HasAccess(aap.Player, "entities.blind_players"))
 			{
-				tab.AddButton(1, "Blind Player", _ =>
+				if (!BlindedPlayers.Contains(player))
 				{
-					tab.CreateDialog("Are you sure you want to blind the player?", ap =>
+					tab.AddButton(1, "Blind Player", _ =>
+					{
+						tab.CreateDialog("Are you sure you want to blind the player?", ap =>
+						{
+							using var cui = new CUI(Singleton.Handler);
+							var container = cui.CreateContainer("blindingpanel", "0 0 0 1", needsCursor: true,
+								needsKeyboard: Singleton.HandleEnableNeedsKeyboard(ap));
+							cui.CreateClientImage(container, "blindingpanel",
+								"https://carbonmod.gg/assets/media/cui/bsod.png", "1 1 1 1");
+							cui.Send(container, player);
+							BlindedPlayers.Add(player);
+							ShowInfo(tab, ap, player);
+
+							if (ap.Player == player) Core.timer.In(1, () => { Singleton.Close(player); });
+						}, null);
+					});
+				}
+				else
+				{
+					tab.AddButton(1, "Unblind Player", ap =>
 					{
 						using var cui = new CUI(Singleton.Handler);
-						var container = cui.CreateContainer("blindingpanel", "0 0 0 1", needsCursor: true, needsKeyboard: Singleton.HandleEnableNeedsKeyboard(ap));
-						cui.CreateClientImage(container, "blindingpanel", "https://carbonmod.gg/assets/media/cui/bsod.png", "1 1 1 1");
-						cui.Send(container, player);
-						BlindedPlayers.Add(player);
+						cui.Destroy("blindingpanel", player);
+						BlindedPlayers.Remove(player);
 						ShowInfo(tab, ap, player);
-
-						if (ap.Player == player) Core.timer.In(1, () => { Singleton.Close(player); });
-					}, null);
-				});
-			}
-			else
-			{
-				tab.AddButton(1, "Unblind Player", ap =>
-				{
-					using var cui = new CUI(Singleton.Handler);
-					cui.Destroy("blindingpanel", player);
-					BlindedPlayers.Remove(player);
-					ShowInfo(tab, ap, player);
-				}, _ => Tab.OptionButton.Types.Selected);
+					}, _ => Tab.OptionButton.Types.Selected);
+				}
 			}
 
 			tab.AddName(1, "Stats");
@@ -278,25 +315,32 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			tab.AddRange(1, "Radiation", 0, player.metabolism.radiation_poison.max, _ => player.metabolism.radiation_poison.value, (_, value) => player.metabolism.radiation_poison.SetValue(value), _ => $"{player.metabolism.radiation_poison.value:0}");
 			tab.AddRange(1, "Bleeding", 0, player.metabolism.bleeding.max, _ => player.metabolism.bleeding.value, (_, value) => player.metabolism.bleeding.SetValue(value), _ => $"{player.metabolism.bleeding.value:0}");
 
-			tab.AddName(1, "Crafting");
-
-			var queue = player.inventory.crafting.queue.Where(x => !x.cancelled);
-			foreach (var craft in queue)
+			if (Singleton.HasAccess(aap.Player, "players.craft_queue"))
 			{
-				tab.AddInputButton(1, $"{craft.blueprint.targetItem.displayName.english} (x{craft.amount}, {TimeEx.Format(craft.endTime - UnityEngine.Time.realtimeSinceStartup)})", 0.1f,
-					new Tab.OptionInput(null, _ => $"<size=8>{craft.takenItems.Select(x => $"{x.info.displayName.english} x {x.amount}").ToString(", ")}</size>", 0, true, null),
-					new Tab.OptionButton("X", TextAnchor.MiddleCenter, ap =>
-					{
-						player.inventory.crafting.CancelTask(craft.taskUID, true);
-						ShowInfo(tab, ap, player);
-					}, _ => Tab.OptionButton.Types.Important));
-			}
+				tab.AddName(1, "Crafting");
 
-			if (!queue.Any())
-			{
-				tab.AddText(1, "No crafts.", 8, "1 1 1 0.5");
-			}
+				var queue = player.inventory.crafting.queue.Where(x => !x.cancelled);
+				foreach (var craft in queue)
+				{
+					tab.AddInputButton(1,
+						$"{craft.blueprint.targetItem.displayName.english} (x{craft.amount}, {TimeEx.Format(craft.endTime - UnityEngine.Time.realtimeSinceStartup)})",
+						0.1f,
+						new Tab.OptionInput(null,
+							_ =>
+								$"<size=8>{craft.takenItems.Select(x => $"{x.info.displayName.english} x {x.amount}").ToString(", ")}</size>",
+							0, true, null),
+						new Tab.OptionButton("X", TextAnchor.MiddleCenter, ap =>
+						{
+							player.inventory.crafting.CancelTask(craft.taskUID, true);
+							ShowInfo(tab, ap, player);
+						}, _ => Tab.OptionButton.Types.Important));
+				}
 
+				if (!queue.Any())
+				{
+					tab.AddText(1, "No crafts.", 8, "1 1 1 0.5");
+				}
+			}
 		}
 	}
 }
