@@ -2,7 +2,7 @@
 
 /*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -95,9 +95,8 @@ public static class ByteEx
 		}
 
 		var formatter = new BinaryFormatter();
-		var stream = new MemoryStream();
 
-		using (stream)
+		using var stream = new MemoryStream();
 		{
 			formatter.Serialize(stream, source);
 			stream.Seek(0, SeekOrigin.Begin);
