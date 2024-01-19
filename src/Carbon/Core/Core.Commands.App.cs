@@ -11,7 +11,7 @@ namespace Carbon.Core;
 
 public partial class CorePlugin : CarbonPlugin
 {
-	[ConsoleCommand("shutdown", "Completely unloads Carbon from the game, rendering it fully vanilla.")]
+	[ConsoleCommand("shutdown", "Completely unloads Carbon from the game, rendering it fully vanilla. WARNING: This is for testing purposes only.")]
 	[AuthLevel(2)]
 	private void Shutdown(ConsoleSystem.Arg arg)
 	{
@@ -248,5 +248,12 @@ public partial class CorePlugin : CarbonPlugin
 
 			return result;
 		}
+	}
+
+	[ConsoleCommand("fetchhooks", "It looks up for the latest available hooks for your current protocol, downloads them, then patches them accordingly at runtime.")]
+	[AuthLevel(2)]
+	private void FetchHooks(ConsoleSystem.Arg arg)
+	{
+		Community.Runtime.HookManager.Fetch();
 	}
 }
