@@ -40,7 +40,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 		public static Tab Get()
 		{
-			var tab = new Tab("carbon", "Carbon", Community.Runtime.CorePlugin, (ap, t) => { Refresh(t, ap); }, 2);
+			var tab = new Tab("carbon", "Carbon", Community.Runtime.CorePlugin, (ap, t) => { Refresh(t, ap); }, "carbon.use");
 			tab.AddColumn(0);
 			tab.AddColumn(1);
 
@@ -52,45 +52,67 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			tab.ClearColumn(0);
 			tab.ClearColumn(1);
 
-			if (Singleton.HasAccessLevel(ap.Player, 2))
+			if (!Singleton.HasAccess(ap.Player, "carbon.use"))
 			{
-				tab.AddInput(0, Singleton.GetPhrase("hostname", ap.Player.UserIDString), ap => $"{ConVar.Server.hostname}", Singleton.HasAccessLevel(ap.Player, 3) ? (ap2, args) => { ConVar.Server.hostname = args.ToString(" "); } : null);
-				tab.AddInput(0, Singleton.GetPhrase("level", ap.Player.UserIDString), ap => $"{ConVar.Server.level}", null);
+				return;
+			}
 
+			if (Singleton.HasAccess(ap.Player, "carbon.server_settings"))
+			{
+				tab.AddInput(0, Singleton.GetPhrase("hostname", ap.Player.UserIDString),
+					ap => $"{ConVar.Server.hostname}", (ap2, args) => { ConVar.Server.hostname = args.ToString(" "); });
+				tab.AddInput(0, Singleton.GetPhrase("level", ap.Player.UserIDString), ap => $"{ConVar.Server.level}",
+					null);
+			}
+
+			if (Singleton.HasAccess(ap.Player, "carbon.server_info"))
+			{
 				tab.AddName(0, Singleton.GetPhrase("info", ap.Player.UserIDString), TextAnchor.MiddleLeft);
 				{
-					tab.AddInput(0, Singleton.GetPhrase("version", ap.Player.UserIDString), ap => $"{Community.Runtime.Analytics.Version}", null);
-					tab.AddInput(0, Singleton.GetPhrase("version2", ap.Player.UserIDString), ap => $"{Community.Runtime.Analytics.InformationalVersion}", null);
+					tab.AddInput(0, Singleton.GetPhrase("version", ap.Player.UserIDString),
+						ap => $"{Community.Runtime.Analytics.Version}", null);
+					tab.AddInput(0, Singleton.GetPhrase("version2", ap.Player.UserIDString),
+						ap => $"{Community.Runtime.Analytics.InformationalVersion}", null);
 
-					var loadedHooks = Community.Runtime.HookManager.LoadedDynamicHooks.Count(x => x.IsInstalled) + Community.Runtime.HookManager.LoadedStaticHooks.Count(x => x.IsInstalled);
-					var totalHooks = Community.Runtime.HookManager.LoadedDynamicHooks.Count() + Community.Runtime.HookManager.LoadedStaticHooks.Count();
-					tab.AddInput(0, Singleton.GetPhrase("hooks", ap.Player.UserIDString), ap => $"<b>{loadedHooks:n0}</b> / {totalHooks:n0} loaded", null);
-					tab.AddInput(0, Singleton.GetPhrase("statichooks", ap.Player.UserIDString), ap => $"{Community.Runtime.HookManager.LoadedStaticHooks.Count():n0}", null);
-					tab.AddInput(0, Singleton.GetPhrase("dynamichooks", ap.Player.UserIDString), ap => $"{Community.Runtime.HookManager.LoadedDynamicHooks.Count():n0}", null);
+					var loadedHooks = Community.Runtime.HookManager.LoadedDynamicHooks.Count(x => x.IsInstalled) +
+					                  Community.Runtime.HookManager.LoadedStaticHooks.Count(x => x.IsInstalled);
+					var totalHooks = Community.Runtime.HookManager.LoadedDynamicHooks.Count() +
+					                 Community.Runtime.HookManager.LoadedStaticHooks.Count();
+					tab.AddInput(0, Singleton.GetPhrase("hooks", ap.Player.UserIDString),
+						ap => $"<b>{loadedHooks:n0}</b> / {totalHooks:n0} loaded", null);
+					tab.AddInput(0, Singleton.GetPhrase("statichooks", ap.Player.UserIDString),
+						ap => $"{Community.Runtime.HookManager.LoadedStaticHooks.Count():n0}", null);
+					tab.AddInput(0, Singleton.GetPhrase("dynamichooks", ap.Player.UserIDString),
+						ap => $"{Community.Runtime.HookManager.LoadedDynamicHooks.Count():n0}", null);
 
 					tab.AddName(0, Singleton.GetPhrase("plugins", ap.Player.UserIDString), TextAnchor.MiddleLeft);
-					tab.AddInput(0, Singleton.GetPhrase("mods", ap.Player.UserIDString), ap => $"{Community.Runtime.Plugins.Plugins.Count:n0}", null);
+					tab.AddInput(0, Singleton.GetPhrase("mods", ap.Player.UserIDString),
+						ap => $"{Community.Runtime.Plugins.Plugins.Count:n0}", null);
 
-					if (Singleton.HasAccessLevel(ap.Player, 3))
+					if (Singleton.HasAccess(ap.Player, "carbon.server_console"))
 					{
 						tab.AddName(0, Singleton.GetPhrase("console", ap.Player.UserIDString), TextAnchor.MiddleLeft);
 						foreach (var log in _logQueue)
 						{
-							tab.AddText(0, log, 8, "1 1 1 0.85", TextAnchor.MiddleLeft, CUI.Handler.FontTypes.DroidSansMono, isInput: true);
+							tab.AddText(0, log, 8, "1 1 1 0.85", TextAnchor.MiddleLeft,
+								CUI.Handler.FontTypes.DroidSansMono, isInput: true);
 						}
-						tab.AddInputButton(0, Singleton.GetPhrase("execservercmd", ap.Player.UserIDString), 0.2f, new Tab.OptionInput(null, null, 0, false, (ap, args) =>
-						{
-							ConsoleSystem.Run(ConsoleSystem.Option.Server, args.ToString(" "), null);
-							Refresh(tab, ap);
-						}), new Tab.OptionButton("Refresh", ap =>
-						{
-							Refresh(tab, ap);
-						}));
+
+						tab.AddInputButton(0, Singleton.GetPhrase("execservercmd", ap.Player.UserIDString), 0.2f,
+							new Tab.OptionInput(null, null, 0, false, (ap, args) =>
+							{
+								ConsoleSystem.Run(ConsoleSystem.Option.Server, args.ToString(" "), null);
+								Refresh(tab, ap);
+							}), new Tab.OptionButton("Refresh", ap =>
+							{
+								Refresh(tab, ap);
+							}));
 					}
 				}
 			}
 
-			if (Singleton.HasAccessLevel(ap.Player, 3))
+
+			if (Singleton.HasAccess(ap.Player, "carbon.server_config"))
 			{
 				tab.AddName(1, Singleton.GetPhrase("config", ap.Player.UserIDString), TextAnchor.MiddleLeft);
 				{
