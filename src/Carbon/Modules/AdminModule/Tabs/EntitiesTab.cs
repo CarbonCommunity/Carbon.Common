@@ -376,7 +376,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 									player.State.unHostileTimestamp = Network.TimeEx.currentTimestamp;
 									player.DirtyPlayerState();
 									player.ClientRPCPlayer<float>(null, player, "SetHostileLength", 0);
-									DrawEntitySettings(tab, 1, ap);
+									SelectEntity(tab, ap, entity);
 								}
 								else
 								{
@@ -391,7 +391,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 										player.MarkHostileFor(modal.Get<float>("duration").Clamp(0f, float.MaxValue));
 										fields.Clear();
 										fields = null;
-										DrawEntitySettings(tab, 1, ap3);
+										SelectEntity(tab, ap3, entity);
 									}, () =>
 									{
 										fields.Clear();

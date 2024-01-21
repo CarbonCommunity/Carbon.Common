@@ -152,7 +152,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					}
 
 					ShowInfo(tab, ap, player);
-				}), new Tab.OptionButton(player.IsHostile() ? $"Remove Hostility" : "Mark Hostile", ap =>
+				}), new Tab.OptionButton(player.GetHostileDuration() > 1f ? $"Remove Hostility" : "Mark Hostile", ap =>
 				{
 					if (player.IsHostile())
 					{

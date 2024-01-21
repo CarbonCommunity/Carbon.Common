@@ -25,6 +25,7 @@ public class Config
 	public float PluginTrackingTime { get; set; } = 60f;
 	public double LogSplitSize { get; set; } = 2.5;
 	public string ScriptDebuggingOrigin = string.Empty;
+	public List<string> CommandPrefixes { get; set; }
 	public bool UnityStacktrace { get; set; } =
 #if DEBUG
 		true;

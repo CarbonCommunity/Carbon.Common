@@ -249,6 +249,18 @@ public class Community
 
 		Config.ConditionalCompilationSymbols = Config.ConditionalCompilationSymbols.Distinct().ToList();
 
+		if (Config.CommandPrefixes == null)
+		{
+			Config.CommandPrefixes = new();
+			needsSave = true;
+		}
+
+		if (Config.CommandPrefixes.Count == 0)
+			Config.CommandPrefixes.Add("/");
+
+		// Mandatory for across the board access
+		API.Commands.Command.Prefixes = Config.CommandPrefixes;
+
 		Logger.CoreLog.SplitSize = (int)(Community.Runtime.Config.LogSplitSize * 1000000f);
 
 		if (needsSave) SaveConfig();
