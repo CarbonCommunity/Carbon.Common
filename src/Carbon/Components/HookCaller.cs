@@ -22,8 +22,6 @@ namespace Carbon;
 public class HookCallerCommon
 {
 	public Dictionary<int, HookArgPool> _argumentBuffer = new();
-	public Dictionary<uint, double> _hookTimeBuffer = new();
-	public Dictionary<uint, double> _hookTotalTimeBuffer = new();
 	public Dictionary<uint, DateTime> _lastDeprecatedWarningAt = new();
 
 	public struct HookArgPool
@@ -59,9 +57,6 @@ public class HookCallerCommon
 			_pool.Enqueue(array);
 		}
 	}
-
-	public virtual void AppendHookTime(uint hook, double time) { }
-	public virtual void ClearHookTime(uint hook) { }
 
 	public virtual object[] AllocateBuffer(int count) => null;
 	public virtual object[] RescaleBuffer(object[] oldBuffer, int newScale, BaseHookable.CachedHook hook) => null;
@@ -119,30 +114,45 @@ public static class HookCaller
 
 	#endregion
 
-	public static double GetHookTime(uint hook)
-	{
-		if (!Caller._hookTimeBuffer.TryGetValue(hook, out var total))
-		{
-			return 0;
-		}
-
-		return total;
-	}
 	public static double GetHookTotalTime(uint hook)
 	{
-		if (!Caller._hookTotalTimeBuffer.TryGetValue(hook, out var total))
+		var finalTime = 0.0;
+
+		foreach (var package in ModLoader.LoadedPackages)
 		{
-			return 0;
+			foreach (var plugin in package.Plugins)
+			{
+				foreach (var cache in plugin.HookCache)
+				{
+					LoopCache(cache.Key, cache.Value);
+				}
+			}
 		}
 
-		return total;
+		foreach (var module in Community.Runtime.ModuleProcessor.Modules)
+		{
+			foreach (var cache in module.HookCache)
+			{
+				LoopCache(cache.Key, cache.Value);
+			}
+		}
+
+		void LoopCache(uint loopHook, List<BaseHookable.CachedHook> cache)
+		{
+			if (loopHook != hook) return;
+
+			foreach (var cacheInstance in cache)
+			{
+				finalTime += cacheInstance.HookTime;
+			}
+		}
+        
+		return finalTime;
 	}
 
 	private static object CallStaticHook(uint hookId, BindingFlags flag = BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public, object[] args = null, bool keepArgs = false)
 	{
 		if (Community.Runtime == null || Community.Runtime.ModuleProcessor == null) return null;
-
-		Caller.ClearHookTime(hookId);
 
 		var result = (object)null;
 		var array = args == null ? null : keepArgs ? args : args.ToArray();
