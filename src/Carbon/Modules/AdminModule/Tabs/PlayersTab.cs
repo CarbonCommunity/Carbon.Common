@@ -152,35 +152,29 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					}
 
 					ShowInfo(tab, ap, player);
-				}), new Tab.OptionButton(player.GetHostileDuration() > 1f ? $"Remove Hostility" : "Mark Hostile", ap =>
+				}), new Tab.OptionButton("Modify Hostility", ap =>
 				{
-					if (player.IsHostile())
+					var fields = new Dictionary<string, ModalModule.Modal.Field>
 					{
-						player.State.unHostileTimestamp = Network.TimeEx.currentTimestamp;
-						player.DirtyPlayerState();
-						player.ClientRPCPlayer<float>(null, player, "SetHostileLength", 0);
-						ShowInfo(tab, ap, player);
-					}
-					else
-					{
-						var fields = new Dictionary<string, ModalModule.Modal.Field>
-						{
-							["duration"] = ModalModule.Modal.Field.Make("Duration",
-								ModalModule.Modal.Field.FieldTypes.Float, true, 60f)
-						};
+						["duration"] = ModalModule.Modal.Field.Make("Duration",
+							ModalModule.Modal.Field.FieldTypes.Float, true, 60f)
+					};
 
-						Singleton.Modal.Open(ap.Player, "Player Hostile", fields, (ap, modal) =>
-						{
-							player.MarkHostileFor(modal.Get<float>("duration").Clamp(0f, float.MaxValue));
-							fields.Clear();
-							fields = null;
-							ShowInfo(tab, aap, player);
-						}, () =>
-						{
-							fields.Clear();
-							fields = null;
-						});
-					}
+					Singleton.Modal.Open(ap.Player, "Player Hostile", fields, (ap, modal) =>
+					{
+						var duration = modal.Get<float>("duration").Clamp(0f, float.MaxValue);
+						player.State.unHostileTimestamp = Network.TimeEx.currentTimestamp + duration;
+						player.DirtyPlayerState();
+						player.ClientRPCPlayer(null, player, "SetHostileLength", duration);
+						fields.Clear();
+						fields = null;
+						ShowInfo(tab, aap, player);
+						Singleton.Draw(aap.Player);
+					}, () =>
+					{
+						fields.Clear();
+						fields = null;
+					});
 				}));
 			}
 			else tab.AddText(1, $"You need 'carbon.cmod' permission to kick, ban, sleep or change player hostility.",
