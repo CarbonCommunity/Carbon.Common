@@ -152,10 +152,39 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					}
 
 					ShowInfo(tab, ap, player);
+				}), new Tab.OptionButton(player.IsHostile() ? $"Remove Hostility" : "Mark Hostile", ap =>
+				{
+					if (player.IsHostile())
+					{
+						player.State.unHostileTimestamp = Network.TimeEx.currentTimestamp;
+						player.DirtyPlayerState();
+						player.ClientRPCPlayer<float>(null, player, "SetHostileLength", 0);
+						ShowInfo(tab, ap, player);
+					}
+					else
+					{
+						var fields = new Dictionary<string, ModalModule.Modal.Field>
+						{
+							["duration"] = ModalModule.Modal.Field.Make("Duration",
+								ModalModule.Modal.Field.FieldTypes.Float, true, 60f)
+						};
+
+						Singleton.Modal.Open(ap.Player, "Player Hostile", fields, (ap, modal) =>
+						{
+							player.MarkHostileFor(modal.Get<float>("duration").Clamp(0f, float.MaxValue));
+							fields.Clear();
+							fields = null;
+							ShowInfo(tab, aap, player);
+						}, () =>
+						{
+							fields.Clear();
+							fields = null;
+						});
+					}
 				}));
 			}
-			else tab.AddText(1, $"You need 'carbon.cmod' permission to kick, ban or make a player to sleep.",
-				17, "white");
+			else tab.AddText(1, $"You need 'carbon.cmod' permission to kick, ban, sleep or change player hostility.",
+				10, "1 1 1 0.4");
 
 			tab.AddName(1, $"Actions", TextAnchor.MiddleLeft);
 
