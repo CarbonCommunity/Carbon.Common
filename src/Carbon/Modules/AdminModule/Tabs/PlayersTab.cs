@@ -152,7 +152,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					}
 
 					ShowInfo(tab, ap, player);
-				}), new Tab.OptionButton("Modify Hostility", ap =>
+				}), new Tab.OptionButton("Hostility", ap =>
 				{
 					var fields = new Dictionary<string, ModalModule.Modal.Field>
 					{
