@@ -282,7 +282,7 @@ public partial class CorePlugin : CarbonPlugin
 			return;
 		}
 
-		using (var table = new StringTable("#", "Id", "Hook", "Time", "Memory", "Subscribed", "Async/Overrides"))
+		using (var table = new StringTable("#", "Id", "Hook", "Time", "Memory", "Fires", "Subscribed", "Async/Overrides"))
 		{
 			foreach (var hook in plugin.HookCache)
 			{
@@ -299,13 +299,14 @@ public partial class CorePlugin : CarbonPlugin
 				var hookMemoryUsage = hook.Value.Sum(x => x.MemoryUsage);
 				var hookCount = hook.Value.Count;
 				var hookAsyncCount = hook.Value.Count(x => x.IsAsync);
+				var hooksTimesFired = hook.Value.Sum(x => x.TimesFired);
 
 				if (!plugin.Hooks.Contains(hookId))
 				{
 					continue;
 				}
 
-				table.AddRow(count, hookId, $"{hookName}", $"{hookTime:0}ms", $"{ByteEx.Format(hookMemoryUsage, shortName: true).ToLower()}", !plugin.IgnoredHooks.Contains(hookId), $"{hookAsyncCount:n0}/{hookCount:n0}");
+				table.AddRow(count, hookId, $"{hookName}", $"{hookTime:0}ms", $"{ByteEx.Format(hookMemoryUsage, shortName: true).ToLower()}", $"{hooksTimesFired:n0}", !plugin.IgnoredHooks.Contains(hookId), $"{hookAsyncCount:n0}/{hookCount:n0}");
 
 				count++;
 			}
