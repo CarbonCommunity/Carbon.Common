@@ -29,8 +29,14 @@ public class BaseHookable
 		public bool IsByRef;
 		public bool IsAsync;
 
+		public int TimesFired;
 		public double HookTime;
 		public double MemoryUsage;
+
+		public void Tick()
+		{
+			TimesFired++;
+		}
 
 		public static CachedHook Make(MethodInfo method)
 		{
