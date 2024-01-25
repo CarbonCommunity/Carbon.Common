@@ -4,6 +4,7 @@ using System.Text;
 using Carbon.Base.Interfaces;
 using ConVar;
 using Facepunch;
+using HarmonyLib;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -146,7 +147,7 @@ public static class HookCaller
 				finalTime += cacheInstance.HookTime;
 			}
 		}
-        
+
 		return finalTime;
 	}
 
@@ -1402,6 +1403,36 @@ public static class HookCaller
 		{
 			var hookMethod = method.AttributeLists.Select(x => x.Attributes.FirstOrDefault(x => x.Name.ToString() == "HookMethod")).FirstOrDefault();
 			var methodName = hookMethod != null && hookMethod.ArgumentList.Arguments.Count > 0 ? hookMethod.ArgumentList.Arguments[0].ToString().Replace("\"", string.Empty) : method.Identifier.ValueText;
+
+			if (hookMethod != null)
+			{
+				var context = hookMethod.ArgumentList.Arguments[0];
+
+				if (context.ToString().Contains("."))
+				{
+					var argument = context.Expression as MemberAccessExpressionSyntax;
+					var expression = argument.Expression.ToString();
+					var name = argument.Name.ToString();
+
+					var value = AccessTools.Field(AccessTools.TypeByName(expression), name)?.GetValue(null)?.ToString();
+
+					if (!string.IsNullOrEmpty(value))
+					{
+						methodName = value;
+					}
+				}
+				else if (context.ToString().Contains("\""))
+				{
+					var value = AccessTools
+						.Field(AccessTools.TypeByName(_classList.FirstOrDefault().Identifier.Text),
+							context.ToString().Replace("\"", string.Empty))?.GetValue(null)?.ToString();
+
+					if (!string.IsNullOrEmpty(value))
+					{
+						methodName = value;
+					}
+				}
+			}
 
 			var id = HookStringPool.GetOrAdd(methodName);
 
