@@ -429,8 +429,6 @@ public class Permission : Library
 	}
 	public virtual bool GroupHasPermission(string name, string perm)
 	{
-		Logger.Debug($"{name} {perm}");
-
 		if (string.IsNullOrEmpty(name) || !GroupExists(name))
 		{
 			return false;

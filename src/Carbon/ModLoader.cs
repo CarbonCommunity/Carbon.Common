@@ -5,7 +5,7 @@ using Report = Carbon.Components.Report;
 
 /*
  *
- * Copyright (c) 2022-2023 Carbon Community
+ * Copyright (c) 2022-2024 Carbon Community 
  * All rights reserved.
  *
  */
@@ -328,11 +328,12 @@ public static class ModLoader
 
 	public const string CARBON_PLUGIN = "CarbonPlugin";
 	public const string RUST_PLUGIN = "RustPlugin";
+	public const string COVALENCE_PLUGIN = "CovalencePlugin";
 
 	public static bool IsValidPlugin(Type type, bool recursive)
 	{
 		if (type == null) return false;
-		if (type.Name == CARBON_PLUGIN || type.Name == RUST_PLUGIN) return true;
+		if (type.Name is CARBON_PLUGIN or RUST_PLUGIN or COVALENCE_PLUGIN) return true;
 		return recursive && IsValidPlugin(type.BaseType, recursive);
 	}
 
