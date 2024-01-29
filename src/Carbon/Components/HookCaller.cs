@@ -4,6 +4,7 @@ using System.Text;
 using Carbon.Base.Interfaces;
 using ConVar;
 using Facepunch;
+using HarmonyLib;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -12,7 +13,7 @@ using Pool = Facepunch.Pool;
 
 /*
  *
- * Copyright (c) 2022-2023 Carbon Community
+ * Copyright (c) 2022-2024 Carbon Community 
  * All rights reserved.
  *
  */
@@ -22,8 +23,6 @@ namespace Carbon;
 public class HookCallerCommon
 {
 	public Dictionary<int, HookArgPool> _argumentBuffer = new();
-	public Dictionary<uint, double> _hookTimeBuffer = new();
-	public Dictionary<uint, double> _hookTotalTimeBuffer = new();
 	public Dictionary<uint, DateTime> _lastDeprecatedWarningAt = new();
 
 	public struct HookArgPool
@@ -59,9 +58,6 @@ public class HookCallerCommon
 			_pool.Enqueue(array);
 		}
 	}
-
-	public virtual void AppendHookTime(uint hook, double time) { }
-	public virtual void ClearHookTime(uint hook) { }
 
 	public virtual object[] AllocateBuffer(int count) => null;
 	public virtual object[] RescaleBuffer(object[] oldBuffer, int newScale, BaseHookable.CachedHook hook) => null;
@@ -119,30 +115,45 @@ public static class HookCaller
 
 	#endregion
 
-	public static double GetHookTime(uint hook)
-	{
-		if (!Caller._hookTimeBuffer.TryGetValue(hook, out var total))
-		{
-			return 0;
-		}
-
-		return total;
-	}
 	public static double GetHookTotalTime(uint hook)
 	{
-		if (!Caller._hookTotalTimeBuffer.TryGetValue(hook, out var total))
+		var finalTime = 0.0;
+
+		foreach (var package in ModLoader.LoadedPackages)
 		{
-			return 0;
+			foreach (var plugin in package.Plugins)
+			{
+				foreach (var cache in plugin.HookCache)
+				{
+					LoopCache(cache.Key, cache.Value);
+				}
+			}
 		}
 
-		return total;
+		foreach (var module in Community.Runtime.ModuleProcessor.Modules)
+		{
+			foreach (var cache in module.HookCache)
+			{
+				LoopCache(cache.Key, cache.Value);
+			}
+		}
+
+		void LoopCache(uint loopHook, List<BaseHookable.CachedHook> cache)
+		{
+			if (loopHook != hook) return;
+
+			foreach (var cacheInstance in cache)
+			{
+				finalTime += cacheInstance.HookTime;
+			}
+		}
+
+		return finalTime;
 	}
 
 	private static object CallStaticHook(uint hookId, BindingFlags flag = BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public, object[] args = null, bool keepArgs = false)
 	{
 		if (Community.Runtime == null || Community.Runtime.ModuleProcessor == null) return null;
-
-		Caller.ClearHookTime(hookId);
 
 		var result = (object)null;
 		var array = args == null ? null : keepArgs ? args : args.ToArray();
@@ -1392,6 +1403,36 @@ public static class HookCaller
 		{
 			var hookMethod = method.AttributeLists.Select(x => x.Attributes.FirstOrDefault(x => x.Name.ToString() == "HookMethod")).FirstOrDefault();
 			var methodName = hookMethod != null && hookMethod.ArgumentList.Arguments.Count > 0 ? hookMethod.ArgumentList.Arguments[0].ToString().Replace("\"", string.Empty) : method.Identifier.ValueText;
+
+			if (hookMethod != null)
+			{
+				var context = hookMethod.ArgumentList.Arguments[0];
+
+				if (context.ToString().Contains("."))
+				{
+					var argument = context.Expression as MemberAccessExpressionSyntax;
+					var expression = argument.Expression.ToString();
+					var name = argument.Name.ToString();
+
+					var value = AccessTools.Field(AccessTools.TypeByName(expression), name)?.GetValue(null)?.ToString();
+
+					if (!string.IsNullOrEmpty(value))
+					{
+						methodName = value;
+					}
+				}
+				else if (context.ToString().Contains("\""))
+				{
+					var value = AccessTools
+						.Field(AccessTools.TypeByName(_classList.FirstOrDefault().Identifier.Text),
+							context.ToString().Replace("\"", string.Empty))?.GetValue(null)?.ToString();
+
+					if (!string.IsNullOrEmpty(value))
+					{
+						methodName = value;
+					}
+				}
+			}
 
 			var id = HookStringPool.GetOrAdd(methodName);
 
