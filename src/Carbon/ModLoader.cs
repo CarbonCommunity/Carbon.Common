@@ -272,6 +272,7 @@ public static class ModLoader
 
 		if (!premature)
 		{
+			// OnPluginUnload
 			HookCaller.CallStaticHook(3843290135, plugin);
 		}
 
@@ -279,7 +280,7 @@ public static class ModLoader
 
 		if (!premature)
 		{
-			Logger.Log($"Unloaded plugin {plugin.ToString()}");
+			Logger.Log($"Unloaded plugin {plugin}");
 			Interface.Oxide.RootPluginManager.RemovePlugin(plugin);
 		}
 		return true;
