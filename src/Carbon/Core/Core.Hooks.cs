@@ -39,6 +39,8 @@ public partial class CorePlugin : CarbonPlugin
 	private void IOnServerShutdown()
 	{
 		Logger.Log($"Saving plugin configuration and data..");
+
+		// OnServerSave
 		HookCaller.CallStaticHook(2032593992);
 
 		Logger.Log($"Shutting down Carbon..");

@@ -236,6 +236,8 @@ namespace Oxide.Game.Rust.Libraries.Covalence
 			}
 		}
 
+		public SaveInfo SaveInfo { get; } = SaveInfo.Create(World.SaveFileName);
+
 		public System.TimeSpan BanTimeRemaining(string id)
 		{
 			if (!IsBanned(id))

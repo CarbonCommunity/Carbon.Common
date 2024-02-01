@@ -113,7 +113,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					}
 				}
 
-				tab = new AdminModule.Tab("env", "Environment", Community.Runtime.CorePlugin, accessLevel: 1, onChange: (ap, tab) =>
+				tab = new AdminModule.Tab("env", "Environment", Community.Runtime.CorePlugin, access: "environment.use", onChange: (ap, tab) =>
 				{
 					Draw();
 				});

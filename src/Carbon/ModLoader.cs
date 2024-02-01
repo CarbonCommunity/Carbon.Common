@@ -1,11 +1,12 @@
-﻿using API.Events;
+﻿using API.Commands;
+using API.Events;
 using Carbon.Base.Interfaces;
 using Newtonsoft.Json;
 using Report = Carbon.Components.Report;
 
 /*
  *
- * Copyright (c) 2022-2023 Carbon Community
+ * Copyright (c) 2022-2024 Carbon Community
  * All rights reserved.
  *
  */
@@ -271,6 +272,7 @@ public static class ModLoader
 
 		if (!premature)
 		{
+			// OnPluginUnload
 			HookCaller.CallStaticHook(3843290135, plugin);
 		}
 
@@ -278,7 +280,7 @@ public static class ModLoader
 
 		if (!premature)
 		{
-			Logger.Log($"Unloaded plugin {plugin.ToString()}");
+			Logger.Log($"Unloaded plugin {plugin}");
 			Interface.Oxide.RootPluginManager.RemovePlugin(plugin);
 		}
 		return true;
@@ -328,11 +330,12 @@ public static class ModLoader
 
 	public const string CARBON_PLUGIN = "CarbonPlugin";
 	public const string RUST_PLUGIN = "RustPlugin";
+	public const string COVALENCE_PLUGIN = "CovalencePlugin";
 
 	public static bool IsValidPlugin(Type type, bool recursive)
 	{
 		if (type == null) return false;
-		if (type.Name == CARBON_PLUGIN || type.Name == RUST_PLUGIN) return true;
+		if (type.Name is CARBON_PLUGIN or RUST_PLUGIN or COVALENCE_PLUGIN) return true;
 		return recursive && IsValidPlugin(type.BaseType, recursive);
 	}
 
@@ -344,11 +347,11 @@ public static class ModLoader
 
 		foreach (var method in methods)
 		{
-			var chatCommand = method.GetCustomAttribute<ChatCommandAttribute>();
-			var consoleCommand = method.GetCustomAttribute<ConsoleCommandAttribute>();
-			var rconCommand = method.GetCustomAttribute<RConCommandAttribute>();
-			var protectedCommand = method.GetCustomAttribute<ProtectedCommandAttribute>();
-			var command = method.GetCustomAttribute<CommandAttribute>();
+			var chatCommands = method.GetCustomAttributes<ChatCommandAttribute>();
+			var consoleCommands = method.GetCustomAttributes<ConsoleCommandAttribute>();
+			var rconCommands = method.GetCustomAttributes<RConCommandAttribute>();
+			var protectedCommands = method.GetCustomAttributes<ProtectedCommandAttribute>();
+			var commands = method.GetCustomAttributes<CommandAttribute>();
 			var permissions = method.GetCustomAttributes<PermissionAttribute>();
 			var groups = method.GetCustomAttributes<GroupAttribute>();
 			var authLevelAttribute = method.GetCustomAttribute<AuthLevelAttribute>();
@@ -358,7 +361,7 @@ public static class ModLoader
 			var gs = groups.Count() == 0 ? null : groups?.Select(x => x.Name).ToArray();
 			var cooldownTime = cooldown == null ? 0 : cooldown.Miliseconds;
 
-			if (command != null)
+			foreach (var command in commands)
 			{
 				foreach (var commandName in command.Names)
 				{
@@ -368,19 +371,42 @@ public static class ModLoader
 				}
 			}
 
-			if (chatCommand != null)
+			foreach (var chatCommand in chatCommands)
 			{
 				Community.Runtime.CorePlugin.cmd.AddChatCommand(string.IsNullOrEmpty(prefix) ? chatCommand.Name : $"{prefix}.{chatCommand.Name}", hookable, method, help: chatCommand.Help, reference: method, permissions: ps, groups: gs, authLevel: authLevel, cooldown: cooldownTime, isHidden: hidden, silent: true);
 			}
 
-			if (consoleCommand != null)
+			foreach (var consoleCommand in consoleCommands)
 			{
 				Community.Runtime.CorePlugin.cmd.AddConsoleCommand(string.IsNullOrEmpty(prefix) ? consoleCommand.Name : $"{prefix}.{consoleCommand.Name}", hookable, method, help: consoleCommand.Help, reference: method, permissions: ps, groups: gs, authLevel: authLevel, cooldown: cooldownTime, isHidden: hidden, silent: true);
 			}
 
-			if (protectedCommand != null)
+			foreach (var protectedCommand in protectedCommands)
 			{
 				Community.Runtime.CorePlugin.cmd.AddConsoleCommand(Community.Protect(string.IsNullOrEmpty(prefix) ? protectedCommand.Name : $"{prefix}.{protectedCommand.Name}"), hookable, method, help: protectedCommand.Help, reference: method, permissions: ps, groups: gs, authLevel: authLevel, cooldown: cooldownTime, isHidden: true, silent: true);
+			}
+
+			foreach (var rconCommand in rconCommands)
+			{
+				var cmd = new API.Commands.Command.RCon
+				{
+					Name = string.IsNullOrEmpty(prefix) ? rconCommand.Name : $"{prefix}.{rconCommand.Name}",
+					Reference = hookable,
+					Callback = arg =>
+					{
+						var result = method.Invoke(hookable, new object[] { arg });
+
+						if (result != null)
+						{
+							Logger.Log(result);
+						}
+					},
+					Help = rconCommand.Help,
+					Token = rconCommand,
+					CanExecute = (cmd, arg) => true
+				};
+
+				Community.Runtime.CommandManager.RegisterCommand(cmd, out var reason);
 			}
 
 			if (ps != null && ps.Length > 0)

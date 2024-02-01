@@ -53,7 +53,33 @@ public partial class AdminModule
 	const string PanelId = "carbonmodularui";
 	const string CursorPanelId = "carbonmodularuicur";
 	const string SpectatePanelId = "carbonmodularuispectate";
-	const int AccessLevels = 3;
+	readonly string[] AccessLevels = new[]
+	{
+		"wizard",
+		"carbon.use",
+		"carbon.server_settings",
+		"carbon.server_config",
+		"carbon.server_info",
+		"carbon.server_console",
+		"entities.use",
+		"entities.kill_entity",
+		"entities.tp_entity",
+		"entities.loot_entity",
+		"entities.loot_players",
+		"entities.respawn_players",
+		"entities.blind_players",
+		"entities.spectate_players",
+		"entities.owner_change",
+		"environment.use",
+		"modules.use",
+		"modules.config_edit",
+		"permissions.use",
+		"players.use",
+		"players.inventory_management",
+		"players.craft_queue",
+		"plugins.use",
+		"plugins.setup"
+	};
 	private const string OptionColor = "0.2 0.2 0.2 0.75";
 
 	internal bool _logRegistration;
@@ -97,9 +123,9 @@ public partial class AdminModule
 		Unsubscribe("OnEntityVisibilityCheck");
 		Unsubscribe("OnEntityDistanceCheck");
 
-		for (int i = 1; i <= AccessLevels; i++)
+		foreach (var level in AccessLevels)
 		{
-			RegisterPermission($"adminmodule.accesslevel{i}");
+			RegisterPermission($"adminmodule.{level}");
 		}
 
 		if (!_logRegistration)
@@ -133,10 +159,10 @@ public partial class AdminModule
 					return;
 				}
 
-				ap.SelectedTab = Tabs.FirstOrDefault(x => HasAccessLevel(player, x.AccessLevel));
+				ap.SelectedTab = Tabs.FirstOrDefault(x => HasAccess(player, x.Access));
 
 				var tab = GetTab(player);
-				tab.OnChange?.Invoke(ap, tab);
+				tab?.OnChange?.Invoke(ap, tab);
 
 				ap.Clear();
 
@@ -250,16 +276,13 @@ public partial class AdminModule
 		catch { }
 	}
 
-	public bool HasAccessLevel(BasePlayer player, int accessLevel)
+	public bool HasAccess(BasePlayer player, string access)
 	{
-		if (accessLevel == 0 || (player != null && player.IsAdmin)) return true;
+		if ((player != null && player.Connection.authLevel == 2)) return true;
 
-		for (int i = accessLevel; i <= AccessLevels; i++)
+		if (HasPermission(player.UserIDString, $"adminmodule.{access}"))
 		{
-			if (HasPermission(player.UserIDString, $"adminmodule.accesslevel{i}"))
-			{
-				return true;
-			}
+			return true;
 		}
 
 		return false;
@@ -1151,7 +1174,7 @@ public partial class AdminModule
 			ap.IsInMenu = true;
 
 			if (CanAccess(player) && !DataInstance.ShowedWizard
-				&& (tab != null && tab.Id != "setupwizard" && tab.Id != "configeditor") && HasAccessLevel(player, 3))
+				&& (tab != null && tab.Id != "setupwizard" && tab.Id != "configeditor") && HasAccess(player, "wizard"))
 			{
 				tab = ap.SelectedTab = SetupWizard.Make();
 			}
@@ -1204,7 +1227,7 @@ public partial class AdminModule
 						{
 							var _tab = Tabs[ap.TabSkip + i];
 							var plugin = _tab.Plugin.IsCorePlugin ? string.Empty : $"<size=8>\nby {_tab.Plugin?.Name}</size>";
-							TabButton(cui, container, tabButtons, $"{(Tabs.IndexOf(ap.SelectedTab) == i ? $"<b>{_tab.Name}</b>" : _tab.Name)}{plugin}", PanelId + $".changetab {i}", tabWidth, tabIndex, Tabs.IndexOf(ap.SelectedTab) == i, !HasAccessLevel(player, _tab.AccessLevel));
+							TabButton(cui, container, tabButtons, $"{(Tabs.IndexOf(ap.SelectedTab) == i ? $"<b>{_tab.Name}</b>" : _tab.Name)}{plugin}", PanelId + $".changetab {i}", tabWidth, tabIndex, Tabs.IndexOf(ap.SelectedTab) == i, !HasAccess(player, _tab.Access));
 							tabIndex += tabWidth;
 						}
 					}
@@ -1467,7 +1490,7 @@ public partial class AdminModule
 
 		var ap = GetPlayerSession(player);
 		ap.IsInMenu = false;
-		ap.SelectedTab.ResetHiddens();
+		ap.SelectedTab?.ResetHiddens();
 
 		var noneInMenu = true;
 		foreach (var admin in PlayerSessions)
@@ -1524,7 +1547,7 @@ public partial class AdminModule
 		var ap = GetPlayerSession(player);
 		var previous = ap.SelectedTab;
 
-		var tab = Tabs.FirstOrDefault(x => HasAccessLevel(player, x.AccessLevel) && x.Id == id);
+		var tab = Tabs.FirstOrDefault(x => HasAccess(player, x.Access) && x.Id == id);
 		if (tab != null)
 		{
 			ap.Tooltip = null;
@@ -1545,7 +1568,7 @@ public partial class AdminModule
 		var previous = ap.SelectedTab;
 
 		var lookupTab = Tabs[index];
-		var tab = HasAccessLevel(player, lookupTab.AccessLevel) ? lookupTab : Tabs.FirstOrDefault(x => HasAccessLevel(player, x.AccessLevel));
+		var tab = HasAccess(player, lookupTab.Access) ? lookupTab : Tabs.FirstOrDefault(x => HasAccess(player, x.Access));
 		if (tab != null)
 		{
 			ap.Tooltip = null;
@@ -1565,7 +1588,7 @@ public partial class AdminModule
 		var ap = GetPlayerSession(player);
 		var previous = ap.SelectedTab;
 
-		tab = HasAccessLevel(player, tab.AccessLevel) ? tab : Tabs.FirstOrDefault(x => HasAccessLevel(player, x.AccessLevel));
+		tab = HasAccess(player, tab.Access) ? tab : Tabs.FirstOrDefault(x => HasAccess(player, x.Access));
 		if (tab != null)
 		{
 			ap.Tooltip = null;
@@ -1912,7 +1935,7 @@ public partial class AdminModule
 	{
 		public string Id;
 		public string Name;
-		public int AccessLevel = 0;
+		public string Access = null;
 		public RustPlugin Plugin;
 		public Action<Tab, CUI, CuiElementContainer, string, PlayerSession> Over, Under, Override;
 		public Dictionary<int, List<Option>> Columns = new();
@@ -1921,13 +1944,13 @@ public partial class AdminModule
 		public TabDialog Dialog;
 		public bool Fullscreen;
 
-		public Tab(string id, string name, RustPlugin plugin, Action<PlayerSession, Tab> onChange = null, int accessLevel = 0)
+		public Tab(string id, string name, RustPlugin plugin, Action<PlayerSession, Tab> onChange = null, string access = null)
 		{
 			Id = id;
 			Name = name;
 			Plugin = plugin;
 			OnChange = onChange;
-			AccessLevel = accessLevel;
+			Access = access;
 		}
 
 		public void ClearColumn(int column, bool erase = false)

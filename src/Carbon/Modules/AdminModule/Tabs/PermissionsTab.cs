@@ -32,7 +32,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				ap.SetStorage(tab, "option", 0);
 
 				GeneratePlayers(tab, permission, ap);
-			}, 3);
+			}, "permissions.use");
 
 			tab.AddName(0, "Options", TextAnchor.MiddleLeft);
 

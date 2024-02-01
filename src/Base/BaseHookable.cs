@@ -5,7 +5,7 @@ using Newtonsoft.Json;
 
 /*
  *
- * Copyright (c) 2022-2023 Carbon Community
+ * Copyright (c) 2022-2024 Carbon Community
  * All rights reserved.
  *
  */
@@ -29,8 +29,14 @@ public class BaseHookable
 		public bool IsByRef;
 		public bool IsAsync;
 
+		public int TimesFired;
 		public double HookTime;
 		public double MemoryUsage;
+
+		public void Tick()
+		{
+			TimesFired++;
+		}
 
 		public static CachedHook Make(MethodInfo method)
 		{
@@ -290,5 +296,10 @@ public class BaseHookable
 		}
 
 		return default;
+	}
+
+	public override string ToString()
+	{
+		return $"{Name} v{Version}";
 	}
 }

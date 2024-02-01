@@ -5,7 +5,7 @@ using Time = UnityEngine.Time;
 
 /*
  *
- * Copyright (c) 2023 Carbon Community 
+ * Copyright (c) 2022-2024 Carbon Community  
  * Copyright (c) 2023 Patrette
  * All rights reserved.
  *

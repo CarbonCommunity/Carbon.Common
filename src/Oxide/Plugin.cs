@@ -708,10 +708,6 @@ namespace Oxide.Core.Plugins
 
 		}
 
-		public new string ToString()
-		{
-			return GetType().Name;
-		}
 		public virtual void Dispose()
 		{
 			IsLoaded = false;
