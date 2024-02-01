@@ -5,7 +5,7 @@ using Newtonsoft.Json;
 
 /*
  *
- * Copyright (c) 2022-2024 Carbon Community 
+ * Copyright (c) 2022-2024 Carbon Community
  * All rights reserved.
  *
  */
@@ -296,5 +296,10 @@ public class BaseHookable
 		}
 
 		return default;
+	}
+
+	public override string ToString()
+	{
+		return $"{Name} v{Version}";
 	}
 }
