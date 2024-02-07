@@ -195,7 +195,7 @@ public partial class AdminModule
 
 		if (Community.IsServerInitialized) GenerateTabs();
 
-		if (Community.Runtime.Analytics.HasNewIdentifier)
+		if (ModuleConfiguration.HasConfigStructureChanged())
 		{
 			DataInstance.ShowedWizard = false;
 		}
