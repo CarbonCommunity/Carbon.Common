@@ -55,7 +55,7 @@ public partial class CorePlugin : CarbonPlugin
 				break;
 
 			case "group":
-				if (permission.GroupHasPermission(user.Key, perm))
+				if (permission.GroupHasPermission(name, perm))
 				{
 					arg.ReplyWith($"Already has that permission assigned.");
 				}
@@ -113,7 +113,7 @@ public partial class CorePlugin : CarbonPlugin
 				break;
 
 			case "group":
-				if (!permission.GroupHasPermission(user.Key, perm))
+				if (!permission.GroupHasPermission(name, perm))
 				{
 					arg.ReplyWith($"Group does not have that permission assigned.");
 				}
