@@ -2166,7 +2166,10 @@ public partial class AdminModule
 				if (centerNext)
 				{
 					cui.CreateProtectedButton(container, panel, "#7d8f32", "1 1 1 1", $"{nextPage.Title} ▶", 9,
-						xMin: 0.9f, yMin: 0f, yMax: 0.055f, OxMin: -395, OxMax: -395, OyMin: 145f, OyMax: 145f, command: $"wizard.changepage 1");
+						xMin: 0.9f, yMin: 0f, yMax: 0.055f, OxMin: -415, OxMax: -415, OyMin: 145f, OyMax: 145f, command: $"wizard.changepage 1");
+
+					cui.CreateProtectedButton(container, panel, "1 1 1 0.3", "1 1 1 1", $"SKIP ▶▶", 9,
+						xMin: 0.9f, yMin: 0f, yMax: 0.055f, OxMin: -400, OxMax: -430, OyMin: 100f, OyMax: 100f, command: $"wizard.changepage -1");
 				}
 				else
 				{
@@ -2229,12 +2232,28 @@ public partial class AdminModule
 	{
 		var ap = GetPlayerSession(arg.Player());
 		var tab = GetTab(ap.Player);
+		var value = arg.GetInt(0);
 
 		var currentPage = ap.GetStorage(tab, "page", 0);
-		currentPage += arg.GetInt(0);
-		ap.SetStorage(tab, "page", currentPage);
 
-		Community.Runtime.CorePlugin.NextFrame(() => Draw(ap.Player));
+		if (value == -1)
+		{
+			ap.SetStorage(tab, "page", 0);
+			Singleton.DataInstance.ShowedWizard = true;
+			Singleton.GenerateTabs();
+			Community.Runtime.CorePlugin.NextTick(() =>
+			{
+				Singleton.SetTab(ap.Player, 0);
+				Draw(ap.Player);
+			});
+		}
+		else
+		{
+			currentPage += value;
+			ap.SetStorage(tab, "page", currentPage);
+			Community.Runtime.CorePlugin.NextFrame(() => Draw(ap.Player));
+		}
+
 	}
 
 	[ProtectedCommand("wizard.togglemodule")]
