@@ -10,7 +10,7 @@
 
 namespace Carbon.Modules;
 
-public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
+public partial class AdminModule
 {
 	public class CarbonTab
 	{
