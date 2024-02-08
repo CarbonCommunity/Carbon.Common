@@ -197,7 +197,7 @@ public partial class AdminModule
 
 		if (ModuleConfiguration.HasConfigStructureChanged())
 		{
-			DataInstance.ShowedWizard = false;
+			DataInstance.WizardDisplayed = false;
 		}
 	}
 	public override void Save()
@@ -1021,7 +1021,7 @@ public partial class AdminModule
 			var tab = GetTab(player);
 			ap.IsInMenu = true;
 
-			if (CanAccess(player) && !DataInstance.ShowedWizard
+			if (CanAccess(player) && !DataInstance.WizardDisplayed
 				&& (tab != null && tab.Id != "setupwizard" && tab.Id != "configeditor") && HasAccess(player, "wizard"))
 			{
 				tab = ap.SelectedTab = SetupWizard.Make();
@@ -2089,7 +2089,7 @@ public partial class AdminModule
 
 			tab.Pages.Add(new Page("Finalize", (cui, t, container, panel, ap) =>
 			{
-				Singleton.DataInstance.ShowedWizard = true;
+				Singleton.DataInstance.WizardDisplayed = true;
 				Singleton.GenerateTabs();
 				Community.Runtime.CorePlugin.NextTick(() => Singleton.SetTab(ap.Player, 0));
 			}));
@@ -2165,11 +2165,11 @@ public partial class AdminModule
 
 				if (centerNext)
 				{
-					cui.CreateProtectedButton(container, panel, "#7d8f32", "1 1 1 1", $"{nextPage.Title} ▶", 9,
-						xMin: 0.9f, yMin: 0f, yMax: 0.055f, OxMin: -415, OxMax: -415, OyMin: 145f, OyMax: 145f, command: $"wizard.changepage 1");
+					cui.CreateProtectedButton(container, panel, "#7d8f32", "1 1 1 1", $"{nextPage.Title}   ▶", 9,
+						xMin: 0.9f, yMin: 0f, yMax: 0.055f, OxMin: -470, OxMax: -470, OyMin: 145f, OyMax: 145f, command: $"wizard.changepage 1");
 
-					cui.CreateProtectedButton(container, panel, "1 1 1 0.3", "1 1 1 1", $"SKIP ▶▶", 9,
-						xMin: 0.9f, yMin: 0f, yMax: 0.055f, OxMin: -400, OxMax: -430, OyMin: 100f, OyMax: 100f, command: $"wizard.changepage -1");
+					cui.CreateProtectedButton(container, panel, "1 1 1 0.3", "1 1 1 1", $"Skip   ▶▶", 9,
+						xMin: 0.9f, yMin: 0f, yMax: 0.055f, OxMin: -370, OxMax: -370, OyMin: 145f, OyMax: 145f, command: $"wizard.changepage -2");
 				}
 				else
 				{
@@ -2236,10 +2236,10 @@ public partial class AdminModule
 
 		var currentPage = ap.GetStorage(tab, "page", 0);
 
-		if (value == -1)
+		if (value == -2)
 		{
 			ap.SetStorage(tab, "page", 0);
-			Singleton.DataInstance.ShowedWizard = true;
+			Singleton.DataInstance.WizardDisplayed = true;
 			Singleton.GenerateTabs();
 			Community.Runtime.CorePlugin.NextTick(() =>
 			{
@@ -2342,8 +2342,8 @@ public class AdminConfig
 }
 public class AdminData
 {
-	[JsonProperty("ShowedWizard v3")]
-	public bool ShowedWizard = false;
+	[JsonProperty("WizardDisplayed")]
+	public bool WizardDisplayed = false;
 	public DataColors Colors = new();
 
 	public class DataColors
