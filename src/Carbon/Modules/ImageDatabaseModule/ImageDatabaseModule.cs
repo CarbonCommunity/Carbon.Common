@@ -461,14 +461,12 @@ public class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModule
 
 		internal Queue<string> _urlQueue = new();
 		internal int _processed;
-		internal WebRequests _webRequests;
 		internal WebRequests.WebRequest.Client _client;
 		internal bool _finishedProcessing;
 		internal bool _disposed;
 
 		public override void Start()
 		{
-			_webRequests = new WebRequests();
 			foreach (var url in ImageUrls) { _urlQueue.Enqueue(url); }
 
 			base.Start();
@@ -524,7 +522,6 @@ public class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModule
 			Scale = default;
 			_urlQueue.Clear();
 			_client?.Dispose();
-			_webRequests = null;
 			_finishedProcessing = default;
 			_disposed = true;
 
