@@ -40,6 +40,28 @@ public partial class CorePlugin : CarbonPlugin
 		if (previousEnabled != newEnabled)
 		{
 			module.SetEnabled(newEnabled);
+
+			if (newEnabled)
+			{
+				try
+				{
+					module.OnServerInit(false);
+				}
+				catch (Exception ex)
+				{
+					Logger.Error($"Failed OnServerInit on {module.Name}", ex);
+				}
+
+				try
+				{
+					module.OnPostServerInit(false);
+				}
+				catch (Exception ex)
+				{
+					Logger.Error($"Failed OnPostServerInit on {module.Name}", ex);
+				}
+			}
+
 			module.Save();
 		}
 
