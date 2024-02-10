@@ -1987,7 +1987,7 @@ public partial class AdminModule
 					OyMin: -20, OyMax: -20);
 				cui.CreateText(container, panel,
 					color: "1 1 1 0.5",
-					text: "Welcome to <b>Carbon</b> setup wizard!", 13,
+					text: "Welcome to <b>Carbon</b> setup wizard!\nIf you've seen this panel again, your existent settings are not reset.", 13,
 					yMax: 0.495f, OyMin: -20, OyMax: -20, align: TextAnchor.UpperCenter);
 				tab.DisplayArrows(cui, tab, container, panel, ap, true);
 			}));
@@ -2243,6 +2243,7 @@ public partial class AdminModule
 			Singleton.GenerateTabs();
 			Community.Runtime.CorePlugin.NextTick(() =>
 			{
+				Save();
 				Singleton.SetTab(ap.Player, 0);
 				Draw(ap.Player);
 			});
