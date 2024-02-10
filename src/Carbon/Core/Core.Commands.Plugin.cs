@@ -372,7 +372,7 @@ public partial class CorePlugin : CarbonPlugin
 		var builder = PoolEx.GetStringBuilder();
 		var count = 1;
 
-		using (var table = new StringTable("", "Chat Commands"))
+		using (var table = new StringTable("Chat Commands"))
 		{
 			foreach (var command in Community.Runtime.CommandManager.Chat.Where(x => x.Reference == plugin).Distinct())
 			{
@@ -381,7 +381,7 @@ public partial class CorePlugin : CarbonPlugin
 					continue;
 				}
 
-				table.AddRow(string.Empty, command.Name);
+				table.AddRow(command.Name);
 
 				count++;
 			}
@@ -389,7 +389,7 @@ public partial class CorePlugin : CarbonPlugin
 			builder.AppendLine(table.ToStringMinimal());
 		}
 
-		using (var table = new StringTable("", "Console Commands"))
+		using (var table = new StringTable("Console Commands"))
 		{
 			count = 1;
 			foreach (var command in Community.Runtime.CommandManager.ClientConsole.Where(x => x.Reference == plugin))
@@ -399,7 +399,7 @@ public partial class CorePlugin : CarbonPlugin
 					continue;
 				}
 
-				table.AddRow(string.Empty, command.Name);
+				table.AddRow(command.Name);
 
 				count++;
 			}
