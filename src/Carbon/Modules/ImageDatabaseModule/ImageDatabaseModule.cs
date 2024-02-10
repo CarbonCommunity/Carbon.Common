@@ -187,25 +187,7 @@ public class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModule
 			return true;
 		}
 
-		var invalidations = Facepunch.Pool.GetList<string>();
-
-		foreach (var pointer in _protoData.Map)
-		{
-			if (FileStorage.server.Get(pointer.Value, FileStorage.Type.png, new NetworkableId(_protoData.Identifier)) == null)
-			{
-				invalidations.Add(pointer.Key);
-			}
-		}
-
-		foreach (var invalidation in invalidations)
-		{
-			_protoData.Map.Remove(invalidation);
-		}
-
-		var invalidated = invalidations.Count > 0;
-		Facepunch.Pool.FreeList(ref invalidations);
-
-		return invalidated;
+		return false;
 	}
 
 	public void QueueBatch(bool @override, params string[] urls)
