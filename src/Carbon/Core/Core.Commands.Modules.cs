@@ -195,6 +195,8 @@ public partial class CorePlugin : CarbonPlugin
 		}
 
 		var name = arg.GetString(0);
+		var mode = arg.GetString(1);
+		var flip = arg.GetString(2).Equals("-asc");
 		var module = Community.Runtime.ModuleProcessor.Modules.FirstOrDefault(x => x.Name == name) as BaseModule;
 		var count = 1;
 
@@ -206,14 +208,22 @@ public partial class CorePlugin : CarbonPlugin
 
 		using (var table = new StringTable("#", "Id", "Hook", "Time", "Memory", "Fires", "Subscribed", "Async/Overrides"))
 		{
-			foreach (var hook in module.HookCache)
+			IEnumerable<List<CachedHook>> array = mode switch
 			{
-				if (hook.Value.Count == 0)
+				"-t" => (flip ? module.HookCache.OrderBy(x => x.Value.Sum(x => x.HookTime)) : module.HookCache.OrderByDescending(x => x.Value.Sum(x => x.HookTime))).Select(x => x.Value),
+				"-m" => (flip ? module.HookCache.OrderBy(x => x.Value.Sum(x => x.MemoryUsage)) : module.HookCache.OrderByDescending(x => x.Value.Sum(x => x.MemoryUsage))).Select(x => x.Value),
+				"-f" => (flip ? module.HookCache.OrderBy(x => x.Value.Sum(x => x.TimesFired)) : module.HookCache.OrderByDescending(x => x.Value.Sum(x => x.TimesFired))).Select(x => x.Value),
+				_ => module.HookCache.Select(x => x.Value)
+			};
+
+			foreach (var hook in array)
+			{
+				if (hook.Count == 0)
 				{
 					continue;
 				}
 
-				var current = hook.Value[0];
+				var current = hook[0];
 				var hookId = HookStringPool.GetOrAdd(current.Method.Name);
 
 				if (!module.Hooks.Contains(hookId))
@@ -223,11 +233,11 @@ public partial class CorePlugin : CarbonPlugin
 
 				var hookName = current.Method.Name;
 
-				var hookTime = hook.Value.Sum(x => x.HookTime);
-				var hookMemoryUsage = hook.Value.Sum(x => x.MemoryUsage);
-				var hookCount = hook.Value.Count;
-				var hookAsyncCount = hook.Value.Count(x => x.IsAsync);
-				var hooksTimesFired = hook.Value.Sum(x => x.TimesFired);
+				var hookTime = hook.Sum(x => x.HookTime);
+				var hookMemoryUsage = hook.Sum(x => x.MemoryUsage);
+				var hookCount = hook.Count;
+				var hookAsyncCount = hook.Count(x => x.IsAsync);
+				var hooksTimesFired = hook.Sum(x => x.TimesFired);
 
 				if (!module.Hooks.Contains(hookId))
 				{

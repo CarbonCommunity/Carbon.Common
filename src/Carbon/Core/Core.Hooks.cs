@@ -40,6 +40,9 @@ public partial class CorePlugin : CarbonPlugin
 	{
 		Logger.Log($"Saving plugin configuration and data..");
 
+		// OnServerShutdown
+		HookCaller.CallStaticHook(1708437245);
+
 		// OnServerSave
 		HookCaller.CallStaticHook(2032593992);
 

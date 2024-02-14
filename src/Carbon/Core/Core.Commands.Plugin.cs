@@ -273,6 +273,8 @@ public partial class CorePlugin : CarbonPlugin
 		}
 
 		var name = arg.GetString(0).ToLower();
+		var mode = arg.GetString(1);
+		var flip = arg.GetString(2).Equals("-asc");
 		var plugin = ModLoader.LoadedPackages.SelectMany(x => x.Plugins).FirstOrDefault(x => string.IsNullOrEmpty(x.FileName) ? x.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase) : x.FileName.Contains(name, CompareOptions.OrdinalIgnoreCase));
 		var count = 1;
 
@@ -284,22 +286,30 @@ public partial class CorePlugin : CarbonPlugin
 
 		using (var table = new StringTable("#", "Id", "Hook", "Time", "Memory", "Fires", "Subscribed", "Async/Overrides"))
 		{
-			foreach (var hook in plugin.HookCache)
+			IEnumerable<List<CachedHook>> array = mode switch
 			{
-				if (hook.Value.Count == 0)
+				"-t" => (flip ? plugin.HookCache.OrderBy(x => x.Value.Sum(x => x.HookTime)) : plugin.HookCache.OrderByDescending(x => x.Value.Sum(x => x.HookTime))).Select(x => x.Value),
+				"-m" => (flip ? plugin.HookCache.OrderBy(x => x.Value.Sum(x => x.MemoryUsage)) : plugin.HookCache.OrderByDescending(x => x.Value.Sum(x => x.MemoryUsage))).Select(x => x.Value),
+				"-f" => (flip ? plugin.HookCache.OrderBy(x => x.Value.Sum(x => x.TimesFired)) : plugin.HookCache.OrderByDescending(x => x.Value.Sum(x => x.TimesFired))).Select(x => x.Value),
+				_ => plugin.HookCache.Select(x => x.Value)
+			};
+
+			foreach (var hook in array)
+			{
+				if (hook.Count == 0)
 				{
 					continue;
 				}
 
-				var current = hook.Value[0];
+				var current = hook[0];
 				var hookName = current.Method.Name;
 
 				var hookId = HookStringPool.GetOrAdd(hookName);
-				var hookTime = hook.Value.Sum(x => x.HookTime);
-				var hookMemoryUsage = hook.Value.Sum(x => x.MemoryUsage);
-				var hookCount = hook.Value.Count;
-				var hookAsyncCount = hook.Value.Count(x => x.IsAsync);
-				var hooksTimesFired = hook.Value.Sum(x => x.TimesFired);
+				var hookTime = hook.Sum(x => x.HookTime);
+				var hookMemoryUsage = hook.Sum(x => x.MemoryUsage);
+				var hookCount = hook.Count;
+				var hookAsyncCount = hook.Count(x => x.IsAsync);
+				var hooksTimesFired = hook.Sum(x => x.TimesFired);
 
 				if (!plugin.Hooks.Contains(hookId))
 				{
@@ -372,7 +382,7 @@ public partial class CorePlugin : CarbonPlugin
 		var builder = PoolEx.GetStringBuilder();
 		var count = 1;
 
-		using (var table = new StringTable("", "Chat Commands"))
+		using (var table = new StringTable("Chat Commands"))
 		{
 			foreach (var command in Community.Runtime.CommandManager.Chat.Where(x => x.Reference == plugin).Distinct())
 			{
@@ -381,7 +391,7 @@ public partial class CorePlugin : CarbonPlugin
 					continue;
 				}
 
-				table.AddRow(string.Empty, command.Name);
+				table.AddRow(command.Name);
 
 				count++;
 			}
@@ -389,7 +399,7 @@ public partial class CorePlugin : CarbonPlugin
 			builder.AppendLine(table.ToStringMinimal());
 		}
 
-		using (var table = new StringTable("", "Console Commands"))
+		using (var table = new StringTable("Console Commands"))
 		{
 			count = 1;
 			foreach (var command in Community.Runtime.CommandManager.ClientConsole.Where(x => x.Reference == plugin))
@@ -399,7 +409,7 @@ public partial class CorePlugin : CarbonPlugin
 					continue;
 				}
 
-				table.AddRow(string.Empty, command.Name);
+				table.AddRow(command.Name);
 
 				count++;
 			}
