@@ -2,7 +2,7 @@
 
 /*
  *
- * Copyright (c) 2022-2023 Carbon Community
+ * Copyright (c) 2022-2024 Carbon Community 
  * All rights reserved.
  *
  */
@@ -17,14 +17,15 @@ public class Config
 	public SearchOption ScriptWatcherOption { get; set; } = SearchOption.TopDirectoryOnly;
 	public bool FileNameCheck { get; set; } = true;
 	public bool IsModded { get; set; } = true;
-	public bool HigherPriorityHookWarns { get; set; } = false;
 	public string PlayerDefaultGroup { get; set; } = "default";
 	public string AdminDefaultGroup { get; set; } = "admin";
 	public int LogFileMode { get; set; } = 2;
 	public int LogVerbosity { get; set; } = 0;
 	public bool BypassAdminCooldowns { get; set; } = false;
 	public float PluginTrackingTime { get; set; } = 60f;
+	public double LogSplitSize { get; set; } = 2.5;
 	public string ScriptDebuggingOrigin = string.Empty;
+	public List<string> CommandPrefixes { get; set; }
 	public bool UnityStacktrace { get; set; } =
 #if DEBUG
 		true;

@@ -1,6 +1,6 @@
 ﻿/*
  *
- * Copyright (c) 2022-2023 Carbon Community
+ * Copyright (c) 2022-2024 Carbon Community 
  * All rights reserved.
  *
  */
@@ -110,7 +110,7 @@ public class CarbonPlugin : RustPlugin
 
 	public string Domain => $"com.carbon.{Name}.{Author}";
 
-	public Harmony _CARBON_PATCH;
+	public HarmonyLib.Harmony _CARBON_PATCH;
 
 	public bool ApplyPatch()
 	{
@@ -121,7 +121,7 @@ public class CarbonPlugin : RustPlugin
 
 		try
 		{
-			_CARBON_PATCH = new Harmony(Domain);
+			_CARBON_PATCH = new HarmonyLib.Harmony(Domain);
 			_CARBON_PATCH.PatchAll(Type.Assembly);
 			return true;
 		}

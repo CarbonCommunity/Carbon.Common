@@ -15,17 +15,30 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 	{
 		internal static Permission permission;
 
+		public enum HookableTypes
+		{
+			Plugin,
+			Module
+		}
+
 		public static Tab Get()
 		{
 			permission = Community.Runtime.CorePlugin.permission;
 
 			var tab = new Tab("permissions", "Permissions", Community.Runtime.CorePlugin, (ap, tab) =>
 			{
+				ap.SetStorage(tab, "groupedit", false);
+
 				tab.ClearColumn(1);
 				tab.ClearColumn(2);
 				tab.ClearColumn(3);
+				ap.Clear();
+
+				ap.SetStorage(tab, "pluginedit", false);
+				ap.SetStorage(tab, "option", 0);
+
 				GeneratePlayers(tab, permission, ap);
-			}, 3);
+			}, "permissions.use");
 
 			tab.AddName(0, "Options", TextAnchor.MiddleLeft);
 
@@ -92,11 +105,13 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					Singleton.Modal.Open(ap.Player, "Create New User", new()
 					{
 						["steamid"] = ModalModule.Modal.Field.Make("Steam ID", ModalModule.Modal.Field.FieldTypes.String, true, customIsInvalid: field => !field.Get<string>().IsSteamId() ? "Not a valid Steam ID." : permission.UserExists(field.Get<string>()) ? "User with the same Steam ID already exists." : string.Empty),
-						["displayname"] = ModalModule.Modal.Field.Make("Display Name", ModalModule.Modal.Field.FieldTypes.String)
+						["displayname"] = ModalModule.Modal.Field.Make("Display Name", ModalModule.Modal.Field.FieldTypes.String),
+						["language"] = ModalModule.Modal.Field.Make("Language", ModalModule.Modal.Field.FieldTypes.String)
 					}, (pl, mod) =>
 					{
-						var user = permission.GetUserData(mod.Get<string>("steamid"));
+						var user = permission.GetUserData(mod.Get<string>("steamid"), addIfNotExisting: true);
 						user.LastSeenNickname = mod.Get<string>("displayname");
+						user.Language = mod.Get<string>("language");
 
 						GeneratePlayers(tab, perms, ap);
 					});
@@ -126,7 +141,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 							tab.ClearColumn(3);
 
-							GeneratePlugins(tab, ap, perms, permission.FindUser(player.UserIDString), null);
+							GenerateHookables(tab, ap, perms, permission.FindUser(player.UserIDString), null, HookableTypes.Plugin);
 						}, type: (_instance) => ap.GetStorage<string>(tab, "player", null) == player.UserIDString ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.None));
 					}
 				}
@@ -144,14 +159,14 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 								tab.ClearColumn(3);
 
-								GeneratePlugins(tab, ap, perms, player, null);
+								GenerateHookables(tab, ap, perms, player, null, HookableTypes.Plugin);
 							}, type: (_instance) => ap.GetStorage<string>(tab, "player", null) == player.Key ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.None));
 						}
 					}
 				}
 			}
 		}
-		public static void GeneratePlugins(Tab tab, PlayerSession ap, Permission permission, KeyValuePair<string, UserData> player, string selectedGroup)
+		public static void GenerateHookables(Tab tab, PlayerSession ap, Permission permission, KeyValuePair<string, UserData> player, string selectedGroup, HookableTypes hookableType)
 		{
 			var groupEdit = ap.GetStorage<bool>(tab, "groupedit");
 			var pluginEdit = ap.GetStorage<bool>(tab, "pluginedit");
@@ -173,10 +188,38 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 						PlayersTab.RefreshPlayers(tab, ap);
 						PlayersTab.ShowInfo(tab, ap, existentPlayer);
 					}, ap => Tab.OptionButton.Types.Warned),
-					new Tab.OptionButton(groupEdit ? "Edit Plugins" : "Edit Groups", (ap2) =>
+					new Tab.OptionButton(!groupEdit ? $"{(hookableType == HookableTypes.Plugin ? "Modules" : "Groups")}" : "Plugins", (ap2) =>
 					{
-						ap.SetStorage(tab, "groupedit", !groupEdit);
-						GeneratePlugins(tab, ap, permission, player, null);
+						if (groupEdit)
+						{
+							ap.SetStorage(tab, "groupedit", !groupEdit);
+							GenerateHookables(tab, ap, permission, player, null, HookableTypes.Plugin);
+						}
+						else if (hookableType == HookableTypes.Plugin)
+						{
+							GenerateHookables(tab, ap, permission, player, null, HookableTypes.Module);
+						}
+						else
+						{
+							ap.SetStorage(tab, "groupedit", !groupEdit);
+							GenerateHookables(tab, ap, permission, player, null, hookableType);
+						}
+					}),
+					new Tab.OptionButton("Edit User", (ap2) =>
+					{
+						Singleton.Modal.Open(ap.Player, "Edit User", new()
+						{
+							["steamid"] = ModalModule.Modal.Field.Make("Steam ID", ModalModule.Modal.Field.FieldTypes.String, required: false, @default: player.Key, isReadOnly: true),
+							["displayname"] = ModalModule.Modal.Field.Make("Display Name", ModalModule.Modal.Field.FieldTypes.String, @default: player.Value.LastSeenNickname, required: true),
+							["language"] = ModalModule.Modal.Field.Make("Language", ModalModule.Modal.Field.FieldTypes.String, @default: player.Value.Language, required: true)
+						}, (pl, mod) =>
+						{
+							var user = permission.GetUserData(player.Key);
+							user.LastSeenNickname = mod.Get<string>("displayname");
+							user.Language = mod.Get<string>("language");
+
+							GeneratePlayers(tab, permission, ap);
+						});
 					}));
 			}
 			else
@@ -224,7 +267,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 						tab.ClearColumn(2);
 						tab.ClearColumn(3);
 						GenerateGroups(tab, permission, ap);
-						GeneratePlugins(tab, ap, permission, permission.FindUser(ap.Player.UserIDString), selectedGroup);
+						GenerateHookables(tab, ap, permission, permission.FindUser(ap.Player.UserIDString), selectedGroup,hookableType);
 					});
 				}));
 				tab.AddButtonArray(2,
@@ -263,10 +306,22 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 							GenerateGroups(tab, permission, ap);
 						});
 					}, ap => Tab.OptionButton.Types.None),
-					new Tab.OptionButton(pluginEdit ? "Plugins" : "Players", ap =>
+					new Tab.OptionButton(!pluginEdit ? hookableType == HookableTypes.Module ? "Players" : "Modules" : "Plugins", ap =>
 					{
-						ap.SetStorage(tab, "pluginedit", !pluginEdit);
-						GeneratePlugins(tab, ap, permission, player, selectedGroup);
+						if (pluginEdit)
+						{
+							ap.SetStorage(tab, "pluginedit", !pluginEdit);
+							GenerateHookables(tab, ap, permission, player, selectedGroup, HookableTypes.Plugin);
+						}
+						else if (hookableType == HookableTypes.Plugin)
+						{
+							GenerateHookables(tab, ap, permission, player, selectedGroup, HookableTypes.Module);
+						}
+						else
+						{
+							ap.SetStorage(tab, "pluginedit", !pluginEdit);
+							GenerateHookables(tab, ap, permission, player, selectedGroup, hookableType);
+						}
 					}, ap => Tab.OptionButton.Types.None));
 			}
 
@@ -279,7 +334,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					tab.AddInput(2, "Search", ap => ap.GetStorage(tab, "groupfilter", string.Empty), (ap, args) =>
 					{
 						ap.SetStorage(tab, "groupfilter", args.ToString(" "));
-						GeneratePlugins(tab, ap, permission, player, selectedGroup);
+						GenerateHookables(tab, ap, permission, player, selectedGroup, hookableType);
 					});
 
 					var groupFilter = ap.GetStorage<string>(tab, "groupfilter");
@@ -299,29 +354,46 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 								permission.AddUserGroup(player.Key, group);
 							}
 
-							GeneratePlugins(tab, ap, permission, player, selectedGroup);
+							GenerateHookables(tab, ap, permission, player, selectedGroup, hookableType);
 						}, type: (_instance) => permission.UserHasGroup(player.Key, group) ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.None);
 					}
 				}
 			}
 			else if (!pluginEdit)
 			{
-				tab.AddName(2, "Plugins", TextAnchor.MiddleLeft);
+				tab.AddName(2, hookableType == HookableTypes.Module ? "Modules" : "Plugins", TextAnchor.MiddleLeft);
 				{
 					tab.AddInput(2, "Search", ap => ap.GetStorage(tab, "pluginfilter", string.Empty), (ap, args) =>
 					{
 						ap.SetStorage(tab, "pluginfilter", args.ToString(" "));
-						GeneratePlugins(tab, ap, permission, player, selectedGroup);
+						GenerateHookables(tab, ap, permission, player, selectedGroup, hookableType);
 					});
 
-					var plugins = ModLoader.LoadedPackages.SelectMany(x => x.Plugins).Where(x =>
+					var plugins = hookableType == HookableTypes.Plugin ? ModLoader.LoadedPackages.SelectMany(x => x.Plugins).Where(x =>
 					{
-						if (!string.IsNullOrEmpty(filter))
+						if (x.permission.permset.TryGetValue(x, out var perms))
 						{
-							return x.IsCorePlugin || x.permission.GetPermissions().Any(y => y.StartsWith(x.Name.ToLower()) && x.Name.Trim().ToLower().Contains(filter));
+							if (!string.IsNullOrEmpty(filter))
+							{
+								return x.IsCorePlugin || perms.Any(y => x.Name.Trim().ToLower().Contains(filter));
+							}
+
+							return perms.Count > 0;
 						}
 
-						return x.IsCorePlugin || x.permission.GetPermissions().Any(y => y.StartsWith(x.Name.ToLower()));
+						return false;
+					}).Select(x => x as BaseHookable) : Community.Runtime.ModuleProcessor.Modules.Where(x => {
+						if (permission.permset.TryGetValue(x, out var perms))
+						{
+							if (!string.IsNullOrEmpty(filter))
+							{
+								return permission.GetPermissions().Any(y => x.Name.Trim().ToLower().Contains(filter));
+							}
+
+							return perms.Count > 0;
+						}
+
+						return false;
 					});
 
 					foreach (var plugin in plugins)
@@ -333,7 +405,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 							ap.SetStorage(tab, "pluginc", instance3.LastPressedColumn);
 
 							GeneratePermissions(tab, permission, plugin, player, selectedGroup);
-						}, type: (_instance) => ap.GetStorage<RustPlugin>(tab, "plugin", null) == plugin ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.None));
+						}, type: (_instance) => ap.GetStorage<BaseHookable>(tab, "plugin", null) == plugin ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.None));
 					}
 				}
 			}
@@ -344,7 +416,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					tab.AddInput(2, "Search", ap => ap.GetStorage(tab, "pluginfilter", string.Empty), (ap, args) =>
 					{
 						ap.SetStorage(tab, "pluginfilter", args.ToString(" "));
-						GeneratePlugins(tab, ap, permission, player, selectedGroup);
+						GenerateHookables(tab, ap, permission, player, selectedGroup, hookableType);
 					});
 
 					var users = permission.userdata.Where(x =>
@@ -378,18 +450,18 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 							ap.SetStorage(tab, "player", user.Key);
 
 							GeneratePlayers(tab, permission, ap);
-							GeneratePlugins(tab, ap, permission, user, null);
+							GenerateHookables(tab, ap, permission, user, null, hookableType);
 
 						}, type: (_instance) => Tab.OptionButton.Types.Selected));
 					}
 				}
 			}
 		}
-		public static void GeneratePermissions(Tab tab, Permission perms, RustPlugin plugin, KeyValuePair<string, UserData> player, string selectedGroup)
+		public static void GeneratePermissions(Tab tab, Permission perms, BaseHookable hookable, KeyValuePair<string, UserData> player, string selectedGroup)
 		{
 			tab.ClearColumn(3);
 			tab.AddName(3, "Permissions", TextAnchor.MiddleLeft);
-			foreach (var perm in perms.GetPermissions(plugin))
+			foreach (var perm in perms.GetPermissions(hookable))
 			{
 				if (string.IsNullOrEmpty(selectedGroup))
 				{
@@ -407,7 +479,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					{
 						if (perms.UserHasPermission(player.Key, perm))
 							perms.RevokeUserPermission(player.Key, perm);
-						else perms.GrantUserPermission(player.Key, perm, plugin);
+						else perms.GrantUserPermission(player.Key, perm, hookable);
 					}, type: (_instance) => isInherited ? Tab.OptionButton.Types.Important : perms.UserHasPermission(player.Key, perm) ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.None));
 
 					if (isInherited)
@@ -421,7 +493,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					{
 						if (permission.GroupHasPermission(selectedGroup, perm))
 							permission.RevokeGroupPermission(selectedGroup, perm);
-						else permission.GrantGroupPermission(selectedGroup, perm, plugin);
+						else permission.GrantGroupPermission(selectedGroup, perm, hookable);
 					}, type: (_instance) => permission.GroupHasPermission(selectedGroup, perm) ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.None));
 				}
 			}
@@ -469,11 +541,13 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					});
 				}, (_instance) => Tab.OptionButton.Types.Warned);
 
-				foreach (var group in permission.GetGroups())
+				foreach (var group in permission.GetGroups().OrderBy(x => permission.GetGroupData(x).Rank))
 				{
 					if (!string.IsNullOrEmpty(groupFilter) && !group.Contains(groupFilter)) continue;
 
-					tab.AddButton(1, $"{group}", instance2 =>
+					var data = permission.GetGroupData(group);
+
+					tab.AddButton(1, string.IsNullOrEmpty(data.Title) ? $"{group}" : $"{data.Title} ({group})", instance2 =>
 					{
 						ap.SetStorage(tab, "group", group);
 						ap.ClearStorage(tab, "plugin");
@@ -481,7 +555,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 						tab.ClearColumn(2);
 						tab.ClearColumn(3);
 
-						GeneratePlugins(tab, ap, permission, permission.FindUser(ap.Player.UserIDString), group);
+						GenerateHookables(tab, ap, permission, permission.FindUser(ap.Player.UserIDString), group, HookableTypes.Plugin);
 					}, type: (_instance) => ap.GetStorage(tab, "group", string.Empty) == group ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.None);
 				}
 			}

@@ -137,11 +137,14 @@ namespace Oxide.Core.Plugins
 			{
 				using (TimeMeasure.New($"IUnload.UnprocessHooks on '{this}'"))
 				{
-					foreach (var hook in Hooks)
+					if (Hooks != null)
 					{
-						Community.Runtime.HookManager.Unsubscribe(HookStringPool.GetOrAdd(hook), FileName);
+						foreach (var hook in Hooks)
+						{
+							Community.Runtime.HookManager.Unsubscribe(HookStringPool.GetOrAdd(hook), FileName);
+						}
+						Carbon.Logger.Debug(Name, $"Unprocessed hooks");
 					}
-					Carbon.Logger.Debug(Name, $"Unprocessed hooks");
 				}
 			}
 			catch (Exception ex)
@@ -158,21 +161,92 @@ namespace Oxide.Core.Plugins
 					Hooks?.Clear();
 					HookMethods?.Clear();
 					PluginReferences?.Clear();
-					HookMethodAttributeCache?.Clear();
 
 					IgnoredHooks = null;
 					HookCache = null;
 					Hooks = null;
 					HookMethods = null;
 					PluginReferences = null;
-					HookMethodAttributeCache = null;
 				}
 			}
 			catch (Exception ex)
 			{
 				Logger.Error($"Failed calling Plugin.IUnload.Disposal on {this}", ex);
 			}
+		}
 
+		internal bool InternalApplyPluginReferences()
+		{
+			if (PluginReferences == null) return true;
+
+			foreach (var attribute in PluginReferences)
+			{
+				var field = attribute.Field;
+				var name = string.IsNullOrEmpty(attribute.Name) ? field.Name : attribute.Name;
+				var path = Path.Combine(Defines.GetScriptFolder(), $"{name}.cs");
+
+				try
+				{
+					var plugin = (Plugin)null;
+					if (field.FieldType.Name != nameof(Plugin) &&
+					    field.FieldType.Name != nameof(RustPlugin) &&
+					    field.FieldType.Name != nameof(CovalencePlugin) &&
+					    field.FieldType.Name != nameof(CarbonPlugin))
+					{
+						var info = field.FieldType.GetCustomAttribute<InfoAttribute>();
+						if (info == null)
+						{
+							Carbon.Logger.Warn(
+								$"You're trying to reference a non-plugin instance: {name}[{field.FieldType.Name}]");
+							continue;
+						}
+
+						plugin = Community.Runtime.CorePlugin.plugins.Find(info.Title);
+					}
+					else
+					{
+						plugin = Community.Runtime.CorePlugin.plugins.Find(name);
+					}
+
+					if (plugin != null)
+					{
+						var version = new VersionNumber(attribute.MinVersion);
+
+						if (version.IsValid() && plugin.Version < version)
+						{
+							Logger.Warn(
+								$"Plugin '{Name} by {Author} v{Version}' references a required plugin which is outdated: {plugin.Name} by {plugin.Author} v{plugin.Version} < v{version}");
+							return false;
+						}
+						else
+						{
+							field.SetValue(this, plugin);
+
+							if (attribute.IsRequired)
+							{
+								ModLoader.AddPendingRequiree(plugin, this);
+							}
+						}
+					}
+					else if (attribute.IsRequired)
+					{
+						ModLoader.PostBatchFailedRequirees.Add(FilePath);
+						ModLoader.AddPendingRequiree(path, FilePath);
+						Logger.Warn(
+							$"Plugin '{Name} by {Author} v{Version}' references a required plugin which is not loaded: {name}");
+						return false;
+					}
+				}
+				catch (Exception ex)
+				{
+					Logger.Error($"Plugin '{Name} by {Author} v{Version}' failed to assign PluginReference on field {name} ({field.FieldType.Name})", ex);
+				}
+			}
+
+			return true;
+		}
+		internal bool IUnloadDependantPlugins()
+		{
 			try
 			{
 				using (TimeMeasure.New($"IUnload.UnloadRequirees on '{this}'"))
@@ -186,18 +260,22 @@ namespace Oxide.Core.Plugins
 						plugins.Clear();
 						plugins.AddRange(mod.Plugins);
 
-						foreach (var plugin in plugins)
+						foreach (Plugin plugin in plugins.Where(plugin => plugin.Requires != null && plugin.Requires.Contains(this)))
 						{
-							if (plugin.Requires != null && plugin.Requires.Contains(this))
+							switch (plugin.Processor)
 							{
-								switch (plugin.Processor)
-								{
-									case IScriptProcessor script:
-										Logger.Warn($" [{Name}] Unloading '{plugin.ToString()}' because parent '{ToString()}' has been unloaded.");
-										ModLoader.AddPendingRequiree(this, plugin);
-										plugin.Processor.Get<IScriptProcessor.IScript>(plugin.FileName)?.Dispose();
-										break;
-								}
+								case IScriptProcessor script:
+									Logger.Warn($" [{Name}] Unloading '{plugin.ToString()}' because parent '{ToString()}' has been unloaded.");
+									ModLoader.AddPendingRequiree(this, plugin);
+
+									script.Get<IScriptProcessor.IScript>(plugin.FileName)?.Dispose();
+
+									if (plugin is RustPlugin rustPlugin)
+									{
+										ModLoader.UninitializePlugin(rustPlugin);
+									}
+
+									break;
 							}
 						}
 					}
@@ -205,70 +283,14 @@ namespace Oxide.Core.Plugins
 					Pool.FreeList(ref mods);
 					Pool.FreeList(ref plugins);
 				}
+
+				return true;
 			}
 			catch (Exception ex)
 			{
 				Logger.Error($"Failed calling Plugin.IUnload.UnloadRequirees on {this}", ex);
+				return false;
 			}
-		}
-		internal bool InternalApplyPluginReferences()
-		{
-			if (PluginReferences == null) return true;
-
-			foreach (var attribute in PluginReferences)
-			{
-				var field = attribute.Field;
-				var name = string.IsNullOrEmpty(attribute.Name) ? field.Name : attribute.Name;
-				var path = Path.Combine(Defines.GetScriptFolder(), $"{name}.cs");
-
-				var plugin = (Plugin)null;
-				if (field.FieldType.Name != nameof(Plugin) &&
-					field.FieldType.Name != nameof(RustPlugin) &&
-					field.FieldType.Name != nameof(CarbonPlugin))
-				{
-					var info = field.FieldType.GetCustomAttribute<InfoAttribute>();
-					if (info == null)
-					{
-						Carbon.Logger.Warn($"You're trying to reference a non-plugin instance: {name}[{field.FieldType.Name}]");
-						continue;
-					}
-
-					plugin = Community.Runtime.CorePlugin.plugins.Find(info.Title);
-				}
-				else
-				{
-					plugin = Community.Runtime.CorePlugin.plugins.Find(name);
-				}
-
-				if (plugin != null)
-				{
-					var version = new VersionNumber(attribute.MinVersion);
-
-					if (version.IsValid() && plugin.Version < version)
-					{
-						Logger.Warn($"Plugin '{Name} by {Author} v{Version}' references a required plugin which is outdated: {plugin.Name} by {plugin.Author} v{plugin.Version} < v{version}");
-						return false;
-					}
-					else
-					{
-						field.SetValue(this, plugin);
-
-						if (attribute.IsRequired)
-						{
-							ModLoader.AddPendingRequiree(plugin, this);
-						}
-					}
-				}
-				else if (attribute.IsRequired)
-				{
-					ModLoader.PostBatchFailedRequirees.Add(FilePath);
-					ModLoader.AddPendingRequiree(path, FilePath);
-					Logger.Warn($"Plugin '{Name} by {Author} v{Version}' references a required plugin which is not loaded: {name}");
-					return false;
-				}
-			}
-
-			return true;
 		}
 
 		public static void InternalApplyAllPluginReferences()
@@ -697,10 +719,6 @@ namespace Oxide.Core.Plugins
 
 		}
 
-		public new string ToString()
-		{
-			return GetType().Name;
-		}
 		public virtual void Dispose()
 		{
 			IsLoaded = false;

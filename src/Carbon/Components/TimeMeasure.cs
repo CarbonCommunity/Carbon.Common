@@ -1,6 +1,6 @@
 ﻿/*
  *
- * Copyright (c) 2022-2023 Carbon Community
+ * Copyright (c) 2022-2024 Carbon Community 
  * All rights reserved.
  *
  */
@@ -18,7 +18,7 @@ public struct TimeMeasure : IDisposable
 	internal Stopwatch _watch;
 #endif
 
-	public static TimeMeasure New(string name, int miliseconds = 75, string warn = null)
+	public static TimeMeasure New(string name, int miliseconds = 100, string warn = null)
 	{
 #if DEBUG
 		var result = default(TimeMeasure);

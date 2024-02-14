@@ -1,6 +1,6 @@
 ﻿/*
  *
- * Copyright (c) 2022-2023 Carbon Community
+ * Copyright (c) 2022-2024 Carbon Community 
  * All rights reserved.
  *
  */
@@ -55,7 +55,11 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 		{
 			Watcher = new FileSystemWatcher(Folder)
 			{
-				NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName,
+				NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName
+				#if WIN
+				| NotifyFilters.LastAccess
+				#endif
+				,
 				Filter = $"*{Extension}"
 			};
 			Watcher.Created += OnCreated;
@@ -66,7 +70,7 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 			Watcher.EnableRaisingEvents = true;
 		}
 
-		Logger.Log($" Initialized {IndexedType?.Name} processor...");
+		Logger.Log($" Initialized {(IndexedType?.Name ?? Name)} processor...");
 	}
 	public virtual void OnDestroy()
 	{

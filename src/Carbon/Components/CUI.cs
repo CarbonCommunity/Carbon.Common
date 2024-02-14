@@ -1,27 +1,33 @@
 ﻿using System.Collections.Specialized;
+using ConVar;
+using Network;
 using Oxide.Game.Rust.Cui;
 using static Carbon.Components.CUI;
+using Net = Network.Net;
 
 /*
  *
- * Copyright (c) 2022-2023 Carbon Community
+ * Copyright (c) 2022-2024 Carbon Community 
  * All rights reserved.
  *
  */
 
 namespace Carbon.Components;
 
-public struct CUI : IDisposable
+public readonly struct CUI : IDisposable
 {
-	public Handler Manager { get; private set; }
-	public ImageDatabaseModule ImageDatabase { get; private set; }
+	public Handler Manager { get; }
+	public ImageDatabaseModule ImageDatabase { get; }
+	public Cache Cache => Manager.Cache;
 
 	public enum ClientPanels
 	{
 		Overlay,
 		Hud,
 		HudMenu,
-		Under
+		Under,
+		LoadingBG,
+		LoadingFG
 	}
 	public string GetClientPanel(ClientPanels panel)
 	{
@@ -30,6 +36,8 @@ public struct CUI : IDisposable
 			ClientPanels.Hud => "Hud",
 			ClientPanels.HudMenu => "Hud.Menu",
 			ClientPanels.Under => "Under",
+			ClientPanels.LoadingBG => "Loading.BG",
+			ClientPanels.LoadingFG => "Loading.FG",
 			_ => "Overlay",
 		};
 	}
@@ -264,15 +272,11 @@ public struct CUI : IDisposable
 
 	public class Handler
 	{
-		internal string Identifier { get; set; }
+		internal string Identifier { get; } = RandomEx.GetRandomString(4);
 
+		public Cache Cache = new();
 		public int Pooled => _containerPool.Count + _elements.Count + _images.Count + _rawImages.Count + _texts.Count + _buttons.Count + _inputFields.Count + _rects.Count + _needsCursors.Count + _needsKeyboards.Count;
 		public int Used => _queue.Count;
-
-		public Handler()
-		{
-			Identifier = RandomEx.GetRandomString(4);
-		}
 
 		#region Properties
 
@@ -764,6 +768,44 @@ public struct CUI : IDisposable
 	}
 }
 
+public class Cache
+{
+	internal Dictionary<string, byte[]> _cuiData = new();
+
+	public bool TryStore(string id, CuiElementContainer container)
+	{
+		if (TryTake(id, out _))
+		{
+			return false;
+		}
+
+		_cuiData.Add(id, container.GetData());
+		return true;
+	}
+	public bool TryTake(string id, out byte[] data)
+	{
+		data = default;
+
+		if (_cuiData.TryGetValue(id, out var content))
+		{
+			data = content;
+			return true;
+		}
+
+		return false;
+	}
+	public bool TrySend(string id, BasePlayer player)
+	{
+		if (!TryTake(id, out var data))
+		{
+			return false;
+		}
+
+		CUIStatics.SendData(data, player);
+		return true;
+	}
+}
+
 public static class CUIStatics
 {
 	internal static string ProcessColor(string color)
@@ -1173,9 +1215,35 @@ public static class CUIStatics
 		return new Pair<string, CuiElement>(id, element);
 	}
 
+	public static readonly uint AddUiString = StringPool.Get("AddUi");
+
 	public static void Send(this CuiElementContainer container, BasePlayer player)
 	{
 		CuiHelper.AddUi(player, container);
+	}
+	public static byte[] GetData(this CuiElementContainer container)
+	{
+		var write = Net.sv.StartWrite();
+		write.PacketID(Message.Type.RPCMessage);
+		write.EntityID(CommunityEntity.ServerInstance.net.ID);
+		write.UInt32(AddUiString);
+		write.UInt64(0UL);
+		write.String(container.ToJson());
+
+		var bytes = new byte[write._length];
+		Array.Copy(write.Data, bytes, write._length);
+
+		Facepunch.Pool.Free(ref write);
+
+		return bytes;
+	}
+	public static void SendData(byte[] data, BasePlayer player)
+	{
+		var write = Net.sv.StartWrite();
+		write.EnsureCapacity(data.Length);
+		Array.Copy(data, 0, write.Data,write.Length , data.Length);
+		write._length += data.Length;
+		write.Send(new SendInfo(player.Connection));
 	}
 	public static void SendUpdate(this Pair<string, CuiElement> pair, BasePlayer player)
 	{

@@ -1,4 +1,5 @@
 ﻿using API.Commands;
+using Mysqlx.Session;
 using Network;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -52,8 +53,36 @@ public partial class AdminModule
 	const string PanelId = "carbonmodularui";
 	const string CursorPanelId = "carbonmodularuicur";
 	const string SpectatePanelId = "carbonmodularuispectate";
-	const int AccessLevels = 3;
+	readonly string[] AdminPermissions = new[]
+	{
+		"wizard",
+		"carbon.use",
+		"carbon.server_settings",
+		"carbon.server_config",
+		"carbon.server_info",
+		"carbon.server_console",
+		"entities.use",
+		"entities.kill_entity",
+		"entities.tp_entity",
+		"entities.loot_entity",
+		"entities.loot_players",
+		"entities.respawn_players",
+		"entities.blind_players",
+		"entities.spectate_players",
+		"entities.owner_change",
+		"environment.use",
+		"modules.use",
+		"modules.config_edit",
+		"permissions.use",
+		"players.use",
+		"players.inventory_management",
+		"players.craft_queue",
+		"plugins.use",
+		"plugins.setup"
+	};
 	private const string OptionColor = "0.2 0.2 0.2 0.75";
+
+	internal bool _logRegistration;
 
 	public AdminModule()
 	{
@@ -76,9 +105,11 @@ public partial class AdminModule
 		return HandleEnableNeedsKeyboard(GetPlayerSession(player));
 	}
 
-	public override void OnServerInit()
+	public override void OnServerInit(bool initial)
 	{
-		base.OnServerInit();
+		base.OnServerInit(initial);
+
+		if (!initial) return;
 
 		ImageDatabase = GetModule<ImageDatabaseModule>();
 		ColorPicker = GetModule<ColorPickerModule>();
@@ -92,16 +123,20 @@ public partial class AdminModule
 		Unsubscribe("OnEntityVisibilityCheck");
 		Unsubscribe("OnEntityDistanceCheck");
 
-		for (int i = 1; i <= AccessLevels; i++)
+		foreach (var level in AdminPermissions)
 		{
-			RegisterPermission($"adminmodule.accesslevel{i}");
+			RegisterPermission($"adminmodule.{level}");
 		}
 
-		Application.logMessageReceived += OnLog;
+		if (!_logRegistration)
+		{
+			Application.logMessageReceived += OnLog;
+			_logRegistration = true;
+		}
 	}
-	public override void OnPostServerInit()
+	public override void OnPostServerInit(bool initial)
 	{
-		base.OnPostServerInit();
+		base.OnPostServerInit(initial);
 
 		GenerateTabs();
 	}
@@ -124,10 +159,10 @@ public partial class AdminModule
 					return;
 				}
 
-				ap.SelectedTab = Tabs.FirstOrDefault(x => HasAccessLevel(player, x.AccessLevel));
+				ap.SelectedTab = Tabs.FirstOrDefault(x => HasAccess(player, x.Access));
 
 				var tab = GetTab(player);
-				tab.OnChange?.Invoke(ap, tab);
+				tab?.OnChange?.Invoke(ap, tab);
 
 				ap.Clear();
 
@@ -160,9 +195,9 @@ public partial class AdminModule
 
 		if (Community.IsServerInitialized) GenerateTabs();
 
-		if (Community.Runtime.Analytics.HasNewIdentifier)
+		if (ModuleConfiguration.HasConfigStructureChanged())
 		{
-			DataInstance.ShowedWizard = false;
+			DataInstance.WizardDisplayed = false;
 		}
 	}
 	public override void Save()
@@ -197,6 +232,8 @@ public partial class AdminModule
 				["watchers"] = "Watchers",
 				["scriptwatchers"] = "Script Watchers",
 				["scriptwatchers_help"] = "When disabled, you must load/unload plugins manually with 'c.load' or 'c.unload'.",
+				["zipscriptwatchers"] = "ZIP Script Watchers",
+				["zipscriptwatchers_help"] = "When disabled, you must load/unload plugins manually with 'c.load' or 'c.unload'.",
 				["scriptwatchersoption"] = "Script Watchers Option",
 				["scriptwatchersoption_help"] = "Indicates wether the script watcher (whenever enabled) listens to the 'carbon/plugins' folder only, or its subfolders.",
 				["filenamecheck"] = "File Name Check",
@@ -209,7 +246,17 @@ public partial class AdminModule
 				["serverlang"] = "Server Language",
 				["webreqip"] = "WebRequest IP",
 				["permmode"] = "Permission Mode",
-				["nocontent"] = "There are no options available.\nSelect a sub-tab to populate this area (if available)."
+				["nocontent"] = "There are no options available.\nSelect a sub-tab to populate this area (if available).",
+				["consoleinfo"] = "Show Console Info",
+				["consoleinfo_help"] = "Show the Windows-only Carbon information at the bottom of the console.",
+				["playerdefgroup"] = "Player Default Group",
+				["admindefgroup"] = "Admin Default Group",
+				["permissions"] = "Permissions",
+				["debugging"] = "Debugging",
+				["scriptdebugorigin"] = "Script Debugging Origin",
+				["scriptdebugorigin_help"] = "Whenever a debugger is attached on server boot, the compiler will replace the debugging origin of the plugin file.",
+				["conditionals"] = "Conditionals"
+
 			}
 		};
 	}
@@ -229,16 +276,13 @@ public partial class AdminModule
 		catch { }
 	}
 
-	public bool HasAccessLevel(BasePlayer player, int accessLevel)
+	public bool HasAccess(BasePlayer player, string access)
 	{
-		if (accessLevel == 0 || (player != null && player.IsAdmin)) return true;
+		if ((player != null && player.Connection.authLevel == 2)) return true;
 
-		for (int i = accessLevel; i <= AccessLevels; i++)
+		if (HasPermission(player.UserIDString, $"adminmodule.{access}"))
 		{
-			if (HasPermission(player.UserIDString, $"adminmodule.accesslevel{i}"))
-			{
-				return true;
-			}
+			return true;
 		}
 
 		return false;
@@ -252,53 +296,8 @@ public partial class AdminModule
 		if (!ConfigInstance.DisableEntitiesTab) RegisterTab(EntitiesTab.Get());
 		RegisterTab(PermissionsTab.Get());
 		RegisterTab(ModulesTab.Get());
+		RegisterTab(EnvironmentTab.Get());
 		if (!ConfigInstance.DisablePluginsTab) RegisterTab(PluginsTab.Get());
-	}
-
-	private void OnEntityDismounted(BaseMountable entity, BasePlayer player)
-	{
-		var ap = GetPlayerSession(player);
-		var tab = GetTab(player);
-		if (!ap.GetStorage(tab, "wasviewingcam", false)) return;
-
-		entity.Kill();
-		Draw(player);
-
-		Unsubscribe("OnEntityDismounted");
-	}
-	private void OnPlayerLootEnd(PlayerLoot loot)
-	{
-		if (EntitiesTab.LastContainerLooter != null && loot.baseEntity == EntitiesTab.LastContainerLooter.Player)
-		{
-			Draw(EntitiesTab.LastContainerLooter.Player);
-			EntitiesTab.LastContainerLooter = null;
-			Unsubscribe("OnEntityVisibilityCheck");
-			Unsubscribe("OnEntityDistanceCheck");
-		}
-	}
-	private object OnEntityDistanceCheck(BaseEntity ent, BasePlayer player, uint id, string debugName, float maximumDistance)
-	{
-		var ap = GetPlayerSession(player);
-		var tab = GetTab(player);
-		var lootedEnt = ap.GetStorage<BaseEntity>(tab, "lootedent");
-
-		if (lootedEnt == null) return null;
-
-		return true;
-	}
-	private object OnEntityVisibilityCheck(BaseEntity ent, BasePlayer player, uint id, string debugName, float maximumDistance)
-	{
-		var ap = GetPlayerSession(player);
-		var tab = GetTab(player);
-		var lootedEnt = ap.GetStorage<BaseEntity>(tab, "lootedent");
-
-		if (lootedEnt == null) return null;
-
-		return true;
-	}
-	private void OnPlayerDisconnected(BasePlayer player)
-	{
-		if (PlayersTab.BlindedPlayers.Contains(player)) PlayersTab.BlindedPlayers.Remove(player);
 	}
 
 	private bool CanAccess(BasePlayer player)
@@ -1010,110 +1009,6 @@ public partial class AdminModule
 
 	#endregion
 
-	#region UI Commands
-
-	[ProtectedCommand(PanelId + ".changetab")]
-	private void ChangeTab(Arg args)
-	{
-		var player = args.Player();
-		var ap = GetPlayerSession(player);
-		var previous = ap.SelectedTab;
-
-		ap.Clear();
-
-		if (int.TryParse(args.Args[0], out int index))
-		{
-			SetTab(player, index);
-			ap.SelectedTab = Tabs[index];
-		}
-		else
-		{
-			var indexOf = Tabs.IndexOf(previous);
-			indexOf = args.Args[0] == "up" ? indexOf + 1 : indexOf - 1;
-
-			if (indexOf > Tabs.Count - 1) indexOf = 0;
-			else if (indexOf < 0) indexOf = Tabs.Count - 1;
-
-			SetTab(player, indexOf);
-		}
-	}
-
-	[ProtectedCommand(PanelId + ".callaction")]
-	private void CallAction(Arg args)
-	{
-		var player = args.Player();
-
-		if (CallColumnRow(player, args.Args[0].ToInt(), args.Args[1].ToInt(), args.Args.Skip(2).Count() > 0 ? args.Args.Skip(2) : Array.Empty<string>()))
-			Draw(player);
-	}
-
-	[ProtectedCommand(PanelId + ".changecolumnpage")]
-	private void ChangeColumnPage(Arg args)
-	{
-		var player = args.Player();
-		var instance = GetPlayerSession(player);
-		var page = instance.GetOrCreatePage(args.Args[0].ToInt());
-		var type = args.Args[1].ToInt();
-
-		switch (type)
-		{
-			case 0:
-				page.CurrentPage--;
-				if (page.CurrentPage < 0) page.CurrentPage = page.TotalPages;
-				break;
-
-			case 1:
-				page.CurrentPage++;
-				if (page.CurrentPage > page.TotalPages) page.CurrentPage = 0;
-				break;
-
-			case 2:
-				page.CurrentPage = 0;
-				break;
-
-			case 3:
-				page.CurrentPage = page.TotalPages;
-				break;
-
-			case 4:
-				page.CurrentPage = (args.Args[2].ToInt() - 1).Clamp(0, page.TotalPages);
-				break;
-		}
-
-		Draw(player);
-	}
-
-	[ProtectedCommand(PanelId + ".close")]
-	private void CloseUI(Arg args)
-	{
-		Close(args.Player());
-	}
-
-	[ProtectedCommand(PanelId + ".dialogaction")]
-	private void Dialog_Action(Arg args)
-	{
-		var player = args.Player();
-		var admin = GetPlayerSession(player);
-		var tab = GetTab(player);
-		var dialog = tab?.Dialog;
-		if (tab != null) tab.Dialog = null;
-
-		switch (args.Args[0])
-		{
-			case "confirm":
-				try { dialog?.OnConfirm(admin); } catch { }
-				break;
-
-			case "decline":
-				try { dialog?.OnDecline(admin); } catch { }
-				break;
-		}
-
-		Draw(player);
-	}
-
-	#endregion
-
 	#region Methods
 
 	public const float OptionHeightOffset = 0.0035f;
@@ -1126,8 +1021,8 @@ public partial class AdminModule
 			var tab = GetTab(player);
 			ap.IsInMenu = true;
 
-			if (CanAccess(player) && !DataInstance.ShowedWizard
-				&& (tab != null && tab.Id != "setupwizard" && tab.Id != "configeditor") && HasAccessLevel(player, 3))
+			if (CanAccess(player) && !DataInstance.WizardDisplayed
+				&& (tab != null && tab.Id != "setupwizard" && tab.Id != "configeditor") && HasAccess(player, "wizard"))
 			{
 				tab = ap.SelectedTab = SetupWizard.Make();
 			}
@@ -1180,7 +1075,7 @@ public partial class AdminModule
 						{
 							var _tab = Tabs[ap.TabSkip + i];
 							var plugin = _tab.Plugin.IsCorePlugin ? string.Empty : $"<size=8>\nby {_tab.Plugin?.Name}</size>";
-							TabButton(cui, container, tabButtons, $"{(Tabs.IndexOf(ap.SelectedTab) == i ? $"<b>{_tab.Name}</b>" : _tab.Name)}{plugin}", PanelId + $".changetab {i}", tabWidth, tabIndex, Tabs.IndexOf(ap.SelectedTab) == i, !HasAccessLevel(player, _tab.AccessLevel));
+							TabButton(cui, container, tabButtons, $"{(Tabs.IndexOf(ap.SelectedTab) == i ? $"<b>{_tab.Name}</b>" : _tab.Name)}{plugin}", PanelId + $".changetab {i}", tabWidth, tabIndex, Tabs.IndexOf(ap.SelectedTab) == i, !HasAccess(player, _tab.Access));
 							tabIndex += tabWidth;
 						}
 					}
@@ -1443,7 +1338,7 @@ public partial class AdminModule
 
 		var ap = GetPlayerSession(player);
 		ap.IsInMenu = false;
-		ap.SelectedTab.ResetHiddens();
+		ap.SelectedTab?.ResetHiddens();
 
 		var noneInMenu = true;
 		foreach (var admin in PlayerSessions)
@@ -1500,7 +1395,7 @@ public partial class AdminModule
 		var ap = GetPlayerSession(player);
 		var previous = ap.SelectedTab;
 
-		var tab = Tabs.FirstOrDefault(x => HasAccessLevel(player, x.AccessLevel) && x.Id == id);
+		var tab = Tabs.FirstOrDefault(x => HasAccess(player, x.Access) && x.Id == id);
 		if (tab != null)
 		{
 			ap.Tooltip = null;
@@ -1521,7 +1416,7 @@ public partial class AdminModule
 		var previous = ap.SelectedTab;
 
 		var lookupTab = Tabs[index];
-		var tab = HasAccessLevel(player, lookupTab.AccessLevel) ? lookupTab : Tabs.FirstOrDefault(x => HasAccessLevel(player, x.AccessLevel));
+		var tab = HasAccess(player, lookupTab.Access) ? lookupTab : Tabs.FirstOrDefault(x => HasAccess(player, x.Access));
 		if (tab != null)
 		{
 			ap.Tooltip = null;
@@ -1541,7 +1436,7 @@ public partial class AdminModule
 		var ap = GetPlayerSession(player);
 		var previous = ap.SelectedTab;
 
-		tab = HasAccessLevel(player, tab.AccessLevel) ? tab : Tabs.FirstOrDefault(x => HasAccessLevel(player, x.AccessLevel));
+		tab = HasAccess(player, tab.Access) ? tab : Tabs.FirstOrDefault(x => HasAccess(player, x.Access));
 		if (tab != null)
 		{
 			ap.Tooltip = null;
@@ -1739,540 +1634,7 @@ public partial class AdminModule
 
 	#endregion
 
-	#region Custom Hooks
-
-	private object IValidDismountPosition(BaseMountable mountable, BasePlayer player)
-	{
-		switch (mountable.skinID)
-		{
-			case 69696:
-				return true;
-			default:
-				break;
-		}
-
-		return null;
-	}
-
-	#endregion
-
 #endif
-
-	internal Dictionary<BasePlayer, PlayerSession> PlayerSessions = new();
-
-	public PlayerSession GetPlayerSession(BasePlayer player)
-	{
-		if (PlayerSessions.TryGetValue(player, out PlayerSession adminPlayer)) return adminPlayer;
-
-		adminPlayer = new PlayerSession(player);
-		PlayerSessions.Add(player, adminPlayer);
-		return adminPlayer;
-	}
-
-	public class PlayerSession : IDisposable
-	{
-		public static PlayerSession Blank { get; } = new PlayerSession(null);
-
-		public BasePlayer Player;
-		public bool IsInMenu;
-		public Dictionary<int, Page> ColumnPages = new();
-		public Dictionary<string, object> LocalStorage = new();
-
-		public Tab SelectedTab;
-		public int TabSkip;
-		public int LastPressedColumn;
-		public int LastPressedRow;
-
-		public Tab.Option Tooltip;
-		public Tab.Option Input;
-		public Tab.Option PreviousInput;
-
-		internal Tab.OptionDropdown _selectedDropdown;
-		internal Page _selectedDropdownPage = new();
-
-		public PlayerSession(BasePlayer player)
-		{
-			Player = player;
-		}
-
-		public void SetPage(int column, int page)
-		{
-			if (ColumnPages.TryGetValue(column, out var pageInstance))
-			{
-				pageInstance.CurrentPage = page;
-				pageInstance.Check();
-			}
-		}
-		public T GetStorage<T>(Tab tab, string id, T @default = default)
-		{
-			try
-			{
-				var mainId = id;
-				id = $"{tab?.Id}_{id}";
-
-				if (LocalStorage.TryGetValue(id, out var storage)) return (T)storage;
-
-				return SetStorage(tab, mainId, (T)@default);
-			}
-			catch (Exception ex) { Logger.Warn($"Failed GetStorage<{typeof(T).Name}>({tab?.Id}, {id}): {ex.Message}"); }
-
-			return (T)default;
-		}
-		public T SetStorage<T>(Tab tab, string id, T value)
-		{
-			id = $"{tab?.Id}_{id}";
-
-			LocalStorage[id] = value;
-			return value;
-		}
-		public T SetDefaultStorage<T>(Tab tab, string id, T value)
-		{
-			if (Player == null) return default;
-
-			return GetStorage(tab, id, value);
-		}
-		public void ClearStorage(Tab tab, string id)
-		{
-			id = $"{tab?.Id}_{id}";
-
-			LocalStorage[id] = null;
-		}
-		public bool HasStorage(Tab tab, string id)
-		{
-			id = $"{tab?.Id}_{id}";
-
-			return LocalStorage.ContainsKey(id);
-		}
-		public void Clear()
-		{
-			foreach (var page in ColumnPages)
-			{
-				var value = ColumnPages[page.Key];
-				Facepunch.Pool.Free(ref value);
-			}
-
-			ColumnPages.Clear();
-			// LocalStorage.Clear();
-
-			_selectedDropdown = null;
-			_selectedDropdownPage.CurrentPage = 0;
-		}
-		public Page GetOrCreatePage(int column)
-		{
-			if (ColumnPages.TryGetValue(column, out var page)) return page;
-			else
-			{
-				ColumnPages[column] = page = new Page();
-				return page;
-			}
-		}
-
-		public void Dispose()
-		{
-			Clear();
-		}
-
-		public class Page
-		{
-			public int CurrentPage { get; set; }
-			public int TotalPages { get; set; }
-
-			public void Check()
-			{
-				if (CurrentPage < 0) CurrentPage = TotalPages;
-				else if (CurrentPage > TotalPages) CurrentPage = 0;
-			}
-		}
-	}
-	public class Tab : IDisposable
-	{
-		public string Id;
-		public string Name;
-		public int AccessLevel = 0;
-		public RustPlugin Plugin;
-		public Action<Tab, CUI, CuiElementContainer, string, PlayerSession> Over, Under, Override;
-		public Dictionary<int, List<Option>> Columns = new();
-		public Action<PlayerSession, Tab> OnChange;
-		public Dictionary<string, Radio> Radios = new();
-		public TabDialog Dialog;
-		public bool Fullscreen;
-
-		public Tab(string id, string name, RustPlugin plugin, Action<PlayerSession, Tab> onChange = null, int accessLevel = 0)
-		{
-			Id = id;
-			Name = name;
-			Plugin = plugin;
-			OnChange = onChange;
-			AccessLevel = accessLevel;
-		}
-
-		public void ClearColumn(int column, bool erase = false)
-		{
-			if (Columns.TryGetValue(column, out var rows))
-			{
-				rows.Clear();
-
-				if (erase)
-				{
-					Columns[column] = null;
-					Columns.Remove(column);
-				}
-			}
-		}
-		public void ClearAfter(int index, bool erase = false)
-		{
-			var count = Columns.Count;
-
-			for (int i = 0; i < count; i++)
-			{
-				if (i >= index) ClearColumn(i, erase);
-			}
-		}
-		public Tab AddColumn(int column, bool clear = false)
-		{
-			if (!Columns.TryGetValue(column, out var options))
-			{
-				Columns[column] = options = new List<Option>();
-			}
-
-			if (clear)
-			{
-				options.Clear();
-			}
-
-			return this;
-		}
-		public Tab AddRow(int column, Option row, bool hidden = false)
-		{
-			row.CurrentlyHidden = row.Hidden = hidden;
-
-			if (Columns.TryGetValue(column, out var options))
-			{
-				options.Add(row);
-			}
-			else
-			{
-
-				Columns[column] = options = new List<Option>();
-				options.Add(row);
-			}
-
-			return this;
-		}
-		public Tab AddName(int column, string name, TextAnchor align = TextAnchor.MiddleLeft, bool hidden = false)
-		{
-			return AddRow(column, new OptionName(name, align, null), hidden);
-		}
-		public Tab AddButton(int column, string name, Action<PlayerSession> callback, Func<PlayerSession, OptionButton.Types> type = null, TextAnchor align = TextAnchor.MiddleCenter, bool hidden = false)
-		{
-			return AddRow(column, new OptionButton(name, align, callback, type, null), hidden);
-		}
-		public Tab AddToggle(int column, string name, Action<PlayerSession> callback, Func<PlayerSession, bool> isOn = null, string tooltip = null, bool hidden = false)
-		{
-			return AddRow(column, new OptionToggle(name, callback, ap => { try { return (isOn?.Invoke(ap)).GetValueOrDefault(false); } catch (Exception ex) { Logger.Error($"AddToggle[{column}][{name}] failed", ex); } return false; }, tooltip), hidden);
-		}
-		public Tab AddText(int column, string name, int size, string color, TextAnchor align = TextAnchor.MiddleCenter, Handler.FontTypes font = Handler.FontTypes.RobotoCondensedRegular, bool isInput = false, bool hidden = false)
-		{
-			return AddRow(column, new OptionText(name, size, color, align, font, isInput, null), hidden);
-		}
-		public Tab AddInput(int column, string name, Func<PlayerSession, string> placeholder, int characterLimit, bool readOnly, Action<PlayerSession, IEnumerable<string>> callback = null, string tooltip = null, bool hidden = false)
-		{
-			return AddRow(column, new OptionInput(name, placeholder, characterLimit, readOnly, callback, tooltip), hidden);
-		}
-		public Tab AddInput(int column, string name, Func<PlayerSession, string> placeholder, Action<PlayerSession, IEnumerable<string>> callback = null, string tooltip = null, bool hidden = false)
-		{
-			return AddInput(column, name, placeholder, 0, callback == null, callback, tooltip, hidden);
-		}
-		public Tab AddEnum(int column, string name, Action<PlayerSession, bool> callback, Func<PlayerSession, string> text, string tooltip = null, bool hidden = false)
-		{
-			AddRow(column, new OptionEnum(name, callback, text, tooltip), hidden);
-			return this;
-		}
-		public Tab AddRadio(int column, string name, string id, bool wantsOn, Action<bool, PlayerSession> callback = null, string tooltip = null, bool hidden = false)
-		{
-			if (!Radios.TryGetValue(id, out var radio))
-			{
-				Radios[id] = radio = new();
-			}
-
-			radio.TemporaryIndex++;
-			if (wantsOn) radio.Selected = radio.TemporaryIndex;
-
-			var index = radio.TemporaryIndex;
-			var option = new OptionRadio(name, id, index, wantsOn, callback, radio, tooltip);
-			radio.Options.Add(option);
-
-			return AddRow(column, option, hidden);
-		}
-		public Tab AddDropdown(int column, string name, Func<PlayerSession, int> index, Action<PlayerSession, int> callback, string[] options, string[] optionsIcons = null, float optionsIconScale = 0f, string tooltip = null, bool hidden = false)
-		{
-			return AddRow(column, new OptionDropdown(name, index, callback, options, optionsIcons, optionsIconScale, tooltip), hidden);
-		}
-		public Tab AddRange(int column, string name, float min, float max, Func<PlayerSession, float> value, Action<PlayerSession, float> callback, Func<PlayerSession, string> text = null, string tooltip = null, bool hidden = false)
-		{
-			return AddRow(column, new OptionRange(name, min, max, value, callback, text, tooltip), hidden);
-		}
-		public Tab AddButtonArray(int column, float spacing, params OptionButton[] buttons)
-		{
-			return AddRow(column, new OptionButtonArray(string.Empty, spacing, null, false, buttons));
-		}
-		public Tab AddButtonArray(int column, params OptionButton[] buttons)
-		{
-			return AddRow(column, new OptionButtonArray(string.Empty, 0.01f, null, false, buttons));
-		}
-		public Tab AddInputButton(int column, string name, float buttonPriority, OptionInput input, OptionButton button, string tooltip = null, bool hidden = false)
-		{
-			return AddRow(column, new OptionInputButton(name, buttonPriority, input, button, tooltip), hidden);
-		}
-		public Tab AddColor(int column, string name, Func<string> color, Action<PlayerSession, string, string, float> callback, string tooltip = null, bool hidden = false)
-		{
-			return AddRow(column, new OptionColor(name, color, callback, tooltip), hidden);
-		}
-
-		public void CreateDialog(string title, Action<PlayerSession> onConfirm, Action<PlayerSession> onDecline)
-		{
-			Dialog = new TabDialog(title, onConfirm, onDecline);
-		}
-		public void ResetHiddens()
-		{
-			foreach (var column in Columns)
-			{
-				foreach (var row in column.Value)
-				{
-					row.CurrentlyHidden = row.Hidden;
-				}
-			}
-		}
-		public void Dispose()
-		{
-			foreach (var column in Columns)
-			{
-				column.Value.Clear();
-			}
-
-			Columns.Clear();
-			Columns = null;
-		}
-
-		public class Radio : IDisposable
-		{
-			public int Selected;
-
-			public int TemporaryIndex = -1;
-
-			public List<OptionRadio> Options = new();
-
-			public void Change(int index, PlayerSession ap)
-			{
-				Options[Selected]?.Callback?.Invoke(false, ap);
-
-				Selected = index;
-			}
-
-			public void Dispose()
-			{
-				Options.Clear();
-				Options = null;
-			}
-		}
-		public class TabDialog
-		{
-			public string Title;
-			public Action<PlayerSession> OnConfirm, OnDecline;
-
-			public TabDialog(string title, Action<PlayerSession> onConfirm, Action<PlayerSession> onDecline)
-			{
-				Title = title;
-				OnConfirm = onConfirm;
-				OnDecline = onDecline;
-			}
-		}
-
-		public class Option
-		{
-			public string Name;
-			public string Tooltip;
-			public bool Hidden;
-			public bool CurrentlyHidden;
-
-			public Option(string name, string tooltip = null, bool hidden = false)
-			{
-				Name = name;
-				Tooltip = tooltip;
-				CurrentlyHidden = Hidden = hidden;
-			}
-		}
-		public class OptionName : Option
-		{
-			public TextAnchor Align;
-
-			public OptionName(string name, TextAnchor align, string tooltip = null, bool hidden = false) : base(name, tooltip, hidden) { Align = align; }
-		}
-		public class OptionText : Option
-		{
-			public int Size;
-			public string Color;
-			public TextAnchor Align;
-			public Handler.FontTypes Font;
-			public bool IsInput;
-
-			public OptionText(string name, int size, string color, TextAnchor align, Handler.FontTypes font, bool isInput, string tooltip = null, bool hidden = false) : base(name, tooltip, hidden) { Align = align; Size = size; Color = color; Font = font; IsInput = isInput; }
-		}
-		public class OptionInput : Option
-		{
-			public Func<PlayerSession, string> Placeholder;
-			public int CharacterLimit;
-			public bool ReadOnly;
-			public Action<PlayerSession, IEnumerable<string>> Callback;
-
-			public OptionInput(string name, Func<PlayerSession, string> placeholder, int characterLimit, bool readOnly, Action<PlayerSession, IEnumerable<string>> args, string tooltip = null, bool hidden = false) : base(name, tooltip, hidden)
-			{
-				Placeholder = ap => { try { return placeholder?.Invoke(ap); } catch (Exception ex) { Logger.Error($"Failed OptionInput.Placeholder callback ({name}): {ex.Message}"); return string.Empty; } };
-				Callback = (ap, args2) => { try { args?.Invoke(ap, args2); } catch (Exception ex) { Logger.Error($"Failed OptionInput.Callback callback ({name}): {ex.Message}"); } };
-				CharacterLimit = characterLimit;
-				ReadOnly = readOnly;
-			}
-		}
-		public class OptionButton : Option
-		{
-			public Func<PlayerSession, Types> Type;
-			public Action<PlayerSession> Callback;
-			public TextAnchor Align = TextAnchor.MiddleCenter;
-
-			public enum Types
-			{
-				None,
-				Selected,
-				Warned,
-				Important
-			}
-
-			public OptionButton(string name, TextAnchor align, Action<PlayerSession> callback, Func<PlayerSession, Types> type = null, string tooltip = null, bool hidden = false) : base(name, tooltip, hidden)
-			{
-				Align = align;
-				Callback = (ap) => { try { callback?.Invoke(ap); } catch (Exception ex) { Logger.Error($"Failed OptionButton.Callback callback ({name}): {ex.Message}"); } };
-				Type = (ap) => { try { return (type?.Invoke(ap)).GetValueOrDefault(Types.None); } catch (Exception ex) { Logger.Error($"Failed OptionButton.Type callback ({name}): {ex.Message}"); return Types.None; } };
-			}
-			public OptionButton(string name, Action<PlayerSession> callback, Func<PlayerSession, Types> type = null, string tooltip = null, bool hidden = false) : base(name, tooltip, hidden)
-			{
-				Callback = callback;
-				Type = type;
-			}
-		}
-		public class OptionToggle : Option
-		{
-			public Func<PlayerSession, bool> IsOn;
-			public Action<PlayerSession> Callback;
-
-			public OptionToggle(string name, Action<PlayerSession> callback, Func<PlayerSession, bool> isOn = null, string tooltip = null, bool hidden = false) : base(name, tooltip, hidden)
-			{
-				Callback = (ap) => { try { callback?.Invoke(ap); } catch (Exception ex) { Logger.Error($"Failed OptionToggle.Callback callback ({name}): {ex.Message}"); } };
-				IsOn = (ap) => { try { return (isOn?.Invoke(ap)).GetValueOrDefault(false); } catch (Exception ex) { Logger.Error($"Failed OptionToggle.IsOn callback ({name}): {ex.Message}"); return false; } };
-			}
-		}
-		public class OptionEnum : Option
-		{
-			public Func<PlayerSession, string> Text;
-			public Action<PlayerSession, bool> Callback;
-
-			public OptionEnum(string name, Action<PlayerSession, bool> callback, Func<PlayerSession, string> text, string tooltip = null, bool hidden = false) : base(name, tooltip, hidden)
-			{
-				Callback = (ap, value) => { try { callback?.Invoke(ap, value); } catch (Exception ex) { Logger.Error($"Failed OptionEnum.Callback callback ({name}): {ex.Message}"); } };
-				Text = (ap) => { try { return text?.Invoke(ap); } catch (Exception ex) { Logger.Error($"Failed OptionToggle.Callback callback ({name}): {ex.Message}"); return string.Empty; } };
-			}
-		}
-		public class OptionRange : Option
-		{
-			public float Min = 0;
-			public float Max = 1;
-			public Func<PlayerSession, float> Value;
-			public Action<PlayerSession, float> Callback;
-			public Func<PlayerSession, string> Text;
-
-			public OptionRange(string name, float min, float max, Func<PlayerSession, float> value, Action<PlayerSession, float> callback, Func<PlayerSession, string> text, string tooltip = null, bool hidden = false) : base(name, tooltip, hidden)
-			{
-				Min = min;
-				Max = max;
-				Callback = (ap, value) => { try { callback?.Invoke(ap, value); } catch (Exception ex) { Logger.Error($"Failed OptionRange.Callback callback ({name}): {ex.Message}"); } };
-				Value = (ap) => { try { return (value?.Invoke(ap)).GetValueOrDefault(0); } catch (Exception ex) { Logger.Error($"Failed OptionRange.Callback callback ({name}): {ex.Message}"); return 0f; } };
-				Text = (ap) => { try { return text?.Invoke(ap); } catch (Exception ex) { Logger.Error($"Failed OptionRange.Callback callback ({name}): {ex.Message}"); return string.Empty; } };
-			}
-		}
-		public class OptionRadio : Option
-		{
-			public string Id;
-			public int Index;
-			public bool WantsOn;
-			public Action<bool, PlayerSession> Callback;
-
-			public Radio Radio;
-
-			public OptionRadio(string name, string id, int index, bool on, Action<bool, PlayerSession> callback, Radio radio, string tooltip = null, bool hidden = false) : base(name, tooltip, hidden)
-			{
-				Id = id;
-				Callback = (value, ap) => { try { callback?.Invoke(value, ap); } catch (Exception ex) { Logger.Error($"Failed OptionRadio.Callback callback ({name}): {ex.Message}"); } };
-				WantsOn = on;
-				Index = index;
-				Radio = radio;
-			}
-		}
-		public class OptionDropdown : Option
-		{
-			public Func<PlayerSession, int> Index;
-			public Action<PlayerSession, int> Callback;
-			public string[] Options;
-			public string[] OptionsIcons;
-			public float OptionsIconScale;
-
-			public OptionDropdown(string name, Func<PlayerSession, int> index, Action<PlayerSession, int> callback, string[] options, string[] optionsIcons, float optionsIconScale, string tooltip = null, bool hidden = false) : base(name, tooltip, hidden)
-			{
-				Index = (ap) => { try { return (index?.Invoke(ap)).GetValueOrDefault(0); } catch (Exception ex) { Logger.Error($"Failed OptionRange.Callback callback ({name}): {ex.Message}"); return 0; } };
-				Callback = (ap, value) => { try { callback?.Invoke(ap, value); } catch (Exception ex) { Logger.Error($"Failed OptionRange.Callback callback ({name}): {ex.Message}"); } };
-				Options = options;
-				OptionsIcons = optionsIcons;
-				OptionsIconScale = optionsIconScale;
-			}
-		}
-		public class OptionInputButton : Option
-		{
-			public OptionInput Input;
-			public OptionButton Button;
-			public float ButtonPriority = 0.25f;
-
-			public OptionInputButton(string name, float buttonPriority, OptionInput input, OptionButton button, string tooltip = null, bool hidden = false) : base(name, tooltip, hidden)
-			{
-				ButtonPriority = buttonPriority;
-				Input = input;
-				Button = button;
-			}
-		}
-		public class OptionButtonArray : Option
-		{
-			public OptionButton[] Buttons;
-			public float Spacing = 0.01f;
-
-			public OptionButtonArray(string name, float spacing, string tooltip = null, bool hidden = false, params OptionButton[] buttons) : base(name, tooltip, hidden)
-			{
-				Buttons = buttons;
-				Spacing = spacing;
-			}
-		}
-		public class OptionColor : Option
-		{
-			public Func<string> Color;
-			public Action<PlayerSession, string, string, float> Callback;
-
-			public OptionColor(string name, Func<string> color, Action<PlayerSession, string, string, float> callback, string tooltip = null, bool hidden = false) : base(name, tooltip, hidden)
-			{
-				Color = color;
-				Callback = callback;
-			}
-		}
-	}
-	public class DynamicTab : Tab
-	{
-		public DynamicTab(string id, string name, RustPlugin plugin, Action<PlayerSession, Tab> onChange = null) : base(id, name, plugin, onChange) { }
-	}
 
 #if !MINIMAL
 
@@ -2342,12 +1704,19 @@ public partial class AdminModule
 		player.spectateFilter = targetPlayer != null ? targetPlayer.UserIDString : target.net.ID.ToString();
 
 		using var cui = new CUI(Singleton.Handler);
-		var container = cui.CreateContainer(SpectatePanelId, color: "0.1 0.1 0.1 0.8", needsCursor: false, parent: ClientPanels.Overlay);
-		var panel = cui.CreatePanel(container, SpectatePanelId, null, Cache.CUI.BlankColor);
-		var item = target.GetItem();
-		cui.CreateText(container, panel,
-			color: "1 1 1 0.2",
-			text: $"YOU'RE SPECTATING ".SpacedString(1, false) + $"<b>{(targetPlayer == null ? item != null ? item.info.displayName.english.ToUpper().SpacedString(1) : target.ShortPrefabName.ToUpper().SpacedString(1) : targetPlayer.displayName.ToUpper().SpacedString(1))}</b>", 15);
+		var container = cui.CreateContainer(SpectatePanelId, color: Cache.CUI.BlankColor, needsCursor: false, parent: ClientPanels.Overlay);
+		var panel = cui.CreatePanel(container, SpectatePanelId, Cache.CUI.BlankColor);
+
+		if (Singleton.ConfigInstance.SpectatingInfoOverlay)
+		{
+			var item = target.GetItem();
+			cui.CreateText(container, panel,
+				color: "1 1 1 0.2",
+				text: $"YOU'RE SPECTATING ".SpacedString(1, false) +
+				      $"<b>{(targetPlayer == null ? item != null ? item.info.displayName.english.ToUpper().SpacedString(1) : target.ShortPrefabName.ToUpper().SpacedString(1) : targetPlayer.displayName.ToUpper().SpacedString(1))}</b>",
+				15);
+		}
+
 		cui.CreateProtectedButton(container, panel,
 			color: "#1c6aa0", textColor: "1 1 1 0.7",
 			text: "END SPECTATE".SpacedString(1), 10,
@@ -2390,19 +1759,21 @@ public partial class AdminModule
 		internal JObject Entry { get; set; }
 		internal Action<PlayerSession, JObject> OnSave, OnSaveAndReload, OnCancel;
 		internal const string Spacing = " ";
+		internal string[] Blacklist;
 
 		public ConfigEditor(string id, string name, RustPlugin plugin, Action<PlayerSession, Tab> onChange = null) : base(id, name, plugin, onChange)
 		{
 		}
 
-		public static ConfigEditor Make(string json, Action<PlayerSession, JObject> onCancel, Action<PlayerSession, JObject> onSave, Action<PlayerSession, JObject> onSaveAndReload)
+		public static ConfigEditor Make(string json, Action<PlayerSession, JObject> onCancel, Action<PlayerSession, JObject> onSave, Action<PlayerSession, JObject> onSaveAndReload, string[] blacklist = null)
 		{
 			var tab = new ConfigEditor("configeditor", "Config Editor", Community.Runtime.CorePlugin)
 			{
 				Entry = JObject.Parse(json),
 				OnSave = onSave,
 				OnSaveAndReload = onSaveAndReload,
-				OnCancel = onCancel
+				OnCancel = onCancel,
+				Blacklist = blacklist
 			};
 
 			tab._draw();
@@ -2431,6 +1802,11 @@ public partial class AdminModule
 		}
 		internal void _recurseBuild(string name, JToken token, int level, int column, bool removeButtons = false)
 		{
+			if (Blacklist != null && Enumerable.Contains(Blacklist, name))
+			{
+				return;
+			}
+
 			switch (token)
 			{
 				case JArray array:
@@ -2611,7 +1987,7 @@ public partial class AdminModule
 					OyMin: -20, OyMax: -20);
 				cui.CreateText(container, panel,
 					color: "1 1 1 0.5",
-					text: "Welcome to <b>Carbon</b> setup wizard!", 13,
+					text: "Welcome to <b>Carbon</b> setup wizard!\nIf you've seen this panel again, your existent settings are not reset.", 13,
 					yMax: 0.495f, OyMin: -20, OyMax: -20, align: TextAnchor.UpperCenter);
 				tab.DisplayArrows(cui, tab, container, panel, ap, true);
 			}));
@@ -2713,7 +2089,7 @@ public partial class AdminModule
 
 			tab.Pages.Add(new Page("Finalize", (cui, t, container, panel, ap) =>
 			{
-				Singleton.DataInstance.ShowedWizard = true;
+				Singleton.DataInstance.WizardDisplayed = true;
 				Singleton.GenerateTabs();
 				Community.Runtime.CorePlugin.NextTick(() => Singleton.SetTab(ap.Player, 0));
 			}));
@@ -2729,9 +2105,9 @@ public partial class AdminModule
 
 		internal void InfoTemplate(CUI cui, Tab tab, CuiElementContainer container, string panel, PlayerSession ap, string title, string content, string hint)
 		{
-			cui.CreateImage(container, panel, null, "carbonws", "0 0 0 0.1", xMin: 0.75f, xMax: 0.95f, yMin: 0.875f, yMax: 0.95f);
+			cui.CreateImage(container, panel, "carbonws", "0 0 0 0.1", xMin: 0.75f, xMax: 0.95f, yMin: 0.875f, yMax: 0.95f);
 
-			var mainTitle = cui.CreatePanel(container, panel, null, "0 0 0 0.5", xMin: 0.05f, xMax: ((float)title.Length).Scale(0, 7, 0.075f, 0.18f), yMin: 0.875f, yMax: 0.95f);
+			var mainTitle = cui.CreatePanel(container, panel, "0 0 0 0.5", xMin: 0.05f, xMax: ((float)title.Length).Scale(0, 7, 0.075f, 0.18f), yMin: 0.875f, yMax: 0.95f);
 			cui.CreateText(container, mainTitle,
 				color: "1 1 1 1", text: $"<b>{title.ToUpper()}</b>", 25, align: TextAnchor.MiddleCenter, fadeIn: 2f);
 
@@ -2789,8 +2165,11 @@ public partial class AdminModule
 
 				if (centerNext)
 				{
-					cui.CreateProtectedButton(container, panel, "#7d8f32", "1 1 1 1", $"{nextPage.Title} ▶", 9,
-						xMin: 0.9f, yMin: 0f, yMax: 0.055f, OxMin: -395, OxMax: -395, OyMin: 145f, OyMax: 145f, command: $"wizard.changepage 1");
+					cui.CreateProtectedButton(container, panel, "#7d8f32", "1 1 1 1", $"{nextPage.Title}   ▶", 9,
+						xMin: 0.9f, yMin: 0f, yMax: 0.055f, OxMin: -470, OxMax: -470, OyMin: 145f, OyMax: 145f, command: $"wizard.changepage 1");
+
+					cui.CreateProtectedButton(container, panel, "1 1 1 0.3", "1 1 1 1", $"Skip   ▶▶", 9,
+						xMin: 0.9f, yMin: 0f, yMax: 0.055f, OxMin: -370, OxMax: -370, OyMin: 145f, OyMax: 145f, command: $"wizard.changepage -2");
 				}
 				else
 				{
@@ -2853,12 +2232,29 @@ public partial class AdminModule
 	{
 		var ap = GetPlayerSession(arg.Player());
 		var tab = GetTab(ap.Player);
+		var value = arg.GetInt(0);
 
 		var currentPage = ap.GetStorage(tab, "page", 0);
-		currentPage += arg.GetInt(0);
-		ap.SetStorage(tab, "page", currentPage);
 
-		Community.Runtime.CorePlugin.NextFrame(() => Draw(ap.Player));
+		if (value == -2)
+		{
+			ap.SetStorage(tab, "page", 0);
+			Singleton.DataInstance.WizardDisplayed = true;
+			Singleton.GenerateTabs();
+			Community.Runtime.CorePlugin.NextTick(() =>
+			{
+				Save();
+				Singleton.SetTab(ap.Player, 0);
+				Draw(ap.Player);
+			});
+		}
+		else
+		{
+			currentPage += value;
+			ap.SetStorage(tab, "page", currentPage);
+			Community.Runtime.CorePlugin.NextFrame(() => Draw(ap.Player));
+		}
+
 	}
 
 	[ProtectedCommand("wizard.togglemodule")]
@@ -2899,7 +2295,7 @@ public partial class AdminModule
 		var module = FindModule(arg.GetString(0));
 		var moduleConfigFile = Path.Combine(Core.Defines.GetModulesFolder(), module.Name, "config.json");
 		ap.SelectedTab = ConfigEditor.Make(OsEx.File.ReadText(moduleConfigFile),
-			(ap, jobject) =>
+			(ap, _) =>
 			{
 				SetTab(ap.Player, SetupWizard.Make());
 				Draw(ap.Player);
@@ -2943,11 +2339,12 @@ public class AdminConfig
 	public int MinimumAuthLevel = 2;
 	public bool DisableEntitiesTab = true;
 	public bool DisablePluginsTab = false;
+	public bool SpectatingInfoOverlay = true;
 }
 public class AdminData
 {
-	[JsonProperty("ShowedWizard v3")]
-	public bool ShowedWizard = false;
+	[JsonProperty("WizardDisplayed")]
+	public bool WizardDisplayed = false;
 	public DataColors Colors = new();
 
 	public class DataColors
@@ -2956,7 +2353,6 @@ public class AdminData
 		public string EditableInputHighlight = "0.259 0.529 0.961";
 		public float OptionNameOpacity = 0.7f;
 		public float TitleUnderlineOpacity = 0.9f;
-
 	}
 }
 

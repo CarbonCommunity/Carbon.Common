@@ -2,7 +2,7 @@
 
 /*
  *
- * Copyright (c) 2022-2023 Carbon Community
+ * Copyright (c) 2022-2024 Carbon Community 
  * All rights reserved.
  *
  */
@@ -160,7 +160,7 @@ public struct StringTable : IDisposable
 		columnLengths = null;
 
 		builder.AppendLine(columnHeaders);
-		builder.AppendLine(divider);
+		// builder.AppendLine(divider);
 
 		foreach(var item in results)
 		{

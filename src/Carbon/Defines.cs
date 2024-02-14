@@ -1,6 +1,6 @@
 ﻿/*
  *
- * Copyright (c) 2022-2023 Carbon Community
+ * Copyright (c) 2022-2024 Carbon Community 
  * All rights reserved.
  *
  */
@@ -21,7 +21,16 @@ public class Defines
 		GetLogsFolder();
 		GetLangFolder();
 		GetReportsFolder();
-		OsEx.Folder.DeleteContents(GetTempFolder());
+
+		try
+		{
+			OsEx.Folder.DeleteContents(GetTempFolder());
+		}
+		catch (Exception ex)
+		{
+			Logger.Warn($"Failed clearing up the temporary folder. ({ex.Message})\n{ex.StackTrace}");
+		}
+
 		Logger.Log("Loaded folders");
 	}
 
@@ -33,6 +42,7 @@ public class Defines
 	internal static string _customModuleFolder;
 	internal static string _customExtensionsFolder;
 	internal static string _customHarmonyFolder;
+	internal static string _customLogsFolder;
 	internal static bool _commandLineInitialized;
 
 	internal static void _initializeCommandLine()
@@ -47,6 +57,7 @@ public class Defines
 		_customLangFolder = CommandLineEx.GetArgumentResult("-carbon.langdir");
 		_customModuleFolder = CommandLineEx.GetArgumentResult("-carbon.moduledir");
 		_customExtensionsFolder = CommandLineEx.GetArgumentResult("-carbon.extdir");
+		_customLogsFolder = CommandLineEx.GetArgumentResult("-carbon.logdir");
 		_customHarmonyFolder = CommandLineEx.GetArgumentResult("-carbon.harmonydir");
 	}
 
@@ -54,6 +65,11 @@ public class Defines
 	{
 		_initializeCommandLine();
 		return Path.Combine(GetRootFolder(), "config.json");
+	}
+	public static string GetClientConfigFile()
+	{
+		_initializeCommandLine();
+		return Path.Combine(GetRootFolder(), "config_client.json");
 	}
 	public static string GetCarbonAutoFile()
 	{
@@ -174,7 +190,7 @@ public class Defines
 	public static string GetLogsFolder()
 	{
 		_initializeCommandLine();
-		var folder = Path.Combine($"{GetRootFolder()}", "logs");
+		var folder = Path.GetFullPath(string.IsNullOrEmpty(_customLogsFolder) ? Path.Combine(GetRootFolder(), "logs") : _customLogsFolder);
 		Directory.CreateDirectory(folder);
 
 		return folder;

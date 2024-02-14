@@ -104,7 +104,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			{
 				ap.SetStorage(t, "selectedplugin", (Plugin)null);
 				LocalInstance?.Refresh();
-			}, 2)
+			}, "plugins.use")
 			{
 				Override = (t, cui, container, parent, ap) => Draw(cui, container, parent, t, ap)
 			};
@@ -154,7 +154,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			var resultList = Facepunch.Pool.GetList<Plugin>();
 			var customList = Facepunch.Pool.GetList<Plugin>();
 
-			using (TimeMeasure.New("GetPluginsFromVendor", 1))
+			using (TimeMeasure.New("GetPluginsFromVendor"))
 			{
 				try
 				{
@@ -487,7 +487,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			cui.CreateImage(container, reloadButton, "reload", "1 1 1 0.4", xMin: 0.225f, xMax: 0.775f, yMin: 0.25f, yMax: 0.75f);
 
 			if (TagFilter.Contains("peanus")) cui.CreateClientImage(container, grid, "https://media.discordapp.net/attachments/1078801277565272104/1085062151221293066/15ox1d_1.jpg?width=827&height=675", "1 1 1 1", xMax: 0.8f);
-			if (TagFilter.Contains("banan")) cui.CreateClientImage(container, grid, "https://cf-images.us-east-1.prod.boltdns.net/v1/static/507936866/2cd498e2-da08-4305-a86e-f9711ac41615/eac8316f-0061-40ed-b289-aac0bab35da0/1280x720/match/image.jpg", "1 1 1 1", xMax: 0.8f);
+			if (TagFilter.Contains("banan")) cui.CreateClientImage(container, grid, "https://upload.wikimedia.org/wikipedia/commons/2/23/Banan.jpg", "1 1 1 1", xMax: 0.8f);
 
 			var selectedPlugin = ap.GetStorage<Plugin>(tab, "selectedplugin");
 			if (selectedPlugin != null)
@@ -570,7 +570,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					command: "pluginbrowser.deselectplugin",
 					font: CUI.Handler.FontTypes.DroidSansMono);
 
-				if (Singleton.HasAccessLevel(ap.Player, 3))
+				if (Singleton.HasAccess(ap.Player, "plugins.setup"))
 				{
 					var buttonColor = string.Empty;
 					var elementColor = string.Empty;
@@ -634,11 +634,14 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 						}
 					}
 
-					if (isAdmin || selectedPlugin.Owned || !selectedPlugin.IsPaid() || selectedPlugin.IsInstalled())
+					if (vendor is not Local)
 					{
-						var button = cui.CreateProtectedButton(container, mainPanel, buttonColor, "0 0 0 0", string.Empty, 0, xMin: 0.48f, xMax: scale, yMin: 0.175f, yMax: 0.235f, align: TextAnchor.MiddleRight, command: selectedPlugin.IsBusy ? "" : $"pluginbrowser.interact {callMode} {selectedPlugin.Id}");
-						cui.CreateText(container, button, "1 1 1 0.7", status, 11, xMax: 0.88f, align: TextAnchor.MiddleRight);
-						cui.CreateImage(container, button, icon, elementColor, xMin: 0.1f, xMax: 0.3f, yMin: 0.2f, yMax: 0.8f);
+						if (isAdmin || selectedPlugin.Owned || !selectedPlugin.IsPaid() || selectedPlugin.IsInstalled())
+						{
+							var button = cui.CreateProtectedButton(container, mainPanel, buttonColor, "0 0 0 0", string.Empty, 0, xMin: 0.48f, xMax: scale, yMin: 0.175f, yMax: 0.235f, align: TextAnchor.MiddleRight, command: selectedPlugin.IsBusy ? "" : $"pluginbrowser.interact {callMode} {selectedPlugin.Id}");
+							cui.CreateText(container, button, "1 1 1 0.7", status, 11, xMax: 0.88f, align: TextAnchor.MiddleRight);
+							cui.CreateImage(container, button, icon, elementColor, xMin: 0.1f, xMax: 0.3f, yMin: 0.2f, yMax: 0.8f);
+						}
 					}
 					if (selectedPlugin.IsInstalled())
 					{
@@ -868,7 +871,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				{
 					try
 					{
-						var name = Path.GetFileNameWithoutExtension(plugin.File);
+						var name = Path.GetFileName(plugin.File);
 						plugin.Owned = auth.User != null && auth.User.OwnedFiles.Contains(plugin.Id);
 
 						foreach (var existentPlugin in plugins)
@@ -1364,7 +1367,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 				foreach (var plugin in FetchedPlugins)
 				{
-					var name = plugin.File.Substring(0, plugin.File.IndexOf(".cs"));
+					var name = Path.GetFileName(plugin.File);
 
 					foreach (var existentPlugin in plugins)
 					{
@@ -1420,7 +1423,16 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				{
 					var list = JObject.Parse(data);
 
-					FetchPage(0, (list["last_page"]?.ToString().ToInt()).GetValueOrDefault(), callback);
+					var totalPages = list["last_page"]?.ToString().ToInt();
+
+					if (totalPages == 0)
+					{
+						Logger.Warn($"[{Type}] Endpoint seems to be down. Will retry gathering plugin metadata again later...");
+						list = null;
+						return;
+					}
+
+					FetchPage(0, totalPages.GetValueOrDefault(), callback);
 					list = null;
 				}, Community.Runtime.CorePlugin);
 			}
@@ -2022,7 +2034,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 	{
 		var player = args.Player();
 
-		if (!Singleton.HasAccessLevel(player, 3)) return;
+		if (!Singleton.HasAccess(player, "plugins.setup")) return;
 
 		var ap = Singleton.GetPlayerSession(player);
 		var tab = Singleton.GetTab(ap.Player);
@@ -2212,12 +2224,12 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			var dataPath = Path.Combine(Defines.GetDataFolder(), $"vendordata_{id}.db");
 			OsEx.File.Delete(dataPath);
 
-			if (vendor is IVendorStored stored && !stored.Load())
+			if (vendor is PluginsTab.IVendorStored stored && !stored.Load())
 			{
 				vendor.FetchList(vendor => vendor.Refresh());
 				vendor.Refresh();
 			}
-			if (vendor is IVendorAuthenticated auth)
+			if (vendor is PluginsTab.IVendorAuthenticated auth)
 			{
 				auth.RefreshUser(ap);
 			}
@@ -2326,7 +2338,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					auth.User = null;
 					vendor2.Refresh();
 					Singleton.Draw(args.Player());
-					if (vendor2 is IVendorStored store) store.Save();
+					if (vendor2 is PluginsTab.IVendorStored store) store.Save();
 				}, null);
 			}
 			else
@@ -2429,7 +2441,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		var dataPath = Path.Combine(Defines.GetDataFolder(), $"vendordata_{id}.db");
 		OsEx.File.Delete(dataPath);
 
-		if (vendor is IVendorStored stored && !stored.Load())
+		if (vendor is PluginsTab.IVendorStored stored && !stored.Load())
 		{
 			vendor.FetchList(vendor => vendor.Refresh());
 			vendor.Refresh();

@@ -57,9 +57,6 @@ public class Timers : Library
 				timer.TimesTriggered++;
 			}
 			catch (Exception ex) { Plugin.LogError($"Timer {time}s has failed:", ex); }
-
-			timer.Destroy();
-			Pool.Free(ref timer);
 		});
 
 		timer.Delay = time;
@@ -115,8 +112,11 @@ public class Timers : Library
 
 				if (times != 0 && timer.TimesTriggered >= times)
 				{
-					timer.Dispose();
-					Pool.Free(ref timer);
+					if (Persistence != null)
+					{
+						Persistence.CancelInvoke(timer.Callback);
+						Persistence.CancelInvokeFixedTime(timer.Callback);
+					}
 				}
 			}
 			catch (Exception ex)
@@ -142,6 +142,15 @@ public class Timers : Library
 
 		timer = null;
 	}
+	public void DestroyAll()
+	{
+		foreach (var timer in _timers)
+		{
+			timer.Destroy();
+		}
+
+		_timers.Clear();
+	}
 }
 
 public class Timer : Library, IDisposable
@@ -166,6 +175,7 @@ public class Timer : Library, IDisposable
 
 	public void Reset(float delay = -1f, int repetitions = 1)
 	{
+		TimesTriggered = 0;
 		Repetitions = repetitions;
 		Delay = delay;
 
@@ -180,8 +190,6 @@ public class Timer : Library, IDisposable
 			Persistence.CancelInvoke(Callback);
 			Persistence.CancelInvokeFixedTime(Callback);
 		}
-
-		TimesTriggered = 0;
 
 		if (Repetitions == 1)
 		{

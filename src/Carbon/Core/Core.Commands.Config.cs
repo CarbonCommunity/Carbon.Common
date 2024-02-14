@@ -35,10 +35,6 @@ public partial class CorePlugin : CarbonPlugin
 	[AuthLevel(2)]
 	private bool Modding { get { return Community.Runtime.Config.IsModded; } set { Community.Runtime.Config.IsModded = value; Community.Runtime.SaveConfig(); } }
 
-	[CommandVar("higherpriorityhookwarns", "Print warns if hooks with higher priority conflict with other hooks. Best to keep this disabled. Same-priority hooks will be printed.")]
-	[AuthLevel(2)]
-	private bool HigherPriorityHookWarns { get { return Community.Runtime.Config.HigherPriorityHookWarns; } set { Community.Runtime.Config.HigherPriorityHookWarns = value; Community.Runtime.SaveConfig(); } }
-
 	[CommandVar("scriptwatchers", "When disabled, you must load/unload plugins manually with `c.load` or `c.unload`.")]
 	[AuthLevel(2)]
 	private bool ScriptWatchers { get { return Community.Runtime.Config.ScriptWatchers; } set { Community.Runtime.Config.ScriptWatchers = value; Community.Runtime.SaveConfig(); } }
@@ -83,7 +79,7 @@ public partial class CorePlugin : CarbonPlugin
 	[CommandVar("filenamecheck", "It checks if the file name and the plugin name matches. (only applies to scripts)")]
 	[AuthLevel(2)]
 	private bool FileNameCheck { get { return Community.Runtime.Config.FileNameCheck; } set { Community.Runtime.Config.FileNameCheck = value; Community.Runtime.SaveConfig(); } }
-	
+
 	[CommandVar("language", "Server language used by the Language API.")]
 	[AuthLevel(2)]
 	private string Language { get { return Community.Runtime.Config.Language; } set { Community.Runtime.Config.Language = value; Community.Runtime.SaveConfig(); } }
@@ -91,6 +87,10 @@ public partial class CorePlugin : CarbonPlugin
 	[CommandVar("bypassadmincooldowns", "Bypasses the command cooldowns for admin-authed players.")]
 	[AuthLevel(2)]
 	private bool BypassAdminCooldowns { get { return Community.Runtime.Config.BypassAdminCooldowns; } set { Community.Runtime.Config.BypassAdminCooldowns = value; Community.Runtime.SaveConfig(); } }
+
+	[CommandVar("logsplitsize", "The size for each log (in megabytes) required for it to be split into separate chunks.")]
+	[AuthLevel(2)]
+	private double LogSplitSize { get { return Community.Runtime.Config.LogSplitSize; } set { Community.Runtime.Config.LogSplitSize = value; Community.Runtime.SaveConfig(); } }
 
 #if DEBUG
 	[CommandVar("plugintrackingtime", "Plugin average time value for memory and hook time tracking. [DEBUG]")]

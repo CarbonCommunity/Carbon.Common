@@ -6,6 +6,8 @@
  */
 
 using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
+using Oxide.Core.Extensions;
 using Oxide.Plugins;
 using Logger = Carbon.Logger;
 
@@ -26,11 +28,12 @@ public class OxideMod
 	public string LangDirectory { get; private set; }
 	public string LogDirectory { get; private set; }
 	public string TempDirectory { get; private set; }
+	public string ExtensionDirectory { get; private set; }
 
 	public bool IsShuttingDown { get; private set; }
 
 	internal static readonly Version _assemblyVersion = Assembly.GetExecutingAssembly().GetName().Version;
-	internal List<Extensions.Extension> _extensions = new();
+	internal List<Extension> _extensions = new();
 
 	public float Now => UnityEngine.Time.realtimeSinceStartup;
 
@@ -47,6 +50,7 @@ public class OxideMod
 		LogDirectory = Defines.GetLogsFolder();
 		PluginDirectory = Defines.GetScriptFolder();
 		TempDirectory = Defines.GetTempFolder();
+		ExtensionDirectory = Defines.GetExtensionsFolder();
 
 		DataFileSystem = new DataFileSystem(DataDirectory);
 		RootPluginManager = new PluginManager();
@@ -66,7 +70,7 @@ public class OxideMod
 				break;
 		}
 
-		_extensions.Add(new Extensions.Extension { Name = "Rust", Author = "Carbon Community LTD", Branch = "none", Filename = "Carbon.dll", Version = new VersionNumber(1, 0, 0) });
+		_extensions.Add(new Extension { Name = "Rust", Author = "Carbon Community LTD", Branch = "none", Filename = "Carbon.dll", Version = new VersionNumber(1, 0, 0) });
 	}
 
 	public void NextTick(Action callback)
@@ -93,7 +97,7 @@ public class OxideMod
 	{
 		var path = CorePlugin.GetPluginPath(name);
 
-		Community.Runtime.ScriptProcessor.Prepare(name, path);
+		Community.Runtime.ScriptProcessor.Prepare(path.Key, path.Value);
 	}
 
 	public void ReloadPlugin(string name)
@@ -101,9 +105,12 @@ public class OxideMod
 		LoadPlugin(name);
 	}
 
-	public void UnloadPlugin(string name)
+	public bool UnloadPlugin(string name)
 	{
+		var isValid = Community.Runtime.ScriptProcessor.InstanceBuffer.ContainsKey(name);
 		Community.Runtime.ScriptProcessor.Remove(name);
+
+		return isValid;
 	}
 
 	public void OnSave()
@@ -119,7 +126,7 @@ public class OxideMod
 		}
 	}
 
-	public IEnumerable<Extensions.Extension> GetAllExtensions()
+	public IEnumerable<Extension> GetAllExtensions()
 	{
 		return _extensions;
 	}
@@ -179,10 +186,10 @@ public class OxideMod
 
 		if (type == typeof(Permission)) return Community.Runtime.CorePlugin.permission as T;
 		else if (type == typeof(Lang)) return Community.Runtime.CorePlugin.lang as T;
-		else if (type == typeof(Game.Rust.Libraries.Command)) return Community.Runtime.CorePlugin.cmd as T;
+		else if (type == typeof(Command)) return Community.Runtime.CorePlugin.cmd as T;
 		else if (type == typeof(Game.Rust.Libraries.Rust)) return Community.Runtime.CorePlugin.rust as T;
-		else if (type == typeof(Oxide.Core.Libraries.WebRequests)) return Community.Runtime.CorePlugin.webrequest as T;
-		else if (type == typeof(Oxide.Plugins.Timers)) return Community.Runtime.CorePlugin.timer as T;
+		else if (type == typeof(WebRequests)) return Community.Runtime.CorePlugin.webrequest as T;
+		else if (type == typeof(Timers)) return Community.Runtime.CorePlugin.timer as T;
 
 		name ??= type.Name;
 
@@ -199,6 +206,20 @@ public class OxideMod
 		}
 
 		return instance as T;
+	}
+
+	public Extension GetExtension(string name = null)
+	{
+		return null;
+	}
+
+	public void LoadExtension(string name)
+	{
+	}
+
+	public void LoadAllPlugins(bool init = false)
+	{
+
 	}
 
 	public static readonly VersionNumber Version = new(_assemblyVersion.Major, _assemblyVersion.Minor, _assemblyVersion.Build);

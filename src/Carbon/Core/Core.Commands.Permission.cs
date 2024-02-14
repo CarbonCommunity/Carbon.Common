@@ -40,7 +40,11 @@ public partial class CorePlugin : CarbonPlugin
 		switch (action)
 		{
 			case "user":
-				if (permission.GrantUserPermission(user.Key, perm, null))
+				if (permission.UserHasPermission(user.Key, perm))
+				{
+					arg.ReplyWith($"Already has that permission assigned.");
+				}
+				else if (permission.GrantUserPermission(user.Key, perm, null))
 				{
 					arg.ReplyWith($"Granted user '{user.Value.LastSeenNickname}' permission '{perm}'");
 				}
@@ -51,7 +55,11 @@ public partial class CorePlugin : CarbonPlugin
 				break;
 
 			case "group":
-				if (permission.GrantGroupPermission(name, perm, null))
+				if (permission.GroupHasPermission(name, perm))
+				{
+					arg.ReplyWith($"Already has that permission assigned.");
+				}
+				else if (permission.GrantGroupPermission(name, perm, null))
 				{
 					arg.ReplyWith($"Granted group '{name}' permission '{perm}'");
 				}
@@ -90,7 +98,11 @@ public partial class CorePlugin : CarbonPlugin
 		switch (action)
 		{
 			case "user":
-				if (permission.RevokeUserPermission(user.Key, perm))
+				if (!permission.UserHasPermission(user.Key, perm))
+				{
+					arg.ReplyWith($"User does not have that permission assigned.");
+				}
+				else if (permission.RevokeUserPermission(user.Key, perm))
 				{
 					arg.ReplyWith($"Revoked user '{user.Value?.LastSeenNickname}' permission '{perm}'");
 				}
@@ -101,7 +113,11 @@ public partial class CorePlugin : CarbonPlugin
 				break;
 
 			case "group":
-				if (permission.RevokeGroupPermission(name, perm))
+				if (!permission.GroupHasPermission(name, perm))
+				{
+					arg.ReplyWith($"Group does not have that permission assigned.");
+				}
+				else if (permission.RevokeGroupPermission(name, perm))
 				{
 					arg.ReplyWith($"Revoked group '{name}' permission '{perm}'");
 				}

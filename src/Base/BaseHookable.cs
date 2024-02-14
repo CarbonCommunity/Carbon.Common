@@ -5,7 +5,7 @@ using Newtonsoft.Json;
 
 /*
  *
- * Copyright (c) 2022-2023 Carbon Community
+ * Copyright (c) 2022-2024 Carbon Community
  * All rights reserved.
  *
  */
@@ -19,7 +19,6 @@ public class BaseHookable
 	public List<PluginReferenceAttribute> PluginReferences;
 
 	public Dictionary<uint, List<CachedHook>> HookCache = new();
-	public Dictionary<uint, List<CachedHook>> HookMethodAttributeCache = new();
 	public HashSet<uint> IgnoredHooks = new();
 
 	public class CachedHook
@@ -30,8 +29,14 @@ public class BaseHookable
 		public bool IsByRef;
 		public bool IsAsync;
 
+		public int TimesFired;
 		public double HookTime;
 		public double MemoryUsage;
+
+		public void Tick()
+		{
+			TimesFired++;
+		}
 
 		public static CachedHook Make(MethodInfo method)
 		{
@@ -170,7 +175,6 @@ public class BaseHookable
 		var hooksPresent = Hooks.Count != 0;
 
 		HookCache.Clear();
-		HookMethodAttributeCache.Clear();
 
 		var methods = Type.GetMethods(flag);
 
@@ -201,22 +205,37 @@ public class BaseHookable
 			{
 				hooks.Add(hook);
 			}
+		}
 
-			if (method.HasAttribute(typeof(HookMethodAttribute)))
+		var methodAttributes = Type.GetMethods(flag | BindingFlags.Public);
+
+		foreach (var method in methodAttributes)
+		{
+			var methodAttribute = method.GetCustomAttribute<HookMethodAttribute>();
+
+			if (methodAttribute == null) continue;
+
+			var id = HookStringPool.GetOrAdd(string.IsNullOrEmpty(methodAttribute.Name) ? method.Name : methodAttribute.Name);
+
+			if (!HookCache.TryGetValue(id, out var hooks))
 			{
-				if (!HookMethodAttributeCache.TryGetValue(id, out var hooks2))
-				{
-					HookMethodAttributeCache.Add(id, hooks2 = new());
-				}
+				HookCache.Add(id, hooks = new());
+			}
 
-				if (hooks2.Count > 0 && hooks2[0].Parameters.Length < hook.Parameters.Length)
-				{
-					hooks2.Insert(0, hook);
-				}
-				else
-				{
-					hooks2.Add(hook);
-				}
+			if(hooks.Any(x => x.Method == method))
+			{
+				continue;
+			}
+
+			var hook = CachedHook.Make(method);
+
+			if (hooks.Count > 0 && hooks[0].Parameters.Length < hook.Parameters.Length)
+			{
+				hooks.Insert(0, hook);
+			}
+			else
+			{
+				hooks.Add(hook);
 			}
 		}
 
@@ -256,21 +275,15 @@ public class BaseHookable
 
 	public void SubscribeAll(Func<string, bool> condition = null)
 	{
-		foreach (var hook in Hooks)
+		foreach (var name in Hooks.Select(hook => HookStringPool.GetOrAdd(hook)).Where(name => condition == null || condition(name)))
 		{
-			var name = HookStringPool.GetOrAdd(hook);
-			if (condition != null && !condition(name)) continue;
-
 			Subscribe(name);
 		}
 	}
 	public void UnsubscribeAll(Func<string, bool> condition = null)
 	{
-		foreach (var hook in Hooks)
+		foreach (var name in Hooks.Select(hook => HookStringPool.GetOrAdd(hook)).Where(name => condition == null || condition(name)))
 		{
-			var name = HookStringPool.GetOrAdd(hook);
-			if (condition != null && !condition(name)) continue;
-
 			Unsubscribe(name);
 		}
 	}
@@ -283,5 +296,10 @@ public class BaseHookable
 		}
 
 		return default;
+	}
+
+	public override string ToString()
+	{
+		return $"{Name} v{Version}";
 	}
 }

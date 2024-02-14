@@ -90,15 +90,16 @@ public class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModule
 		Facepunch.Pool.FreeList(ref toDelete);
 	}
 
-	public override void OnServerInit()
+	public override void OnServerInit(bool initial)
 	{
-		base.OnServerInit();
+		base.OnServerInit(initial);
 
-		if (Validate())
-		{
-			Save();
-			LoadDefaultImages();
-		}
+		if(!initial) return;
+
+		if (!Validate()) return;
+
+		Save();
+		LoadDefaultImages();
 
 	}
 	public override void OnServerSaved()
@@ -186,25 +187,7 @@ public class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModule
 			return true;
 		}
 
-		var invalidations = Facepunch.Pool.GetList<string>();
-
-		foreach (var pointer in _protoData.Map)
-		{
-			if (FileStorage.server.Get(pointer.Value, FileStorage.Type.png, new NetworkableId(_protoData.Identifier)) == null)
-			{
-				invalidations.Add(pointer.Key);
-			}
-		}
-
-		foreach (var invalidation in invalidations)
-		{
-			_protoData.Map.Remove(invalidation);
-		}
-
-		var invalidated = invalidations.Count > 0;
-		Facepunch.Pool.FreeList(ref invalidations);
-
-		return invalidated;
+		return false;
 	}
 
 	public void QueueBatch(bool @override, params string[] urls)
@@ -244,26 +227,33 @@ public class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModule
 		{
 			Scale = scale
 		};
-		thread.ImageUrls.AddRange(urls);
-		_queue.Add(thread);
-
-		if (!@override)
+		try
 		{
-			foreach (var url in urls)
+			thread.ImageUrls.AddRange(urls);
+			_queue.Add(thread);
+
+			if (!@override)
 			{
-				if (GetImage(url, scale, true) != 0) thread.ImageUrls.Remove(url);
+				foreach (var url in urls)
+				{
+					if (GetImage(url, scale, true) != 0) thread.ImageUrls.Remove(url);
+				}
+			}
+			else
+			{
+				foreach (var url in thread.ImageUrls)
+				{
+					DeleteImage(url, 0);
+					if (scale != 0f) DeleteImage(url, scale);
+				}
 			}
 		}
-		else
+		catch (Exception ex)
 		{
-			foreach (var url in thread.ImageUrls)
-			{
-				DeleteImage(url, 0);
-				if (scale != 0f) DeleteImage(url, scale);
-			}
+			Logger.Error($"Failed processing queue batch", ex);
 		}
 
-		if (ConfigInstance.PrintInitializedBatchLogs && thread.ImageUrls.Count > 0) Puts($"Added {thread.ImageUrls.Count:n0} to the queue (scale: {(scale == 0 ? "default" : $"{scale:0.0}")})...");
+		if (ConfigInstance.InitializedBatchLogs && thread.ImageUrls.Count > 0) Puts($"Added {thread.ImageUrls.Count:n0} to the queue (scale: {(scale == 0 ? "default" : $"{scale:0.0}")})...");
 
 		Community.Runtime.CorePlugin.persistence.StartCoroutine(_executeQueue(thread, results =>
 		{
@@ -272,7 +262,7 @@ public class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModule
 				if (results != null)
 				{
 					onComplete?.Invoke(results);
-					if (ConfigInstance.PrintCompletedBatchLogs && results.Count > 0) Puts($"Completed queue of {results.Count:n0} urls (scale: {(scale == 0 ? "default" : $"{scale:0.0}")}).");
+					if (ConfigInstance.CompletedBatchLogs && results.Count > 0) Puts($"Completed queue of {results.Count:n0} urls (scale: {(scale == 0 ? "default" : $"{scale:0.0}")}).");
 				}
 
 				_queue.Remove(thread);
@@ -285,13 +275,19 @@ public class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModule
 
 		Community.Runtime.CorePlugin.timer.In(ConfigInstance.TimeoutPerUrl * urls.Length, () =>
 		{
-			if (!thread._disposed)
+			if (thread._disposed) return;
+
+			try
 			{
 				thread.DisposalSave();
 				onComplete?.Invoke(thread.Result);
-				if (ConfigInstance.PrintCompletedBatchLogs && thread.Result.Count > 0) Puts($"Completed queue of {thread.Result.Count:n0} urls (scale: {(scale == 0 ? "default" : $"{scale:0.0}")}).");
+				if (ConfigInstance.CompletedBatchLogs && thread.Result.Count > 0) Puts($"Completed queue of {thread.Result.Count:n0} urls (scale: {(scale == 0 ? "default" : $"{scale:0.0}")}).");
 				thread.Dispose();
 				_queue.Remove(thread);
+			}
+			catch (Exception ex)
+			{
+				Logger.Error($"Failed timeout process", ex);
 			}
 		});
 	}
@@ -380,7 +376,7 @@ public class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModule
 
 		if (_protoData.Map.TryGetValue(id, out var uid))
 		{
-			if (!silent && ConfigInstance.PrintRetrievedImageLogs) Puts($"Retrieved image '{keyOrUrl}'{(scale == 0 ? "" : $" (scale:{scale:0.0})")}.");
+			if (!silent && ConfigInstance.RetrievedImageLogs) Puts($"Retrieved image '{keyOrUrl}'{(scale == 0 ? "" : $" (scale:{scale:0.0})")}.");
 			return uid;
 		}
 
@@ -396,7 +392,7 @@ public class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModule
 
 		if (_protoData.Map.TryGetValue(id, out var uid))
 		{
-			if (ConfigInstance.PrintDeletedImageLogs) Puts($"Deleted image '{url}' (scale: {(scale == 0 ? "default" : $"{scale:0.0}")}).");
+			if (ConfigInstance.DeletedImageLogs) Puts($"Deleted image '{url}' (scale: {(scale == 0 ? "default" : $"{scale:0.0}")}).");
 
 			FileStorage.server.Remove(uid, FileStorage.Type.png, new NetworkableId(_protoData.Identifier));
 			_protoData.Map.Remove(id);
@@ -447,17 +443,15 @@ public class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModule
 
 		internal Queue<string> _urlQueue = new();
 		internal int _processed;
-		internal WebRequests _webRequests;
 		internal WebRequests.WebRequest.Client _client;
 		internal bool _finishedProcessing;
 		internal bool _disposed;
 
 		public override void Start()
 		{
-			base.Start();
-
-			_webRequests = new WebRequests();
 			foreach (var url in ImageUrls) { _urlQueue.Enqueue(url); }
+
+			base.Start();
 		}
 		public override void ThreadFunction()
 		{
@@ -469,8 +463,13 @@ public class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModule
 				_client.Credentials = CredentialCache.DefaultCredentials;
 				_client.Proxy = null;
 
-				_client.DownloadDataCompleted += (object sender, DownloadDataCompletedEventArgs e) =>
+				_client.DownloadDataCompleted += (_, e) =>
 				{
+					if (e.Error != null)
+					{
+						return;
+					}
+
 					_processed++;
 					Result.Add(new QueuedThreadResult
 					{
@@ -486,7 +485,6 @@ public class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModule
 
 			while (_processed != ImageUrls.Count)
 			{
-				continue;
 			}
 
 			_client.Dispose();
@@ -506,7 +504,6 @@ public class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModule
 			Scale = default;
 			_urlQueue.Clear();
 			_client?.Dispose();
-			_webRequests = null;
 			_finishedProcessing = default;
 			_disposed = true;
 
@@ -590,10 +587,10 @@ public class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModule
 public class ImageDatabaseConfig
 {
 	public float TimeoutPerUrl { get; set; } = 2f;
-	public bool PrintInitializedBatchLogs { get; set; } = true;
-	public bool PrintCompletedBatchLogs { get; set; } = true;
-	public bool PrintRetrievedImageLogs { get; set; } = false;
-	public bool PrintDeletedImageLogs { get; set; } = false;
+	public bool InitializedBatchLogs { get; set; } = false;
+	public bool CompletedBatchLogs { get; set; } = false;
+	public bool RetrievedImageLogs { get; set; } = false;
+	public bool DeletedImageLogs { get; set; } = false;
 }
 
 [ProtoContract]

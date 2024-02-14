@@ -203,7 +203,7 @@ public partial class ModalModule : CarbonModule<EmptyModuleConfig, EmptyModuleDa
 
 				if (field.Value.IsReadOnly)
 				{
-					cui.CreatePanel(container, option, null, "0 0 0 0");
+					cui.CreatePanel(container, option, "0 0 0 0");
 				}
 
 				offset -= spacing;

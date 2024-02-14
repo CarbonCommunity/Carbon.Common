@@ -270,7 +270,7 @@ public class RustPlugin : Plugin
 		CallHook("LoadDefaultMessages");
 	}
 
-	public new string ToString()
+	public override string ToString()
 	{
 		return $"{Name} v{Version} by {Author}";
 	}

@@ -4,6 +4,7 @@ using API.Commands;
 using API.Contracts;
 using API.Events;
 using API.Hooks;
+using Carbon.Client;
 using Facepunch;
 using Newtonsoft.Json;
 using Carbon.Extensions;
@@ -111,6 +112,9 @@ public class Community
 	public Config Config
 	{ get; set; }
 
+	public Carbon.Client.ClientConfig ClientConfig
+	{ get; set; }
+
 	public RustPlugin CorePlugin
 	{ get; set; }
 
@@ -123,21 +127,18 @@ public class Community
 	public Entities Entities
 	{ get; set; }
 
-	internal static int Tick = DateTime.UtcNow.Year + DateTime.UtcNow.Month + DateTime.UtcNow.Day + DateTime.UtcNow.Hour + DateTime.UtcNow.Minute + DateTime.UtcNow.Second + DateTime.UtcNow.Month;
+	internal static int Tick = DateTime.UtcNow.Year + DateTime.UtcNow.Month + DateTime.UtcNow.Day + DateTime.UtcNow.Hour + DateTime.UtcNow.Minute + DateTime.UtcNow.Second + DateTime.UtcNow.Millisecond;
 
 	public static string Protect(string name)
 	{
 		if (string.IsNullOrEmpty(name)) return string.Empty;
 
-		var split = name.Split(' ');
-		var command = split[0];
-		var args = split.Skip(1).ToArray();
-		var arguments = args.ToString(" ");
+		using var split = TemporaryArray<string>.New(name.Split(' '));
+		var command = split.Array[0];
+		using var args = TemporaryArray<string>.New(split.Array.Skip(1).ToArray());
+		var arguments = args.Array.ToString(" ");
 
-		Array.Clear(split, 0, split.Length);
-		Array.Clear(args, 0, args.Length);
-
-		return $"carbonprotecc_{RandomEx.GetRandomString(16, command + Tick.ToString(), command.Length + Tick)} {arguments}".TrimEnd();
+		return $"carbonprotecc_{RandomEx.GetRandomString(16, command + Tick, command.Length + Tick)} {arguments}".TrimEnd();
 	}
 
 	public void MarkServerInitialized(bool wants, bool hookCall = true)
@@ -248,7 +249,51 @@ public class Community
 
 		Config.ConditionalCompilationSymbols = Config.ConditionalCompilationSymbols.Distinct().ToList();
 
+		if (Config.CommandPrefixes == null)
+		{
+			Config.CommandPrefixes = new();
+			needsSave = true;
+		}
+
+		if (Config.CommandPrefixes.Count == 0)
+			Config.CommandPrefixes.Add("/");
+
+		// Mandatory for across the board access
+		API.Commands.Command.Prefixes = Config.CommandPrefixes;
+
+		Logger.CoreLog.SplitSize = (int)(Community.Runtime.Config.LogSplitSize * 1000000f);
+
 		if (needsSave) SaveConfig();
+	}
+
+	public void LoadClientConfig()
+	{
+		var needsSave = false;
+
+		if (!OsEx.File.Exists(Defines.GetClientConfigFile()))
+		{
+			ClientConfig ??= new();
+			needsSave = true;
+		}
+		else
+		{
+			ClientConfig = JsonConvert.DeserializeObject<ClientConfig>(OsEx.File.ReadText(Defines.GetClientConfigFile()));
+		}
+
+		if (ClientConfig.Addons.Count == 0)
+		{
+			ClientConfig.Addons.Add(new ClientConfig.AddonEntry { Url = "http//", Enabled = false });
+			needsSave = true;
+		}
+
+		ClientConfig.RefreshNetworkedAddons();
+
+		if (ClientConfig.Enabled)
+		{
+			ConVar.Server.secure = false;
+		}
+
+		if(needsSave) SaveClientConfig();
 	}
 
 	public void SaveConfig()
@@ -256,6 +301,13 @@ public class Community
 		if (Config == null) Config = new Config();
 
 		OsEx.File.Create(Defines.GetConfigFile(), JsonConvert.SerializeObject(Config, Formatting.Indented));
+	}
+
+	public void SaveClientConfig()
+	{
+		if (ClientConfig == null) ClientConfig = new ClientConfig();
+
+		OsEx.File.Create(Defines.GetClientConfigFile(), JsonConvert.SerializeObject(ClientConfig, Formatting.Indented));
 	}
 
 	#endregion

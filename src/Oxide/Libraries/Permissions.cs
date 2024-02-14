@@ -59,7 +59,7 @@ public class Permission : Library
 		var needsUserSave = false;
 		var needsGroupSave = false;
 
-		userdata = (ProtoStorage.Load<Dictionary<string, UserData>>("oxide.users") ?? new Dictionary<string, UserData>());
+		userdata = (ProtoStorage.Load<Dictionary<string, UserData>>("oxide.users") ?? new Dictionary<string, UserData>(StringComparer.OrdinalIgnoreCase));
 		{
 			var validatedUsers = new Dictionary<string, UserData>(StringComparer.OrdinalIgnoreCase);
 			var groupSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -362,7 +362,7 @@ public class Permission : Library
 
 		foreach (var user in userdata)
 		{
-			if (user.Value != null && user.Key == id || (!string.IsNullOrEmpty(user.Value.LastSeenNickname) && user.Value.LastSeenNickname.Contains(id)))
+			if (user.Value != null && user.Key == id || (!string.IsNullOrEmpty(user.Value.LastSeenNickname) && user.Value.LastSeenNickname.Equals(id, StringComparison.InvariantCultureIgnoreCase)))
 				return new KeyValuePair<string, UserData>(user.Key, user.Value);
 		}
 
@@ -429,8 +429,6 @@ public class Permission : Library
 	}
 	public virtual bool GroupHasPermission(string name, string perm)
 	{
-		Logger.Debug($"{name} {perm}");
-
 		if (string.IsNullOrEmpty(name) || !GroupExists(name))
 		{
 			return false;
@@ -559,6 +557,7 @@ public class Permission : Library
 		if (!GroupExists(name)) return;
 		if (!GetUserData(id).Groups.Add(name.ToLower())) return;
 
+		// OnUserGroupRemoved
 		HookCaller.CallStaticHook(3469176166, id, name);
 	}
 	public virtual void RemoveUserGroup(string id, string name)
@@ -570,12 +569,19 @@ public class Permission : Library
 		{
 			if (userData.Groups.Count <= 0) return;
 
+			foreach (var group in userData.Groups)
+			{
+				// OnUserGroupRemoved
+				HookCaller.CallStaticHook(2616322405, id, group);
+			}
+
 			userData.Groups.Clear();
 		}
 		else
 		{
 			if (!userData.Groups.Remove(name.ToLower())) return;
 
+			// OnUserGroupRemoved
 			HookCaller.CallStaticHook(2616322405, id, name);
 		}
 	}
@@ -691,19 +697,35 @@ public class Permission : Library
 			}
 			if (perm.Equals("*"))
 			{
-				source.Aggregate(false, (c, s) => c | data.Perms.Add(s));
+				source.Aggregate(false, (c, s) =>
+				{
+					if (!(c | data.Perms.Add(s))) return false;
+					// OnUserPermissionGranted
+					HookCaller.CallStaticHook(593143994, id, s);
+					return true;
+
+				});
 				return true;
 			}
 			perm = perm.TrimEnd(Star);
+
 			(from s in source
 			 where s.StartsWith(perm)
-			 select s).Aggregate(false, (c, s) => c | data.Perms.Add(s));
+			 select s).Aggregate(false, (c, s) =>
+			{
+				if (!(c | data.Perms.Add(s))) return false;
+				// OnUserPermissionGranted
+				HookCaller.CallStaticHook(593143994, id, s);
+				return true;
+
+			});
 			return true;
 		}
 		else
 		{
 			if (!data.Perms.Add(perm)) return false;
 
+			// OnUserPermissionGranted
 			HookCaller.CallStaticHook(593143994, id, perm);
 			return true;
 		}
@@ -724,7 +746,13 @@ public class Permission : Library
 			if (!perm.Equals("*"))
 			{
 				perm = perm.TrimEnd(Star);
-				return userData.Perms.RemoveWhere(s => s.StartsWith(perm)) > 0;
+				return userData.Perms.RemoveWhere(s =>
+				{
+					if (!s.StartsWith(perm)) return false;
+					// OnUserPermissionRevoked
+					HookCaller.CallStaticHook(1216290467, id, s);
+					return true;
+				}) > 0;
 			}
 			if (userData.Perms.Count <= 0) return false;
 
@@ -735,6 +763,7 @@ public class Permission : Library
 		{
 			if (!userData.Perms.Remove(perm)) return false;
 
+			// OnUserPermissionRevoked
 			HookCaller.CallStaticHook(1216290467, id, perm);
 			return true;
 		}
@@ -768,13 +797,25 @@ public class Permission : Library
 			}
 			if (perm.Equals("*"))
 			{
-				source.Aggregate(false, (c, s) => c | data.Perms.Add(s));
+				source.Aggregate(false, (c, s) =>
+				{
+					if (!(c | data.Perms.Add(s))) return false;
+					// OnGroupPermissionGranted
+					HookCaller.CallStaticHook(2569513351, name, perm);
+					return true;
+				});
 				return true;
 			}
 			perm = perm.TrimEnd(Star).ToLower();
 			(from s in source
 			 where s.StartsWith(perm)
-			 select s).Aggregate(false, (c, s) => c | data.Perms.Add(s));
+			 select s).Aggregate(false, (c, s) =>
+			{
+				if (!(c | data.Perms.Add(s))) return false;
+				// OnGroupPermissionGranted
+				HookCaller.CallStaticHook(2569513351, name, perm);
+				return true;
+			});
 			return true;
 		}
 		else
@@ -807,9 +848,23 @@ public class Permission : Library
 			if (!perm.Equals("*"))
 			{
 				perm = perm.TrimEnd(Star).ToLower();
-				return groupData.Perms.RemoveWhere(s => s.StartsWith(perm)) > 0;
+				return groupData.Perms.RemoveWhere(s =>
+				{
+					if (!s.StartsWith(perm)) return false;
+					// OnGroupPermissionRevoked
+					HookCaller.CallStaticHook(858041166, name, s);
+					return true;
+
+				}) > 0;
 			}
 			if (groupData.Perms.Count <= 0) return false;
+
+			foreach (var permission in groupData.Perms)
+			{
+				// OnGroupPermissionRevoked
+				HookCaller.CallStaticHook(858041166, name, permission);
+			}
+
 			groupData.Perms.Clear();
 			return true;
 		}

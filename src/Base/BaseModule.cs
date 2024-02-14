@@ -3,7 +3,7 @@ using Defines = Carbon.Core.Defines;
 
 /*
  *
- * Copyright (c) 2022-2023 Carbon Community
+ * Copyright (c) 2022-2024 Carbon Community
  * All rights reserved.
  *
  */
@@ -18,11 +18,13 @@ public abstract class BaseModule : BaseHookable
 	public virtual bool ForceModded => false;
 	public virtual bool ForceEnabled => false;
 
-	public abstract void OnPostServerInit();
-	public abstract void OnServerInit();
+	public abstract void OnServerInit(bool initial);
+	public abstract void OnPostServerInit(bool initial);
 	public abstract void OnServerSaved();
 	public abstract void Load();
 	public abstract void Save();
+	public abstract void Unload();
+	public abstract void Reload();
 	public abstract bool GetEnabled();
 	public abstract void SetEnabled(bool enable);
 	public abstract void Shutdown();
@@ -79,6 +81,8 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 		base.Type ??= Type;
 
 		TrackInit();
+
+		InternalCallHookOverriden = false;
 	}
 	public virtual bool InitEnd()
 	{
@@ -143,6 +147,11 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 			try
 			{
 				ModuleConfiguration = Config.ReadObject<Configuration>();
+
+				if (ModuleConfiguration.HasConfigStructureChanged())
+				{
+					shouldSave = true;
+				}
 			}
 			catch (Exception exception)
 			{
@@ -204,8 +213,52 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 		Config.WriteObject(ModuleConfiguration);
 		if (DataInstance != null) Data?.WriteObject(DataInstance);
 	}
+	public override void Reload()
+	{
+		try
+		{
+			Unload();
+		}
+		catch (Exception ex)
+		{
+			Logger.Error($"Failed module Unload for {Name} [Reload Request]", ex);
+		}
+
+		try
+		{
+			Load();
+		}
+		catch (Exception ex)
+		{
+			Logger.Error($"Failed module Load for {Name} [Reload Request]", ex);
+		}
+
+		try
+		{
+			OnServerInit(false);
+		}
+		catch (Exception ex)
+		{
+			Logger.Error($"Failed module OnServerInit for {Name} [Reload Request]", ex);
+		}
+
+		try
+		{
+			OnPostServerInit(false);
+		}
+		catch (Exception ex)
+		{
+			Logger.Error($"Failed module OnPostServerInit for {Name} [Reload Request]", ex);
+		}
+	}
+	public override void Unload()
+	{
+
+	}
 	public override void Shutdown()
 	{
+		Unload();
+
 		Community.Runtime.ModuleProcessor.Uninstall(this);
 	}
 
@@ -241,7 +294,7 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 
 		if (InitEnd())
 		{
-			if (initialized) OnServerInit();
+			if (initialized) OnServerInit(true);
 		}
 	}
 
@@ -259,33 +312,45 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 
 	public override void OnServerSaved()
 	{
-		try { Save(); }
-		catch (Exception ex)
-		{
-			Logger.Error($"Couldn't save '{Name}'", ex);
-		}
+
 	}
 
-	public override void OnServerInit()
+	public override void OnServerInit(bool initial)
 	{
-		OnEnableStatus();
+		if (initial)
+		{
+			OnEnableStatus();
+		}
 	}
-	public override void OnPostServerInit()
+	public override void OnPostServerInit(bool initial)
 	{
 
 	}
 
 	#region Permission
 
+	public virtual bool GroupExists(string group)
+	{
+		return Community.Runtime.CorePlugin.permission.GroupExists(group);
+	}
+	public virtual bool HasGroup(string userId, string group)
+	{
+		return Community.Runtime.CorePlugin.permission.UserHasGroup(userId, group);
+	}
+	public virtual bool HasGroup(BasePlayer player, string group)
+	{
+		return HasGroup(player.UserIDString, group);
+	}
+
 	public virtual bool PermissionExists(string permission)
 	{
-		return Community.Runtime.CorePlugin.permission.PermissionExists(permission, Community.Runtime.CorePlugin);
+		return Community.Runtime.CorePlugin.permission.PermissionExists(permission, this);
 	}
 	public virtual void RegisterPermission(string permission)
 	{
 		if (PermissionExists(permission)) return;
 
-		Community.Runtime.CorePlugin.permission.RegisterPermission(permission, Community.Runtime.CorePlugin);
+		Community.Runtime.CorePlugin.permission.RegisterPermission(permission, this);
 	}
 	public virtual void UnregisterPermissions()
 	{
@@ -298,14 +363,6 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 	public virtual bool HasPermission(BasePlayer player, string permission)
 	{
 		return HasPermission(player.UserIDString, permission);
-	}
-	public virtual bool HasGroup(string userId, string group)
-	{
-		return Community.Runtime.CorePlugin.permission.UserHasGroup(userId, group);
-	}
-	public virtual bool HasGroup(BasePlayer player, string group)
-	{
-		return HasGroup(player.UserIDString, group);
 	}
 
 	#endregion
@@ -338,5 +395,34 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 	{
 		public bool Enabled { get; set; }
 		public C Config { get; set; }
+		public string Version { get; set; }
+
+		public string GetVersion()
+		{
+			if (Config == null)
+			{
+				return null;
+			}
+
+			var type = Config.GetType();
+			var content = type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Select(x => x.PropertyType.FullName + x.Name)
+				.Concat(type.GetFields(BindingFlags.Public | BindingFlags.Instance).Select(x => x.FieldType.FullName + x.Name))
+				.Select(x => x).ToString(string.Empty);
+
+			return StringPool.Add(content).ToString();
+		}
+
+		public bool HasConfigStructureChanged()
+		{
+			var version = GetVersion();
+			var isValid = version == Version;
+
+			if (!isValid)
+			{
+				Version = version;
+			}
+
+			return !isValid;
+		}
 	}
 }
