@@ -106,7 +106,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 						ap.SetStorage(tab, "player", player.UserIDString);
 						PermissionsTab.GeneratePlayers(perms, permission, ap);
-						PermissionsTab.GeneratePlugins(perms, ap, permission, permission.FindUser(player.UserIDString), null);
+						PermissionsTab.GenerateHookables(perms, ap, permission, permission.FindUser(player.UserIDString), null, PermissionsTab.HookableTypes.Plugin);
 					}, (_) => Tab.OptionButton.Types.Important);
 				}
 			}

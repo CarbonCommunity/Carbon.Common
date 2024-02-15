@@ -544,6 +544,8 @@ namespace Oxide.Core.Libraries.Covalence
 
 		System.Globalization.CultureInfo Language { get; }
 
+		SaveInfo SaveInfo { get; }
+		
 		int Players { get; }
 		int MaxPlayers { get; set; }
 

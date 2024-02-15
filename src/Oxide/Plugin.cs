@@ -185,50 +185,61 @@ namespace Oxide.Core.Plugins
 				var name = string.IsNullOrEmpty(attribute.Name) ? field.Name : attribute.Name;
 				var path = Path.Combine(Defines.GetScriptFolder(), $"{name}.cs");
 
-				var plugin = (Plugin)null;
-				if (field.FieldType.Name != nameof(Plugin) &&
-					field.FieldType.Name != nameof(RustPlugin) &&
-					field.FieldType.Name != nameof(CarbonPlugin))
+				try
 				{
-					var info = field.FieldType.GetCustomAttribute<InfoAttribute>();
-					if (info == null)
+					var plugin = (Plugin)null;
+					if (field.FieldType.Name != nameof(Plugin) &&
+					    field.FieldType.Name != nameof(RustPlugin) &&
+					    field.FieldType.Name != nameof(CovalencePlugin) &&
+					    field.FieldType.Name != nameof(CarbonPlugin))
 					{
-						Carbon.Logger.Warn($"You're trying to reference a non-plugin instance: {name}[{field.FieldType.Name}]");
-						continue;
-					}
+						var info = field.FieldType.GetCustomAttribute<InfoAttribute>();
+						if (info == null)
+						{
+							Carbon.Logger.Warn(
+								$"You're trying to reference a non-plugin instance: {name}[{field.FieldType.Name}]");
+							continue;
+						}
 
-					plugin = Community.Runtime.CorePlugin.plugins.Find(info.Title);
-				}
-				else
-				{
-					plugin = Community.Runtime.CorePlugin.plugins.Find(name);
-				}
-
-				if (plugin != null)
-				{
-					var version = new VersionNumber(attribute.MinVersion);
-
-					if (version.IsValid() && plugin.Version < version)
-					{
-						Logger.Warn($"Plugin '{Name} by {Author} v{Version}' references a required plugin which is outdated: {plugin.Name} by {plugin.Author} v{plugin.Version} < v{version}");
-						return false;
+						plugin = Community.Runtime.CorePlugin.plugins.Find(info.Title);
 					}
 					else
 					{
-						field.SetValue(this, plugin);
+						plugin = Community.Runtime.CorePlugin.plugins.Find(name);
+					}
 
-						if (attribute.IsRequired)
+					if (plugin != null)
+					{
+						var version = new VersionNumber(attribute.MinVersion);
+
+						if (version.IsValid() && plugin.Version < version)
 						{
-							ModLoader.AddPendingRequiree(plugin, this);
+							Logger.Warn(
+								$"Plugin '{Name} by {Author} v{Version}' references a required plugin which is outdated: {plugin.Name} by {plugin.Author} v{plugin.Version} < v{version}");
+							return false;
+						}
+						else
+						{
+							field.SetValue(this, plugin);
+
+							if (attribute.IsRequired)
+							{
+								ModLoader.AddPendingRequiree(plugin, this);
+							}
 						}
 					}
+					else if (attribute.IsRequired)
+					{
+						ModLoader.PostBatchFailedRequirees.Add(FilePath);
+						ModLoader.AddPendingRequiree(path, FilePath);
+						Logger.Warn(
+							$"Plugin '{Name} by {Author} v{Version}' references a required plugin which is not loaded: {name}");
+						return false;
+					}
 				}
-				else if (attribute.IsRequired)
+				catch (Exception ex)
 				{
-					ModLoader.PostBatchFailedRequirees.Add(FilePath);
-					ModLoader.AddPendingRequiree(path, FilePath);
-					Logger.Warn($"Plugin '{Name} by {Author} v{Version}' references a required plugin which is not loaded: {name}");
-					return false;
+					Logger.Error($"Plugin '{Name} by {Author} v{Version}' failed to assign PluginReference on field {name} ({field.FieldType.Name})", ex);
 				}
 			}
 
@@ -708,10 +719,6 @@ namespace Oxide.Core.Plugins
 
 		}
 
-		public new string ToString()
-		{
-			return GetType().Name;
-		}
 		public virtual void Dispose()
 		{
 			IsLoaded = false;
