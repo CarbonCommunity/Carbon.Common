@@ -13,7 +13,7 @@ using Pool = Facepunch.Pool;
 
 /*
  *
- * Copyright (c) 2022-2024 Carbon Community 
+ * Copyright (c) 2022-2024 Carbon Community
  * All rights reserved.
  *
  */
@@ -1407,8 +1407,16 @@ public static class HookCaller
 			if (hookMethod != null)
 			{
 				var context = hookMethod.ArgumentList.Arguments[0];
+				var contextString = context.ToString();
 
-				if (context.ToString().Contains("."))
+				if (contextString.Contains("nameof"))
+				{
+					methodName = contextString
+						.Replace("nameof", string.Empty)
+						.Replace("(", string.Empty)
+						.Replace(")", string.Empty);
+				}
+				else if (contextString.Contains("."))
 				{
 					var argument = context.Expression as MemberAccessExpressionSyntax;
 					var expression = argument.Expression.ToString();

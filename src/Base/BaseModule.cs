@@ -3,7 +3,7 @@ using Defines = Carbon.Core.Defines;
 
 /*
  *
- * Copyright (c) 2022-2024 Carbon Community 
+ * Copyright (c) 2022-2024 Carbon Community
  * All rights reserved.
  *
  */
@@ -329,15 +329,28 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 
 	#region Permission
 
+	public virtual bool GroupExists(string group)
+	{
+		return Community.Runtime.CorePlugin.permission.GroupExists(group);
+	}
+	public virtual bool HasGroup(string userId, string group)
+	{
+		return Community.Runtime.CorePlugin.permission.UserHasGroup(userId, group);
+	}
+	public virtual bool HasGroup(BasePlayer player, string group)
+	{
+		return HasGroup(player.UserIDString, group);
+	}
+
 	public virtual bool PermissionExists(string permission)
 	{
-		return Community.Runtime.CorePlugin.permission.PermissionExists(permission, Community.Runtime.CorePlugin);
+		return Community.Runtime.CorePlugin.permission.PermissionExists(permission, this);
 	}
 	public virtual void RegisterPermission(string permission)
 	{
 		if (PermissionExists(permission)) return;
 
-		Community.Runtime.CorePlugin.permission.RegisterPermission(permission, Community.Runtime.CorePlugin);
+		Community.Runtime.CorePlugin.permission.RegisterPermission(permission, this);
 	}
 	public virtual void UnregisterPermissions()
 	{
@@ -350,14 +363,6 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 	public virtual bool HasPermission(BasePlayer player, string permission)
 	{
 		return HasPermission(player.UserIDString, permission);
-	}
-	public virtual bool HasGroup(string userId, string group)
-	{
-		return Community.Runtime.CorePlugin.permission.UserHasGroup(userId, group);
-	}
-	public virtual bool HasGroup(BasePlayer player, string group)
-	{
-		return HasGroup(player.UserIDString, group);
 	}
 
 	#endregion
