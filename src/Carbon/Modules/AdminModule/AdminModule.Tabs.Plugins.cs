@@ -376,7 +376,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					cui.CreateImage(container, card, "glow", "1 1 1 0.5", OxMin: -20, OxMax: 20, OyMin: -20, OyMax: 20);
 				}
 
-				if (plugin.NoImage())
+				if (plugin.NoImage() || Singleton.DataInstance.HidePluginIcons)
 				{
 					cui.CreateImage(container, card, vendor.Logo, "0.2 0.2 0.2 0.4", xMin: 0.2f, xMax: 0.8f, yMin: 0.2f + vendor.LogoRatio, yMax: 0.8f - vendor.LogoRatio);
 				}
@@ -1698,8 +1698,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 							Author = token["author"]?.ToString(),
 							Description = token["description"]?.ToString(),
 							Version = token["version"]?.ToString(),
-							OriginalPrice = $"${token["price"]?.ToString()}",
-							SalePrice = $"${token["salePrice"]?.ToString()}",
+							OriginalPrice = $"${token["price"]}",
+							SalePrice = $"${token["salePrice"]}",
 							File = token["filename"]?.ToString(),
 							Image = image,
 							Thumbnail = image,
