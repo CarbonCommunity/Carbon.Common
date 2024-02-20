@@ -43,10 +43,10 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		}
 
 		public static bool DropdownShow { get; set; }
-		public static string[] DropdownOptions { get; } = new string[] { "A-Z", "Price", "Author", "Installed", "Needs Update", "Favourites", "Owned" };
+		public static string[] DropdownOptions { get; } = new[] { "A-Z", "Price", "Author", "Installed", "Needs Update", "Favourites", "Owned" };
 		public static PlayerSession.Page PlaceboPage { get; } = new PlayerSession.Page();
 		public static List<string> TagFilter { get; set; } = new();
-		public static string[] PopularTags { get; } = new string[]
+		public static string[] PopularTags { get; } = new[]
 		{
 				"gui",
 				"admin",
@@ -661,7 +661,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 					var image = cui.CreatePanel(container, parent, "1 1 1 1", xMin: 0.12f, xMax: 0.45f, yMin: 0.2f, yMax: 0.8f);
 
-					cui.QueueImages(vendor.Logo);
+					cui.QueueImages(vendor.LogoEnumerable);
 					var code = string.Format(auth.AuthRequestEndpoint, auth.AuthCode);
 					var qr = cui.CreateQRCodeImage(container, image, code,
 						brandUrl: vendor.Logo,
@@ -727,6 +727,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			public virtual string Type { get; }
 			public virtual string Url { get; }
 			public virtual string Logo { get; }
+			public IEnumerable<string> LogoEnumerable;
 			public virtual float LogoRatio { get; }
 
 			public virtual float IconScale { get; }
@@ -862,6 +863,11 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			public override void Refresh()
 			{
 				if (FetchedPlugins == null) return;
+
+				if (LogoEnumerable == null)
+				{
+					LogoEnumerable = new[] { Logo };
+				}
 
 				var plugins = Community.Runtime.CorePlugin.plugins.GetAll();
 				var auth = this as IVendorAuthenticated;
@@ -1363,6 +1369,11 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			{
 				if (FetchedPlugins == null) return;
 
+				if (LogoEnumerable == null)
+				{
+					LogoEnumerable = new[] { Logo };
+				}
+
 				var plugins = Community.Runtime.CorePlugin.plugins.GetAll();
 
 				foreach (var plugin in FetchedPlugins)
@@ -1633,6 +1644,11 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			{
 				if (FetchedPlugins == null) return;
 
+				if (LogoEnumerable == null)
+				{
+					LogoEnumerable = new[] { Logo };
+				}
+
 				foreach (var plugin in FetchedPlugins)
 				{
 					foreach (var existentPlugin in Community.Runtime.CorePlugin.plugins.GetAll())
@@ -1828,8 +1844,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			public override float IconScale => 0.4f;
 			public override float SafeIconScale => 0.2f;
 
-
-			internal string[] _defaultTags = new string[] { "carbon", "oxide" };
+			internal string[] _defaultTags = new[] { "carbon", "oxide" };
 
 			public override void CheckMetadata(string id, Action callback)
 			{
@@ -1851,6 +1866,11 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			public override void Refresh()
 			{
 				FetchedPlugins.Clear();
+
+				if (LogoEnumerable == null)
+				{
+					LogoEnumerable = new[] { Logo };
+				}
 
 				foreach (var package in ModLoader.LoadedPackages)
 				{
