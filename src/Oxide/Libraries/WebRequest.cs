@@ -201,7 +201,7 @@ public class WebRequests : Library
 									ResponseObject = e.Result;
 									OnComplete(false);
 								}
-								catch(Exception ex)
+								catch
 								{
 									OnComplete(true);
 								}
@@ -233,7 +233,7 @@ public class WebRequests : Library
 									ResponseObject = e.Result;
 									OnComplete(false);
 								}
-								catch(Exception exception)
+								catch
 								{
 									OnComplete(false);
 								}
@@ -291,7 +291,7 @@ public class WebRequests : Library
 									ResponseObject = e.Result;
 									OnComplete(false);
 								}
-								catch(Exception ex)
+								catch
 								{
 									OnComplete(true);
 								}
@@ -323,7 +323,7 @@ public class WebRequests : Library
 									ResponseObject = e.Result;
 									OnComplete(false);
 								}
-								catch(Exception ex)
+								catch
 								{
 									OnComplete(true);
 								}
