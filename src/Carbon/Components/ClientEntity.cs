@@ -5,7 +5,7 @@ using Time = UnityEngine.Time;
 
 /*
  *
- * Copyright (c) 2022-2024 Carbon Community  
+ * Copyright (c) 2022-2024 Carbon Community
  * Copyright (c) 2023 Patrette
  * All rights reserved.
  *
@@ -149,16 +149,14 @@ public class ClientEntity : IDisposable
 	{
 		if (watchers.Contains(connection)) watchers.Remove(connection);
 
-		using var writer = Net.sv.StartWrite();
-		writer.PacketID(Message.Type.EntityDestroy);
+		using var writer = Net.sv.StartWrite(Message.Type.EntityDestroy);
 		writer.EntityID(NetID);
 		writer.UInt8((byte)mode);
 		writer.Send(new SendInfo(connection));
 	}
 	public virtual void KillAll(BaseNetworkable.DestroyMode mode = BaseNetworkable.DestroyMode.None)
 	{
-		using var writer = Net.sv.StartWrite();
-		writer.PacketID(Message.Type.EntityDestroy);
+		using var writer = Net.sv.StartWrite(Message.Type.EntityDestroy);
 		writer.EntityID(NetID);
 		writer.UInt8((byte)mode);
 		writer.Send(new SendInfo(watchers));
@@ -202,8 +200,7 @@ public class ClientEntity : IDisposable
 	{
 		if (watchers.Count == 0) return;
 
-		using var writer = Net.sv.StartWrite();
-		writer.PacketID(Message.Type.EntityFlags);
+		using var writer = Net.sv.StartWrite(Message.Type.EntityFlags);
 		writer.EntityID(NetID);
 		writer.Int32((int)Flags);
 		writer.Send(new SendInfo(watchers));
@@ -212,8 +209,7 @@ public class ClientEntity : IDisposable
 	{
 		if (watchers.Count == 0) return;
 
-		using var writer = Net.sv.StartWrite();
-		writer.PacketID(Message.Type.EntityPosition);
+		using var writer = Net.sv.StartWrite(Message.Type.EntityPosition);
 		writer.EntityID(NetID);
 		writer.Vector3(in Proto.baseEntity.pos);
 		writer.Vector3(in Proto.baseEntity.rot);
@@ -263,10 +259,9 @@ public class ClientEntity : IDisposable
 	}
 	internal void _sendSnapshot(Connection connection, byte[] data)
 	{
-		using var writer = Network.Net.sv.StartWrite();
+		using var writer = Network.Net.sv.StartWrite(Message.Type.Entities);
 		connection.validate.entityUpdates++;
 
-		writer.PacketID(Message.Type.Entities);
 		writer.UInt32(connection.validate.entityUpdates);
 		writer.Write(data, 0, data.Length);
 		writer.Send(new SendInfo(connection));
@@ -280,8 +275,7 @@ public class ClientEntity : IDisposable
 
 	internal NetWrite RPCWriteStart(Connection sourceConnection, string funcName)
 	{
-		var writer = Net.sv.StartWrite();
-		writer.PacketID(Message.Type.RPCMessage);
+		var writer = Net.sv.StartWrite(Message.Type.RPCMessage);
 		writer.EntityID(NetID);
 		writer.UInt32(StringPool.Get(funcName));
 		writer.UInt64(sourceConnection?.userid ?? 0);
