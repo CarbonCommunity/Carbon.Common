@@ -268,6 +268,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 						tab.ClearColumn(3);
 						GenerateGroups(tab, permission, ap);
 						GenerateHookables(tab, ap, permission, permission.FindUser(ap.Player.UserIDString), selectedGroup,hookableType);
+
+						Singleton.NextFrame(() => Singleton.Draw(ap.Player));
 					});
 				}));
 				tab.AddButtonArray(2,
@@ -304,6 +306,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 							tab.ClearColumn(2);
 							tab.ClearColumn(3);
 							GenerateGroups(tab, permission, ap);
+
+							Singleton.NextFrame(() => Singleton.Draw(ap.Player));
 						});
 					}, ap => Tab.OptionButton.Types.None),
 					new Tab.OptionButton(!pluginEdit ? hookableType == HookableTypes.Module ? "Players" : "Modules" : "Plugins", ap =>
@@ -538,6 +542,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 						tab.ClearColumn(2);
 						tab.ClearColumn(3);
 						GenerateGroups(tab, perms, ap);
+
+						Singleton.NextFrame(() => Singleton.Draw(ap.Player));
 					});
 				}, (_instance) => Tab.OptionButton.Types.Warned);
 

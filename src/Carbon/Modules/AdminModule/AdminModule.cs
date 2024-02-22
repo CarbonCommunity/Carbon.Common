@@ -2345,6 +2345,7 @@ public class AdminData
 {
 	[JsonProperty("WizardDisplayed")]
 	public bool WizardDisplayed = false;
+	public bool HidePluginIcons = false;
 	public DataColors Colors = new();
 
 	public class DataColors

@@ -1415,6 +1415,12 @@ public static class HookCaller
 						.Replace("nameof", string.Empty)
 						.Replace("(", string.Empty)
 						.Replace(")", string.Empty);
+
+					if (methodName.Contains("."))
+					{
+						using var temp = TemporaryArray<string>.New(methodName.Split('.'));
+						methodName = temp.Get(temp.Length - 1);
+					}
 				}
 				else if (contextString.Contains("."))
 				{

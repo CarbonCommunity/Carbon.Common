@@ -190,23 +190,23 @@ public readonly struct CUI : IDisposable
 		return ImageDatabase.GetImageString(url, scale, true);
 	}
 
-	public void QueueImages(float scale, params string[] urls)
+	public void QueueImages(float scale, IEnumerable<string> urls)
 	{
 		ImageDatabase.QueueBatch(scale, false, urls);
 	}
-	public void QueueImages(params string[] urls)
+	public void QueueImages(IEnumerable<string> urls)
 	{
 		QueueImages(0, urls);
 	}
 
-	public void ClearImages(float scale, params string[] urls)
+	public void ClearImages(float scale, IEnumerable<string> urls)
 	{
 		foreach (var url in urls)
 		{
 			ImageDatabase.DeleteImage(url, scale);
 		}
 	}
-	public void ClearImages(params string[] urls)
+	public void ClearImages(IEnumerable<string> urls)
 	{
 		ClearImages(0, urls);
 	}
