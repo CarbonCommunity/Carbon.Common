@@ -64,7 +64,7 @@ public class HookCallerCommon
 	public virtual void ProcessDefaults(object[] buffer, BaseHookable.CachedHook hook) { }
 	public virtual void ReturnBuffer(object[] buffer) { }
 
-	public virtual object CallHook<T>(T hookable, uint hookId, BindingFlags flags, object[] args, bool keepArgs = false) where T : BaseHookable => null;
+	public virtual object CallHook<T>(T hookable, uint hookId, BindingFlags flags, object[] args) where T : BaseHookable => null;
 	public virtual object CallDeprecatedHook<T>(T plugin, uint oldHookId, uint newHookId, DateTime expireDate, BindingFlags flags, object[] args) where T : BaseHookable => null;
 
 	public struct Conflict
@@ -151,12 +151,11 @@ public static class HookCaller
 		return finalTime;
 	}
 
-	private static object CallStaticHook(uint hookId, BindingFlags flag = BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public, object[] args = null, bool keepArgs = false)
+	private static object CallStaticHook(uint hookId, BindingFlags flag = BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public, object[] args = null)
 	{
 		if (Community.Runtime == null || Community.Runtime.ModuleProcessor == null) return null;
 
 		var result = (object)null;
-		var array = args == null ? null : keepArgs ? args : args.ToArray();
 		var conflicts = Pool.GetList<Conflict>();
 
 		for(int i = 0; i < Community.Runtime.ModuleProcessor.Modules.Count; i++)
@@ -165,7 +164,7 @@ public static class HookCaller
 
 			if (hookable is IModule modules && !modules.GetEnabled()) continue;
 
-			var methodResult = Caller.CallHook(hookable, hookId, flags: flag, args: array, keepArgs);
+			var methodResult = Caller.CallHook(hookable, hookId, flags: flag, args: args);
 
 			if (methodResult == null) continue;
 
@@ -183,7 +182,7 @@ public static class HookCaller
 
 				try
 				{
-					var methodResult = Caller.CallHook(plugin, hookId, flags: flag, args: array, keepArgs);
+					var methodResult = Caller.CallHook(plugin, hookId, flags: flag, args: args);
 
 					if (methodResult == null) continue;
 
@@ -200,8 +199,6 @@ public static class HookCaller
 		}
 
 		ConflictCheck(conflicts, ref result, hookId);
-
-		if (array != null && !keepArgs) Array.Clear(array, 0, array.Length);
 
 		Pool.FreeList(ref conflicts);
 
@@ -234,7 +231,7 @@ public static class HookCaller
 	}
 	public static void ConflictCheck(List<Conflict> conflicts, ref object result, uint hookId)
 	{
-		if (conflicts.Count <= 1) return;
+		if (conflicts == null || conflicts.Count <= 1) return;
 
 		var localResult = result = conflicts[0].Result;
 		var differentResults =  conflicts.Any(conflict => localResult != null && conflict.Result.ToString() != localResult.ToString());
@@ -1336,9 +1333,9 @@ public static class HookCaller
 		return result;
 	}
 
-	public static object CallStaticHook(uint hookId, object[] args, bool keepArgs = false)
+	public static object CallStaticHook(uint hookId, object[] args)
 	{
-		return CallStaticHook(hookId, BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public, args, keepArgs: keepArgs);
+		return CallStaticHook(hookId, BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public, args);
 	}
 	public static object CallStaticDeprecatedHook(uint oldHookId, uint newHookId, DateTime expireDate, object[] args)
 	{
