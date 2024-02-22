@@ -158,18 +158,27 @@ public static class HookCaller
 		var result = (object)null;
 		var conflicts = Pool.GetList<Conflict>();
 
-		for(int i = 0; i < Community.Runtime.ModuleProcessor.Modules.Count; i++)
+		for (int i = 0; i < Community.Runtime.ModuleProcessor.Modules.Count; i++)
 		{
 			var hookable = Community.Runtime.ModuleProcessor.Modules[i];
 
-			if (hookable is IModule modules && !modules.GetEnabled()) continue;
+			try
+			{
+				if (hookable is IModule modules && !modules.GetEnabled()) continue;
 
-			var methodResult = Caller.CallHook(hookable, hookId, flags: flag, args: args);
+				var methodResult = Caller.CallHook(hookable, hookId, flags: flag, args: args);
 
-			if (methodResult == null) continue;
+				if (methodResult == null) continue;
 
-			result = methodResult;
-			ResultOverride(conflicts, hookable, hookId, result);
+				result = methodResult;
+				ResultOverride(conflicts, hookable, hookId, result);
+			}
+			catch (Exception ex)
+			{
+				var exception = ex.InnerException ?? ex;
+				var readableHook = HookStringPool.GetOrAdd(hookId);
+				Logger.Error($"Failed to call hook '{readableHook}' on module '{hookable.Name} v{hookable.Version}'", exception);
+			}
 		}
 
 		for (int i = 0; i < ModLoader.LoadedPackages.Count; i++)
