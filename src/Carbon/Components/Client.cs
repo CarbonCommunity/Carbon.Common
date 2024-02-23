@@ -39,16 +39,20 @@ public struct Client
 		{
 			Logger.Log($" C4C: Carbon Client ready.");
 
-			Analytic.Include("nomap", Config.Environment.NoMap);
-			Analytic.Include("oldrecoil", Config.Client.UseOldRecoil);
-			Analytic.Include("clientgravity", Config.Client.ClientGravity.ToString("0.0"));
-			Analytic.Send("carbon_client_init");
+			if (Analytic.Enabled)
+			{
+				Analytic.Include("nomap", Config.Environment.NoMap);
+				Analytic.Include("oldrecoil", Config.Client.UseOldRecoil);
+				Analytic.Include("clientgravity", Config.Client.ClientGravity.ToString("0.0"));
+				Analytic.Send("carbon_client_init");
+			}
 		}
 		else
 		{
 			Logger.Log($" C4C: Carbon Client disabled.");
 		}
 	}
+
 	public static void TerrainPostprocess()
 	{
 		if (!Config.Environment.NoMap)
@@ -58,11 +62,13 @@ public struct Client
 
 		TerrainMeta.Collider.enabled = false;
 	}
+
 	public static void ProcessConVars()
 	{
 		ConVar.Spawn.max_density = 0;
 		ConVar.Server.events = false;
 	}
+
 	public static void ProcessPatches()
 	{
 		Community.Runtime.CarbonClientManager.ApplyPatch();

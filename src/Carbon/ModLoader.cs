@@ -210,8 +210,11 @@ public static class ModLoader
 		}
 		catch (Exception ex)
 		{
-			Analytic.Include("plugin", $"{plugin.Name} v{plugin.Version} by {plugin.Author}");
-			Analytic.Send("plugin_constructor_failure");
+			if (Analytic.Enabled)
+			{
+				Analytic.Include("plugin", $"{plugin.Name} v{plugin.Version} by {plugin.Author}");
+				Analytic.Send("plugin_constructor_failure");
+			}
 
 			Logger.Error($"Failed executing constructor for {plugin}. This is fatal! Unloading plugin.", ex);
 			return false;
