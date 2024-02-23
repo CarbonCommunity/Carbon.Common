@@ -91,6 +91,7 @@ public class BaseHookable
 	public double CurrentHookTime { get; internal set; }
 	public static long CurrentMemory => GC.GetTotalMemory(false);
 	public static int CurrentGcCount => GC.CollectionCount(0);
+	public int CurrentHookFires => HookCache.Sum(x => x.Value.Sum(y => y.TimesFired));
 	public bool HasGCCollected => _currentGcCount != CurrentGcCount;
 
 	public virtual void TrackInit()

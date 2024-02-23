@@ -457,7 +457,7 @@ public class Permission : Library
 	}
 	public virtual bool UserHasPermission(string id, string perm)
 	{
-		if (string.IsNullOrEmpty(perm)) return false;
+		if (string.IsNullOrEmpty(perm) || string.IsNullOrEmpty(id)) return false;
 		if (id.Equals("server_console")) return true;
 
 		var userData = GetUserData(id);
