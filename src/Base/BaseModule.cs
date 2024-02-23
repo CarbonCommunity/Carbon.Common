@@ -122,8 +122,8 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 	{
 		var shouldSave = false;
 
-		Config ??= new DynamicConfigFile(Path.Combine(Defines.GetModulesFolder(), Name, "config.json"));
-		Data ??= new DynamicConfigFile(Path.Combine(Defines.GetModulesFolder(), Name, "data.json"));
+		Config ??= new DynamicConfigFile(GetConfigPath());
+		Data ??= new DynamicConfigFile(GetDataPath());
 		Lang ??= new(this);
 
 		var newConfig = !Config.Exists();
@@ -185,7 +185,7 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 		if (PreLoadShouldSave(newConfig, newData)) shouldSave = true;
 
 		if (shouldSave) Save();
-
+		
 		OnEnableStatus();
 	}
 	public virtual bool PreLoadShouldSave(bool newConfig, bool newData)
@@ -260,6 +260,15 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 		Unload();
 
 		Community.Runtime.ModuleProcessor.Uninstall(this);
+	}
+
+	public virtual string GetConfigPath()
+	{
+		return Path.Combine(Defines.GetModulesFolder(), Name, "config.json");
+	}
+	public virtual string GetDataPath()
+	{
+		return Path.Combine(Defines.GetModulesFolder(), Name, "data.json");
 	}
 
 	public override void SetEnabled(bool enable)

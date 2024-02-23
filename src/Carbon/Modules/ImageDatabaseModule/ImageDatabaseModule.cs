@@ -189,14 +189,14 @@ public class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModule
 
 		return false;
 	}
-
-	public void QueueBatch(bool @override, params string[] urls)
+	
+	public void QueueBatch(bool @override, IEnumerable<string> urls)
 	{
 		QueueBatch(0f, @override, urls);
 	}
-	public void QueueBatch(float scale, bool @override, params string[] urls)
+	public void QueueBatch(float scale, bool @override, IEnumerable<string> urls)
 	{
-		if (urls == null || urls.Length == 0)
+		if (urls == null || !urls.Any())
 		{
 			return;
 		}
@@ -207,7 +207,7 @@ public class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModule
 			{
 				if (result.Data.Length >= MaximumBytes)
 				{
-					Puts($"Failed storing {urls.Length:n0} jobs [scale:{scale}]: {result.Data.Length} more or equal than {MaximumBytes}");
+					Puts($"Failed storing {urls.Count():n0} jobs [scale:{scale}]: {result.Data.Length} more or equal than {MaximumBytes}");
 					continue;
 				}
 
@@ -216,9 +216,9 @@ public class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModule
 			}
 		}, urls);
 	}
-	public void QueueBatch(float scale, bool @override, Action<List<QueuedThreadResult>> onComplete, params string[] urls)
+	public void QueueBatch(float scale, bool @override, Action<List<QueuedThreadResult>> onComplete, IEnumerable<string> urls)
 	{
-		if (urls == null || urls.Length == 0)
+		if (urls == null || !urls.Any())
 		{
 			return;
 		}
@@ -269,11 +269,11 @@ public class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModule
 			}
 			catch (Exception ex)
 			{
-				PutsError($"Failed QueueBatch of {urls.Length:n0}", ex);
+				PutsError($"Failed QueueBatch of {urls.Count():n0}", ex);
 			}
 		}));
 
-		Community.Runtime.CorePlugin.timer.In(ConfigInstance.TimeoutPerUrl * urls.Length, () =>
+		Community.Runtime.CorePlugin.timer.In(ConfigInstance.TimeoutPerUrl * urls.Count(), () =>
 		{
 			if (thread._disposed) return;
 

@@ -137,7 +137,7 @@ public class WebRequests : Library
 		public string Body { get; set; }
 
 		public int ResponseCode { get; protected set; } = 200;
-		public object ResponseObject { get; protected set; }
+		public object ResponseObject { get; protected set; } = string.Empty;
 		public Exception ResponseError { get; protected set; }
 
 		public Plugin Owner { get; protected set; }
@@ -155,7 +155,6 @@ public class WebRequests : Library
 			_uri = new Uri(url);
 			_data = false;
 		}
-
 		public WebRequest(string url, Action<int, byte[]> callback, Plugin owner)
 		{
 			Url = url;
@@ -193,16 +192,19 @@ public class WebRequests : Library
 									{
 										if (e.Error is WebException web) ResponseCode = (int)(web.Response as HttpWebResponse).StatusCode;
 										ResponseError = e.Error;
+										ResponseObject = e.Result;
 										OnComplete(true);
 										return;
 									}
 
 									ResponseCode = _client.StatusCode;
 									ResponseObject = e.Result;
-
 									OnComplete(false);
 								}
-								catch { }
+								catch
+								{
+									OnComplete(true);
+								}
 							};
 						}
 						else
@@ -219,18 +221,22 @@ public class WebRequests : Library
 
 									if (e.Error != null)
 									{
-										if (e.Error is WebException web) ResponseCode = (int)(web.Response as HttpWebResponse).StatusCode;
+										if (e.Error is WebException web)
+											ResponseCode = (int)(web.Response as HttpWebResponse).StatusCode;
 										ResponseError = e.Error;
+										ResponseObject = e.Result;
 										OnComplete(true);
 										return;
 									}
 
 									ResponseCode = _client.StatusCode;
 									ResponseObject = e.Result;
-
 									OnComplete(false);
 								}
-								catch { }
+								catch
+								{
+									OnComplete(false);
+								}
 							};
 						}
 
@@ -276,16 +282,19 @@ public class WebRequests : Library
 									{
 										if (e.Error is WebException web) ResponseCode = (int)(web.Response as HttpWebResponse).StatusCode;
 										ResponseError = e.Error;
+										ResponseObject = e.Result;
 										OnComplete(true);
 										return;
 									}
 
 									ResponseCode = _client.StatusCode;
 									ResponseObject = e.Result;
-
 									OnComplete(false);
 								}
-								catch { }
+								catch
+								{
+									OnComplete(true);
+								}
 							};
 						}
 						else
@@ -302,18 +311,22 @@ public class WebRequests : Library
 
 									if (e.Error != null)
 									{
-										if (e.Error is WebException web) ResponseCode = (int)(web.Response as HttpWebResponse).StatusCode;
+										if (e.Error is WebException web)
+											ResponseCode = (int)(web.Response as HttpWebResponse).StatusCode;
 										ResponseError = e.Error;
+										ResponseObject = e.Result;
 										OnComplete(true);
 										return;
 									}
 
 									ResponseCode = _client.StatusCode;
 									ResponseObject = e.Result;
-
 									OnComplete(false);
 								}
-								catch { }
+								catch
+								{
+									OnComplete(true);
+								}
 							};
 						}
 
@@ -350,34 +363,32 @@ public class WebRequests : Library
 		{
 			Owner?.TrackStart();
 
+			var text = "Web request callback raised an exception";
+
+			if (Owner && Owner != null)
+			{
+				text += $" in '{Owner.Name} v{Owner.Version}' plugin";
+			}
+
 			try
 			{
 				if (failure)
 				{
 					ErrorCallback?.Invoke(ResponseCode, ResponseObject, ResponseError);
 				}
+
+				if (_data)
+				{
+					SuccessDataCallback?.Invoke(ResponseCode, ResponseObject as byte[]);
+				}
 				else
 				{
-					if (_data)
-					{
-						SuccessDataCallback?.Invoke(ResponseCode, ResponseObject as byte[]);
-					}
-					else
-					{
-						SuccessCallback?.Invoke(ResponseCode, ResponseObject?.ToString());
-					}
+					SuccessCallback?.Invoke(ResponseCode, ResponseObject?.ToString());
 				}
 			}
 			catch (Exception ex)
 			{
-				var text = "Web request callback raised an exception";
-
-				if (Owner && Owner != null)
-				{
-					text += $" in '{Owner.Name} v{Owner.Version}' plugin";
-				}
-
-				try { Logger.Error(text, ex); } catch { Logger.Error($"{text}", ex); }
+				Logger.Error($"{text} [{ResponseCode}]", ex);
 			}
 
 			Owner?.TrackEnd();

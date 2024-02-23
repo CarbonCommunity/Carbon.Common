@@ -7,7 +7,7 @@ using Net = Network.Net;
 
 /*
  *
- * Copyright (c) 2022-2024 Carbon Community 
+ * Copyright (c) 2022-2024 Carbon Community
  * All rights reserved.
  *
  */
@@ -190,23 +190,23 @@ public readonly struct CUI : IDisposable
 		return ImageDatabase.GetImageString(url, scale, true);
 	}
 
-	public void QueueImages(float scale, params string[] urls)
+	public void QueueImages(float scale, IEnumerable<string> urls)
 	{
 		ImageDatabase.QueueBatch(scale, false, urls);
 	}
-	public void QueueImages(params string[] urls)
+	public void QueueImages(IEnumerable<string> urls)
 	{
 		QueueImages(0, urls);
 	}
 
-	public void ClearImages(float scale, params string[] urls)
+	public void ClearImages(float scale, IEnumerable<string> urls)
 	{
 		foreach (var url in urls)
 		{
 			ImageDatabase.DeleteImage(url, scale);
 		}
 	}
-	public void ClearImages(params string[] urls)
+	public void ClearImages(IEnumerable<string> urls)
 	{
 		ClearImages(0, urls);
 	}
@@ -1223,8 +1223,7 @@ public static class CUIStatics
 	}
 	public static byte[] GetData(this CuiElementContainer container)
 	{
-		var write = Net.sv.StartWrite();
-		write.PacketID(Message.Type.RPCMessage);
+		var write = Net.sv.StartWrite(Message.Type.RPCMessage);
 		write.EntityID(CommunityEntity.ServerInstance.net.ID);
 		write.UInt32(AddUiString);
 		write.UInt64(0UL);
@@ -1239,7 +1238,7 @@ public static class CUIStatics
 	}
 	public static void SendData(byte[] data, BasePlayer player)
 	{
-		var write = Net.sv.StartWrite();
+		var write = Net.sv.StartWrite(Message.Type.RPCMessage);
 		write.EnsureCapacity(data.Length);
 		Array.Copy(data, 0, write.Data,write.Length , data.Length);
 		write._length += data.Length;
