@@ -644,6 +644,25 @@ public static class ModLoader
 
 			if (counter > 1)
 			{
+				if (Analytic.Enabled)
+				{
+					var rustPluginCount = 0;
+					var covalencePluginCount = 0;
+					var carbonPluginCount = 0;
+
+					foreach (var plugin in LoadedPackages.SelectMany(package => package.Plugins))
+					{
+						if (plugin.Type.BaseType == typeof(CovalencePlugin)) covalencePluginCount++;
+						else if (plugin.Type.BaseType == typeof(RustPlayer)) rustPluginCount++;
+						else if (plugin.Type.BaseType == typeof(CarbonPlugin)) carbonPluginCount++;
+					}
+
+					Analytic.Include("rustplugin", $"{rustPluginCount:n0}");
+					Analytic.Include("covalenceplugin", $"{covalencePluginCount:n0}");
+					Analytic.Include("carbonplugin", $"{carbonPluginCount:n0}");
+					Analytic.Send("batch_plugin_types");
+				}
+
 				Logger.Log($" Batch completed! OSI on {counter:n0} {counter.Plural("plugin", "plugins")}.");
 			}
 
