@@ -653,7 +653,7 @@ public static class ModLoader
 					foreach (var plugin in LoadedPackages.SelectMany(package => package.Plugins))
 					{
 						if (plugin.Type.BaseType == typeof(CovalencePlugin)) covalencePluginCount++;
-						else if (plugin.Type.BaseType == typeof(RustPlayer)) rustPluginCount++;
+						else if (plugin.Type.BaseType == typeof(RustPlugin)) rustPluginCount++;
 						else if (plugin.Type.BaseType == typeof(CarbonPlugin)) carbonPluginCount++;
 					}
 
