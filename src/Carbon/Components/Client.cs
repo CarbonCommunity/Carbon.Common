@@ -1,6 +1,6 @@
 ﻿/*
  *
- * Copyright (c) 2022-2024 Carbon Community 
+ * Copyright (c) 2022-2024 Carbon Community
  * All rights reserved.
  *
  */
@@ -38,6 +38,11 @@ public struct Client
 		if (Config.Enabled)
 		{
 			Logger.Log($" C4C: Carbon Client ready.");
+
+			Analytic.Include("nomap", Config.Environment.NoMap);
+			Analytic.Include("oldrecoil", Config.Client.UseOldRecoil);
+			Analytic.Include("clientgravity", Config.Client.ClientGravity.ToString("0.0"));
+			Analytic.Send("carbon_client_init");
 		}
 		else
 		{
