@@ -35,7 +35,7 @@ public partial class CorePlugin : CarbonPlugin
 		if (!arg.IsPlayerCalledOrAdmin()) return;
 
 		var mode = arg.GetString(0);
-		var flip = (string.IsNullOrEmpty(mode) ? arg.GetString(0) : arg.GetString(1)).Equals("-asc");
+		var flip = arg.GetString(0).Equals("-asc") || arg.GetString(1).Equals("-asc");
 
 		switch (mode)
 		{
