@@ -28,13 +28,14 @@ public partial class CorePlugin : CarbonPlugin
 			$"You're currently running {Community.Runtime.Analytics.InformationalVersion}.");
 	}
 
-	[ConsoleCommand("plugins", "Prints the list of mods and their loaded plugins.")]
+	[ConsoleCommand("plugins", "Prints the list of mods and their loaded plugins. Eg. c.plugins [-j|--j|-json|-abc|--json|-t|-m|-f] [-asc]")]
 	[AuthLevel(2)]
 	private void Plugins(ConsoleSystem.Arg arg)
 	{
 		if (!arg.IsPlayerCalledOrAdmin()) return;
 
 		var mode = arg.GetString(0);
+		var flip = (string.IsNullOrEmpty(mode) ? arg.GetString(0) : arg.GetString(1)).Equals("-asc");
 
 		switch (mode)
 		{
@@ -47,20 +48,28 @@ public partial class CorePlugin : CarbonPlugin
 
 			default:
 				var result = string.Empty;
-				var alphabeticalOrder = mode == "-abc";
 
 				// Loaded plugins
 				{
-					using var body = new StringTable("#", "Mod", "Author", "Version", "Hook Time", "Memory Usage", "Compile Time", "Uptime");
+					using var body = new StringTable("#", "Mod", "Author", "Version", "Hook Time", "Hook Fires", "Memory Usage", "Compile Time", "Uptime");
 					var count = 1;
 
-					foreach (var mod in (alphabeticalOrder ? ModLoader.LoadedPackages.OrderBy(x => x.Name) : ModLoader.LoadedPackages.AsEnumerable())!)
+					foreach (var mod in ModLoader.LoadedPackages.AsEnumerable())
 					{
 						if (mod.IsCoreMod) continue;
 
-						body.AddRow($"{count:n0}", $"{mod.Name}{(mod.Plugins.Count >= 1 ? $" ({mod.Plugins.Count:n0})" : string.Empty)}", string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
+						body.AddRow($"{count:n0}", $"{mod.Name}{(mod.Plugins.Count >= 1 ? $" ({mod.Plugins.Count:n0})" : string.Empty)}", string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
 
-						foreach (var plugin in (alphabeticalOrder ? mod.Plugins.OrderBy(x => x.Name) : mod.Plugins.AsEnumerable())!)
+						IEnumerable<RustPlugin> array = mode switch
+						{
+							"-abc" => mod.Plugins.OrderBy(x => x.Name),
+							"-t" => (flip ? mod.Plugins.OrderBy(x => x.HookCache.Max(x => x.Value.Sum(x => x.HookTime))) : mod.Plugins.OrderByDescending(x => x.HookCache.Max(x => x.Value.Sum(x => x.HookTime)))),
+							"-m" => (flip ? mod.Plugins.OrderBy(x => x.HookCache.Max(x => x.Value.Sum(x => x.MemoryUsage))) : mod.Plugins.OrderByDescending(x => x.HookCache.Max(x => x.Value.Sum(x => x.MemoryUsage)))),
+							"-f" => (flip ? mod.Plugins.OrderBy(x => x.HookCache.Max(x => x.Value.Sum(x => x.TimesFired))) : mod.Plugins.OrderByDescending(x => x.HookCache.Max(x => x.Value.Sum(x => x.TimesFired)))),
+							_ => (flip ? mod.Plugins.AsEnumerable().Reverse() : mod.Plugins.AsEnumerable())
+						};
+
+						foreach (var plugin in array)
 						{
 							var hookTimeAverageValue =
 #if DEBUG
@@ -74,9 +83,18 @@ public partial class CorePlugin : CarbonPlugin
 #else
 								0;
 #endif
-							var hookTimeAverage = Mathf.RoundToInt(hookTimeAverageValue) == 0 ? string.Empty : $" (avg {hookTimeAverageValue:0}ms)";
-							var memoryAverage = Mathf.RoundToInt(memoryAverageValue) == 0 ? string.Empty : $" (avg {ByteEx.Format(memoryAverageValue, shortName: true, stringFormat: "{0}{1}").ToLower()})";
-							body.AddRow(string.Empty, plugin.Name, plugin.Author, $"v{plugin.Version}", $"{plugin.TotalHookTime:0}ms{hookTimeAverage}", $"{ByteEx.Format(plugin.TotalMemoryUsed, shortName: true, stringFormat: "{0}{1}").ToLower()}{memoryAverage}", plugin.IsPrecompiled ? string.Empty : $"{plugin.CompileTime:0}ms", $"{TimeEx.Format(plugin.Uptime)}");
+							var hookTimeAverage = Mathf.RoundToInt(hookTimeAverageValue) == 0
+								? string.Empty
+								: $" (avg {hookTimeAverageValue:0}ms)";
+							var memoryAverage = Mathf.RoundToInt(memoryAverageValue) == 0
+								? string.Empty
+								: $" (avg {ByteEx.Format(memoryAverageValue, shortName: true, stringFormat: "{0}{1}").ToLower()})";
+							body.AddRow(string.Empty, plugin.Name, plugin.Author, $"v{plugin.Version}",
+								$"{plugin.TotalHookTime:0}ms{hookTimeAverage}",
+								$"{plugin.CurrentHookFires:0}",
+								$"{ByteEx.Format(plugin.TotalMemoryUsed, shortName: true, stringFormat: "{0}{1}").ToLower()}{memoryAverage}",
+								plugin.IsPrecompiled ? string.Empty : $"{plugin.CompileTime:0}ms",
+								$"{TimeEx.Format(plugin.Uptime)}");
 						}
 
 						count++;
