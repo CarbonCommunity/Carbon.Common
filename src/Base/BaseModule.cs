@@ -94,7 +94,7 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 
 		foreach (var method in Type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic))
 		{
-			if (Community.Runtime.HookManager.IsHookLoaded(method.Name))
+			if (Community.Runtime.HookManager.IsHook(method.Name))
 			{
 				Community.Runtime.HookManager.Subscribe(method.Name, Name);
 
@@ -185,7 +185,7 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 		if (PreLoadShouldSave(newConfig, newData)) shouldSave = true;
 
 		if (shouldSave) Save();
-		
+
 		OnEnableStatus();
 	}
 	public virtual bool PreLoadShouldSave(bool newConfig, bool newData)

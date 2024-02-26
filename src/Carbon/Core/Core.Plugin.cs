@@ -61,7 +61,7 @@ public partial class CorePlugin : CarbonPlugin
 
 		foreach (var method in Type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic))
 		{
-			if (Community.Runtime.HookManager.IsHookLoaded(method.Name))
+			if (Community.Runtime.HookManager.IsHook(method.Name))
 			{
 				Community.Runtime.HookManager.Subscribe(method.Name, Name);
 

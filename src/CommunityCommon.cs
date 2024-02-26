@@ -165,14 +165,15 @@ public class Community
 
 			Events.Subscribe(CarbonEvent.CarbonStartupComplete, args =>
 			{
-				Analytics.LogEvent("on_server_startup",
-					segments: Analytics.Segments,
-					metrics: new Dictionary<string, object> {
-						{ "carbon", $"{Analytics.Version}/{Analytics.Platform}/{Analytics.Protocol}" },
-						{ "carbon_informational", Analytics.InformationalVersion },
-						{ "rust", $"{BuildInfo.Current.Build.Number}/{Rust.Protocol.printable}" },
-					}
-				);
+				if (Analytic.Enabled)
+				{
+					Analytic.Include("carbon", $"{Analytics.Version}/{Analytics.Platform}/{Analytics.Protocol}");
+					Analytic.Include("carbon_informational", Analytics.InformationalVersion);
+					Analytic.Include("carbon_build",
+						$"{Build.Git.Author} on {Build.Git.Branch} [{Build.Git.HashLong}]");
+					Analytic.Include("rust", $"{BuildInfo.Current.Build.Number}/{Rust.Protocol.printable}");
+					Analytic.Send("on_server_startup");
+				}
 			});
 
 			var newlineSplit = new char[] { '\n' };
