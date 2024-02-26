@@ -11,7 +11,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="Lib.Harmony.Thin" Version="2.3.0" />
-		<PackageReference Include="Mono.Cecil" Version="0.11.4" />
+		<PackageReference Include="Mono.Cecil" Version="0.11.5" />
 		<PackageReference Include="Ben.Demystifier" Version="0.4.1" />
 		<PackageReference Include="MySql.Data" Version="8.0.32.1" />
 		<PackageReference Include="protobuf-net.Core" Version="3.2.26" />
