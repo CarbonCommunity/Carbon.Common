@@ -185,7 +185,7 @@ public class BaseHookable
 
 			if (!hooksPresent)
 			{
-				if (Community.Runtime.HookManager.IsHookLoaded(method.Name) && !Hooks.Contains(id))
+				if (Community.Runtime.HookManager.IsHook(method.Name) && !Hooks.Contains(id))
 				{
 					Hooks.Add(id);
 				}
