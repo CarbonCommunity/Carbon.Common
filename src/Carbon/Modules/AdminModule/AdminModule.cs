@@ -2078,14 +2078,6 @@ public partial class AdminModule
 					"A very basic system that only grants players access to a server based on the 'whitelist.bypass' permission or 'whitelisted' group.", "",
 					FindModule("WhitelistModule"));
 			}));
-			tab.Pages.Add(new Page("DRM", (cui, t, container, panel, ap) =>
-			{
-				tab.ModuleInfoTemplate(cui, t, container, panel, ap,
-					"DRM Module",
-					"A system that allows server hosts to bind endpoints that deliver plugin information with respect to the public and private keys.\n" +
-					"For more information, check out the documentation page over on https://docs.carbonmod.gg.", "",
-					FindModule("DRMModule"));
-			}));
 
 			tab.Pages.Add(new Page("Finalize", (cui, t, container, panel, ap) =>
 			{
