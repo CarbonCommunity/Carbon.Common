@@ -278,7 +278,7 @@ public static class ModLoader
 
 		if (!premature)
 		{
-			// OnPluginUnload
+			// OnPluginUnloaded
 			HookCaller.CallStaticHook(3843290135, plugin);
 		}
 
