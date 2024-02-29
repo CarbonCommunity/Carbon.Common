@@ -10,7 +10,7 @@ namespace Carbon.Core;
 
 public partial class CorePlugin : CarbonPlugin
 {
-	private object IOnLoseCondition(Item item, float amount)
+	internal static object IOnLoseCondition(Item item, float amount)
 	{
 		var args = HookCaller.Caller.AllocateBuffer(2);
 

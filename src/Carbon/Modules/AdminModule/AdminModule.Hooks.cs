@@ -50,18 +50,5 @@ public partial class AdminModule
 
 		StopSpectating(player);
 	}
-
-	private object IValidDismountPosition(BaseMountable mountable, BasePlayer player)
-	{
-		switch (mountable.skinID)
-		{
-			case 69696:
-				return true;
-			default:
-				break;
-		}
-
-		return null;
-	}
 #endif
 }

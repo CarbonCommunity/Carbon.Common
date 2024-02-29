@@ -12,9 +12,9 @@ namespace Carbon.Core;
 public partial class CorePlugin : CarbonPlugin
 {
 	internal static bool _isPlayerTakingDamage = false;
-	internal readonly string[] _emptyStringArray = new string[0];
+	internal static readonly string[] _emptyStringArray = new string[0];
 
-	private void IOnServerInitialized()
+	internal static object IOnServerInitialized()
 	{
 		if (!Community.IsServerInitialized)
 		{
@@ -35,8 +35,10 @@ public partial class CorePlugin : CarbonPlugin
 				Analytic.Send("on_server_initialized");
 			}
 		}
+
+		return null;
 	}
-	private void IOnServerShutdown()
+	internal static object IOnServerShutdown()
 	{
 		Logger.Log($"Saving plugin configuration and data..");
 
@@ -49,5 +51,7 @@ public partial class CorePlugin : CarbonPlugin
 		Logger.Log($"Shutting down Carbon..");
 		Interface.Oxide.OnShutdown();
 		Community.Runtime.ScriptProcessor.Clear();
+
+		return null;
 	}
 }

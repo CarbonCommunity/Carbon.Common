@@ -30,8 +30,8 @@ public partial class CorePlugin : CarbonPlugin
 	private void OnServerUserRemove(ulong steamId)
 	{
 		if (Community.IsServerInitialized &&
-		    ServerUsers.users.ContainsKey(steamId) &&
-		    ServerUsers.users[steamId].group == ServerUsers.UserGroup.Banned)
+		    ServerUsers.users.TryGetValue(steamId, out var user) &&
+		    user.group == ServerUsers.UserGroup.Banned)
 		{
 			var playerId = steamId.ToString();
 			var player = BasePlayer.FindByID(steamId)?.AsIPlayer();
