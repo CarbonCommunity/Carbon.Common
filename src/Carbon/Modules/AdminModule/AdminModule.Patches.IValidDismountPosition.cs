@@ -28,7 +28,6 @@ public partial class AdminModule
 					return false;
 				default:
 					return true;
-					break;
 			}
 		}
 	}
