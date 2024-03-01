@@ -13,7 +13,7 @@ namespace Carbon.Core;
 
 public partial class CorePlugin : CarbonPlugin
 {
-	internal static object IOnPlayerCommand(BasePlayer player, string message)
+	private object IOnPlayerCommand(BasePlayer player, string message)
 	{
 		if (Community.Runtime == null) return true;
 
@@ -67,7 +67,7 @@ public partial class CorePlugin : CarbonPlugin
 
 		return true;
 	}
-	internal static object IOnServerCommand(ConsoleSystem.Arg arg)
+	private object IOnServerCommand(ConsoleSystem.Arg arg)
 	{
 		if (arg != null && arg.cmd != null && arg.Player() != null && arg.cmd.FullName == "chat.say") return null;
 
@@ -79,7 +79,7 @@ public partial class CorePlugin : CarbonPlugin
 
 		return true;
 	}
-	internal static object IOnPlayerChat(ulong playerId, string playerName, string message, Chat.ChatChannel channel, BasePlayer basePlayer)
+	private object IOnPlayerChat(ulong playerId, string playerName, string message, Chat.ChatChannel channel, BasePlayer basePlayer)
 	{
 		if (string.IsNullOrEmpty(message) || message.Equals("text"))
 		{
@@ -103,14 +103,5 @@ public partial class CorePlugin : CarbonPlugin
 		}
 
 		return hook2;
-	}
-
-	internal static object IOnRconInitialize()
-	{
-		return null;
-	}
-	internal static object IOnRunCommandLine()
-	{
-		return null;
 	}
 }

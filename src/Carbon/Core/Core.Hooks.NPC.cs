@@ -12,7 +12,7 @@ namespace Carbon.Core;
 
 public partial class CorePlugin : CarbonPlugin
 {
-	internal static object IOnNpcTarget(BaseNpc npc, BaseEntity target)
+	private object IOnNpcTarget(BaseNpc npc, BaseEntity target)
 	{
 		// OnNpcTarget
 		if (HookCaller.CallStaticHook(1265749384, npc, target) == null)

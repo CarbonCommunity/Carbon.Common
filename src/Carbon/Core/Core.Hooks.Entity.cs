@@ -12,16 +12,14 @@ namespace Carbon.Core;
 
 public partial class CorePlugin : CarbonPlugin
 {
-	internal static object IOnEntitySaved(BaseNetworkable baseNetworkable, BaseNetworkable.SaveInfo saveInfo)
+	private void IOnEntitySaved(BaseNetworkable baseNetworkable, BaseNetworkable.SaveInfo saveInfo)
 	{
 		if (!Community.IsServerInitialized || saveInfo.forConnection == null)
 		{
-			return null;
+			return;
 		}
 
 		// OnEntitySaved
 		HookCaller.CallStaticHook(3947573992, baseNetworkable, saveInfo);
-
-		return null;
 	}
 }
