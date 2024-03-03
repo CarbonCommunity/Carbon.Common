@@ -12,12 +12,14 @@ namespace Carbon.Core;
 
 public partial class CorePlugin : CarbonPlugin
 {
-	private void IOnPlayerConnected(BasePlayer player)
+	internal static object IOnPlayerConnected(BasePlayer player)
 	{
-		lang.SetLanguage(player.net.connection.info.GetString("global.language", "en"), player.UserIDString);
+		var core = Singleton<CorePlugin>();
+
+		core.lang.SetLanguage(player.net.connection.info.GetString("global.language", "en"), player.UserIDString);
 		player.SendEntitySnapshot(CommunityEntity.ServerInstance);
 
-		permission.RefreshUser(player);
+		core.permission.RefreshUser(player);
 
 		// OnPlayerConnected
 		HookCaller.CallStaticHook(3704844088, player);
@@ -25,9 +27,9 @@ public partial class CorePlugin : CarbonPlugin
 		// OnUserConnected
 		HookCaller.CallStaticHook(1971459992, player.AsIPlayer());
 
+		return null;
 	}
-
-	private object IOnUserApprove(Connection connection)
+	internal static object IOnUserApprove(Connection connection)
 	{
 		var username = connection.username;
 		var text = connection.userid.ToString();
@@ -55,6 +57,14 @@ public partial class CorePlugin : CarbonPlugin
 
 		return null;
 	}
+	internal static object IOnPlayerBanned(Connection connection, AuthResponse status)
+	{
+		// OnPlayerBanned
+		HookCaller.CallStaticHook(2433979267, connection, status.ToString());
+
+		return null;
+	}
+
 	private void OnPlayerKicked(BasePlayer basePlayer, string reason)
 	{
 		// OnUserKicked
@@ -69,11 +79,6 @@ public partial class CorePlugin : CarbonPlugin
 	{
 		// OnUserRespawned
 		HookCaller.CallStaticHook(3161392945, basePlayer.AsIPlayer());
-	}
-	private void IOnPlayerBanned(Connection connection, AuthResponse status)
-	{
-		// OnPlayerBanned
-		HookCaller.CallStaticHook(2433979267, connection, status.ToString());
 	}
 	private void OnClientAuth(Connection connection)
 	{
