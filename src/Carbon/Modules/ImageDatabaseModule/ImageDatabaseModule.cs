@@ -100,7 +100,6 @@ public class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModule
 
 		Save();
 		LoadDefaultImages();
-
 	}
 	public override void OnServerSaved()
 	{
@@ -180,16 +179,23 @@ public class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModule
 	{
 		if (_protoData.Identifier != CommunityEntity.ServerInstance.net.ID.Value)
 		{
-			PutsWarn($"The server identifier has changed. Wiping old image database. [old {_protoData.Identifier}, new {CommunityEntity.ServerInstance.net.ID.Value}]"); _protoData.Map.Clear();
+			PutsWarn($"The server identifier has changed. Wiping old image database. [old {_protoData.Identifier}, new {CommunityEntity.ServerInstance.net.ID.Value}]");
 			_protoData.CustomMap.Clear();
 			_protoData.Map.Clear();
 			_protoData.Identifier = CommunityEntity.ServerInstance.net.ID.Value;
 			return true;
 		}
 
+		if (!HasImage("checkmark"))
+		{
+			_protoData.CustomMap.Clear();
+			_protoData.Map.Clear();
+			return true;
+		}
+
 		return false;
 	}
-	
+
 	public void QueueBatch(bool @override, IEnumerable<string> urls)
 	{
 		QueueBatch(0f, @override, urls);
@@ -385,6 +391,10 @@ public class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModule
 	public string GetImageString(string keyOrUrl, float scale = 0, bool silent = false)
 	{
 		return GetImage(keyOrUrl, scale, silent).ToString();
+	}
+	public bool HasImage(string keyOrUrl, float scale = 0)
+	{
+		return FileStorage.server.Get(GetImage(keyOrUrl, scale), FileStorage.Type.png, CommunityEntity.ServerInstance.net.ID) != null;
 	}
 	public bool DeleteImage(string url, float scale = 0)
 	{

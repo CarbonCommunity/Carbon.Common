@@ -190,6 +190,11 @@ public readonly struct CUI : IDisposable
 		return ImageDatabase.GetImageString(url, scale, true);
 	}
 
+	public bool HasImage(string url, float scale = 0)
+	{
+		return ImageDatabase.HasImage(url, scale);
+	}
+
 	public void QueueImages(float scale, IEnumerable<string> urls)
 	{
 		ImageDatabase.QueueBatch(scale, false, urls);
