@@ -263,7 +263,7 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 	public override void Shutdown()
 	{
 		Unload();
-		
+
 		Community.Runtime.ModuleProcessor.Uninstall(this);
 	}
 
