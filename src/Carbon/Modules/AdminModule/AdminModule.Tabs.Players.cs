@@ -86,7 +86,10 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			});
 			tab.AddInput(1, "Steam ID", _ => player.UserIDString, null);
 			tab.AddInput(1, "Net ID", _ => $"{player.net?.ID}", null);
-			tab.AddInput(1, "IP", _ => $"{player.net?.connection?.ipaddress}", null, hidden: true);
+			if (Singleton.HasPermission(aap.Player, "players.see_ips"))
+			{
+				tab.AddInput(1, "IP", _ => $"{player.net?.connection?.ipaddress}", null, hidden: true);
+			}
 			try
 			{
 				var position = player.transform.position;

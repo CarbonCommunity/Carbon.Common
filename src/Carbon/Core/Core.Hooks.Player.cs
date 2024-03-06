@@ -12,7 +12,7 @@ namespace Carbon.Core;
 
 public partial class CorePlugin : CarbonPlugin
 {
-	private object IOnBasePlayerAttacked(BasePlayer basePlayer, HitInfo hitInfo)
+	internal static object IOnBasePlayerAttacked(BasePlayer basePlayer, HitInfo hitInfo)
 	{
 		if (!Community.IsServerInitialized || _isPlayerTakingDamage || basePlayer == null || hitInfo == null || basePlayer.IsDead() || basePlayer is NPCPlayer)
 		{
@@ -38,7 +38,7 @@ public partial class CorePlugin : CarbonPlugin
 
 		return Cache.True;
 	}
-	private object IOnBasePlayerHurt(BasePlayer basePlayer, HitInfo hitInfo)
+	internal static object IOnBasePlayerHurt(BasePlayer basePlayer, HitInfo hitInfo)
 	{
 		if (!_isPlayerTakingDamage)
 		{
@@ -48,7 +48,7 @@ public partial class CorePlugin : CarbonPlugin
 
 		return null;
 	}
-	private object IOnBaseCombatEntityHurt(BaseCombatEntity entity, HitInfo hitInfo)
+	internal static object IOnBaseCombatEntityHurt(BaseCombatEntity entity, HitInfo hitInfo)
 	{
 		if (entity is not BasePlayer)
 		{
@@ -58,7 +58,7 @@ public partial class CorePlugin : CarbonPlugin
 
 		return null;
 	}
-	private object ICanPickupEntity(BasePlayer basePlayer, DoorCloser entity)
+	internal static object ICanPickupEntity(BasePlayer basePlayer, DoorCloser entity)
 	{
 		// CanPickupEntity
 		if (HookCaller.CallStaticHook(385185486, basePlayer, entity) is bool result)
@@ -68,6 +68,7 @@ public partial class CorePlugin : CarbonPlugin
 
 		return null;
 	}
+
 	private void OnPlayerSetInfo(Connection connection, string key, string val)
 	{
 		switch (key)

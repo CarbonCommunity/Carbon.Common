@@ -13,7 +13,7 @@ namespace Carbon.Core;
 
 public partial class CorePlugin : CarbonPlugin
 {
-	private object IOnPlayerCommand(BasePlayer player, string message)
+	public static object IOnPlayerCommand(BasePlayer player, string message)
 	{
 		if (Community.Runtime == null) return true;
 
@@ -65,21 +65,21 @@ public partial class CorePlugin : CarbonPlugin
 		}
 		catch (Exception ex) { Logger.Error($"Failed IOnPlayerCommand.", ex); }
 
-		return true;
+		return null;
 	}
-	private object IOnServerCommand(ConsoleSystem.Arg arg)
+	internal static object IOnServerCommand(ConsoleSystem.Arg arg)
 	{
 		if (arg != null && arg.cmd != null && arg.Player() != null && arg.cmd.FullName == "chat.say") return null;
 
 		// OnServerCommand
-		if (HookCaller.CallStaticHook(3282920085, arg) == null)
+		if (HookCaller.CallStaticHook(3282920085, arg) != null)
 		{
-			return null;
+			return true;
 		}
 
-		return true;
+		return null;
 	}
-	private object IOnPlayerChat(ulong playerId, string playerName, string message, Chat.ChatChannel channel, BasePlayer basePlayer)
+	public static object IOnPlayerChat(ulong playerId, string playerName, string message, Chat.ChatChannel channel, BasePlayer basePlayer)
 	{
 		if (string.IsNullOrEmpty(message) || message.Equals("text"))
 		{
@@ -103,5 +103,30 @@ public partial class CorePlugin : CarbonPlugin
 		}
 
 		return hook2;
+	}
+
+	internal static object IOnRconInitialize()
+	{
+		return !Community.Runtime.Config.Rcon ? Cache.False : null;
+	}
+	internal static object IOnRunCommandLine()
+	{
+		foreach (var @switch in Facepunch.CommandLine.GetSwitches())
+		{
+			var value = @switch.Value;
+
+			if (value == "")
+			{
+				value = "1";
+			}
+
+			var key = @switch.Key.Substring(1);
+			var options = ConsoleSystem.Option.Unrestricted;
+			options.PrintOutput = false;
+
+			ConsoleSystem.Run(options, key, value);
+		}
+
+		return false;
 	}
 }

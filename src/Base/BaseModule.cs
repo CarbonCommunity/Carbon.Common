@@ -60,6 +60,7 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 	public C ConfigInstance { get; private set; }
 
 	public new virtual string Name => "Not set";
+	public bool HasOSI { get; set; }
 
 	protected void Puts(object message)
 		=> Logger.Log($"[{Name}] {message}");
@@ -250,10 +251,14 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 		{
 			Logger.Error($"Failed module OnPostServerInit for {Name} [Reload Request]", ex);
 		}
+
+		HookCaller.CallHook(this, 1330569572, Community.IsServerInitialized);
+
+		HasOSI = true;
 	}
 	public override void Unload()
 	{
-
+		HasOSI = false;
 	}
 	public override void Shutdown()
 	{

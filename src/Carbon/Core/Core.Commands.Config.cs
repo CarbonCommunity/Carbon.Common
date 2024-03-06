@@ -37,7 +37,7 @@ public partial class CorePlugin : CarbonPlugin
 
 	[CommandVar("scriptwatchers", "When disabled, you must load/unload plugins manually with `c.load` or `c.unload`.")]
 	[AuthLevel(2)]
-	private bool ScriptWatchers { get { return Community.Runtime.Config.ScriptWatchers; } set { Community.Runtime.Config.ScriptWatchers = value; Community.Runtime.SaveConfig(); } }
+	private bool ScriptWatchers { get { return Community.Runtime.Config.Watchers.ScriptWatchers; } set { Community.Runtime.Config.Watchers.ScriptWatchers = value; Community.Runtime.SaveConfig(); } }
 
 	[CommandVar("scriptwatchersoption", "Indicates wether the script watcher (whenever enabled) listens to the 'carbon/plugins' folder only, or its subfolders. (0 = Top-only directories, 1 = All directories)")]
 	[AuthLevel(2)]
@@ -45,11 +45,11 @@ public partial class CorePlugin : CarbonPlugin
 	{
 		get
 		{
-			return (int)Community.Runtime.Config.ScriptWatcherOption;
+			return (int)Community.Runtime.Config.Watchers.ScriptWatcherOption;
 		}
 		set
 		{
-			Community.Runtime.Config.ScriptWatcherOption = (SearchOption)value;
+			Community.Runtime.Config.Watchers.ScriptWatcherOption = (SearchOption)value;
 			Community.Runtime.ScriptProcessor.IncludeSubdirectories = value == (int)SearchOption.AllDirectories;
 			Community.Runtime.SaveConfig();
 		}
@@ -57,20 +57,20 @@ public partial class CorePlugin : CarbonPlugin
 
 	[CommandVar("debug", "The level of debug logging for Carbon. Helpful for very detailed logs in case things break. (Set it to -1 to disable debug logging.)")]
 	[AuthLevel(2)]
-	private int CarbonDebug { get { return Community.Runtime.Config.LogVerbosity; } set { Community.Runtime.Config.LogVerbosity = value; Community.Runtime.SaveConfig(); } }
+	private int CarbonDebug { get { return Community.Runtime.Config.Logging.LogVerbosity; } set { Community.Runtime.Config.Logging.LogVerbosity = value; Community.Runtime.SaveConfig(); } }
 
 	[CommandVar("logfiletype", "The mode for writing the log to file. (0=disabled, 1=saves updates every 5 seconds, 2=saves immediately)")]
 	[AuthLevel(2)]
-	private int LogFileType { get { return Community.Runtime.Config.LogFileMode; } set { Community.Runtime.Config.LogFileMode = Mathf.Clamp(value, 0, 2); Community.Runtime.SaveConfig(); } }
+	private int LogFileType { get { return Community.Runtime.Config.Logging.LogFileMode; } set { Community.Runtime.Config.Logging.LogFileMode = Mathf.Clamp(value, 0, 2); Community.Runtime.SaveConfig(); } }
 
 	[CommandVar("unitystacktrace", "Enables a big chunk of detail of Unity's default stacktrace. Recommended to be disabled as a lot of it is internal and unnecessary for the average user.")]
 	[AuthLevel(2)]
 	private bool UnityStacktrace
 	{
-		get { return Community.Runtime.Config.UnityStacktrace; }
+		get { return Community.Runtime.Config.Debugging.UnityStacktrace; }
 		set
 		{
-			Community.Runtime.Config.UnityStacktrace = value;
+			Community.Runtime.Config.Debugging.UnityStacktrace = value;
 			Community.Runtime.SaveConfig();
 			ApplyStacktrace();
 		}
@@ -78,7 +78,7 @@ public partial class CorePlugin : CarbonPlugin
 
 	[CommandVar("filenamecheck", "It checks if the file name and the plugin name matches. (only applies to scripts)")]
 	[AuthLevel(2)]
-	private bool FileNameCheck { get { return Community.Runtime.Config.FileNameCheck; } set { Community.Runtime.Config.FileNameCheck = value; Community.Runtime.SaveConfig(); } }
+	private bool FileNameCheck { get { return Community.Runtime.Config.Watchers.FileNameCheck; } set { Community.Runtime.Config.Watchers.FileNameCheck = value; Community.Runtime.SaveConfig(); } }
 
 	[CommandVar("language", "Server language used by the Language API.")]
 	[AuthLevel(2)]
@@ -86,21 +86,21 @@ public partial class CorePlugin : CarbonPlugin
 
 	[CommandVar("bypassadmincooldowns", "Bypasses the command cooldowns for admin-authed players.")]
 	[AuthLevel(2)]
-	private bool BypassAdminCooldowns { get { return Community.Runtime.Config.BypassAdminCooldowns; } set { Community.Runtime.Config.BypassAdminCooldowns = value; Community.Runtime.SaveConfig(); } }
+	private bool BypassAdminCooldowns { get { return Community.Runtime.Config.Permissions.BypassAdminCooldowns; } set { Community.Runtime.Config.Permissions.BypassAdminCooldowns = value; Community.Runtime.SaveConfig(); } }
 
 	[CommandVar("logsplitsize", "The size for each log (in megabytes) required for it to be split into separate chunks.")]
 	[AuthLevel(2)]
-	private double LogSplitSize { get { return Community.Runtime.Config.LogSplitSize; } set { Community.Runtime.Config.LogSplitSize = value; Community.Runtime.SaveConfig(); } }
+	private double LogSplitSize { get { return Community.Runtime.Config.Logging.LogSplitSize; } set { Community.Runtime.Config.Logging.LogSplitSize = value; Community.Runtime.SaveConfig(); } }
 
 #if DEBUG
 	[CommandVar("plugintrackingtime", "Plugin average time value for memory and hook time tracking. [DEBUG]")]
 	[AuthLevel(2)]
 	private float PluginTrackingTime
 	{
-		get { return Community.Runtime.Config.PluginTrackingTime; }
+		get { return Community.Runtime.Config.Debugging.PluginTrackingTime; }
 		set
 		{
-			Community.Runtime.Config.PluginTrackingTime = value;
+			Community.Runtime.Config.Debugging.PluginTrackingTime = value;
 
 			foreach(var mod in ModLoader.LoadedPackages)
 			{
@@ -121,10 +121,10 @@ public partial class CorePlugin : CarbonPlugin
 	[AuthLevel(2)]
 	private bool ConsoleInfo
 	{
-		get { return Community.Runtime.Config.ShowConsoleInfo; }
+		get { return Community.Runtime.Config.Misc.ShowConsoleInfo; }
 		set
 		{
-			Community.Runtime.Config.ShowConsoleInfo = value;
+			Community.Runtime.Config.Misc.ShowConsoleInfo = value;
 
 			if (value)
 			{
@@ -143,5 +143,5 @@ public partial class CorePlugin : CarbonPlugin
 
 	[CommandVar("ocommandchecks", "Prints a reminding warning if RCON/console attempts at calling an o.* command.")]
 	[AuthLevel(2)]
-	private bool oCommandChecks { get { return Community.Runtime.Config.oCommandChecks; } set { Community.Runtime.Config.oCommandChecks = value; Community.Runtime.SaveConfig(); } }
+	private bool oCommandChecks { get { return Community.Runtime.Config.Misc.oCommandChecks; } set { Community.Runtime.Config.Misc.oCommandChecks = value; Community.Runtime.SaveConfig(); } }
 }

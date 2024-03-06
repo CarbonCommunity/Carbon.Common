@@ -1,20 +1,24 @@
 ﻿namespace Carbon.Components;
 
-public struct Analytic
+public partial struct Analytics
 {
 	public static readonly Dictionary<string, object> Metrics = new();
 
 	public static bool Enabled => Community.Runtime.Analytics.Enabled;
 
-	public static void Include(string key, object value)
+	public static Analytics Singleton = default;
+
+	public Analytics Include(string key, object value)
 	{
 		Metrics[key] = value;
+		return this;
 	}
 
-	public static void Send(string eventName)
+	public Analytics Submit(string eventName)
 	{
 		Community.Runtime.Analytics.LogEvents(eventName);
 		Dispose();
+		return this;
 	}
 
 	public static void Dispose()

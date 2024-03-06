@@ -104,12 +104,12 @@ public class BaseHookable
 #if DEBUG
 		if (HookTimeAverage == null)
 		{
-			HookTimeAverage = new(Community.Runtime.Config.PluginTrackingTime);
+			HookTimeAverage = new(Community.Runtime.Config.Debugging.PluginTrackingTime);
 		}
 
 		if (MemoryAverage == null)
 		{
-			MemoryAverage = new(Community.Runtime.Config.PluginTrackingTime);
+			MemoryAverage = new(Community.Runtime.Config.Debugging.PluginTrackingTime);
 		}
 #endif
 	}

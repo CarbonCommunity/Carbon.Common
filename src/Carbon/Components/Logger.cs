@@ -4,7 +4,7 @@ using ILogger = API.Logger.ILogger;
 
 /*
  *
- * Copyright (c) 2022-2024 Carbon Community 
+ * Copyright (c) 2022-2024 Carbon Community
  * All rights reserved.
  *
  */
@@ -31,7 +31,7 @@ public sealed class Logger : ILogger
 
 		if (severity != Severity.Debug)
 		{
-			Severity minSeverity = Community.Runtime?.Config?.LogSeverity ?? Severity.Notice;
+			Severity minSeverity = Community.Runtime?.Config?.Logging.LogSeverity ?? Severity.Notice;
 			if (severity > minSeverity) return;
 		}
 
@@ -122,7 +122,7 @@ public sealed class Logger : ILogger
 				break;
 
 			case Severity.Debug:
-				int minVerbosity = Community.Runtime?.Config?.LogVerbosity ?? -1;
+				int minVerbosity = Community.Runtime?.Config?.Logging.LogVerbosity ?? -1;
 				if (verbosity > minVerbosity) break;
 				CoreLog.QueueLog($"[INFO] {textMessage}");
 				if (nativeLog) PrintLog(textMessage, severity);
