@@ -1,6 +1,6 @@
 ﻿/*
  *
- * Copyright (c) 2022-2024 Carbon Community 
+ * Copyright (c) 2022-2024 Carbon Community
  * All rights reserved.
  *
  */
@@ -69,12 +69,12 @@ public class Defines
 	public static string GetClientConfigFile()
 	{
 		_initializeCommandLine();
-		return Path.Combine(GetRootFolder(), "config_client.json");
+		return Path.Combine(GetRootFolder(), "config.client.json");
 	}
 	public static string GetCarbonAutoFile()
 	{
 		_initializeCommandLine();
-		return Path.Combine(GetRootFolder(), "carbonauto.cfg");
+		return Path.Combine(GetRootFolder(), "carbon.auto.cfg");
 	}
 
 	public static string GetRootFolder()
