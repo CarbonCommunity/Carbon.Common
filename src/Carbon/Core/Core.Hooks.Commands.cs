@@ -72,7 +72,7 @@ public partial class CorePlugin : CarbonPlugin
 		if (arg != null && arg.cmd != null && arg.Player() != null && arg.cmd.FullName == "chat.say") return null;
 
 		// OnServerCommand
-		if (HookCaller.CallStaticHook(3282920085, arg) == null)
+		if (HookCaller.CallStaticHook(3282920085, arg) != null)
 		{
 			return true;
 		}
