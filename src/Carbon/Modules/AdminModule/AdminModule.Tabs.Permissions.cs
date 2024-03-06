@@ -474,8 +474,6 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			tab.AddName(3, "Permissions", TextAnchor.MiddleLeft);
 			tab.AddButton(3, grantAllStatus ? "Grant All" : "Revoke All", ap =>
 			{
-				Logger.Log($"{selectedGroup} {grantAllStatus} {hookable}");
-
 				foreach (var perm in perms.GetPermissions(hookable))
 				{
 					if (string.IsNullOrEmpty(selectedGroup))
