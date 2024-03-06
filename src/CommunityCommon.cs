@@ -230,19 +230,19 @@ public class Community
 			Config = JsonConvert.DeserializeObject<Config>(OsEx.File.ReadText(Defines.GetConfigFile()));
 		}
 
-		if (Config.ConditionalCompilationSymbols == null)
+		if (Config.Debugging.ConditionalCompilationSymbols == null)
 		{
-			Config.ConditionalCompilationSymbols = new();
+			Config.Debugging.ConditionalCompilationSymbols = new();
 			needsSave = true;
 		}
 
-		if (!Config.ConditionalCompilationSymbols.Contains("CARBON"))
-			Config.ConditionalCompilationSymbols.Add("CARBON");
+		if (!Config.Debugging.ConditionalCompilationSymbols.Contains("CARBON"))
+			Config.Debugging.ConditionalCompilationSymbols.Add("CARBON");
 
-		if (!Config.ConditionalCompilationSymbols.Contains("RUST"))
-			Config.ConditionalCompilationSymbols.Add("RUST");
+		if (!Config.Debugging.ConditionalCompilationSymbols.Contains("RUST"))
+			Config.Debugging.ConditionalCompilationSymbols.Add("RUST");
 
-		Config.ConditionalCompilationSymbols = Config.ConditionalCompilationSymbols.Distinct().ToList();
+		Config.Debugging.ConditionalCompilationSymbols = Config.Debugging.ConditionalCompilationSymbols.Distinct().ToList();
 
 		if (Config.CommandPrefixes == null)
 		{
@@ -256,7 +256,7 @@ public class Community
 		// Mandatory for across the board access
 		API.Commands.Command.Prefixes = Config.CommandPrefixes;
 
-		Logger.CoreLog.SplitSize = (int)(Community.Runtime.Config.LogSplitSize * 1000000f);
+		Logger.CoreLog.SplitSize = (int)(Community.Runtime.Config.Logging.LogSplitSize * 1000000f);
 
 		if (needsSave) SaveConfig();
 	}
@@ -330,7 +330,7 @@ public class Community
 	public void RefreshConsoleInfo()
 	{
 #if WIN
-		if (!IsConfigReady || !Config.ShowConsoleInfo) return;
+		if (!IsConfigReady || !Config.Misc.ShowConsoleInfo) return;
 
 		if (!IsServerInitialized) return;
 		if (ServerConsole.Instance.input.statusText.Length != 4) ServerConsole.Instance.input.statusText = new string[4];
