@@ -43,7 +43,7 @@ public class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModule
 		["update-pending"] = "https://carbonmod.gg/assets/media/cui/update-pending.png",
 		["magnifying-glass"] = "https://carbonmod.gg/assets/media/cui/magnifying-glass.png",
 		["star"] = "https://carbonmod.gg/assets/media/cui/star.png",
-		["glow"] = "https://b0f7b4d5.carbon-website.pages.dev/assets/media/cui/glow.png"
+		["glow"] = "https://carbonmod.gg/assets/media/cui/glow.png"
 	};
 	internal IEnumerator _executeQueue(QueuedThread thread, Action<List<QueuedThreadResult>> onFinished)
 	{
