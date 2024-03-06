@@ -27,7 +27,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 			var tab = new Tab("permissions", "Permissions", Community.Runtime.CorePlugin, (ap, tab) =>
 			{
-				ap.GetStorage(tab, "toggleall", true);
+				ap.SetStorage(tab, "toggleall", true);
 				ap.SetStorage(tab, "groupedit", false);
 
 				tab.ClearColumn(1);
@@ -45,7 +45,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 			tab.AddButton(0, "Players", ap =>
 			{
-				ap.GetStorage(tab, "toggleall", true);
+				ap.SetStorage(tab, "toggleall", true);
 				ap.SetStorage(tab, "groupedit", false);
 
 				tab.ClearColumn(1);
@@ -63,7 +63,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 			tab.AddButton(0, "Groups", ap =>
 			{
-				ap.GetStorage(tab, "toggleall", true);
+				ap.SetStorage(tab, "toggleall", true);
 				ap.SetStorage(tab, "pluginedit", false);
 				ap.SetStorage(tab, "groupedit", false);
 
@@ -407,7 +407,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					{
 						tab.AddRow(2, new Tab.OptionButton($"{plugin.Name} ({plugin.Version})", instance3 =>
 						{
-							ap.GetStorage(tab, "toggleall", true);
+							ap.SetStorage(tab, "toggleall", true);
 							ap.SetStorage(tab, "plugin", plugin);
 							ap.SetStorage(tab, "pluginr", instance3.LastPressedRow);
 							ap.SetStorage(tab, "pluginc", instance3.LastPressedColumn);
@@ -446,7 +446,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					{
 						tab.AddRow(2, new Tab.OptionButton($"{user.Value.LastSeenNickname} ({user.Key})", instance3 =>
 						{
-							ap.GetStorage(tab, "toggleall", true);
+							ap.SetStorage(tab, "toggleall", true);
 							ap.SetStorage(tab, "groupedit", false);
 							ap.SetStorage(tab, "pluginedit", false);
 
