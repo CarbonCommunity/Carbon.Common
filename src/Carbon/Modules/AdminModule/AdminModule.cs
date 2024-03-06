@@ -77,6 +77,7 @@ public partial class AdminModule
 		"players.use",
 		"players.inventory_management",
 		"players.craft_queue",
+		"players.see_ips",
 		"plugins.use",
 		"plugins.setup"
 	};
