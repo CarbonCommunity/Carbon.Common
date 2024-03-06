@@ -2082,6 +2082,8 @@ public partial class AdminModule
 
 			tab.Pages.Add(new Page("Finalize", (cui, t, container, panel, ap) =>
 			{
+				Analytics.admin_module_wizard(Analytics.WizardProgress.Walkthrough);
+
 				Singleton.DataInstance.WizardDisplayed = true;
 				Singleton.GenerateTabs();
 				Community.Runtime.CorePlugin.NextTick(() => Singleton.SetTab(ap.Player, 0));
@@ -2231,6 +2233,8 @@ public partial class AdminModule
 
 		if (value == -2)
 		{
+			Analytics.admin_module_wizard(Analytics.WizardProgress.Skipped);
+
 			ap.SetStorage(tab, "page", 0);
 			Singleton.DataInstance.WizardDisplayed = true;
 			Singleton.GenerateTabs();

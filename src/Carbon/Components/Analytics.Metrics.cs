@@ -125,4 +125,22 @@ public partial struct Analytics
 			Include("clientgravity", clientConfig.Client.ClientGravity.ToString("0.0")).
 			Submit("carbon_client_init");
 	}
+	public static void admin_module_wizard(WizardProgress progress)
+	{
+		if (!Enabled)
+		{
+			return;
+		}
+
+		Singleton.
+			Include("walkthrough", progress == WizardProgress.Walkthrough).
+			Include("skipped", progress == WizardProgress.Skipped).
+			Submit("admin_module_wizard");
+	}
+
+	public enum WizardProgress
+	{
+		Walkthrough,
+		Skipped
+	}
 }

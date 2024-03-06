@@ -18,7 +18,7 @@ public readonly struct CUI : IDisposable
 {
 	public Handler Manager { get; }
 	public ImageDatabaseModule ImageDatabase { get; }
-	public Cache Cache => Manager.Cache;
+	public Handler.Cache CacheInstance => Manager.CacheInstance;
 
 	public enum ClientPanels
 	{
@@ -293,7 +293,7 @@ public readonly struct CUI : IDisposable
 	{
 		internal string Identifier { get; } = RandomEx.GetRandomString(4);
 
-		public Cache Cache = new();
+		public Cache CacheInstance = new();
 		public int Pooled => _containerPool.Count + _elements.Count + _images.Count + _rawImages.Count + _texts.Count + _buttons.Count + _inputFields.Count + _rects.Count + _needsCursors.Count + _needsKeyboards.Count;
 		public int Used => _queue.Count;
 
@@ -784,44 +784,44 @@ public readonly struct CUI : IDisposable
 				_hasDisposed = true;
 			}
 		}
-	}
-}
 
-public class Cache
-{
-	internal Dictionary<string, byte[]> _cuiData = new();
-
-	public bool TryStore(string id, CuiElementContainer container)
-	{
-		if (TryTake(id, out _))
+		public class Cache
 		{
-			return false;
+			internal Dictionary<string, byte[]> _cuiData = new();
+
+			public bool TryStore(string id, CuiElementContainer container)
+			{
+				if (TryTake(id, out _))
+				{
+					return false;
+				}
+
+				_cuiData.Add(id, container.GetData());
+				return true;
+			}
+			public bool TryTake(string id, out byte[] data)
+			{
+				data = default;
+
+				if (_cuiData.TryGetValue(id, out var content))
+				{
+					data = content;
+					return true;
+				}
+
+				return false;
+			}
+			public bool TrySend(string id, BasePlayer player)
+			{
+				if (!TryTake(id, out var data))
+				{
+					return false;
+				}
+
+				CUIStatics.SendData(data, player);
+				return true;
+			}
 		}
-
-		_cuiData.Add(id, container.GetData());
-		return true;
-	}
-	public bool TryTake(string id, out byte[] data)
-	{
-		data = default;
-
-		if (_cuiData.TryGetValue(id, out var content))
-		{
-			data = content;
-			return true;
-		}
-
-		return false;
-	}
-	public bool TrySend(string id, BasePlayer player)
-	{
-		if (!TryTake(id, out var data))
-		{
-			return false;
-		}
-
-		CUIStatics.SendData(data, player);
-		return true;
 	}
 }
 
