@@ -630,11 +630,12 @@ public static class ModLoader
 
 			foreach (var plugin in Community.Runtime.ModuleProcessor.Modules)
 			{
-				if (plugin is IModule module && !module.GetEnabled()) continue;
+				if (plugin is IModule module && (!module.GetEnabled() || module.HasOSI)) continue;
 
 				try
 				{
 					HookCaller.CallHook(plugin, 1330569572, Community.IsServerInitialized);
+					((IModule)plugin).HasOSI = true;
 				}
 				catch (Exception initException)
 				{
