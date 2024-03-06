@@ -2,7 +2,7 @@
 
 /*
  *
- * Copyright (c) 2022-2024 Carbon Community 
+ * Copyright (c) 2022-2024 Carbon Community
  * All rights reserved.
  *
  */
@@ -32,6 +32,7 @@ public class Config
 #else
 		true; // Set false when we're out of development
 #endif
+	public bool Rcon { get; set; } = true;
 	public List<string> ConditionalCompilationSymbols { get; set; }
 	public Severity LogSeverity { get; set; } = Severity.Notice;
 	public Permission.SerializationMode PermissionSerialization { get; set; } = Permission.SerializationMode.Protobuf;

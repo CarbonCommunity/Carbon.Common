@@ -107,10 +107,26 @@ public partial class CorePlugin : CarbonPlugin
 
 	internal static object IOnRconInitialize()
 	{
-		return null;
+		return !Community.Runtime.Config.Rcon ? Cache.False : null;
 	}
 	internal static object IOnRunCommandLine()
 	{
-		return null;
+		foreach (var @switch in Facepunch.CommandLine.GetSwitches())
+		{
+			var value = @switch.Value;
+
+			if (value == "")
+			{
+				value = "1";
+			}
+
+			var key = @switch.Key.Substring(1);
+			var options = ConsoleSystem.Option.Unrestricted;
+			options.PrintOutput = false;
+
+			ConsoleSystem.Run(options, key, value);
+		}
+
+		return false;
 	}
 }
