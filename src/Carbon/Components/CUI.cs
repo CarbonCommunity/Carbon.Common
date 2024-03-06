@@ -121,10 +121,24 @@ public readonly struct CUI : IDisposable
 	}
 	public Pair<string, CuiElement> CreateImage(CuiElementContainer container, string parent, string url, string color, string material = null, float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string outlineColor = null, string outlineDistance = null, bool outlineUseGraphicAlpha = false, string id = null, string destroyUi = null, bool update = false)
 	{
+		if (!HasImage(url))
+		{
+			return Manager.Panel(container, parent, color, material, xMin, xMax, yMin, yMax, OxMin, OxMax, OyMin, OyMax,
+				false, fadeIn, fadeOut, needsCursor, needsKeyboard, outlineColor, outlineDistance,
+				outlineUseGraphicAlpha, id, destroyUi, update);
+		}
+
 		return Manager.Image(container, parent, GetImage(url), null, color, material, xMin, xMax, yMin, yMax, OxMin, OxMax, OyMin, OyMax, fadeIn, fadeOut, needsCursor, needsKeyboard, outlineColor, outlineDistance, outlineUseGraphicAlpha, id, destroyUi, update);
 	}
 	public Pair<string, CuiElement> CreateImage(CuiElementContainer container, string parent, string url, float scale, string color, string material = null, float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string outlineColor = null, string outlineDistance = null, bool outlineUseGraphicAlpha = false, string id = null, string destroyUi = null, bool update = false)
 	{
+		if (!HasImage(url))
+		{
+			return Manager.Panel(container, parent, color, material, xMin, xMax, yMin, yMax, OxMin, OxMax, OyMin, OyMax,
+				false, fadeIn, fadeOut, needsCursor, needsKeyboard, outlineColor, outlineDistance,
+				outlineUseGraphicAlpha, id, destroyUi, update);
+		}
+
 		return Manager.Image(container, parent, GetImage(url, scale), null, color, material, xMin, xMax, yMin, yMax, OxMin, OxMax, OyMin, OyMax, fadeIn, fadeOut, needsCursor, needsKeyboard, outlineColor, outlineDistance, outlineUseGraphicAlpha, id, destroyUi, update);
 	}
 	public Pair<string, CuiElement> CreateSimpleImage(CuiElementContainer container, string parent, string png, string sprite, string color, string material = null, float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string outlineColor = null, string outlineDistance = null, bool outlineUseGraphicAlpha = false, string id = null, string destroyUi = null, bool update = false)
