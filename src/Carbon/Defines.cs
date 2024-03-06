@@ -74,7 +74,7 @@ public class Defines
 	public static string GetCarbonAutoFile()
 	{
 		_initializeCommandLine();
-		return Path.Combine(GetRootFolder(), "carbon.auto.cfg");
+		return Path.Combine(GetRootFolder(), "config.auto.cfg");
 	}
 
 	public static string GetRootFolder()
