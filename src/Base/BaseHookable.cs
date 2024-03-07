@@ -301,6 +301,11 @@ public class BaseHookable
 
 	public override string ToString()
 	{
+		return GetType().FullName;
+	}
+
+	public virtual string ToPrettyString()
+	{
 		return $"{Name} v{Version}";
 	}
 }

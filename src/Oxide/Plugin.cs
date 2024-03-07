@@ -265,7 +265,7 @@ namespace Oxide.Core.Plugins
 							switch (plugin.Processor)
 							{
 								case IScriptProcessor script:
-									Logger.Warn($" [{Name}] Unloading '{plugin.ToString()}' because parent '{ToString()}' has been unloaded.");
+									Logger.Warn($" [{Name}] Unloading '{plugin.ToPrettyString()}' because parent '{ToPrettyString()}' has been unloaded.");
 									ModLoader.AddPendingRequiree(this, plugin);
 
 									script.Get<IScriptProcessor.IScript>(plugin.FileName)?.Dispose();
