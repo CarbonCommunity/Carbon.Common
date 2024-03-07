@@ -77,6 +77,7 @@ public partial class AdminModule
 		"players.use",
 		"players.inventory_management",
 		"players.craft_queue",
+		"players.see_ips",
 		"plugins.use",
 		"plugins.setup"
 	};
@@ -123,9 +124,9 @@ public partial class AdminModule
 		Unsubscribe("OnEntityVisibilityCheck");
 		Unsubscribe("OnEntityDistanceCheck");
 
-		foreach (var level in AdminPermissions)
+		foreach (var perm in AdminPermissions)
 		{
-			RegisterPermission($"adminmodule.{level}");
+			RegisterPermission($"adminmodule.{perm}");
 		}
 
 		if (!_logRegistration)
@@ -2078,17 +2079,11 @@ public partial class AdminModule
 					"A very basic system that only grants players access to a server based on the 'whitelist.bypass' permission or 'whitelisted' group.", "",
 					FindModule("WhitelistModule"));
 			}));
-			tab.Pages.Add(new Page("DRM", (cui, t, container, panel, ap) =>
-			{
-				tab.ModuleInfoTemplate(cui, t, container, panel, ap,
-					"DRM Module",
-					"A system that allows server hosts to bind endpoints that deliver plugin information with respect to the public and private keys.\n" +
-					"For more information, check out the documentation page over on https://docs.carbonmod.gg.", "",
-					FindModule("DRMModule"));
-			}));
 
 			tab.Pages.Add(new Page("Finalize", (cui, t, container, panel, ap) =>
 			{
+				Analytics.admin_module_wizard(Analytics.WizardProgress.Walkthrough);
+
 				Singleton.DataInstance.WizardDisplayed = true;
 				Singleton.GenerateTabs();
 				Community.Runtime.CorePlugin.NextTick(() => Singleton.SetTab(ap.Player, 0));
@@ -2238,6 +2233,8 @@ public partial class AdminModule
 
 		if (value == -2)
 		{
+			Analytics.admin_module_wizard(Analytics.WizardProgress.Skipped);
+
 			ap.SetStorage(tab, "page", 0);
 			Singleton.DataInstance.WizardDisplayed = true;
 			Singleton.GenerateTabs();

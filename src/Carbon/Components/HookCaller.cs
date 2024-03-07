@@ -85,36 +85,7 @@ public class HookCallerCommon
 public static class HookCaller
 {
 	public static HookCallerCommon Caller { get; set; }
-
-	#region Internals
-
-	public static readonly string[] InternalHooks = new string[]
-	{
-		"OnPluginLoaded",
-		"OnPluginUnloaded",
-		"CanClientLogin",
-		"CanUserLogin",
-		"OnUserApprove",
-		"OnUserApproved",
-		"OnPlayerChat",
-		"OnUserChat",
-		"OnPlayerOfflineChat",
-		"OnPermissionRegistered",
-		"OnPermissionsUnregistered",
-		"OnGroupPermissionGranted",
-		"OnGroupPermissionRevoked",
-		"OnGroupCreated",
-		"OnGroupDeleted",
-		"OnGroupTitleSet",
-		"OnGroupRankSet",
-		"OnGroupParentSet",
-		"CanUseUI",
-		"OnDestroyUI",
-		"OnUserNameUpdated"
-	};
-
-	#endregion
-
+	
 	public static double GetHookTotalTime(uint hook)
 	{
 		var finalTime = 0.0;

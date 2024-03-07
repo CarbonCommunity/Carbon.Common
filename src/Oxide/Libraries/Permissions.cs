@@ -145,8 +145,17 @@ public class Permission : Library
 			groupdata = validatedGroups;
 		}
 
-		if (!GroupExists(Community.Runtime.Config.PlayerDefaultGroup)) CreateGroup(Community.Runtime.Config.PlayerDefaultGroup, Community.Runtime.Config.PlayerDefaultGroup?.ToCamelCase(), 0);
-		if (!GroupExists(Community.Runtime.Config.AdminDefaultGroup)) CreateGroup(Community.Runtime.Config.AdminDefaultGroup, Community.Runtime.Config.AdminDefaultGroup?.ToCamelCase(), 1);
+		var playerDefaultGroup = Community.Runtime.Config.Permissions.PlayerDefaultGroup;
+		var adminDefaultGroup = Community.Runtime.Config.Permissions.AdminDefaultGroup;
+
+		if (!GroupExists(playerDefaultGroup))
+		{
+			CreateGroup(playerDefaultGroup, playerDefaultGroup?.ToCamelCase(), 0);
+		}
+		if (!GroupExists(adminDefaultGroup))
+		{
+			CreateGroup(adminDefaultGroup, adminDefaultGroup?.ToCamelCase(), 1);
+		}
 
 		IsLoaded = true;
 
@@ -380,18 +389,18 @@ public class Permission : Library
 			user.Language = player.net.connection.info.GetString("global.language", Community.Runtime.Config.Language);
 		else user.Language = Community.Runtime.Config.Language;
 
-		if (!string.IsNullOrEmpty(Community.Runtime.Config.PlayerDefaultGroup))
-			AddUserGroup(player.UserIDString, Community.Runtime.Config.PlayerDefaultGroup);
+		if (!string.IsNullOrEmpty(Community.Runtime.Config.Permissions.PlayerDefaultGroup))
+			AddUserGroup(player.UserIDString, Community.Runtime.Config.Permissions.PlayerDefaultGroup);
 
-		if (!string.IsNullOrEmpty(Community.Runtime.Config.AdminDefaultGroup))
+		if (!string.IsNullOrEmpty(Community.Runtime.Config.Permissions.AdminDefaultGroup))
 		{
 			if (player.IsAdmin || (player.net.connection != null && player.net.connection.authLevel >= 2))
 			{
-				AddUserGroup(player.UserIDString, Community.Runtime.Config.AdminDefaultGroup);
+				AddUserGroup(player.UserIDString, Community.Runtime.Config.Permissions.AdminDefaultGroup);
 			}
-			else if (UserHasGroup(player.UserIDString, Community.Runtime.Config.AdminDefaultGroup))
+			else if (UserHasGroup(player.UserIDString, Community.Runtime.Config.Permissions.AdminDefaultGroup))
 			{
-				RemoveUserGroup(player.UserIDString, Community.Runtime.Config.AdminDefaultGroup);
+				RemoveUserGroup(player.UserIDString, Community.Runtime.Config.Permissions.AdminDefaultGroup);
 			}
 		}
 

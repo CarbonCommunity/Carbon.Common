@@ -60,6 +60,7 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 	public C ConfigInstance { get; private set; }
 
 	public new virtual string Name => "Not set";
+	public bool HasOSI { get; set; }
 
 	protected void Puts(object message)
 		=> Logger.Log($"[{Name}] {message}");
@@ -94,7 +95,7 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 
 		foreach (var method in Type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic))
 		{
-			if (Community.Runtime.HookManager.IsHookLoaded(method.Name))
+			if (Community.Runtime.HookManager.IsHook(method.Name))
 			{
 				Community.Runtime.HookManager.Subscribe(method.Name, Name);
 
@@ -185,7 +186,7 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 		if (PreLoadShouldSave(newConfig, newData)) shouldSave = true;
 
 		if (shouldSave) Save();
-		
+
 		OnEnableStatus();
 	}
 	public virtual bool PreLoadShouldSave(bool newConfig, bool newData)
@@ -250,10 +251,14 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 		{
 			Logger.Error($"Failed module OnPostServerInit for {Name} [Reload Request]", ex);
 		}
+
+		HookCaller.CallHook(this, 1330569572, Community.IsServerInitialized);
+
+		HasOSI = true;
 	}
 	public override void Unload()
 	{
-
+		HasOSI = false;
 	}
 	public override void Shutdown()
 	{

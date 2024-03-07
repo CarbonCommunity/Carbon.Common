@@ -210,13 +210,9 @@ public static class ModLoader
 		}
 		catch (Exception ex)
 		{
-			if (Analytic.Enabled)
-			{
-				Analytic.Include("plugin", $"{plugin.Name} v{plugin.Version} by {plugin.Author}");
-				Analytic.Send("plugin_constructor_failure");
-			}
+			Analytics.plugin_constructor_failure(plugin);
 
-			Logger.Error($"Failed executing constructor for {plugin}. This is fatal! Unloading plugin.", ex);
+			Logger.Error($"Failed executing constructor for {plugin.ToPrettyString()}. This is fatal! Unloading plugin.", ex);
 			return false;
 		}
 
@@ -256,7 +252,7 @@ public static class ModLoader
 
 		Interface.Oxide.RootPluginManager.AddPlugin(plugin);
 
-		Logger.Log($"Loaded plugin {plugin.ToString()} [{plugin.CompileTime:0}ms]");
+		Logger.Log($"Loaded plugin {plugin.ToPrettyString()} [{plugin.CompileTime:0}ms]");
 		return true;
 	}
 	public static bool UninitializePlugin(RustPlugin plugin, bool premature = false)
@@ -278,7 +274,7 @@ public static class ModLoader
 
 		if (!premature)
 		{
-			// OnPluginUnload
+			// OnPluginUnloaded
 			HookCaller.CallStaticHook(3843290135, plugin);
 		}
 
@@ -286,7 +282,7 @@ public static class ModLoader
 
 		if (!premature)
 		{
-			Logger.Log($"Unloaded plugin {plugin}");
+			Logger.Log($"Unloaded plugin {plugin.ToPrettyString()}");
 			Interface.Oxide.RootPluginManager.RemovePlugin(plugin);
 		}
 		return true;
@@ -305,7 +301,7 @@ public static class ModLoader
 			{
 				var hash = HookStringPool.GetOrAdd(method.Name);
 
-				if (Community.Runtime.HookManager.IsHookLoaded(method.Name))
+				if (Community.Runtime.HookManager.IsHook(method.Name))
 				{
 					if (!hooks.Contains(hash)) hooks.Add(hash);
 				}
@@ -330,7 +326,7 @@ public static class ModLoader
 		}
 		catch (Exception ex)
 		{
-			Logger.Error($"Failed ProcessPrecompiledType for plugin '{plugin}'", ex);
+			Logger.Error($"Failed ProcessPrecompiledType for plugin '{plugin.ToPrettyString()}'", ex);
 		}
 	}
 
@@ -630,11 +626,12 @@ public static class ModLoader
 
 			foreach (var plugin in Community.Runtime.ModuleProcessor.Modules)
 			{
-				if (plugin is IModule module && !module.GetEnabled()) continue;
+				if (plugin is IModule module && (!module.GetEnabled() || module.HasOSI)) continue;
 
 				try
 				{
 					HookCaller.CallHook(plugin, 1330569572, Community.IsServerInitialized);
+					((IModule)plugin).HasOSI = true;
 				}
 				catch (Exception initException)
 				{
@@ -644,24 +641,7 @@ public static class ModLoader
 
 			if (counter > 1)
 			{
-				if (Analytic.Enabled)
-				{
-					var rustPluginCount = 0;
-					var covalencePluginCount = 0;
-					var carbonPluginCount = 0;
-
-					foreach (var plugin in LoadedPackages.SelectMany(package => package.Plugins))
-					{
-						if (plugin.Type.BaseType == typeof(CovalencePlugin)) covalencePluginCount++;
-						else if (plugin.Type.BaseType == typeof(RustPlugin)) rustPluginCount++;
-						else if (plugin.Type.BaseType == typeof(CarbonPlugin)) carbonPluginCount++;
-					}
-
-					Analytic.Include("rustplugin", $"{rustPluginCount:n0}");
-					Analytic.Include("covalenceplugin", $"{covalencePluginCount:n0}");
-					Analytic.Include("carbonplugin", $"{carbonPluginCount:n0}");
-					Analytic.Send("batch_plugin_types");
-				}
+				Analytics.batch_plugin_types();
 
 				Logger.Log($" Batch completed! OSI on {counter:n0} {counter.Plural("plugin", "plugins")}.");
 			}

@@ -86,15 +86,18 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			});
 			tab.AddInput(1, "Steam ID", _ => player.UserIDString, null);
 			tab.AddInput(1, "Net ID", _ => $"{player.net?.ID}", null);
-			tab.AddInput(1, "IP", _ => $"{player.net?.connection?.ipaddress}", null, hidden: true);
+			if (Singleton.HasAccess(aap.Player, "players.see_ips"))
+			{
+				tab.AddInput(1, "IP", _ => $"{player.net?.connection?.ipaddress}", null, hidden: true);
+			}
 			try
 			{
 				var position = player.transform.position;
-				tab.AddInput(1, "Position", _ => $"{player.transform.position}", null);
+				tab.AddInput(1, "Position", _ => $"{position}", null);
 			}
 			catch { }
 
-			if (Singleton.HasPermission(aap.Player, "permissions.use"))
+			if (Singleton.HasAccess(aap.Player, "permissions.use"))
 			{
 				tab.AddName(1, $"Permissions", TextAnchor.MiddleLeft);
 				{
@@ -177,7 +180,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					});
 				}));
 			}
-			else tab.AddText(1, $"You need 'carbon.cmod' permission to kick, ban, sleep or change player hostility.",
+			else tab.AddText(1, $"You need 'carbon.cmod' permission to kick, ban, sleep or change player hostility",
 				10, "1 1 1 0.4");
 
 			tab.AddName(1, $"Actions", TextAnchor.MiddleLeft);

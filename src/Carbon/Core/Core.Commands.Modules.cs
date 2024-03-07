@@ -202,7 +202,7 @@ public partial class CorePlugin : CarbonPlugin
 
 		if (module == null)
 		{
-			arg.ReplyWith("Couldn't find that plugin.");
+			arg.ReplyWith("Couldn't find that module.");
 			return;
 		}
 
