@@ -212,7 +212,7 @@ public static class ModLoader
 		{
 			Analytics.plugin_constructor_failure(plugin);
 
-			Logger.Error($"Failed executing constructor for {plugin}. This is fatal! Unloading plugin.", ex);
+			Logger.Error($"Failed executing constructor for {plugin.ToPrettyString()}. This is fatal! Unloading plugin.", ex);
 			return false;
 		}
 
@@ -326,7 +326,7 @@ public static class ModLoader
 		}
 		catch (Exception ex)
 		{
-			Logger.Error($"Failed ProcessPrecompiledType for plugin '{plugin}'", ex);
+			Logger.Error($"Failed ProcessPrecompiledType for plugin '{plugin.ToPrettyString()}'", ex);
 		}
 	}
 

@@ -507,7 +507,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				ap.SetStorage(tab, "toggleall", !grantAllStatus);
 
 				GeneratePermissions(tab, ap, permission, hookable, player, selectedGroup);
-			}, ap => grantAllStatus ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.Important);
+			}, ap => grantAllStatus ? Tab.OptionButton.Types.Warned : Tab.OptionButton.Types.Important);
 
 			foreach (var perm in perms.GetPermissions(hookable))
 			{
