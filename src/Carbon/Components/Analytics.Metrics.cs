@@ -91,7 +91,7 @@ public partial struct Analytics
 		}
 
 		Singleton.
-			Include("name", $"{readableHook} ({basePlugin.Name} v{basePlugin.Version} by {basePlugin.Author})").
+			Include("name", $"{readableHook} ({basePlugin.ToPrettyString()})").
 			Include("time", $"{afterHookTime.RoundUpToNearestCount(50)}ms").
 			Include("memory", $"{ByteEx.Format(totalMemory, shortName: true).ToLower()}").
 			Include("fires", $"{cachedHook.TimesFired}").

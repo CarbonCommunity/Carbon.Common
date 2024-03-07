@@ -65,7 +65,7 @@ public partial class CorePlugin : CarbonPlugin
 		}
 		catch (Exception ex) { Logger.Error($"Failed IOnPlayerCommand.", ex); }
 
-		return null;
+		return false;
 	}
 	internal static object IOnServerCommand(ConsoleSystem.Arg arg)
 	{

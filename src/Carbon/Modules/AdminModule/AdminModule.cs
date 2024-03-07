@@ -124,9 +124,9 @@ public partial class AdminModule
 		Unsubscribe("OnEntityVisibilityCheck");
 		Unsubscribe("OnEntityDistanceCheck");
 
-		foreach (var level in AdminPermissions)
+		foreach (var perm in AdminPermissions)
 		{
-			RegisterPermission($"adminmodule.{level}");
+			RegisterPermission($"adminmodule.{perm}");
 		}
 
 		if (!_logRegistration)

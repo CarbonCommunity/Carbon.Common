@@ -1259,6 +1259,7 @@ public static class CUIStatics
 	public static void SendData(byte[] data, BasePlayer player)
 	{
 		var write = Net.sv.StartWrite();
+		write.PacketID(Message.Type.RPCMessage);
 		write.EnsureCapacity(data.Length);
 		Array.Copy(data, 0, write.Data,write.Length , data.Length);
 		write._length += data.Length;
