@@ -1,5 +1,4 @@
 ﻿using Facepunch;
-using Facepunch.Models;
 using Newtonsoft.Json;
 using Logger = Carbon.Logger;
 

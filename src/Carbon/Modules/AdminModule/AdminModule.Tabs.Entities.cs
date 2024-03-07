@@ -738,7 +738,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				return;
 			}
 
-			var netWrite = Net.sv.StartWrite(Message.Type.Entities);
+			var netWrite = Net.sv.StartWrite();
 
 			if (netWrite == null)
 			{
@@ -747,6 +747,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 			++connection.validate.entityUpdates;
 
+			netWrite.PacketID(Message.Type.Entities);
 			netWrite.UInt32(connection.validate.entityUpdates);
 
 			entity.ToStreamForNetwork(netWrite, new BaseNetworkable.SaveInfo() { forConnection = connection, forDisk = false });

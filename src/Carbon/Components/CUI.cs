@@ -1242,7 +1242,8 @@ public static class CUIStatics
 	}
 	public static byte[] GetData(this CuiElementContainer container)
 	{
-		var write = Net.sv.StartWrite(Message.Type.RPCMessage);
+		var write = Net.sv.StartWrite();
+		write.PacketID(Message.Type.RPCMessage);
 		write.EntityID(CommunityEntity.ServerInstance.net.ID);
 		write.UInt32(AddUiString);
 		write.UInt64(0UL);
@@ -1257,7 +1258,8 @@ public static class CUIStatics
 	}
 	public static void SendData(byte[] data, BasePlayer player)
 	{
-		var write = Net.sv.StartWrite(Message.Type.RPCMessage);
+		var write = Net.sv.StartWrite();
+		write.PacketID(Message.Type.RPCMessage);
 		write.EnsureCapacity(data.Length);
 		Array.Copy(data, 0, write.Data,write.Length , data.Length);
 		write._length += data.Length;
