@@ -1,6 +1,6 @@
 ﻿/*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -65,67 +65,4 @@ public sealed class Updater
 		}
 		callback?.Invoke(failed == 0);
 	}
-
-	// private static async Task<string[]> APIGetFileList()
-	// {
-	// 	string suffix = (Community.Runtime.Analytics.Platform == "linux") ? "Unix" : default;
-	// 	string target = (Community.Runtime.Analytics.Branch == "Release") ? "Release" : "Debug";
-	// 	string url = $"https://api.github.com/repos/{Repository}/contents";
-
-	// 	byte[] buffer = await Community.Runtime.Downloader.Download($"{url}/Modules/{target}{suffix}");
-
-	// 	if (buffer is { Length: > 0 })
-	// 	{
-	// 		string json = System.Text.Encoding.UTF8.GetString(buffer, 0, buffer.Length);
-	// 		List<GithubAPIContents> result = JsonConvert.DeserializeObject<List<GithubAPIContents>>(json);
-	// 		return result.Where(x => Regex.IsMatch(x.Name, @"^[\d]{8}$"))
-	// 			.OrderByDescending(x => x.Name).Select(x => x.Path).ToArray();
-	// 	}
-	// 	return default;
-	// }
-
-	// public partial class GithubAPIContents
-	// {
-	// 	[JsonProperty("name")]
-	// 	public string Name { get; set; }
-
-	// 	[JsonProperty("path")]
-	// 	public string Path { get; set; }
-
-	// 	[JsonProperty("sha")]
-	// 	public string Sha { get; set; }
-
-	// 	[JsonProperty("size")]
-	// 	public long Size { get; set; }
-
-	// 	[JsonProperty("url")]
-	// 	public Uri Url { get; set; }
-
-	// 	[JsonProperty("html_url")]
-	// 	public Uri HtmlUrl { get; set; }
-
-	// 	[JsonProperty("git_url")]
-	// 	public Uri GitUrl { get; set; }
-
-	// 	[JsonProperty("download_url")]
-	// 	public object DownloadUrl { get; set; }
-
-	// 	[JsonProperty("type")]
-	// 	public string Type { get; set; }
-
-	// 	[JsonProperty("_links")]
-	// 	public GithubAPILinks Links { get; set; }
-
-	// 	public partial class GithubAPILinks
-	// 	{
-	// 		[JsonProperty("self")]
-	// 		public Uri Self { get; set; }
-
-	// 		[JsonProperty("git")]
-	// 		public Uri Git { get; set; }
-
-	// 		[JsonProperty("html")]
-	// 		public Uri Html { get; set; }
-	// 	}
-	// }
 }

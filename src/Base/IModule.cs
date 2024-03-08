@@ -1,6 +1,6 @@
 ﻿/*
  *
- * Copyright (c) 2022-2024 Carbon Community 
+ * Copyright (c) 2022-2024 Carbon Community
  * All rights reserved.
  *
  */
@@ -10,6 +10,7 @@ namespace Carbon.Base.Interfaces;
 public interface IModule : IDisposable
 {
 	string Name { get; }
+	bool HasOSI { get; internal set; }
 
 	void Init();
 	bool InitEnd();

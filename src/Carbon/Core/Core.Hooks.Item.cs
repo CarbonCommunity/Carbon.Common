@@ -10,11 +10,18 @@ namespace Carbon.Core;
 
 public partial class CorePlugin : CarbonPlugin
 {
-	private object IOnLoseCondition(Item item, float amount)
+	internal static object IOnLoseCondition(Item item, float amount)
 	{
-		var args = new object[] { item, amount };
-		HookCaller.CallStaticHook(3503014187, args, keepArgs: true);
+		var args = HookCaller.Caller.AllocateBuffer(2);
+
+		args[0] = item;
+		args[1] = amount;
+
+		// OnLoseCondition
+		HookCaller.CallStaticHook(3503014187, args);
 		amount = (float)args[1];
+
+		HookCaller.Caller.ReturnBuffer(args);
 
 		var condition = item.condition;
 		item.condition -= amount;
@@ -23,6 +30,6 @@ public partial class CorePlugin : CarbonPlugin
 			item.OnBroken();
 		}
 
-		return true;
+		return Cache.True;
 	}
 }
