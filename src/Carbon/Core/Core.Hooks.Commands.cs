@@ -77,7 +77,7 @@ public partial class CorePlugin : CarbonPlugin
 			return Cache.True;
 		}
 
-		return Cache.Null.Value;
+		return null;
 	}
 	public static object IOnPlayerChat(ulong playerId, string playerName, string message, Chat.ChatChannel channel, BasePlayer basePlayer)
 	{
@@ -107,7 +107,7 @@ public partial class CorePlugin : CarbonPlugin
 
 	internal static object IOnRconInitialize()
 	{
-		return !Community.Runtime.Config.Rcon ? Cache.False : Cache.Null.Value;
+		return !Community.Runtime.Config.Rcon ? Cache.False : null;
 	}
 	internal static object IOnRunCommandLine()
 	{

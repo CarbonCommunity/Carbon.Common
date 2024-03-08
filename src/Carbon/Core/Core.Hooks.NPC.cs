@@ -17,7 +17,7 @@ public partial class CorePlugin : CarbonPlugin
 		// OnNpcTarget
 		if (HookCaller.CallStaticHook(1265749384, npc, target) == null)
 		{
-			return Cache.Null.Value;
+			return null;
 		}
 
 		npc.SetFact(BaseNpc.Facts.HasEnemy, 0);

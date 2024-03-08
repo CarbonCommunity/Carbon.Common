@@ -27,7 +27,7 @@ public partial class CorePlugin : CarbonPlugin
 		// OnUserConnected
 		HookCaller.CallStaticHook(1971459992, player.AsIPlayer());
 
-		return Cache.Null.Value;
+		return null;
 	}
 	internal static object IOnUserApprove(Connection connection)
 	{
@@ -55,14 +55,14 @@ public partial class CorePlugin : CarbonPlugin
 			// OnUserApproved
 			return HookCaller.CallStaticHook(2225250284, username, text, obj);
 
-		return Cache.Null.Value;
+		return null;
 	}
 	internal static object IOnPlayerBanned(Connection connection, AuthResponse status)
 	{
 		// OnPlayerBanned
 		HookCaller.CallStaticHook(2433979267, connection, status.ToString());
 
-		return Cache.Null.Value;
+		return null;
 	}
 
 	private void OnPlayerKicked(BasePlayer basePlayer, string reason)

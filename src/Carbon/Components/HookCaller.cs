@@ -126,7 +126,7 @@ public static class HookCaller
 	{
 		if (Community.Runtime == null || Community.Runtime.ModuleProcessor == null) return null;
 
-		var result = Cache.Null.Value;
+		var result = (object)null;
 		var conflicts = Pool.GetList<Conflict>();
 
 		for (int i = 0; i < Community.Runtime.ModuleProcessor.Modules.Count; i++)
@@ -188,7 +188,7 @@ public static class HookCaller
 	{
 		if (expireDate < DateTime.Now)
 		{
-			return Cache.Null.Value;
+			return null;
 		}
 
 		DateTime now = DateTime.Now;

@@ -2,7 +2,7 @@
 
 /*
  *
- * Copyright (c) 2022-2024 Carbon Community 
+ * Copyright (c) 2022-2024 Carbon Community
  * All rights reserved.
  *
  */
@@ -27,10 +27,7 @@ public class Cache
 	public static readonly object DefaultDouble = default(double);
 	public static readonly object DefaultDecimal = default(decimal);
 	public static readonly object DefaultDateTime = default(DateTime);
-
-	public static readonly DefaultExpression Empty = Expression.Empty();
-	public static readonly ConstantExpression Null = Expression.Constant(null);
-
+	
 	public class CUI
 	{
 		public static readonly string BlankColor = "0 0 0 0";
