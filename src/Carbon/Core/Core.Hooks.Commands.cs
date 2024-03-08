@@ -15,7 +15,7 @@ public partial class CorePlugin : CarbonPlugin
 {
 	public static object IOnPlayerCommand(BasePlayer player, string message)
 	{
-		if (Community.Runtime == null) return true;
+		if (Community.Runtime == null) return Cache.True;
 
 		try
 		{
@@ -23,7 +23,7 @@ public partial class CorePlugin : CarbonPlugin
 
 			if (string.IsNullOrEmpty(fullString))
 			{
-				return false;
+				return Cache.False;
 			}
 
 			var split = fullString.Split(ConsoleArgEx.CommandSpacing, StringSplitOptions.RemoveEmptyEntries);
@@ -34,13 +34,13 @@ public partial class CorePlugin : CarbonPlugin
 			// OnUserCommand
 			if (HookCaller.CallStaticHook(1077563450, player, command, args) != null)
 			{
-				return false;
+				return Cache.False;
 			}
 
 			// OnUserCommand
 			if (HookCaller.CallStaticHook(2623980812, player.AsIPlayer(), command, args) != null)
 			{
-				return false;
+				return Cache.False;
 			}
 
 			if (Community.Runtime.CommandManager.Contains(Community.Runtime.CommandManager.Chat, command, out var cmd))
@@ -55,17 +55,17 @@ public partial class CorePlugin : CarbonPlugin
 
 				commandArgs.Dispose();
 				Facepunch.Pool.Free(ref commandArgs);
-				return false;
+				return Cache.False;
 			}
 
 			if (HookCaller.CallStaticHook(554444971, player, command, args) != null)
 			{
-				return false;
+				return Cache.False;
 			}
 		}
 		catch (Exception ex) { Logger.Error($"Failed IOnPlayerCommand.", ex); }
 
-		return false;
+		return Cache.False;
 	}
 	internal static object IOnServerCommand(ConsoleSystem.Arg arg)
 	{
@@ -74,16 +74,16 @@ public partial class CorePlugin : CarbonPlugin
 		// OnServerCommand
 		if (HookCaller.CallStaticHook(3282920085, arg) != null)
 		{
-			return true;
+			return Cache.True;
 		}
 
-		return null;
+		return Cache.Null.Value;
 	}
 	public static object IOnPlayerChat(ulong playerId, string playerName, string message, Chat.ChatChannel channel, BasePlayer basePlayer)
 	{
 		if (string.IsNullOrEmpty(message) || message.Equals("text"))
 		{
-			return true;
+			return Cache.True;
 		}
 		if (basePlayer == null || !basePlayer.IsConnected)
 		{
@@ -107,7 +107,7 @@ public partial class CorePlugin : CarbonPlugin
 
 	internal static object IOnRconInitialize()
 	{
-		return !Community.Runtime.Config.Rcon ? Cache.False : null;
+		return !Community.Runtime.Config.Rcon ? Cache.False : Cache.Null.Value;
 	}
 	internal static object IOnRunCommandLine()
 	{
@@ -127,6 +127,6 @@ public partial class CorePlugin : CarbonPlugin
 			ConsoleSystem.Run(options, key, value);
 		}
 
-		return false;
+		return Cache.False;
 	}
 }

@@ -23,7 +23,7 @@ public partial class CorePlugin : CarbonPlugin
 			Analytics.on_server_initialized();
 		}
 
-		return null;
+		return Cache.Null.Value;
 	}
 	internal static object IOnServerShutdown()
 	{
@@ -39,6 +39,6 @@ public partial class CorePlugin : CarbonPlugin
 		Interface.Oxide.OnShutdown();
 		Community.Runtime.ScriptProcessor.Clear();
 
-		return null;
+		return Cache.Null.Value;
 	}
 }

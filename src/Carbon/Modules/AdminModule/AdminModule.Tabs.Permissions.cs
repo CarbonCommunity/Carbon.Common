@@ -382,7 +382,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 						{
 							if (!string.IsNullOrEmpty(filter))
 							{
-								return x.IsCorePlugin || perms.Any(y => x.Name.Trim().ToLower().Contains(filter));
+								return perms.Any(y => x.Name.Trim().ToLower().Contains(filter));
 							}
 
 							return perms.Count > 0;

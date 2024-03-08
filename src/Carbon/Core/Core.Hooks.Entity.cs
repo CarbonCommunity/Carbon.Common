@@ -14,12 +14,12 @@ public partial class CorePlugin : CarbonPlugin
 	{
 		if (!Community.IsServerInitialized || saveInfo.forConnection == null)
 		{
-			return null;
+			return Cache.Null.Value;
 		}
 
 		// OnEntitySaved
 		HookCaller.CallStaticHook(3947573992, baseNetworkable, saveInfo);
 
-		return null;
+		return Cache.Null.Value;
 	}
 }

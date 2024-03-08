@@ -16,7 +16,7 @@ public partial class CorePlugin : CarbonPlugin
 	{
 		if (!Community.IsServerInitialized || _isPlayerTakingDamage || basePlayer == null || hitInfo == null || basePlayer.IsDead() || basePlayer is NPCPlayer)
 		{
-			return null;
+			return Cache.Null.Value;
 		}
 
 		// OnEntityTakeDamage
@@ -46,7 +46,7 @@ public partial class CorePlugin : CarbonPlugin
 			return HookCaller.CallStaticHook(2713007450, basePlayer, hitInfo);
 		}
 
-		return null;
+		return Cache.Null.Value;
 	}
 	internal static object IOnBaseCombatEntityHurt(BaseCombatEntity entity, HitInfo hitInfo)
 	{
@@ -56,7 +56,7 @@ public partial class CorePlugin : CarbonPlugin
 			return HookCaller.CallStaticHook(2713007450, entity, hitInfo);
 		}
 
-		return null;
+		return Cache.Null.Value;
 	}
 	internal static object ICanPickupEntity(BasePlayer basePlayer, DoorCloser entity)
 	{
@@ -66,7 +66,7 @@ public partial class CorePlugin : CarbonPlugin
 			return result;
 		}
 
-		return null;
+		return Cache.Null.Value;
 	}
 
 	private void OnPlayerSetInfo(Connection connection, string key, string val)

@@ -27,7 +27,7 @@ public partial class CorePlugin : CarbonPlugin
 		// OnUserConnected
 		HookCaller.CallStaticHook(1971459992, player.AsIPlayer());
 
-		return null;
+		return Cache.Null.Value;
 	}
 	internal static object IOnUserApprove(Connection connection)
 	{
@@ -45,7 +45,7 @@ public partial class CorePlugin : CarbonPlugin
 		if (obj4 is string || (obj4 is bool obj4Value && !obj4Value))
 		{
 			ConnectionAuth.Reject(connection, (obj4 is string) ? obj4.ToString() : "Connection was rejected", null);
-			return true;
+			return Cache.True;
 		}
 
 		Community.Runtime.CarbonClientManager.OnConnected(connection);
@@ -55,14 +55,14 @@ public partial class CorePlugin : CarbonPlugin
 			// OnUserApproved
 			return HookCaller.CallStaticHook(2225250284, username, text, obj);
 
-		return null;
+		return Cache.Null.Value;
 	}
 	internal static object IOnPlayerBanned(Connection connection, AuthResponse status)
 	{
 		// OnPlayerBanned
 		HookCaller.CallStaticHook(2433979267, connection, status.ToString());
 
-		return null;
+		return Cache.Null.Value;
 	}
 
 	private void OnPlayerKicked(BasePlayer basePlayer, string reason)

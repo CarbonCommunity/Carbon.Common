@@ -85,7 +85,7 @@ public class HookCallerCommon
 public static class HookCaller
 {
 	public static HookCallerCommon Caller { get; set; }
-	
+
 	public static double GetHookTotalTime(uint hook)
 	{
 		var finalTime = 0.0;
@@ -126,7 +126,7 @@ public static class HookCaller
 	{
 		if (Community.Runtime == null || Community.Runtime.ModuleProcessor == null) return null;
 
-		var result = (object)null;
+		var result = Cache.Null.Value;
 		var conflicts = Pool.GetList<Conflict>();
 
 		for (int i = 0; i < Community.Runtime.ModuleProcessor.Modules.Count; i++)
@@ -188,7 +188,7 @@ public static class HookCaller
 	{
 		if (expireDate < DateTime.Now)
 		{
-			return null;
+			return Cache.Null.Value;
 		}
 
 		DateTime now = DateTime.Now;
