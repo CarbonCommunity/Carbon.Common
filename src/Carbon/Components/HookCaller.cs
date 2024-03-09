@@ -1332,7 +1332,7 @@ public static class HookCaller
 	internal static string _ifDirective = "#if";
 	internal static string _elifDirective = "#elif";
 
-	public static void GenerateInternalCallHook(CompilationUnitSyntax input, out CompilationUnitSyntax output, out MethodDeclarationSyntax generatedMethod, out bool isPartial, bool baseCall = false, List<ClassDeclarationSyntax> classList = null)
+	public static void GenerateInternalCallHook(CompilationUnitSyntax input, out CompilationUnitSyntax output, out MethodDeclarationSyntax generatedMethod, out bool isPartial, bool baseCall = false, string baseName = "plugin", List<ClassDeclarationSyntax> classList = null)
 	{
 		var methodContents = $"\n\tvar result = {(baseCall ? "base.InternalCallHook(hook, args)" : "(object)null")}; try {{ switch(hook) {{ ";
 
@@ -1525,7 +1525,7 @@ public static class HookCaller
 			methodContents += "\t\t\t\tbreak;\n\t\t\t}\n";
 		}
 
-		methodContents += "}\n}\ncatch (System.Exception ex)\n{\nCarbon.Logger.Error($\"Failed to call internal hook '{Carbon.Pooling.HookStringPool.GetOrAdd(hook)}' on plugin '{base.Name} v{base.Version}' [{hook}]\", ex);\n}\nreturn result;";
+		methodContents += "}\n}\ncatch (System.Exception ex)\n{\nCarbon.Logger.Error($\"Failed to call internal hook '{Carbon.Pooling.HookStringPool.GetOrAdd(hook)}' on " + baseName + " '{this.Name} v{this.Version}' [{hook}]\", ex);\n}\nreturn result;";
 
 		generatedMethod = SyntaxFactory.MethodDeclaration(
 			SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword).WithTrailingTrivia(SyntaxFactory.Space)),
