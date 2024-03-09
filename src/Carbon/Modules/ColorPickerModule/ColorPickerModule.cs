@@ -12,7 +12,7 @@ using static ConsoleSystem;
 
 namespace Carbon.Modules;
 
-public class ColorPickerModule : CarbonModule<EmptyModuleConfig, EmptyModuleData>
+public partial class ColorPickerModule : CarbonModule<EmptyModuleConfig, EmptyModuleData>
 {
 	public AdminModule Admin { get; internal set; }
 	public readonly Handler Handler = new();

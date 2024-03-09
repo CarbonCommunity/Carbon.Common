@@ -16,7 +16,7 @@ using Graphics = System.Drawing.Graphics;
 
 namespace Carbon.Modules;
 
-public class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModuleData>
+public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModuleData>
 {
 	public override string Name => "ImageDatabase";
 	public override Type Type => typeof(ImageDatabaseModule);
