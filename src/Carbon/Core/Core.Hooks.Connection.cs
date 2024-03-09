@@ -45,7 +45,7 @@ public partial class CorePlugin : CarbonPlugin
 		if (obj4 is string || (obj4 is bool obj4Value && !obj4Value))
 		{
 			ConnectionAuth.Reject(connection, (obj4 is string) ? obj4.ToString() : "Connection was rejected", null);
-			return true;
+			return Cache.True;
 		}
 
 		Community.Runtime.CarbonClientManager.OnConnected(connection);

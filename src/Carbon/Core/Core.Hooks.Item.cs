@@ -30,6 +30,6 @@ public partial class CorePlugin : CarbonPlugin
 			item.OnBroken();
 		}
 
-		return true;
+		return Cache.True;
 	}
 }
