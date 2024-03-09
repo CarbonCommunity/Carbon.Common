@@ -11,11 +11,11 @@ public partial class CorePlugin : CarbonPlugin
 {
 	[CommandVar("defaultplayergroup", "The default group for any player with the regular authority level they get assigned to.")]
 	[AuthLevel(2)]
-	private string DefaultPlayerGroup { get { return Community.Runtime.Config.PlayerDefaultGroup; } set { Community.Runtime.Config.PlayerDefaultGroup = value; } }
+	private string DefaultPlayerGroup { get { return Community.Runtime.Config.Permissions.PlayerDefaultGroup; } set { Community.Runtime.Config.Permissions.PlayerDefaultGroup = value; } }
 
 	[CommandVar("defaultadmingroup", "The default group players with the admin flag get assigned to.")]
 	[AuthLevel(2)]
-	private string DefaultAdminGroup { get { return Community.Runtime.Config.AdminDefaultGroup; } set { Community.Runtime.Config.AdminDefaultGroup = value; } }
+	private string DefaultAdminGroup { get { return Community.Runtime.Config.Permissions.AdminDefaultGroup; } set { Community.Runtime.Config.Permissions.AdminDefaultGroup = value; } }
 
 	[ConsoleCommand("grant", "Grant one or more permissions to users or groups. Do 'c.grant' for syntax info.")]
 	[AuthLevel(2)]
@@ -40,7 +40,11 @@ public partial class CorePlugin : CarbonPlugin
 		switch (action)
 		{
 			case "user":
-				if (permission.UserHasPermission(user.Key, perm))
+				if (string.IsNullOrEmpty(user.Key))
+				{
+					arg.ReplyWith($"Couldn't grant user permission - user not found, use full name or steam ID.");
+				}
+				else if (permission.UserHasPermission(user.Key, perm))
 				{
 					arg.ReplyWith($"Already has that permission assigned.");
 				}
@@ -55,7 +59,11 @@ public partial class CorePlugin : CarbonPlugin
 				break;
 
 			case "group":
-				if (permission.GroupHasPermission(name, perm))
+				if (!permission.GroupExists(name))
+				{
+					arg.ReplyWith($"Couldn't grant group permission - group not found, use full name.");
+				}
+				else if (permission.GroupHasPermission(name, perm))
 				{
 					arg.ReplyWith($"Already has that permission assigned.");
 				}
@@ -98,7 +106,11 @@ public partial class CorePlugin : CarbonPlugin
 		switch (action)
 		{
 			case "user":
-				if (!permission.UserHasPermission(user.Key, perm))
+				if (string.IsNullOrEmpty(user.Key))
+				{
+					arg.ReplyWith($"Couldn't revoke user permission - user not found, use full name or steam ID.");
+				}
+				else if (!permission.UserHasPermission(user.Key, perm))
 				{
 					arg.ReplyWith($"User does not have that permission assigned.");
 				}
@@ -113,7 +125,11 @@ public partial class CorePlugin : CarbonPlugin
 				break;
 
 			case "group":
-				if (!permission.GroupHasPermission(name, perm))
+				if (!permission.GroupExists(name))
+				{
+					arg.ReplyWith($"Couldn't revoke group permission - group not found, use full name.");
+				}
+				else if (!permission.GroupHasPermission(name, perm))
 				{
 					arg.ReplyWith($"Group does not have that permission assigned.");
 				}

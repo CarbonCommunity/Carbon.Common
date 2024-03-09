@@ -14,7 +14,6 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Oxide.Game.Rust.Cui;
 using ProtoBuf;
-using static Carbon.Modules.AdminModule.PluginsTab;
 using static ConsoleSystem;
 using Timer = Oxide.Plugins.Timer;
 
@@ -43,10 +42,10 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		}
 
 		public static bool DropdownShow { get; set; }
-		public static string[] DropdownOptions { get; } = new string[] { "A-Z", "Price", "Author", "Installed", "Needs Update", "Favourites", "Owned" };
+		public static string[] DropdownOptions { get; } = new[] { "A-Z", "Price", "Author", "Installed", "Needs Update", "Favourites", "Owned" };
 		public static PlayerSession.Page PlaceboPage { get; } = new PlayerSession.Page();
 		public static List<string> TagFilter { get; set; } = new();
-		public static string[] PopularTags { get; } = new string[]
+		public static string[] PopularTags { get; } = new[]
 		{
 				"gui",
 				"admin",
@@ -376,7 +375,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					cui.CreateImage(container, card, "glow", "1 1 1 0.5", OxMin: -20, OxMax: 20, OyMin: -20, OyMax: 20);
 				}
 
-				if (plugin.NoImage())
+				if (plugin.NoImage() || Singleton.DataInstance.HidePluginIcons)
 				{
 					cui.CreateImage(container, card, vendor.Logo, "0.2 0.2 0.2 0.4", xMin: 0.2f, xMax: 0.8f, yMin: 0.2f + vendor.LogoRatio, yMax: 0.8f - vendor.LogoRatio);
 				}
@@ -661,7 +660,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 					var image = cui.CreatePanel(container, parent, "1 1 1 1", xMin: 0.12f, xMax: 0.45f, yMin: 0.2f, yMax: 0.8f);
 
-					cui.QueueImages(vendor.Logo);
+					cui.QueueImages(vendor.LogoEnumerable);
 					var code = string.Format(auth.AuthRequestEndpoint, auth.AuthCode);
 					var qr = cui.CreateQRCodeImage(container, image, code,
 						brandUrl: vendor.Logo,
@@ -727,6 +726,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			public virtual string Type { get; }
 			public virtual string Url { get; }
 			public virtual string Logo { get; }
+			public IEnumerable<string> LogoEnumerable;
 			public virtual float LogoRatio { get; }
 
 			public virtual float IconScale { get; }
@@ -862,6 +862,11 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			public override void Refresh()
 			{
 				if (FetchedPlugins == null) return;
+
+				if (LogoEnumerable == null)
+				{
+					LogoEnumerable = new[] { Logo };
+				}
 
 				var plugins = Community.Runtime.CorePlugin.plugins.GetAll();
 				var auth = this as IVendorAuthenticated;
@@ -1363,6 +1368,11 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			{
 				if (FetchedPlugins == null) return;
 
+				if (LogoEnumerable == null)
+				{
+					LogoEnumerable = new[] { Logo };
+				}
+
 				var plugins = Community.Runtime.CorePlugin.plugins.GetAll();
 
 				foreach (var plugin in FetchedPlugins)
@@ -1633,6 +1643,11 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			{
 				if (FetchedPlugins == null) return;
 
+				if (LogoEnumerable == null)
+				{
+					LogoEnumerable = new[] { Logo };
+				}
+
 				foreach (var plugin in FetchedPlugins)
 				{
 					foreach (var existentPlugin in Community.Runtime.CorePlugin.plugins.GetAll())
@@ -1698,8 +1713,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 							Author = token["author"]?.ToString(),
 							Description = token["description"]?.ToString(),
 							Version = token["version"]?.ToString(),
-							OriginalPrice = $"${token["price"]?.ToString()}",
-							SalePrice = $"${token["salePrice"]?.ToString()}",
+							OriginalPrice = $"${token["price"]}",
+							SalePrice = $"${token["salePrice"]}",
 							File = token["filename"]?.ToString(),
 							Image = image,
 							Thumbnail = image,
@@ -1828,8 +1843,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			public override float IconScale => 0.4f;
 			public override float SafeIconScale => 0.2f;
 
-
-			internal string[] _defaultTags = new string[] { "carbon", "oxide" };
+			internal string[] _defaultTags = new[] { "carbon", "oxide" };
 
 			public override void CheckMetadata(string id, Action callback)
 			{
@@ -1851,6 +1865,11 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			public override void Refresh()
 			{
 				FetchedPlugins.Clear();
+
+				if (LogoEnumerable == null)
+				{
+					LogoEnumerable = new[] { Logo };
+				}
 
 				foreach (var package in ModLoader.LoadedPackages)
 				{
@@ -2015,6 +2034,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 	#region Commands
 
+	[Conditional("!MINIMAL")]
 	[ProtectedCommand("pluginbrowser.changetab")]
 	private void PluginBrowserChange(Arg args)
 	{
@@ -2022,13 +2042,15 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		var tab = Singleton.GetTab(ap.Player);
 		var vendor2 = ap.SetStorage(tab, "vendor", args.Args[0]);
 
-		var vendor = GetVendor((PluginsTab.VendorTypes)Enum.Parse(typeof(PluginsTab.VendorTypes), vendor2));
+		var vendor = PluginsTab.GetVendor((PluginsTab.VendorTypes)Enum.Parse(typeof(PluginsTab.VendorTypes), vendor2));
 		vendor.Refresh();
-		TagFilter.Clear();
+		PluginsTab.TagFilter.Clear();
 
-		DownloadThumbnails(vendor, tab, Singleton.GetPlayerSession(args.Player()));
+		PluginsTab.DownloadThumbnails(vendor, tab, Singleton.GetPlayerSession(args.Player()));
 		Singleton.Draw(args.Player());
 	}
+
+	[Conditional("!MINIMAL")]
 	[ProtectedCommand("pluginbrowser.interact")]
 	private void PluginBrowserInteract(Arg args)
 	{
@@ -2039,7 +2061,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		var ap = Singleton.GetPlayerSession(player);
 		var tab = Singleton.GetTab(ap.Player);
 
-		var vendor = GetVendor((PluginsTab.VendorTypes)Enum.Parse(typeof(PluginsTab.VendorTypes), ap.GetStorage(tab, "vendor", "Local")));
+		var vendor = PluginsTab.GetVendor((PluginsTab.VendorTypes)Enum.Parse(typeof(PluginsTab.VendorTypes), ap.GetStorage(tab, "vendor", "Local")));
 		var arg = new string[args.Args.Length];
 		Array.Copy(args.Args, arg, args.Args.Length);
 
@@ -2091,14 +2113,14 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			case "10":
 				{
 					var pluginName = arg.Skip(1).ToString(" ");
-					if (ServerOwner.Singleton.FavouritePlugins.Contains(pluginName))
+					if (PluginsTab.ServerOwner.Singleton.FavouritePlugins.Contains(pluginName))
 					{
-						ServerOwner.Singleton.FavouritePlugins.Remove(pluginName);
+						PluginsTab.ServerOwner.Singleton.FavouritePlugins.Remove(pluginName);
 						Logger.Log($" [{vendor.Type}] Unfavorited plugin '{pluginName}'");
 					}
 					else
 					{
-						ServerOwner.Singleton.FavouritePlugins.Add(pluginName);
+						PluginsTab.ServerOwner.Singleton.FavouritePlugins.Add(pluginName);
 						Logger.Log($" [{vendor.Type}] Favorited plugin '{pluginName}'");
 					}
 					Array.Clear(arg, 0, arg.Length);
@@ -2108,14 +2130,14 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			case "11":
 				{
 					var pluginName = arg.Skip(1).ToString(" ");
-					if (ServerOwner.Singleton.AutoUpdate.Contains(pluginName))
+					if (PluginsTab.ServerOwner.Singleton.AutoUpdate.Contains(pluginName))
 					{
-						ServerOwner.Singleton.AutoUpdate.Remove(pluginName);
+						PluginsTab.ServerOwner.Singleton.AutoUpdate.Remove(pluginName);
 						Logger.Log($" [{vendor.Type}] Marked plugin '{pluginName}' for auto-update");
 					}
 					else
 					{
-						ServerOwner.Singleton.AutoUpdate.Add(pluginName);
+						PluginsTab.ServerOwner.Singleton.AutoUpdate.Add(pluginName);
 						Logger.Log($" [{vendor.Type}] Unmarked plugin '{pluginName}' for auto-update");
 					}
 					Array.Clear(arg, 0, arg.Length);
@@ -2126,15 +2148,17 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 		Singleton.Draw(args.Player());
 	}
+
+	[Conditional("!MINIMAL")]
 	[ProtectedCommand("pluginbrowser.page")]
 	private void PluginBrowserPage(Arg args)
 	{
 		var ap = Singleton.GetPlayerSession(args.Player());
 		var tab = Singleton.GetTab(ap.Player);
 
-		var vendor = GetVendor((PluginsTab.VendorTypes)Enum.Parse(typeof(PluginsTab.VendorTypes), ap.GetStorage(tab, "vendor", "Local")));
+		var vendor = PluginsTab.GetVendor((PluginsTab.VendorTypes)Enum.Parse(typeof(PluginsTab.VendorTypes), ap.GetStorage(tab, "vendor", "Local")));
 		vendor.Refresh();
-		GetPlugins(vendor, tab, ap, out var maxPages);
+		PluginsTab.GetPlugins(vendor, tab, ap, out var maxPages);
 
 		var page = ap.GetStorage(tab, "page", 0);
 
@@ -2157,35 +2181,39 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 		ap.SetStorage(tab, "page", page);
 
-		DownloadThumbnails(vendor, tab, Singleton.GetPlayerSession(args.Player()));
+		PluginsTab.DownloadThumbnails(vendor, tab, Singleton.GetPlayerSession(args.Player()));
 
 		Singleton.Draw(args.Player());
 	}
+
+	[Conditional("!MINIMAL")]
 	[ProtectedCommand("pluginbrowser.tagfilter")]
 	private void PluginBrowserTagFilter(Arg args)
 	{
 		var ap = Singleton.GetPlayerSession(args.Player());
 		var tab = Singleton.GetTab(ap.Player);
 
-		var vendor = GetVendor((PluginsTab.VendorTypes)Enum.Parse(typeof(PluginsTab.VendorTypes), ap.GetStorage(tab, "vendor", "Local")));
+		var vendor = PluginsTab.GetVendor((PluginsTab.VendorTypes)Enum.Parse(typeof(PluginsTab.VendorTypes), ap.GetStorage(tab, "vendor", "Local")));
 		vendor.Refresh();
 
 		var filter = args.Args.ToString(" ");
 
-		if (TagFilter.Contains(filter)) TagFilter.Remove(filter);
-		else TagFilter.Add(filter);
+		if (PluginsTab.TagFilter.Contains(filter)) PluginsTab.TagFilter.Remove(filter);
+		else PluginsTab.TagFilter.Add(filter);
 
-		DownloadThumbnails(vendor, tab, Singleton.GetPlayerSession(args.Player()));
+		PluginsTab.DownloadThumbnails(vendor, tab, Singleton.GetPlayerSession(args.Player()));
 
 		Singleton.Draw(args.Player());
 	}
+
+	[Conditional("!MINIMAL")]
 	[ProtectedCommand("pluginbrowser.search")]
 	private void PluginBrowserSearch(Arg args)
 	{
 		var ap = Singleton.GetPlayerSession(args.Player());
 		var tab = Singleton.GetTab(ap.Player);
 
-		var vendor = GetVendor((PluginsTab.VendorTypes)Enum.Parse(typeof(PluginsTab.VendorTypes), ap.GetStorage(tab, "vendor", "Local")));
+		var vendor = PluginsTab.GetVendor((PluginsTab.VendorTypes)Enum.Parse(typeof(PluginsTab.VendorTypes), ap.GetStorage(tab, "vendor", "Local")));
 		vendor.Refresh();
 
 		var search = ap.SetStorage(tab, "search", args.Args.ToString(" "));
@@ -2193,17 +2221,19 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 		if (search == "Search...") ap.SetStorage(tab, "search", string.Empty);
 
-		DownloadThumbnails(vendor, tab, Singleton.GetPlayerSession(args.Player()));
+		PluginsTab.DownloadThumbnails(vendor, tab, Singleton.GetPlayerSession(args.Player()));
 
 		Singleton.Draw(args.Player());
 	}
+
+	[Conditional("!MINIMAL")]
 	[ProtectedCommand("pluginbrowser.refreshvendor")]
 	private void PluginBrowserRefreshVendor(Arg args)
 	{
 		var ap = Singleton.GetPlayerSession(args.Player());
 		var tab = Singleton.GetTab(ap.Player);
 
-		var vendor = GetVendor((PluginsTab.VendorTypes)Enum.Parse(typeof(PluginsTab.VendorTypes), ap.GetStorage(tab, "vendor", "Local")));
+		var vendor = PluginsTab.GetVendor((PluginsTab.VendorTypes)Enum.Parse(typeof(PluginsTab.VendorTypes), ap.GetStorage(tab, "vendor", "Local")));
 
 		if (vendor is PluginsTab.Local) return;
 
@@ -2212,11 +2242,11 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			var id = string.Empty;
 			switch (vendor)
 			{
-				case Codefling:
+				case PluginsTab.Codefling:
 					id = "cf";
 					break;
 
-				case uMod:
+				case PluginsTab.uMod:
 					id = "umod";
 					break;
 			}
@@ -2239,66 +2269,74 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 		Singleton.Draw(args.Player());
 	}
+
+	[Conditional("!MINIMAL")]
 	[ProtectedCommand("pluginbrowser.selectplugin")]
 	private void PluginBrowserSelectPlugin(Arg args)
 	{
 		var ap = Singleton.GetPlayerSession(args.Player());
 		var tab = Singleton.GetTab(ap.Player);
 
-		var vendor = GetVendor((PluginsTab.VendorTypes)Enum.Parse(typeof(PluginsTab.VendorTypes), ap.GetStorage(tab, "vendor", "Local")));
+		var vendor = PluginsTab.GetVendor((PluginsTab.VendorTypes)Enum.Parse(typeof(PluginsTab.VendorTypes), ap.GetStorage(tab, "vendor", "Local")));
 		vendor.Refresh();
 
 		ap.SetStorage(tab, "selectedplugin", vendor.FetchedPlugins.FirstOrDefault(x => x.Id == args.Args[0]));
 
 		Singleton.Draw(args.Player());
 	}
+
+	[Conditional("!MINIMAL")]
 	[ProtectedCommand("pluginbrowser.deselectplugin")]
 	private void PluginBrowserDeselectPlugin(Arg args)
 	{
 		var ap = Singleton.GetPlayerSession(args.Player());
 		var tab = Singleton.GetTab(ap.Player);
 
-		var vendor = GetVendor((PluginsTab.VendorTypes)Enum.Parse(typeof(PluginsTab.VendorTypes), ap.GetStorage(tab, "vendor", "Local")));
+		var vendor = PluginsTab.GetVendor((PluginsTab.VendorTypes)Enum.Parse(typeof(PluginsTab.VendorTypes), ap.GetStorage(tab, "vendor", "Local")));
 		vendor.Refresh();
 
 		ap.SetStorage(tab, "selectedplugin", (PluginsTab.Plugin)null);
 
 		Singleton.Draw(args.Player());
 	}
+
+	[Conditional("!MINIMAL")]
 	[ProtectedCommand("pluginbrowser.changeselectedplugin")]
 	private void PluginBrowserChangeSelected(Arg args)
 	{
 		var ap = Singleton.GetPlayerSession(args.Player());
 		var tab = Singleton.GetTab(ap.Player);
 
-		var vendor = GetVendor((PluginsTab.VendorTypes)Enum.Parse(typeof(PluginsTab.VendorTypes), ap.GetStorage(tab, "vendor", "Local")));
+		var vendor = PluginsTab.GetVendor((PluginsTab.VendorTypes)Enum.Parse(typeof(PluginsTab.VendorTypes), ap.GetStorage(tab, "vendor", "Local")));
 		vendor.Refresh();
 
-		var plugins = GetPlugins(vendor, tab, ap);
+		var plugins = PluginsTab.GetPlugins(vendor, tab, ap);
 		var nextPage = plugins.IndexOf(ap.GetStorage<PluginsTab.Plugin>(tab, "selectedplugin")) + args.Args[0].ToInt();
 		ap.SetStorage(tab, "selectedplugin", plugins[nextPage > plugins.Count - 1 ? 0 : nextPage < 0 ? plugins.Count - 1 : nextPage]);
 		Facepunch.Pool.FreeList(ref plugins);
 
-		DownloadThumbnails(vendor, tab, Singleton.GetPlayerSession(args.Player()));
+		PluginsTab.DownloadThumbnails(vendor, tab, Singleton.GetPlayerSession(args.Player()));
 
 		Singleton.Draw(args.Player());
 	}
+
+	[Conditional("!MINIMAL")]
 	[ProtectedCommand("pluginbrowser.changesetting")]
 	private void PluginBrowserChangeSetting(Arg args)
 	{
 		var ap = Singleton.GetPlayerSession(args.Player());
 		var tab = Singleton.GetTab(ap.Player);
-		var vendor = GetVendor((PluginsTab.VendorTypes)Enum.Parse(typeof(PluginsTab.VendorTypes), ap.GetStorage(tab, "vendor", "Local")));
+		var vendor = PluginsTab.GetVendor((PluginsTab.VendorTypes)Enum.Parse(typeof(PluginsTab.VendorTypes), ap.GetStorage(tab, "vendor", "Local")));
 
 		switch (args.Args[0])
 		{
 			case "filter_dd":
-				DropdownShow = !DropdownShow;
+				PluginsTab.DropdownShow = !PluginsTab.DropdownShow;
 
 				if (args.HasArgs(4))
 				{
 					var index = args.Args[3].ToInt();
-					var filter = ap.GetStorage(tab, "filter", FilterTypes.None);
+					var filter = ap.GetStorage(tab, "filter", PluginsTab.FilterTypes.None);
 					var flipFilter = ap.GetStorage<bool>(tab, "flipfilter");
 
 					if ((int)filter == index)
@@ -2316,11 +2354,13 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				break;
 		}
 
-		DownloadThumbnails(vendor, tab, Singleton.GetPlayerSession(args.Player()));
+		PluginsTab.DownloadThumbnails(vendor, tab, Singleton.GetPlayerSession(args.Player()));
 
 		vendor.Refresh();
 		Singleton.Draw(args.Player());
 	}
+
+	[Conditional("!MINIMAL")]
 	[ProtectedCommand("pluginbrowser.login")]
 	private void PluginBrowserLogin(Arg args)
 	{
@@ -2328,7 +2368,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		var tab = Singleton.GetTab(ap.Player);
 		var vendor = ap.GetStorage<string>(tab, "vendor");
 
-		var vendor2 = GetVendor((PluginsTab.VendorTypes)Enum.Parse(typeof(PluginsTab.VendorTypes), vendor));
+		var vendor2 = PluginsTab.GetVendor((PluginsTab.VendorTypes)Enum.Parse(typeof(PluginsTab.VendorTypes), vendor));
 		if (vendor2 is PluginsTab.IVendorAuthenticated auth)
 		{
 			if (auth.IsLoggedIn)
@@ -2379,6 +2419,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 		Singleton.Draw(args.Player());
 	}
+
+	[Conditional("!MINIMAL")]
 	[ProtectedCommand("pluginbrowser.closelogin")]
 	private void PluginBrowserCloseLogin(Arg args)
 	{
@@ -2386,7 +2428,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		var tab = Singleton.GetTab(ap.Player);
 		var vendor = ap.GetStorage<string>(tab, "vendor");
 
-		var vendor2 = GetVendor((PluginsTab.VendorTypes)Enum.Parse(typeof(PluginsTab.VendorTypes), vendor));
+		var vendor2 = PluginsTab.GetVendor((PluginsTab.VendorTypes)Enum.Parse(typeof(PluginsTab.VendorTypes), vendor));
 		if (vendor2 is PluginsTab.IVendorAuthenticated auth)
 		{
 			auth.User = null;
@@ -2396,11 +2438,12 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		}
 	}
 
+	[Conditional("!MINIMAL")]
 	[ConsoleCommand("adminmodule.downloadplugin", "Downloads a plugin from a vendor (if available). Syntax: adminmodule.downloadplugin <codefling|umod> <plugin>")]
 	[AuthLevel(2)]
 	private void DownloadPlugin(Arg args)
 	{
-		var vendor = GetVendor(args.Args[0] == "codefling" ? VendorTypes.Codefling : VendorTypes.uMod);
+		var vendor = PluginsTab.GetVendor(args.Args[0] == "codefling" ? PluginsTab.VendorTypes.Codefling : PluginsTab.VendorTypes.uMod);
 		if (vendor == null)
 		{
 			Singleton.PutsWarn($"Couldn't find that vendor.");
@@ -2415,11 +2458,12 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		vendor.Download(plugin.Id, () => { Singleton.PutsWarn($"Couldn't download {plugin.Name}."); });
 	}
 
+	[Conditional("!MINIMAL")]
 	[ConsoleCommand("adminmodule.updatevendor", "Downloads latest vendor information. Syntax: adminmodule.updatevendor <codefling|umod>")]
 	[AuthLevel(2)]
 	private void UpdateVendor(Arg args)
 	{
-		var vendor = GetVendor(args.Args[0] == "codefling" ? VendorTypes.Codefling : VendorTypes.uMod);
+		var vendor = PluginsTab.GetVendor(args.Args[0] == "codefling" ? PluginsTab.VendorTypes.Codefling : PluginsTab.VendorTypes.uMod);
 		if (vendor == null)
 		{
 			Singleton.PutsWarn($"Couldn't find that vendor.");
@@ -2429,11 +2473,11 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		var id = string.Empty;
 		switch (vendor)
 		{
-			case Codefling:
+			case PluginsTab.Codefling:
 				id = "cf";
 				break;
 
-			case uMod:
+			case PluginsTab.uMod:
 				id = "umod";
 				break;
 		}

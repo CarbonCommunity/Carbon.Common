@@ -1,5 +1,4 @@
 ﻿using Facepunch;
-using Facepunch.Models;
 using Newtonsoft.Json;
 using Logger = Carbon.Logger;
 
@@ -74,7 +73,7 @@ namespace Oxide.Core.Plugins
 			{
 				if (!InternalApplyPluginReferences())
 				{
-					Logger.Warn($"Failed vibe check {ToString()}");
+					Logger.Warn($"Failed vibe check {ToPrettyString()}");
 					return false;
 				}
 			}
@@ -83,7 +82,7 @@ namespace Oxide.Core.Plugins
 			if (Hooks != null)
 			{
 				string requester = FileName is not default(string) ? FileName : $"{this}";
-				using (TimeMeasure.New($"Processing Hooks on '{this}'"))
+				using (TimeMeasure.New($"Processing Hooks on '{ToPrettyString()}'"))
 				{
 					foreach (var hook in Hooks)
 					{
@@ -102,14 +101,14 @@ namespace Oxide.Core.Plugins
 		}
 		internal virtual void ILoad()
 		{
-			using (TimeMeasure.New($"Load on '{this}'"))
+			using (TimeMeasure.New($"Load on '{ToPrettyString()}'"))
 			{
 				IsLoaded = true;
 				CallHook("OnLoaded");
 				CallHook("Loaded");
 			}
 
-			using (TimeMeasure.New($"Load.PendingRequirees on '{this}'"))
+			using (TimeMeasure.New($"Load.PendingRequirees on '{ToPrettyString()}'"))
 			{
 				var requirees = ModLoader.GetRequirees(this);
 
@@ -117,7 +116,7 @@ namespace Oxide.Core.Plugins
 				{
 					foreach (var requiree in requirees)
 					{
-						Logger.Warn($" [{Name}] Loading '{Path.GetFileNameWithoutExtension(requiree)}' to parent's request: '{ToString()}'");
+						Logger.Warn($" [{Name}] Loading '{Path.GetFileNameWithoutExtension(requiree)}' to parent's request: '{ToPrettyString()}'");
 						Community.Runtime.ScriptProcessor.Prepare(requiree);
 					}
 
@@ -249,7 +248,7 @@ namespace Oxide.Core.Plugins
 		{
 			try
 			{
-				using (TimeMeasure.New($"IUnload.UnloadRequirees on '{this}'"))
+				using (TimeMeasure.New($"IUnload.UnloadRequirees on '{ToPrettyString()}'"))
 				{
 					var mods = Pool.GetList<ModLoader.ModPackage>();
 					mods.AddRange(ModLoader.LoadedPackages);
@@ -265,7 +264,7 @@ namespace Oxide.Core.Plugins
 							switch (plugin.Processor)
 							{
 								case IScriptProcessor script:
-									Logger.Warn($" [{Name}] Unloading '{plugin.ToString()}' because parent '{ToString()}' has been unloaded.");
+									Logger.Warn($" [{Name}] Unloading '{plugin.ToPrettyString()}' because parent '{ToPrettyString()}' has been unloaded.");
 									ModLoader.AddPendingRequiree(this, plugin);
 
 									script.Get<IScriptProcessor.IScript>(plugin.FileName)?.Dispose();
@@ -288,7 +287,7 @@ namespace Oxide.Core.Plugins
 			}
 			catch (Exception ex)
 			{
-				Logger.Error($"Failed calling Plugin.IUnload.UnloadRequirees on {this}", ex);
+				Logger.Error($"Failed calling Plugin.IUnload.UnloadRequirees on {ToPrettyString()}", ex);
 				return false;
 			}
 		}

@@ -16,7 +16,7 @@ using Graphics = System.Drawing.Graphics;
 
 namespace Carbon.Modules;
 
-public class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModuleData>
+public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModuleData>
 {
 	public override string Name => "ImageDatabase";
 	public override Type Type => typeof(ImageDatabaseModule);
@@ -43,7 +43,7 @@ public class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModule
 		["update-pending"] = "https://carbonmod.gg/assets/media/cui/update-pending.png",
 		["magnifying-glass"] = "https://carbonmod.gg/assets/media/cui/magnifying-glass.png",
 		["star"] = "https://carbonmod.gg/assets/media/cui/star.png",
-		["glow"] = "https://b0f7b4d5.carbon-website.pages.dev/assets/media/cui/glow.png"
+		["glow"] = "https://carbonmod.gg/assets/media/cui/glow.png"
 	};
 	internal IEnumerator _executeQueue(QueuedThread thread, Action<List<QueuedThreadResult>> onFinished)
 	{
@@ -100,7 +100,6 @@ public class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModule
 
 		Save();
 		LoadDefaultImages();
-
 	}
 	public override void OnServerSaved()
 	{
@@ -180,23 +179,30 @@ public class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModule
 	{
 		if (_protoData.Identifier != CommunityEntity.ServerInstance.net.ID.Value)
 		{
-			PutsWarn($"The server identifier has changed. Wiping old image database. [old {_protoData.Identifier}, new {CommunityEntity.ServerInstance.net.ID.Value}]"); _protoData.Map.Clear();
+			PutsWarn($"The server identifier has changed. Wiping old image database. [old {_protoData.Identifier}, new {CommunityEntity.ServerInstance.net.ID.Value}]");
 			_protoData.CustomMap.Clear();
 			_protoData.Map.Clear();
 			_protoData.Identifier = CommunityEntity.ServerInstance.net.ID.Value;
 			return true;
 		}
 
+		if (!HasImage("checkmark"))
+		{
+			_protoData.CustomMap.Clear();
+			_protoData.Map.Clear();
+			return true;
+		}
+
 		return false;
 	}
 
-	public void QueueBatch(bool @override, params string[] urls)
+	public void QueueBatch(bool @override, IEnumerable<string> urls)
 	{
 		QueueBatch(0f, @override, urls);
 	}
-	public void QueueBatch(float scale, bool @override, params string[] urls)
+	public void QueueBatch(float scale, bool @override, IEnumerable<string> urls)
 	{
-		if (urls == null || urls.Length == 0)
+		if (urls == null || !urls.Any())
 		{
 			return;
 		}
@@ -207,7 +213,7 @@ public class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModule
 			{
 				if (result.Data.Length >= MaximumBytes)
 				{
-					Puts($"Failed storing {urls.Length:n0} jobs [scale:{scale}]: {result.Data.Length} more or equal than {MaximumBytes}");
+					Puts($"Failed storing {urls.Count():n0} jobs [scale:{scale}]: {result.Data.Length} more or equal than {MaximumBytes}");
 					continue;
 				}
 
@@ -216,9 +222,9 @@ public class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModule
 			}
 		}, urls);
 	}
-	public void QueueBatch(float scale, bool @override, Action<List<QueuedThreadResult>> onComplete, params string[] urls)
+	public void QueueBatch(float scale, bool @override, Action<List<QueuedThreadResult>> onComplete, IEnumerable<string> urls)
 	{
-		if (urls == null || urls.Length == 0)
+		if (urls == null || !urls.Any())
 		{
 			return;
 		}
@@ -269,11 +275,11 @@ public class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModule
 			}
 			catch (Exception ex)
 			{
-				PutsError($"Failed QueueBatch of {urls.Length:n0}", ex);
+				PutsError($"Failed QueueBatch of {urls.Count():n0}", ex);
 			}
 		}));
 
-		Community.Runtime.CorePlugin.timer.In(ConfigInstance.TimeoutPerUrl * urls.Length, () =>
+		Community.Runtime.CorePlugin.timer.In(ConfigInstance.TimeoutPerUrl * urls.Count(), () =>
 		{
 			if (thread._disposed) return;
 
@@ -385,6 +391,10 @@ public class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModule
 	public string GetImageString(string keyOrUrl, float scale = 0, bool silent = false)
 	{
 		return GetImage(keyOrUrl, scale, silent).ToString();
+	}
+	public bool HasImage(string keyOrUrl, float scale = 0)
+	{
+		return FileStorage.server.Get(GetImage(keyOrUrl, scale), FileStorage.Type.png, CommunityEntity.ServerInstance.net.ID) != null;
 	}
 	public bool DeleteImage(string url, float scale = 0)
 	{

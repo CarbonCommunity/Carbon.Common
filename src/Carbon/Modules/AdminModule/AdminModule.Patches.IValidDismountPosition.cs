@@ -4,7 +4,7 @@ using API.Hooks;
 
 /*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -21,13 +21,14 @@ public partial class AdminModule
 	{
 		public static bool Prefix(BasePlayer player, Vector3 disPos, BaseMountable __instance, ref bool __result)
 		{
-			if (HookCaller.CallStaticHook(3269023868, __instance, player) is bool hookResult)
+			switch (__instance.skinID)
 			{
-				__result = hookResult;
-				return false;
+				case 69696:
+					__result = true;
+					return false;
+				default:
+					return true;
 			}
-
-			return true;
 		}
 	}
 }

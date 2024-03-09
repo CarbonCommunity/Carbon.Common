@@ -27,7 +27,7 @@ public partial class CorePlugin : CarbonPlugin
 		var config = Community.Runtime.Config;
 		var processor = Community.Runtime.ScriptProcessor;
 
-		foreach (var file in OsEx.Folder.GetFilesWithExtension(Defines.GetScriptFolder(), "cs", config.ScriptWatcherOption))
+		foreach (var file in OsEx.Folder.GetFilesWithExtension(Defines.GetScriptFolder(), "cs", config.Watchers.ScriptWatcherOption))
 		{
 			if (processor.IsBlacklisted(file)) continue;
 
@@ -61,7 +61,7 @@ public partial class CorePlugin : CarbonPlugin
 
 		foreach (var method in Type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic))
 		{
-			if (Community.Runtime.HookManager.IsHookLoaded(method.Name))
+			if (Community.Runtime.HookManager.IsHook(method.Name))
 			{
 				Community.Runtime.HookManager.Subscribe(method.Name, Name);
 
@@ -82,7 +82,7 @@ public partial class CorePlugin : CarbonPlugin
 
 		timer.Every(5f, () =>
 		{
-			if (Community.Runtime == null || Logger.CoreLog == null || !Logger.CoreLog.HasInit || Logger.CoreLog._buffer.Count == 0 || Community.Runtime.Config.LogFileMode != 1) return;
+			if (Community.Runtime == null || Logger.CoreLog == null || !Logger.CoreLog.HasInit || Logger.CoreLog._buffer.Count == 0 || Community.Runtime.Config.Logging.LogFileMode != 1) return;
 			Logger.CoreLog.Flush();
 		});
 
@@ -155,6 +155,7 @@ public partial class CorePlugin : CarbonPlugin
 
 	private void OnPlayerDisconnected(BasePlayer player, string reason)
 	{
+		// OnUserDisconnected
 		HookCaller.CallStaticHook(4253366379, player?.AsIPlayer(), reason);
 
 		if (player.IsAdmin && !player.IsOnGround())
@@ -213,7 +214,7 @@ public partial class CorePlugin : CarbonPlugin
 
 	public static void ApplyStacktrace()
 	{
-		if (Community.Runtime.Config.UnityStacktrace)
+		if (Community.Runtime.Config.Debugging.UnityStacktrace)
 		{
 			Application.SetStackTraceLogType(LogType.Log, _defaultLogTrace);
 			Application.SetStackTraceLogType(LogType.Warning, _defaultWarningTrace);

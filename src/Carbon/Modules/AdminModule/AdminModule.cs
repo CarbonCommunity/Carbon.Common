@@ -1,19 +1,15 @@
 ﻿using API.Commands;
-using Mysqlx.Session;
-using Network;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Oxide.Game.Rust.Cui;
-using ProtoBuf;
 using static Carbon.Components.CUI;
 using static ConsoleSystem;
-using static SkinnedMultiMesh;
 using Color = UnityEngine.Color;
 using StringEx = Carbon.Extensions.StringEx;
 
 /*
  *
- * Copyright (c) 2022-2023 Carbon Community
+ * Copyright (c) 2022-2024 Carbon Community
  * All rights reserved.
  *
  */
@@ -21,20 +17,21 @@ using StringEx = Carbon.Extensions.StringEx;
 namespace Carbon.Modules;
 #pragma warning disable IDE0051
 
-public partial class AdminModule
-#if !MINIMAL
-	: CarbonModule<AdminConfig, AdminData>
-#endif
+public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 {
-#if !MINIMAL
-
-	internal static AdminModule Singleton { get; set; }
-
 	public override string Name => "Admin";
 	public override VersionNumber Version => new(1, 7, 0);
 	public override Type Type => typeof(AdminModule);
-	public override bool EnabledByDefault => true;
+
+	#if MINIMAL
+	public override bool ForceDisabled => true;
+	#endif
+	
+#if !MINIMAL
 	public override bool ForceEnabled => true;
+	public override bool EnabledByDefault => true;
+
+	internal static AdminModule Singleton { get; set; }
 
 	public ImageDatabaseModule ImageDatabase;
 	public ColorPickerModule ColorPicker;
@@ -77,6 +74,7 @@ public partial class AdminModule
 		"players.use",
 		"players.inventory_management",
 		"players.craft_queue",
+		"players.see_ips",
 		"plugins.use",
 		"plugins.setup"
 	};
@@ -123,9 +121,9 @@ public partial class AdminModule
 		Unsubscribe("OnEntityVisibilityCheck");
 		Unsubscribe("OnEntityDistanceCheck");
 
-		foreach (var level in AdminPermissions)
+		foreach (var perm in AdminPermissions)
 		{
-			RegisterPermission($"adminmodule.{level}");
+			RegisterPermission($"adminmodule.{perm}");
 		}
 
 		if (!_logRegistration)
@@ -261,6 +259,7 @@ public partial class AdminModule
 		};
 	}
 
+	[Conditional("!MINIMAL")]
 	private void OnLog(string condition, string stackTrace, LogType type)
 	{
 		try
@@ -300,6 +299,7 @@ public partial class AdminModule
 		if (!ConfigInstance.DisablePluginsTab) RegisterTab(PluginsTab.Get());
 	}
 
+	[Conditional("!MINIMAL")]
 	private bool CanAccess(BasePlayer player)
 	{
 		if (HookCaller.CallStaticHook(3097360729, player) is bool result)
@@ -328,6 +328,7 @@ public partial class AdminModule
 
 	#region Option Elements
 
+	[Conditional("!MINIMAL")]
 	internal void TabButton(CUI cui, CuiElementContainer container, string parent, string text, string command, float width, float offset, bool highlight = false, bool disabled = false)
 	{
 		var button = cui.CreateProtectedButton(container, parent: parent,
@@ -1642,6 +1643,7 @@ public partial class AdminModule
 
 	#region Administration - Custom Commands
 
+	[Conditional("!MINIMAL")]
 	[ProtectedCommand("carbongg.endspectate")]
 	private void EndSpectate(Arg arg)
 	{
@@ -1650,6 +1652,7 @@ public partial class AdminModule
 
 	#endregion
 
+	[Conditional("!MINIMAL")]
 	private void OnPluginLoaded(RustPlugin plugin)
 	{
 		PluginsTab.GetVendor(PluginsTab.VendorTypes.Codefling)?.Refresh();
@@ -1665,6 +1668,8 @@ public partial class AdminModule
 			}
 		}
 	}
+
+	[Conditional("!MINIMAL")]
 	private void OnPluginUnloaded(RustPlugin plugin)
 	{
 		Community.Runtime.CorePlugin.NextTick(() =>
@@ -2078,17 +2083,11 @@ public partial class AdminModule
 					"A very basic system that only grants players access to a server based on the 'whitelist.bypass' permission or 'whitelisted' group.", "",
 					FindModule("WhitelistModule"));
 			}));
-			tab.Pages.Add(new Page("DRM", (cui, t, container, panel, ap) =>
-			{
-				tab.ModuleInfoTemplate(cui, t, container, panel, ap,
-					"DRM Module",
-					"A system that allows server hosts to bind endpoints that deliver plugin information with respect to the public and private keys.\n" +
-					"For more information, check out the documentation page over on https://docs.carbonmod.gg.", "",
-					FindModule("DRMModule"));
-			}));
 
 			tab.Pages.Add(new Page("Finalize", (cui, t, container, panel, ap) =>
 			{
+				Analytics.admin_module_wizard(Analytics.WizardProgress.Walkthrough);
+
 				Singleton.DataInstance.WizardDisplayed = true;
 				Singleton.GenerateTabs();
 				Community.Runtime.CorePlugin.NextTick(() => Singleton.SetTab(ap.Player, 0));
@@ -2227,6 +2226,7 @@ public partial class AdminModule
 
 	#region Setup Wizard - Custom Commands
 
+	[Conditional("!MINIMAL")]
 	[ProtectedCommand("wizard.changepage")]
 	private void ChangePage(Arg arg)
 	{
@@ -2238,6 +2238,8 @@ public partial class AdminModule
 
 		if (value == -2)
 		{
+			Analytics.admin_module_wizard(Analytics.WizardProgress.Skipped);
+
 			ap.SetStorage(tab, "page", 0);
 			Singleton.DataInstance.WizardDisplayed = true;
 			Singleton.GenerateTabs();
@@ -2257,6 +2259,7 @@ public partial class AdminModule
 
 	}
 
+	[Conditional("!MINIMAL")]
 	[ProtectedCommand("wizard.togglemodule")]
 	private void ToggleModule(Arg arg)
 	{
@@ -2270,6 +2273,7 @@ public partial class AdminModule
 		Draw(ap.Player);
 	}
 
+	[Conditional("!MINIMAL")]
 	[ProtectedCommand("wizard.togglefeature")]
 	private void ToggleFeature(Arg arg)
 	{
@@ -2286,6 +2290,7 @@ public partial class AdminModule
 		Draw(ap.Player);
 	}
 
+	[Conditional("!MINIMAL")]
 	[ProtectedCommand("wizard.editmoduleconfig")]
 	private void EditModuleConfig(Arg arg)
 	{
@@ -2311,6 +2316,7 @@ public partial class AdminModule
 		Draw(ap.Player);
 	}
 
+	[Conditional("!MINIMAL")]
 	[ProtectedCommand("wizard.openmodulefolder")]
 	private void OpenModuleFolder(Arg arg)
 	{
@@ -2330,8 +2336,6 @@ public partial class AdminModule
 #endif
 }
 
-#if !MINIMAL
-
 public class AdminConfig
 {
 	[JsonProperty("OpenCommands")]
@@ -2345,6 +2349,7 @@ public class AdminData
 {
 	[JsonProperty("WizardDisplayed")]
 	public bool WizardDisplayed = false;
+	public bool HidePluginIcons = false;
 	public DataColors Colors = new();
 
 	public class DataColors
@@ -2355,5 +2360,3 @@ public class AdminData
 		public float TitleUnderlineOpacity = 0.9f;
 	}
 }
-
-#endif

@@ -91,6 +91,7 @@ public class BaseHookable
 	public double CurrentHookTime { get; internal set; }
 	public static long CurrentMemory => GC.GetTotalMemory(false);
 	public static int CurrentGcCount => GC.CollectionCount(0);
+	public int CurrentHookFires => HookCache.Sum(x => x.Value.Sum(y => y.TimesFired));
 	public bool HasGCCollected => _currentGcCount != CurrentGcCount;
 
 	public virtual void TrackInit()
@@ -103,12 +104,12 @@ public class BaseHookable
 #if DEBUG
 		if (HookTimeAverage == null)
 		{
-			HookTimeAverage = new(Community.Runtime.Config.PluginTrackingTime);
+			HookTimeAverage = new(Community.Runtime.Config.Debugging.PluginTrackingTime);
 		}
 
 		if (MemoryAverage == null)
 		{
-			MemoryAverage = new(Community.Runtime.Config.PluginTrackingTime);
+			MemoryAverage = new(Community.Runtime.Config.Debugging.PluginTrackingTime);
 		}
 #endif
 	}
@@ -184,7 +185,7 @@ public class BaseHookable
 
 			if (!hooksPresent)
 			{
-				if (Community.Runtime.HookManager.IsHookLoaded(method.Name) && !Hooks.Contains(id))
+				if (Community.Runtime.HookManager.IsHook(method.Name) && !Hooks.Contains(id))
 				{
 					Hooks.Add(id);
 				}
@@ -299,6 +300,11 @@ public class BaseHookable
 	}
 
 	public override string ToString()
+	{
+		return GetType().FullName;
+	}
+
+	public virtual string ToPrettyString()
 	{
 		return $"{Name} v{Version}";
 	}

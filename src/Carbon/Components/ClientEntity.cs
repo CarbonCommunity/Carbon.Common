@@ -5,7 +5,7 @@ using Time = UnityEngine.Time;
 
 /*
  *
- * Copyright (c) 2022-2024 Carbon Community  
+ * Copyright (c) 2022-2024 Carbon Community
  * Copyright (c) 2023 Patrette
  * All rights reserved.
  *
@@ -264,9 +264,9 @@ public class ClientEntity : IDisposable
 	internal void _sendSnapshot(Connection connection, byte[] data)
 	{
 		using var writer = Network.Net.sv.StartWrite();
+		writer.PacketID(Message.Type.Entities);
 		connection.validate.entityUpdates++;
 
-		writer.PacketID(Message.Type.Entities);
 		writer.UInt32(connection.validate.entityUpdates);
 		writer.Write(data, 0, data.Length);
 		writer.Send(new SendInfo(connection));

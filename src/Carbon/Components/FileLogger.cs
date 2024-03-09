@@ -1,6 +1,6 @@
 ﻿/*
  *
- * Copyright (c) 2022-2024 Carbon Community 
+ * Copyright (c) 2022-2024 Carbon Community
  * All rights reserved.
  *
  */
@@ -114,9 +114,9 @@ public class FileLogger : IDisposable
 	}
 	public virtual void QueueLog(object message)
 	{
-		if (Community.IsConfigReady && Community.Runtime.Config.LogFileMode == 0) return;
+		if (Community.IsConfigReady && Community.Runtime.Config.Logging.LogFileMode == 0) return;
 
 		_buffer.Add($"[{Logger.GetDate()}] {message}");
-		if (Community.IsConfigReady && Community.Runtime.Config.LogFileMode == 2) Flush();
+		if (Community.IsConfigReady && Community.Runtime.Config.Logging.LogFileMode == 2) Flush();
 	}
 }

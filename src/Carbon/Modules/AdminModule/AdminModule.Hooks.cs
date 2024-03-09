@@ -3,6 +3,8 @@
 public partial class AdminModule
 {
 #if !MINIMAL
+
+	[Conditional("!MINIMAL")]
 	private void OnEntityDismounted(BaseMountable entity, BasePlayer player)
 	{
 		var ap = GetPlayerSession(player);
@@ -14,6 +16,8 @@ public partial class AdminModule
 
 		Unsubscribe("OnEntityDismounted");
 	}
+
+	[Conditional("!MINIMAL")]
 	private void OnPlayerLootEnd(PlayerLoot loot)
 	{
 		if (EntitiesTab.LastContainerLooter != null && loot.baseEntity == EntitiesTab.LastContainerLooter.Player)
@@ -24,6 +28,8 @@ public partial class AdminModule
 			Unsubscribe("OnEntityDistanceCheck");
 		}
 	}
+
+	[Conditional("!MINIMAL")]
 	private object OnEntityDistanceCheck(BaseEntity ent, BasePlayer player, uint id, string debugName, float maximumDistance)
 	{
 		var ap = GetPlayerSession(player);
@@ -34,6 +40,8 @@ public partial class AdminModule
 
 		return true;
 	}
+
+	[Conditional("!MINIMAL")]
 	private object OnEntityVisibilityCheck(BaseEntity ent, BasePlayer player, uint id, string debugName, float maximumDistance)
 	{
 		var ap = GetPlayerSession(player);
@@ -44,6 +52,8 @@ public partial class AdminModule
 
 		return true;
 	}
+
+	[Conditional("!MINIMAL")]
 	private void OnPlayerDisconnected(BasePlayer player)
 	{
 		if (PlayersTab.BlindedPlayers.Contains(player)) PlayersTab.BlindedPlayers.Remove(player);
@@ -51,6 +61,7 @@ public partial class AdminModule
 		StopSpectating(player);
 	}
 
+	[Conditional("!MINIMAL")]
 	private object IValidDismountPosition(BaseMountable mountable, BasePlayer player)
 	{
 		switch (mountable.skinID)
