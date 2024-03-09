@@ -1,6 +1,6 @@
 ﻿/*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -11,7 +11,7 @@ using static Carbon.Components.CUI;
 
 namespace Carbon.Modules;
 
-public class DatePickerModule : CarbonModule<EmptyModuleConfig, EmptyModuleData>
+public partial class DatePickerModule : CarbonModule<EmptyModuleConfig, EmptyModuleData>
 {
 	public AdminModule Admin { get; internal set; }
 	public readonly Handler Handler = new();
@@ -73,7 +73,7 @@ public class DatePickerModule : CarbonModule<EmptyModuleConfig, EmptyModuleData>
 		ap.SetStorage(ap.SelectedTab, OnDatePicked, onDatePicked);
 
 		using var cui = new CUI(Handler);
-	
+
 		var container = cui.CreateContainer(PanelId,
 			color: "0 0 0 0.75",
 			xMin: 0, xMax: 1, yMin: 0, yMax: 1,

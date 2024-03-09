@@ -40,7 +40,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				RefreshPlayers(tab, ap2);
 			});
 
-			var onlinePlayers = BasePlayer.allPlayerList.Where(x => x.userID.IsSteamId() && x.IsConnected)
+			var onlinePlayers = BasePlayer.allPlayerList.Distinct().Where(x => x.userID.IsSteamId() && x.IsConnected)
 				.OrderBy(x => x.Connection?.connectionTime);
 			tab.AddName(0, $"Online ({onlinePlayers.Count():n0})");
 			foreach (var player in onlinePlayers)
@@ -50,7 +50,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 			if (onlinePlayers.Count() == 0) tab.AddText(0, "No online players found.", 10, "1 1 1 0.4");
 
-			var offlinePlayers = BasePlayer.allPlayerList.Where(x => x.userID.IsSteamId() && !x.IsConnected);
+			var offlinePlayers = BasePlayer.allPlayerList.Distinct().Where(x => x.userID.IsSteamId() && !x.IsConnected);
 			tab.AddName(0, $"Offline ({offlinePlayers.Count():n0})");
 			foreach (var player in offlinePlayers)
 			{

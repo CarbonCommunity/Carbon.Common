@@ -17,6 +17,7 @@ public abstract class BaseModule : BaseHookable
 	public virtual bool EnabledByDefault => false;
 	public virtual bool ForceModded => false;
 	public virtual bool ForceEnabled => false;
+	public virtual bool ForceDisabled => false;
 
 	public abstract void OnServerInit(bool initial);
 	public abstract void OnPostServerInit(bool initial);
@@ -81,13 +82,13 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 		base.Name ??= Name;
 		base.Type ??= Type;
 
-		TrackInit();
+		if (ForceDisabled) return;
 
-		InternalCallHookOverriden = false;
+		TrackInit();
 	}
 	public virtual bool InitEnd()
 	{
-		if (HasInitialized) return false;
+		if (ForceDisabled || HasInitialized) return false;
 
 		Community.Runtime.HookManager.LoadHooksFromType(Type);
 
@@ -121,6 +122,8 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 	}
 	public override void Load()
 	{
+		if (ForceDisabled) return;
+
 		var shouldSave = false;
 
 		Config ??= new DynamicConfigFile(GetConfigPath());
@@ -195,6 +198,8 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 	}
 	public override void Save()
 	{
+		if (ForceDisabled) return;
+
 		if (ModuleConfiguration == null)
 		{
 			ModuleConfiguration = new Configuration { Config = Activator.CreateInstance<C>() };
@@ -216,6 +221,8 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 	}
 	public override void Reload()
 	{
+		if (ForceDisabled) return;
+
 		try
 		{
 			Unload();
@@ -278,6 +285,8 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 
 	public override void SetEnabled(bool enable)
 	{
+		if (ForceDisabled) return;
+
 		if (ModuleConfiguration != null)
 		{
 			ModuleConfiguration.Enabled = enable;
@@ -286,11 +295,13 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 	}
 	public override bool GetEnabled()
 	{
-		return ModuleConfiguration != null && ModuleConfiguration.Enabled;
+		return !ForceDisabled && ModuleConfiguration != null && ModuleConfiguration.Enabled;
 	}
 
 	public virtual void OnDisabled(bool initialized)
 	{
+		if (ForceDisabled) return;
+
 		if (initialized) ModLoader.RemoveCommands(this);
 
 		UnsubscribeAll();
@@ -300,6 +311,8 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 	}
 	public virtual void OnEnabled(bool initialized)
 	{
+		if (ForceDisabled) return;
+
 		if (initialized) ModLoader.ProcessCommands(Type, this, flags: BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
 
 		SubscribeAll();
@@ -314,6 +327,8 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 
 	public void OnEnableStatus()
 	{
+		if (ForceDisabled) return;
+
 		try
 		{
 			if (ModuleConfiguration == null) return;
@@ -331,6 +346,8 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 
 	public override void OnServerInit(bool initial)
 	{
+		if (ForceDisabled) return;
+
 		if (initial)
 		{
 			OnEnableStatus();
