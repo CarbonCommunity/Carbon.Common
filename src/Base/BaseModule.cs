@@ -82,8 +82,6 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 		base.Type ??= Type;
 
 		TrackInit();
-
-		InternalCallHookOverriden = false;
 	}
 	public virtual bool InitEnd()
 	{
