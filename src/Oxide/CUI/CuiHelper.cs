@@ -56,6 +56,15 @@ public static class CuiHelper
 
 	public static string GetGuid() => $"{Guid.NewGuid():N}";
 
+	public static bool AddUi(BasePlayer player, string json)
+	{
+		// CanUseUI
+		if (player?.net != null && HookCaller.CallStaticHook(1318053248, player, json) != null) return false;
+
+		CommunityEntity.ServerInstance.ClientRPCEx(new Network.SendInfo { connection = player.net.connection }, null, "AddUI", json);
+		return true;
+	}
+
 	public static bool AddUi(BasePlayer player, List<CuiElement> elements)
 	{
 		var json = ToJson(elements);
