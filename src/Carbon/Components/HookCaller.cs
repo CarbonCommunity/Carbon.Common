@@ -1525,7 +1525,7 @@ public static class HookCaller
 			methodContents += "\t\t\t\tbreak;\n\t\t\t}\n";
 		}
 
-		methodContents += "}\n}\ncatch (System.Exception ex)\n{\nCarbon.Logger.Error($\"Failed to call internal hook '{Carbon.Pooling.HookStringPool.GetOrAdd(hook)}' on " + baseName + " '{this.Name} v{this.Version}' [{hook}]\", ex);\n}\nreturn result;";
+		methodContents += "}\n}\ncatch (System.Exception ex)\n{\nCarbon.Logger.Error($\"Failed to call internal hook '{Carbon.Pooling.HookStringPool.GetOrAdd(hook)}' on " + baseName + " '{" + (baseName == "plugin" ? "base.Name" : "this.Name") + "} v{ " + (baseName == "plugin" ? "base.Version" : "this.Version") + "}' [{hook}]\", ex);\n}\nreturn result;";
 
 		generatedMethod = SyntaxFactory.MethodDeclaration(
 			SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword).WithTrailingTrivia(SyntaxFactory.Space)),
