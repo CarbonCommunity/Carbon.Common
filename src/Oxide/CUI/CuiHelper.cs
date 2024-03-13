@@ -66,7 +66,7 @@ public static class CuiHelper
 		// CanUseUI
 		if (HookCaller.CallStaticHook(1318053248, player, json) != null) return false;
 
-		CommunityEntity.ServerInstance.ClientRPCEx(new Network.SendInfo { connection = player.net.connection }, null, "AddUI", json);
+		CommunityEntity.ServerInstance.ClientRPCEx(new Network.SendInfo { connection = player.net.connection }, null,  "AddUI", json);
 		return true;
 	}
 

@@ -41,31 +41,13 @@ public partial class CorePlugin : CarbonPlugin
 		{
 			module.SetEnabled(newEnabled);
 
-			if (newEnabled)
-			{
-				try
-				{
-					module.OnServerInit(false);
-				}
-				catch (Exception ex)
-				{
-					Logger.Error($"Failed OnServerInit on {module.Name}", ex);
-				}
-
-				try
-				{
-					module.OnPostServerInit(false);
-				}
-				catch (Exception ex)
-				{
-					Logger.Error($"Failed OnPostServerInit on {module.Name}", ex);
-				}
-			}
-
 			module.Save();
+			arg.ReplyWith($"{module.Name} marked {(module.GetEnabled() ? "enabled" : "disabled")}.");
 		}
-
-		arg.ReplyWith($"{module.Name} marked {(module.GetEnabled() ? "enabled" : "disabled")}.");
+		else
+		{
+			arg.ReplyWith($"{module.Name} is already {(module.GetEnabled() ? "enabled" : "disabled")}.");
+		}
 	}
 
 	[ConsoleCommand("saveallmodules", "Saves the configs and data files of all available modules.")]
