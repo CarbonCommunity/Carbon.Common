@@ -188,8 +188,6 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 		if (PreLoadShouldSave(newConfig, newData)) shouldSave = true;
 
 		if (shouldSave) Save();
-
-		OnEnableStatus();
 	}
 	public virtual bool PreLoadShouldSave(bool newConfig, bool newData)
 	{
@@ -345,10 +343,10 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 
 		try
 		{
-			if (ModuleConfiguration == null || !Community.IsServerInitialized) return;
+			if (ModuleConfiguration == null) return;
 
-			if (ModuleConfiguration.Enabled) OnEnabled(true);
-			else OnDisabled(true);
+			if (ModuleConfiguration.Enabled) OnEnabled(Community.IsServerInitialized);
+			else OnDisabled(Community.IsServerInitialized);
 		}
 		catch (Exception ex) { Logger.Error($"Failed {(ModuleConfiguration.Enabled ? "Enable" : "Disable")} initialization.", ex); }
 	}
@@ -360,12 +358,7 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 
 	public override void OnServerInit(bool initial)
 	{
-		if (ForceDisabled) return;
 
-		if (initial)
-		{
-			OnEnableStatus();
-		}
 	}
 	public override void OnPostServerInit(bool initial)
 	{
