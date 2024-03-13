@@ -345,10 +345,10 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 
 		try
 		{
-			if (ModuleConfiguration == null) return;
+			if (ModuleConfiguration == null || !Community.IsServerInitialized) return;
 
-			if (ModuleConfiguration.Enabled) OnEnabled(Community.IsServerInitialized);
-			else OnDisabled(Community.IsServerInitialized);
+			if (ModuleConfiguration.Enabled) OnEnabled(true);
+			else OnDisabled(true);
 		}
 		catch (Exception ex) { Logger.Error($"Failed {(ModuleConfiguration.Enabled ? "Enable" : "Disable")} initialization.", ex); }
 	}
