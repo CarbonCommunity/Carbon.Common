@@ -358,7 +358,12 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 
 	public override void OnServerInit(bool initial)
 	{
+		if (ForceDisabled) return;
 
+		if (initial && GetEnabled())
+		{
+			OnEnableStatus();
+		}
 	}
 	public override void OnPostServerInit(bool initial)
 	{
