@@ -138,6 +138,7 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 
 		SaveDatabase();
 	}
+
 	public void SaveDatabase()
 	{
 		var path = _getProtoDataPath();

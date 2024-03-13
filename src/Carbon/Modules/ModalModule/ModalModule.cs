@@ -42,7 +42,7 @@ public partial class ModalModule : CarbonModule<EmptyModuleConfig, EmptyModuleDa
 					  Action onCancel = null,
 					  Action<Modal, string, Modal.Field, object, object> onFieldChanged = null)
 	{
-		var tab = new Modal()
+		var modal = new Modal()
 		{
 			Title = title,
 			Fields = fields,
@@ -53,9 +53,9 @@ public partial class ModalModule : CarbonModule<EmptyModuleConfig, EmptyModuleDa
 			Handler = new()
 		};
 
-		NextFrame(() => tab.Draw(player));
+		NextFrame(() => modal.Draw(player));
 
-		return tab;
+		return modal;
 	}
 	public void Close(BasePlayer player)
 	{
