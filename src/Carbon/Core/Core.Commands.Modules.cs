@@ -21,16 +21,21 @@ public partial class CorePlugin : CarbonPlugin
 
 		var moduleName = arg.GetString(0);
 		var hookable = Community.Runtime.ModuleProcessor.Modules.FirstOrDefault(x => x.Name == moduleName);
-		var module = hookable?.To<IModule>();
+		var module = hookable?.To<BaseModule>();
 
 		if (module == null)
 		{
 			arg.ReplyWith($"Couldn't find that module. Try 'c.modules' to print them all.");
 			return;
 		}
-		else if (module is BaseModule baseModule && baseModule.ForceEnabled)
+		else if (module.ForceEnabled)
 		{
 			arg.ReplyWith($"That module is forcefully enabled, you may not change its status.");
+			return;
+		}
+		else if (module.ForceDisabled)
+		{
+			arg.ReplyWith($"That module is forcefully disabled, you may not change its status.");
 			return;
 		}
 
