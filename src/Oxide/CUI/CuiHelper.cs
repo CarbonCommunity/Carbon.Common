@@ -54,23 +54,33 @@ public static class CuiHelper
 
 	public static List<CuiElement> FromJson(string json) => JsonConvert.DeserializeObject<List<CuiElement>>(json);
 
-	public static string GetGuid() => $"{Guid.NewGuid():N}";
+	public static string GetGuid() => Guid.NewGuid().ToString("N");
 
 	public static bool AddUi(BasePlayer player, string json)
 	{
-		// CanUseUI
-		if (player?.net != null && HookCaller.CallStaticHook(1318053248, player, json) != null) return false;
+		if (player == null || player.net == null)
+		{
+			return false;
+		}
 
-		CommunityEntity.ServerInstance.ClientRPCEx(new Network.SendInfo { connection = player.net.connection }, null, "AddUI", json);
+		// CanUseUI
+		if (HookCaller.CallStaticHook(1318053248, player, json) != null) return false;
+
+		CommunityEntity.ServerInstance.ClientRPCEx(new Network.SendInfo { connection = player.net.connection }, null,  "AddUI", json);
 		return true;
 	}
 
 	public static bool AddUi(BasePlayer player, List<CuiElement> elements)
 	{
+		if (player == null || player.net == null)
+		{
+			return false;
+		}
+
 		var json = ToJson(elements);
 
 		// CanUseUI
-		if (player?.net != null && HookCaller.CallStaticHook(1318053248, player, json) != null) return false;
+		if (HookCaller.CallStaticHook(1318053248, player, json) != null) return false;
 
 		if (elements != null && elements.Count > 0)
 		{

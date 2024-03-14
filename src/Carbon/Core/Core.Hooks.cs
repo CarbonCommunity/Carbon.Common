@@ -5,6 +5,9 @@
  *
  */
 
+using Carbon.Base.Interfaces;
+using Facepunch;
+
 namespace Carbon.Core;
 
 #pragma warning disable IDE0051
@@ -28,6 +31,26 @@ public partial class CorePlugin : CarbonPlugin
 	internal static object IOnServerShutdown()
 	{
 		Logger.Log($"Saving plugin configuration and data..");
+
+		var temp = Pool.GetList<BaseHookable>();
+		temp.AddRange(Community.Runtime.ModuleProcessor.Modules);
+
+		foreach (var module in temp)
+		{
+			if (module is BaseModule m)
+			{
+				try
+				{
+					m.Shutdown();
+				}
+				catch (Exception ex)
+				{
+					Logger.Error($"Failed shutting down module '{m.Name} v{m.Version}'", ex);
+				}
+			}
+		}
+
+		Pool.FreeList(ref temp);
 
 		// OnServerShutdown
 		HookCaller.CallStaticHook(1708437245);

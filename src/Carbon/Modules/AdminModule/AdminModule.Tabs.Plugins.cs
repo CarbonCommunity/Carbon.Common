@@ -1042,6 +1042,13 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 						case ".zip":
 							core.webrequest.Enqueue(string.Format(AuthDownloadFileEndpoint, plugin.Id), null, (error, source) =>
 							{
+								if (error != 200)
+								{
+									Logger.Error($"Auth token for Codefling is expired! Please log in once again.");
+									User = null;
+									return;
+								}
+
 								var jobject = JObject.Parse(source);
 								var name = jobject["files"][0]["name"].ToString();
 								var file = jobject["files"][0]["url"].ToString();

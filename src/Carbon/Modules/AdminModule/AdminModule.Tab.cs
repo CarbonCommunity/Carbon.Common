@@ -389,9 +389,4 @@ public partial class AdminModule
 			}
 		}
 	}
-
-	public class DynamicTab : Tab
-	{
-		public DynamicTab(string id, string name, RustPlugin plugin, Action<PlayerSession, Tab> onChange = null) : base(id, name, plugin, onChange) { }
-	}
 }
