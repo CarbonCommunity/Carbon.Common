@@ -15,9 +15,9 @@ namespace Carbon.Modules;
 
 public partial class AdminModule
 {
-	public class Configuration : Tab
+	public class ConfigurationTab : Tab
 	{
-		public Configuration(string id, string name, RustPlugin plugin, Action<PlayerSession, Tab> onChange = null) : base(id, name, plugin, onChange)
+		public ConfigurationTab(string id, string name, RustPlugin plugin, Action<PlayerSession, Tab> onChange = null) : base(id, name, plugin, onChange)
 		{
 		}
 
@@ -29,9 +29,9 @@ public partial class AdminModule
 			"Developer"
 		};
 
-		public static Configuration Make()
+		public static ConfigurationTab Make()
 		{
-			var tab = new Configuration("configuration", "Configuration", Community.Runtime.CorePlugin, (session, tab) =>
+			var tab = new ConfigurationTab("configuration", "Configuration", Community.Runtime.CorePlugin, (session, tab) =>
 			{
 				Refresh(tab, session);
 			}) { Fullscreen = true };
