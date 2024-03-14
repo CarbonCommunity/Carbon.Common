@@ -242,6 +242,8 @@ public class BaseHookable
 
 		HasBuiltHookCache = true;
 		Logger.Debug(Name, $"Built hook cache", 2);
+
+		InternalCallHook(0, null);
 	}
 	public virtual object InternalCallHook(uint hook, object[] args)
 	{
@@ -249,16 +251,6 @@ public class BaseHookable
 		return null;
 	}
 
-	public void Unsubscribe(string hook)
-	{
-		if (IgnoredHooks == null) return;
-
-		var hash = HookStringPool.GetOrAdd(hook);
-
-		if (IgnoredHooks.Contains(hash)) return;
-
-		IgnoredHooks.Add(hash);
-	}
 	public void Subscribe(string hook)
 	{
 		if (IgnoredHooks == null) return;
@@ -267,7 +259,19 @@ public class BaseHookable
 
 		if (!IgnoredHooks.Contains(hash)) return;
 
+		Community.Runtime.HookManager.Subscribe(hook, Name);
 		IgnoredHooks.Remove(hash);
+	}
+	public void Unsubscribe(string hook)
+	{
+		if (IgnoredHooks == null) return;
+
+		var hash = HookStringPool.GetOrAdd(hook);
+
+		if (IgnoredHooks.Contains(hash)) return;
+
+		Community.Runtime.HookManager.Unsubscribe(hook, Name);
+		IgnoredHooks.Add(hash);
 	}
 	public bool IsHookIgnored(uint hook)
 	{

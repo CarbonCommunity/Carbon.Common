@@ -158,17 +158,17 @@ public sealed class Logger : ILogger
 	/// </summary>
 	/// <param name="header"></param>
 	/// <param name="message"></param>
-	/// <param name="verbosity"></param>
-	public static void Debug(object header, object message, int verbosity)
-		=> Write(Severity.Debug, $"[CRBN.{header}] {message}", null, verbosity);
+	/// <param name="layer"></param>
+	public static void Debug(object header, object message, int layer)
+		=> Write(Severity.Debug, $"[CRBN.{header}] {message}", null, layer);
 
 	/// <summary>
 	/// Outputs to the game's console a message with severity level 'DEBUG'.
 	/// </summary>
 	/// <param name="message"></param>
-	/// <param name="verbosity"></param>
-	public static void Debug(object message, int verbosity)
-		=> Write(Severity.Debug, $"[CRBN] {message}", null, verbosity);
+	/// <param name="layer"></param>
+	public static void Debug(object message, int layer)
+		=> Write(Severity.Debug, $"[CRBN] {message}", null, layer);
 
 	/// <summary>
 	/// Outputs to the game's console a message with severity level 'DEBUG'.

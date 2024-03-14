@@ -43,7 +43,9 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 		["update-pending"] = "https://carbonmod.gg/assets/media/cui/update-pending.png",
 		["magnifying-glass"] = "https://carbonmod.gg/assets/media/cui/magnifying-glass.png",
 		["star"] = "https://carbonmod.gg/assets/media/cui/star.png",
-		["glow"] = "https://carbonmod.gg/assets/media/cui/glow.png"
+		["glow"] = "https://carbonmod.gg/assets/media/cui/glow.png",
+		["gear"] = "https://carbonmod.gg/assets/media/cui/gear.png",
+		["close"] = "https://carbonmod.gg/assets/media/cui/close.png"
 	};
 	internal IEnumerator _executeQueue(QueuedThread thread, Action<List<QueuedThreadResult>> onFinished)
 	{
@@ -59,6 +61,14 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 	}
 
 	internal const int MaximumBytes = 4104304;
+
+	[ConsoleCommand("imagedb.loaddefaults")]
+	[AuthLevel(2)]
+	private void LoadDefaults(ConsoleSystem.Arg arg)
+	{
+		LoadDefaultImages();
+		arg.ReplyWith($"Loading all default images.");
+	}
 
 	[ConsoleCommand("imagedb.pending")]
 	[AuthLevel(2)]
@@ -138,6 +148,7 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 
 		SaveDatabase();
 	}
+
 	public void SaveDatabase()
 	{
 		var path = _getProtoDataPath();

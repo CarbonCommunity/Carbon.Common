@@ -78,6 +78,22 @@ public partial class AdminModule
 	}
 
 	[Conditional("!MINIMAL")]
+	[ProtectedCommand(PanelId + ".config")]
+	private void ShowConfig(ConsoleSystem.Arg args)
+	{
+		var player = args.Player();
+
+		if (GetTab(player).Id == "configuration")
+		{
+			SetTab(player, 0);
+		}
+		else
+		{
+			SetTab(player, ConfigurationTab.Make());
+		}
+	}
+
+	[Conditional("!MINIMAL")]
 	[ProtectedCommand(PanelId + ".close")]
 	private void CloseUI(ConsoleSystem.Arg args)
 	{

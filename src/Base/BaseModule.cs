@@ -24,7 +24,7 @@ public abstract class BaseModule : BaseHookable
 	public abstract void OnServerSaved();
 	public abstract void Load();
 	public abstract void Save();
-	public abstract void Unload();
+	public abstract void OnUnload();
 	public abstract void Reload();
 	public abstract bool GetEnabled();
 	public abstract void SetEnabled(bool enable);
@@ -61,7 +61,6 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 	public C ConfigInstance { get; private set; }
 
 	public new virtual string Name => "Not set";
-	public bool HasOSI { get; set; }
 
 	protected void Puts(object message)
 		=> Logger.Log($"[{Name}] {message}");
@@ -189,8 +188,6 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 		if (PreLoadShouldSave(newConfig, newData)) shouldSave = true;
 
 		if (shouldSave) Save();
-
-		OnEnableStatus();
 	}
 	public virtual bool PreLoadShouldSave(bool newConfig, bool newData)
 	{
@@ -225,7 +222,7 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 
 		try
 		{
-			Unload();
+			OnUnload();
 		}
 		catch (Exception ex)
 		{
@@ -258,20 +255,6 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 		{
 			Logger.Error($"Failed module OnPostServerInit for {Name} [Reload Request]", ex);
 		}
-
-		HookCaller.CallHook(this, 1330569572, Community.IsServerInitialized);
-
-		HasOSI = true;
-	}
-	public override void Unload()
-	{
-		HasOSI = false;
-	}
-	public override void Shutdown()
-	{
-		Unload();
-
-		Community.Runtime.ModuleProcessor.Uninstall(this);
 	}
 
 	public virtual string GetConfigPath()
@@ -292,6 +275,27 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 			ModuleConfiguration.Enabled = enable;
 			OnEnableStatus();
 		}
+
+		if (enable && Community.IsServerInitialized)
+		{
+			try
+			{
+				OnServerInit(false);
+			}
+			catch (Exception ex)
+			{
+				Logger.Error($"Failed OnServerInit on '{Name} v{Version}'", ex);
+			}
+
+			try
+			{
+				OnPostServerInit(false);
+			}
+			catch (Exception ex)
+			{
+				Logger.Error($"Failed OnPostServerInit on '{Name} v{Version}'", ex);
+			}
+		}
 	}
 	public override bool GetEnabled()
 	{
@@ -308,20 +312,28 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 		UnregisterPermissions();
 
 		if (Hooks.Count > 0) Puts($"Unsubscribed from {Hooks.Count:n0} {Hooks.Count.Plural("hook", "hooks")}.");
+
+		OnUnload();
 	}
 	public virtual void OnEnabled(bool initialized)
 	{
 		if (ForceDisabled) return;
 
-		if (initialized) ModLoader.ProcessCommands(Type, this, flags: BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+		if (initialized)
+		{
+			ModLoader.ProcessCommands(Type, this, flags: BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+		}
 
 		SubscribeAll();
 
-		if (Hooks.Count > 0) Puts($"Subscribed to {Hooks.Count:n0} {Hooks.Count.Plural("hook", "hooks")}.");
-
-		if (InitEnd())
+		if (Hooks.Count > 0)
 		{
-			if (initialized) OnServerInit(true);
+			Puts($"Subscribed to {Hooks.Count:n0} {Hooks.Count.Plural("hook", "hooks")}.");
+		}
+
+		if (InitEnd() && initialized)
+		{
+			OnServerInit(true);
 		}
 	}
 
@@ -348,7 +360,7 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 	{
 		if (ForceDisabled) return;
 
-		if (initial)
+		if (initial && GetEnabled())
 		{
 			OnEnableStatus();
 		}
@@ -356,6 +368,19 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 	public override void OnPostServerInit(bool initial)
 	{
 
+	}
+	public override void OnUnload()
+	{
+
+	}
+	public override void Shutdown()
+	{
+		Puts($"Shutting down and module save");
+
+		Save();
+		OnUnload();
+
+		Community.Runtime.ModuleProcessor.Uninstall(this);
 	}
 
 	#region Permission
