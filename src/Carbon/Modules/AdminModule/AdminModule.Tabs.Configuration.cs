@@ -58,13 +58,14 @@ public partial class AdminModule
 
 				tab.ClearColumn(1);
 				{
-					var convarSearch = session.GetStorage<string>(tab, "convarsearch", string.Empty);
+					var convarSearch = session.GetStorage(tab, "convarsearch", string.Empty);
+					var currentlyDisplaying = ConVarSnapshots.Snapshots.Count(x => string.IsNullOrEmpty(convarSearch) || x.Key.Contains(convarSearch));
 
 					tab.AddName(1, "ConVars");
 
 					if (string.IsNullOrEmpty(convarSearch))
 					{
-						tab.AddInput(1, $"Search ({ConVarSnapshots.Snapshots.Count:n0})", ap => convarSearch, 0, false, (ap, args) =>
+						tab.AddInput(1, $"Search ({currentlyDisplaying:n0})", ap => convarSearch, 0, false, (ap, args) =>
 						{
 							ap.SetStorage(tab, "convarsearch", args.ToString(" "));
 							Refresh(tab, ap);
@@ -72,7 +73,7 @@ public partial class AdminModule
 					}
 					else
 					{
-						tab.AddInputButton(1, $"Search ({ConVarSnapshots.Snapshots.Count:n0})", 0.08f,
+						tab.AddInputButton(1, $"Search ({currentlyDisplaying:n0})", 0.08f,
 							new OptionInput(string.Empty, ap => convarSearch, 0, false, (ap, args) =>
 							{
 								ap.SetStorage(tab, "convarsearch", args.ToString(" "));
