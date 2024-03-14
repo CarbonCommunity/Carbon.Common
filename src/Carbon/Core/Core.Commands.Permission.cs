@@ -11,11 +11,11 @@ public partial class CorePlugin : CarbonPlugin
 {
 	[CommandVar("defaultplayergroup", "The default group for any player with the regular authority level they get assigned to.")]
 	[AuthLevel(2)]
-	private string DefaultPlayerGroup { get { return Community.Runtime.Config.PlayerDefaultGroup; } set { Community.Runtime.Config.PlayerDefaultGroup = value; } }
+	private string DefaultPlayerGroup { get { return Community.Runtime.Config.Permissions.PlayerDefaultGroup; } set { Community.Runtime.Config.Permissions.PlayerDefaultGroup = value; } }
 
 	[CommandVar("defaultadmingroup", "The default group players with the admin flag get assigned to.")]
 	[AuthLevel(2)]
-	private string DefaultAdminGroup { get { return Community.Runtime.Config.AdminDefaultGroup; } set { Community.Runtime.Config.AdminDefaultGroup = value; } }
+	private string DefaultAdminGroup { get { return Community.Runtime.Config.Permissions.AdminDefaultGroup; } set { Community.Runtime.Config.Permissions.AdminDefaultGroup = value; } }
 
 	[ConsoleCommand("grant", "Grant one or more permissions to users or groups. Do 'c.grant' for syntax info.")]
 	[AuthLevel(2)]

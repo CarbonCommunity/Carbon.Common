@@ -18,7 +18,7 @@ public readonly struct CUI : IDisposable
 {
 	public Handler Manager { get; }
 	public ImageDatabaseModule ImageDatabase { get; }
-	public Cache Cache => Manager.Cache;
+	public Handler.Cache CacheInstance => Manager.CacheInstance;
 
 	public enum ClientPanels
 	{
@@ -121,10 +121,24 @@ public readonly struct CUI : IDisposable
 	}
 	public Pair<string, CuiElement> CreateImage(CuiElementContainer container, string parent, string url, string color, string material = null, float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string outlineColor = null, string outlineDistance = null, bool outlineUseGraphicAlpha = false, string id = null, string destroyUi = null, bool update = false)
 	{
+		if (!HasImage(url))
+		{
+			return Manager.Panel(container, parent, color, material, xMin, xMax, yMin, yMax, OxMin, OxMax, OyMin, OyMax,
+				false, fadeIn, fadeOut, needsCursor, needsKeyboard, outlineColor, outlineDistance,
+				outlineUseGraphicAlpha, id, destroyUi, update);
+		}
+
 		return Manager.Image(container, parent, GetImage(url), null, color, material, xMin, xMax, yMin, yMax, OxMin, OxMax, OyMin, OyMax, fadeIn, fadeOut, needsCursor, needsKeyboard, outlineColor, outlineDistance, outlineUseGraphicAlpha, id, destroyUi, update);
 	}
 	public Pair<string, CuiElement> CreateImage(CuiElementContainer container, string parent, string url, float scale, string color, string material = null, float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string outlineColor = null, string outlineDistance = null, bool outlineUseGraphicAlpha = false, string id = null, string destroyUi = null, bool update = false)
 	{
+		if (!HasImage(url))
+		{
+			return Manager.Panel(container, parent, color, material, xMin, xMax, yMin, yMax, OxMin, OxMax, OyMin, OyMax,
+				false, fadeIn, fadeOut, needsCursor, needsKeyboard, outlineColor, outlineDistance,
+				outlineUseGraphicAlpha, id, destroyUi, update);
+		}
+
 		return Manager.Image(container, parent, GetImage(url, scale), null, color, material, xMin, xMax, yMin, yMax, OxMin, OxMax, OyMin, OyMax, fadeIn, fadeOut, needsCursor, needsKeyboard, outlineColor, outlineDistance, outlineUseGraphicAlpha, id, destroyUi, update);
 	}
 	public Pair<string, CuiElement> CreateSimpleImage(CuiElementContainer container, string parent, string png, string sprite, string color, string material = null, float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string outlineColor = null, string outlineDistance = null, bool outlineUseGraphicAlpha = false, string id = null, string destroyUi = null, bool update = false)
@@ -188,6 +202,11 @@ public readonly struct CUI : IDisposable
 	public string GetImage(string url, float scale = 0)
 	{
 		return ImageDatabase.GetImageString(url, scale, true);
+	}
+
+	public bool HasImage(string url, float scale = 0)
+	{
+		return ImageDatabase.HasImage(url, scale);
 	}
 
 	public void QueueImages(float scale, IEnumerable<string> urls)
@@ -274,7 +293,7 @@ public readonly struct CUI : IDisposable
 	{
 		internal string Identifier { get; } = RandomEx.GetRandomString(4);
 
-		public Cache Cache = new();
+		public Cache CacheInstance = new();
 		public int Pooled => _containerPool.Count + _elements.Count + _images.Count + _rawImages.Count + _texts.Count + _buttons.Count + _inputFields.Count + _rects.Count + _needsCursors.Count + _needsKeyboards.Count;
 		public int Used => _queue.Count;
 
@@ -765,44 +784,44 @@ public readonly struct CUI : IDisposable
 				_hasDisposed = true;
 			}
 		}
-	}
-}
 
-public class Cache
-{
-	internal Dictionary<string, byte[]> _cuiData = new();
-
-	public bool TryStore(string id, CuiElementContainer container)
-	{
-		if (TryTake(id, out _))
+		public class Cache
 		{
-			return false;
+			internal Dictionary<string, byte[]> _cuiData = new();
+
+			public bool TryStore(string id, CuiElementContainer container)
+			{
+				if (TryTake(id, out _))
+				{
+					return false;
+				}
+
+				_cuiData.Add(id, container.GetData());
+				return true;
+			}
+			public bool TryTake(string id, out byte[] data)
+			{
+				data = default;
+
+				if (_cuiData.TryGetValue(id, out var content))
+				{
+					data = content;
+					return true;
+				}
+
+				return false;
+			}
+			public bool TrySend(string id, BasePlayer player)
+			{
+				if (!TryTake(id, out var data))
+				{
+					return false;
+				}
+
+				CUIStatics.SendData(data, player);
+				return true;
+			}
 		}
-
-		_cuiData.Add(id, container.GetData());
-		return true;
-	}
-	public bool TryTake(string id, out byte[] data)
-	{
-		data = default;
-
-		if (_cuiData.TryGetValue(id, out var content))
-		{
-			data = content;
-			return true;
-		}
-
-		return false;
-	}
-	public bool TrySend(string id, BasePlayer player)
-	{
-		if (!TryTake(id, out var data))
-		{
-			return false;
-		}
-
-		CUIStatics.SendData(data, player);
-		return true;
 	}
 }
 
@@ -1223,7 +1242,8 @@ public static class CUIStatics
 	}
 	public static byte[] GetData(this CuiElementContainer container)
 	{
-		var write = Net.sv.StartWrite(Message.Type.RPCMessage);
+		var write = Net.sv.StartWrite();
+		write.PacketID(Message.Type.RPCMessage);
 		write.EntityID(CommunityEntity.ServerInstance.net.ID);
 		write.UInt32(AddUiString);
 		write.UInt64(0UL);
@@ -1238,7 +1258,8 @@ public static class CUIStatics
 	}
 	public static void SendData(byte[] data, BasePlayer player)
 	{
-		var write = Net.sv.StartWrite(Message.Type.RPCMessage);
+		var write = Net.sv.StartWrite();
+		write.PacketID(Message.Type.RPCMessage);
 		write.EnsureCapacity(data.Length);
 		Array.Copy(data, 0, write.Data,write.Length , data.Length);
 		write._length += data.Length;

@@ -27,6 +27,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 			var tab = new Tab("permissions", "Permissions", Community.Runtime.CorePlugin, (ap, tab) =>
 			{
+				ap.SetStorage(tab, "toggleall", true);
 				ap.SetStorage(tab, "groupedit", false);
 
 				tab.ClearColumn(1);
@@ -44,6 +45,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 			tab.AddButton(0, "Players", ap =>
 			{
+				ap.SetStorage(tab, "toggleall", true);
 				ap.SetStorage(tab, "groupedit", false);
 
 				tab.ClearColumn(1);
@@ -61,6 +63,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 			tab.AddButton(0, "Groups", ap =>
 			{
+				ap.SetStorage(tab, "toggleall", true);
 				ap.SetStorage(tab, "pluginedit", false);
 				ap.SetStorage(tab, "groupedit", false);
 
@@ -379,7 +382,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 						{
 							if (!string.IsNullOrEmpty(filter))
 							{
-								return x.IsCorePlugin || perms.Any(y => x.Name.Trim().ToLower().Contains(filter));
+								return perms.Any(y => x.Name.Trim().ToLower().Contains(filter));
 							}
 
 							return perms.Count > 0;
@@ -404,11 +407,12 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					{
 						tab.AddRow(2, new Tab.OptionButton($"{plugin.Name} ({plugin.Version})", instance3 =>
 						{
+							ap.SetStorage(tab, "toggleall", true);
 							ap.SetStorage(tab, "plugin", plugin);
 							ap.SetStorage(tab, "pluginr", instance3.LastPressedRow);
 							ap.SetStorage(tab, "pluginc", instance3.LastPressedColumn);
 
-							GeneratePermissions(tab, permission, plugin, player, selectedGroup);
+							GeneratePermissions(tab, ap, permission, plugin, player, selectedGroup);
 						}, type: (_instance) => ap.GetStorage<BaseHookable>(tab, "plugin", null) == plugin ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.None));
 					}
 				}
@@ -442,6 +446,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					{
 						tab.AddRow(2, new Tab.OptionButton($"{user.Value.LastSeenNickname} ({user.Key})", instance3 =>
 						{
+							ap.SetStorage(tab, "toggleall", true);
 							ap.SetStorage(tab, "groupedit", false);
 							ap.SetStorage(tab, "pluginedit", false);
 
@@ -461,10 +466,49 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				}
 			}
 		}
-		public static void GeneratePermissions(Tab tab, Permission perms, BaseHookable hookable, KeyValuePair<string, UserData> player, string selectedGroup)
+		public static void GeneratePermissions(Tab tab,  PlayerSession ap, Permission perms, BaseHookable hookable, KeyValuePair<string, UserData> player, string selectedGroup)
 		{
+			var grantAllStatus = ap.GetStorage(tab, "toggleall", true);
+
 			tab.ClearColumn(3);
 			tab.AddName(3, "Permissions", TextAnchor.MiddleLeft);
+			tab.AddButton(3, grantAllStatus ? "Grant All" : "Revoke All", ap =>
+			{
+				foreach (var perm in perms.GetPermissions(hookable))
+				{
+					if (string.IsNullOrEmpty(selectedGroup))
+					{
+						if (grantAllStatus)
+						{
+							if (!perms.UserHasPermission(player.Key, perm))
+								perms.GrantUserPermission(player.Key, perm, hookable);
+						}
+						else
+						{
+							if (perms.UserHasPermission(player.Key, perm))
+								perms.RevokeUserPermission(player.Key, perm);
+						}
+					}
+					else
+					{
+						if (grantAllStatus)
+						{
+							if (!perms.GroupHasPermission(selectedGroup, perm))
+								perms.GrantGroupPermission(selectedGroup, perm, hookable);
+						}
+						else
+						{
+							if (perms.GroupHasPermission(selectedGroup, perm))
+								perms.RevokeGroupPermission(selectedGroup, perm);
+						}
+					}
+				}
+
+				ap.SetStorage(tab, "toggleall", !grantAllStatus);
+
+				GeneratePermissions(tab, ap, permission, hookable, player, selectedGroup);
+			}, ap => grantAllStatus ? Tab.OptionButton.Types.Warned : Tab.OptionButton.Types.Important);
+
 			foreach (var perm in perms.GetPermissions(hookable))
 			{
 				if (string.IsNullOrEmpty(selectedGroup))

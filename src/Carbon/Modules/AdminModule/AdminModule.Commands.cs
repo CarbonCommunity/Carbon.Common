@@ -3,6 +3,7 @@
 public partial class AdminModule
 {
 #if !MINIMAL
+	[Conditional("!MINIMAL")]
 	[ProtectedCommand(PanelId + ".changetab")]
 	private void ChangeTab(ConsoleSystem.Arg args)
 	{
@@ -29,6 +30,7 @@ public partial class AdminModule
 		}
 	}
 
+	[Conditional("!MINIMAL")]
 	[ProtectedCommand(PanelId + ".callaction")]
 	private void CallAction(ConsoleSystem.Arg args)
 	{
@@ -38,6 +40,7 @@ public partial class AdminModule
 			Draw(player);
 	}
 
+	[Conditional("!MINIMAL")]
 	[ProtectedCommand(PanelId + ".changecolumnpage")]
 	private void ChangeColumnPage(ConsoleSystem.Arg args)
 	{
@@ -74,12 +77,30 @@ public partial class AdminModule
 		Draw(player);
 	}
 
+	[Conditional("!MINIMAL")]
+	[ProtectedCommand(PanelId + ".config")]
+	private void ShowConfig(ConsoleSystem.Arg args)
+	{
+		var player = args.Player();
+
+		if (GetTab(player).Id == "configuration")
+		{
+			SetTab(player, 0);
+		}
+		else
+		{
+			SetTab(player, ConfigurationTab.Make());
+		}
+	}
+
+	[Conditional("!MINIMAL")]
 	[ProtectedCommand(PanelId + ".close")]
 	private void CloseUI(ConsoleSystem.Arg args)
 	{
 		Close(args.Player());
 	}
 
+	[Conditional("!MINIMAL")]
 	[ProtectedCommand(PanelId + ".dialogaction")]
 	private void Dialog_Action(ConsoleSystem.Arg args)
 	{

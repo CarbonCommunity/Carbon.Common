@@ -17,13 +17,14 @@ public abstract class BaseModule : BaseHookable
 	public virtual bool EnabledByDefault => false;
 	public virtual bool ForceModded => false;
 	public virtual bool ForceEnabled => false;
+	public virtual bool ForceDisabled => false;
 
 	public abstract void OnServerInit(bool initial);
 	public abstract void OnPostServerInit(bool initial);
 	public abstract void OnServerSaved();
 	public abstract void Load();
 	public abstract void Save();
-	public abstract void Unload();
+	public abstract void OnUnload();
 	public abstract void Reload();
 	public abstract bool GetEnabled();
 	public abstract void SetEnabled(bool enable);
@@ -80,13 +81,13 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 		base.Name ??= Name;
 		base.Type ??= Type;
 
-		TrackInit();
+		if (ForceDisabled) return;
 
-		InternalCallHookOverriden = false;
+		TrackInit();
 	}
 	public virtual bool InitEnd()
 	{
-		if (HasInitialized) return false;
+		if (ForceDisabled || HasInitialized) return false;
 
 		Community.Runtime.HookManager.LoadHooksFromType(Type);
 
@@ -94,7 +95,7 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 
 		foreach (var method in Type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic))
 		{
-			if (Community.Runtime.HookManager.IsHookLoaded(method.Name))
+			if (Community.Runtime.HookManager.IsHook(method.Name))
 			{
 				Community.Runtime.HookManager.Subscribe(method.Name, Name);
 
@@ -120,6 +121,8 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 	}
 	public override void Load()
 	{
+		if (ForceDisabled) return;
+
 		var shouldSave = false;
 
 		Config ??= new DynamicConfigFile(GetConfigPath());
@@ -185,8 +188,6 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 		if (PreLoadShouldSave(newConfig, newData)) shouldSave = true;
 
 		if (shouldSave) Save();
-		
-		OnEnableStatus();
 	}
 	public virtual bool PreLoadShouldSave(bool newConfig, bool newData)
 	{
@@ -194,6 +195,8 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 	}
 	public override void Save()
 	{
+		if (ForceDisabled) return;
+
 		if (ModuleConfiguration == null)
 		{
 			ModuleConfiguration = new Configuration { Config = Activator.CreateInstance<C>() };
@@ -215,9 +218,11 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 	}
 	public override void Reload()
 	{
+		if (ForceDisabled) return;
+
 		try
 		{
-			Unload();
+			OnUnload();
 		}
 		catch (Exception ex)
 		{
@@ -251,16 +256,6 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 			Logger.Error($"Failed module OnPostServerInit for {Name} [Reload Request]", ex);
 		}
 	}
-	public override void Unload()
-	{
-
-	}
-	public override void Shutdown()
-	{
-		Unload();
-
-		Community.Runtime.ModuleProcessor.Uninstall(this);
-	}
 
 	public virtual string GetConfigPath()
 	{
@@ -273,42 +268,79 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 
 	public override void SetEnabled(bool enable)
 	{
+		if (ForceDisabled) return;
+
 		if (ModuleConfiguration != null)
 		{
 			ModuleConfiguration.Enabled = enable;
 			OnEnableStatus();
 		}
+
+		if (enable && Community.IsServerInitialized)
+		{
+			try
+			{
+				OnServerInit(false);
+			}
+			catch (Exception ex)
+			{
+				Logger.Error($"Failed OnServerInit on '{Name} v{Version}'", ex);
+			}
+
+			try
+			{
+				OnPostServerInit(false);
+			}
+			catch (Exception ex)
+			{
+				Logger.Error($"Failed OnPostServerInit on '{Name} v{Version}'", ex);
+			}
+		}
 	}
 	public override bool GetEnabled()
 	{
-		return ModuleConfiguration != null && ModuleConfiguration.Enabled;
+		return !ForceDisabled && ModuleConfiguration != null && ModuleConfiguration.Enabled;
 	}
 
 	public virtual void OnDisabled(bool initialized)
 	{
+		if (ForceDisabled) return;
+
 		if (initialized) ModLoader.RemoveCommands(this);
 
 		UnsubscribeAll();
 		UnregisterPermissions();
 
 		if (Hooks.Count > 0) Puts($"Unsubscribed from {Hooks.Count:n0} {Hooks.Count.Plural("hook", "hooks")}.");
+
+		OnUnload();
 	}
 	public virtual void OnEnabled(bool initialized)
 	{
-		if (initialized) ModLoader.ProcessCommands(Type, this, flags: BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+		if (ForceDisabled) return;
+
+		if (initialized)
+		{
+			ModLoader.ProcessCommands(Type, this, flags: BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+		}
 
 		SubscribeAll();
 
-		if (Hooks.Count > 0) Puts($"Subscribed to {Hooks.Count:n0} {Hooks.Count.Plural("hook", "hooks")}.");
-
-		if (InitEnd())
+		if (Hooks.Count > 0)
 		{
-			if (initialized) OnServerInit(true);
+			Puts($"Subscribed to {Hooks.Count:n0} {Hooks.Count.Plural("hook", "hooks")}.");
+		}
+
+		if (InitEnd() && initialized)
+		{
+			OnServerInit(true);
 		}
 	}
 
 	public void OnEnableStatus()
 	{
+		if (ForceDisabled) return;
+
 		try
 		{
 			if (ModuleConfiguration == null) return;
@@ -326,7 +358,9 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 
 	public override void OnServerInit(bool initial)
 	{
-		if (initial)
+		if (ForceDisabled) return;
+
+		if (initial && GetEnabled())
 		{
 			OnEnableStatus();
 		}
@@ -334,6 +368,19 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 	public override void OnPostServerInit(bool initial)
 	{
 
+	}
+	public override void OnUnload()
+	{
+
+	}
+	public override void Shutdown()
+	{
+		Puts($"Shutting down and module save");
+
+		Save();
+		OnUnload();
+
+		Community.Runtime.ModuleProcessor.Uninstall(this);
 	}
 
 	#region Permission

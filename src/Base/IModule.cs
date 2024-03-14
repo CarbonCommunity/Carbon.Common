@@ -1,6 +1,6 @@
 ﻿/*
  *
- * Copyright (c) 2022-2024 Carbon Community 
+ * Copyright (c) 2022-2024 Carbon Community
  * All rights reserved.
  *
  */
@@ -16,7 +16,7 @@ public interface IModule : IDisposable
 	void Save();
 	void Load();
 	void Reload();
-	void Unload();
+	void OnUnload();
 	void Shutdown();
 
 	void OnServerInit(bool initial);

@@ -311,9 +311,12 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 							ap => multiSelection ? MultiselectionReplacement : player.displayName);
 						tab.AddInput(column, "Steam ID",
 							ap => multiSelection ? MultiselectionReplacement : player.UserIDString);
-						tab.AddInput(column, "IP",
-							ap => multiSelection ? MultiselectionReplacement : $"{player.net?.connection?.ipaddress}",
-							null, hidden: true);
+						if (Singleton.HasAccess(ap3.Player, "players.see_ips"))
+						{
+							tab.AddInput(column, "IP",
+								ap => multiSelection ? MultiselectionReplacement : $"{player.net?.connection?.ipaddress}",
+								null, hidden: true);
+						}
 
 						if (!multiSelection && (Singleton.HasPermission(ap3?.Player, "carbon.cmod") ||
 						                        player.userID.IsSteamId()))
@@ -735,7 +738,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				return;
 			}
 
-			var netWrite = Net.sv.StartWrite(Message.Type.Entities);
+			var netWrite = Net.sv.StartWrite();
 
 			if (netWrite == null)
 			{
@@ -744,6 +747,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 			++connection.validate.entityUpdates;
 
+			netWrite.PacketID(Message.Type.Entities);
 			netWrite.UInt32(connection.validate.entityUpdates);
 
 			entity.ToStreamForNetwork(netWrite, new BaseNetworkable.SaveInfo() { forConnection = connection, forDisk = false });

@@ -21,16 +21,21 @@ public partial class CorePlugin : CarbonPlugin
 
 		var moduleName = arg.GetString(0);
 		var hookable = Community.Runtime.ModuleProcessor.Modules.FirstOrDefault(x => x.Name == moduleName);
-		var module = hookable?.To<IModule>();
+		var module = hookable?.To<BaseModule>();
 
 		if (module == null)
 		{
 			arg.ReplyWith($"Couldn't find that module. Try 'c.modules' to print them all.");
 			return;
 		}
-		else if (module is BaseModule baseModule && baseModule.ForceEnabled)
+		else if (module.ForceEnabled)
 		{
 			arg.ReplyWith($"That module is forcefully enabled, you may not change its status.");
+			return;
+		}
+		else if (module.ForceDisabled)
+		{
+			arg.ReplyWith($"That module is forcefully disabled, you may not change its status.");
 			return;
 		}
 
@@ -41,31 +46,13 @@ public partial class CorePlugin : CarbonPlugin
 		{
 			module.SetEnabled(newEnabled);
 
-			if (newEnabled)
-			{
-				try
-				{
-					module.OnServerInit(false);
-				}
-				catch (Exception ex)
-				{
-					Logger.Error($"Failed OnServerInit on {module.Name}", ex);
-				}
-
-				try
-				{
-					module.OnPostServerInit(false);
-				}
-				catch (Exception ex)
-				{
-					Logger.Error($"Failed OnPostServerInit on {module.Name}", ex);
-				}
-			}
-
 			module.Save();
+			arg.ReplyWith($"{module.Name} marked {(module.GetEnabled() ? "enabled" : "disabled")}.");
 		}
-
-		arg.ReplyWith($"{module.Name} marked {(module.GetEnabled() ? "enabled" : "disabled")}.");
+		else
+		{
+			arg.ReplyWith($"{module.Name} is already {(module.GetEnabled() ? "enabled" : "disabled")}.");
+		}
 	}
 
 	[ConsoleCommand("saveallmodules", "Saves the configs and data files of all available modules.")]
@@ -202,7 +189,7 @@ public partial class CorePlugin : CarbonPlugin
 
 		if (module == null)
 		{
-			arg.ReplyWith("Couldn't find that plugin.");
+			arg.ReplyWith("Couldn't find that module.");
 			return;
 		}
 

@@ -55,7 +55,7 @@ public class OxideMod
 		DataFileSystem = new DataFileSystem(DataDirectory);
 		RootPluginManager = new PluginManager();
 
-		switch (Community.Runtime.Config.PermissionSerialization)
+		switch (Community.Runtime.Config.Permissions.PermissionSerialization)
 		{
 			case Permission.SerializationMode.Storeless:
 				Permission = new PermissionStoreless();
