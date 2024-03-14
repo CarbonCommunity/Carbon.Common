@@ -40,7 +40,7 @@ public partial class AdminModule
 			{
 				tab.ClearColumn(0);
 				{
-					tab.AddButton(0, "< Go Back", ap => Singleton.SetTab(session.Player, 0), ap => OptionButton.Types.Selected);
+					tab.AddButton(0, "< Go Back", ap => Singleton.SetTab(session.Player, 0), ap => AdminModule.Tab.OptionButton.Types.Selected);
 
 					tab.AddName(0, "Configuration");
 					tab.AddDropdown(0, "Minimum Auth-Level", ap => Singleton.ConfigInstance.MinimumAuthLevel,
@@ -54,6 +54,84 @@ public partial class AdminModule
 						ap => Singleton.ConfigInstance.DisablePluginsTab = !Singleton.ConfigInstance.DisablePluginsTab,
 						ap => !Singleton.ConfigInstance.DisablePluginsTab);
 					tab.AddButton(0, "Apply Changes", ap => Singleton.GenerateTabs());
+					tab.AddToggle(0, "Spectating Info Overlay",
+						ap => Singleton.ConfigInstance.SpectatingInfoOverlay = !Singleton.ConfigInstance.SpectatingInfoOverlay,
+						ap => !Singleton.ConfigInstance.SpectatingInfoOverlay);
+					tab.AddToggle(0, "Hide Plugin Icons (Plugins tab)",
+						ap => Singleton.DataInstance.HidePluginIcons = Singleton.DataInstance.HidePluginIcons,
+						ap => Singleton.DataInstance.HidePluginIcons);
+
+					tab.AddName(0, "Customization");
+
+					tab.AddRange(0, "Title Underline Opacity", 0f, 100f, ap => Singleton.DataInstance.Colors.TitleUnderlineOpacity * 100f,
+						(ap, value) =>
+						{
+							Singleton.DataInstance.Colors.TitleUnderlineOpacity = value * 0.01f;
+							Singleton.Draw(ap.Player);
+						}, ap => Singleton.DataInstance.Colors.TitleUnderlineOpacity.ToString("0.0"));
+					tab.AddRange(0, "Option Width", 20f, 100f, ap => Singleton.DataInstance.Colors.OptionWidth * 100f,
+						(ap, value) =>
+						{
+							Singleton.DataInstance.Colors.OptionWidth = value * 0.01f;
+							Singleton.Draw(ap.Player);
+						}, ap => Singleton.DataInstance.Colors.OptionWidth.ToString("0.0"));
+
+					tab.AddColor(0, "Selected Tab Color", () => Singleton.DataInstance.Colors.SelectedTabColor,
+						(ap, color1, color2, value) =>
+						{
+							Singleton.DataInstance.Colors.SelectedTabColor = CUI.HexToRustColor($"#{color1}", includeAlpha: false);
+							Singleton.Draw(ap.Player);
+						});
+					tab.AddColor(0, "Editable Input Highlight", () => Singleton.DataInstance.Colors.EditableInputHighlight,
+						(ap, color1, color2, value) =>
+						{
+							Singleton.DataInstance.Colors.EditableInputHighlight = CUI.HexToRustColor($"#{color1}", includeAlpha: false);
+							Singleton.Draw(ap.Player);
+						});
+					tab.AddColor(0, "Name Text Color", () => Singleton.DataInstance.Colors.NameTextColor,
+						(ap, color1, color2, value) =>
+						{
+							Singleton.DataInstance.Colors.NameTextColor = CUI.HexToRustColor($"#{color1}", value);
+							Singleton.Draw(ap.Player);
+						});
+					tab.AddColor(0, "Option Name Color", () => Singleton.DataInstance.Colors.OptionNameColor,
+						(ap, color1, color2, value) =>
+						{
+							Singleton.DataInstance.Colors.OptionNameColor = CUI.HexToRustColor($"#{color1}", value);
+							Singleton.Draw(ap.Player);
+						});
+
+					tab.AddColor(0, "Button Selected Color", () => Singleton.DataInstance.Colors.ButtonSelectedColor,
+						(ap, color1, color2, value) =>
+						{
+							Singleton.DataInstance.Colors.ButtonSelectedColor = CUI.HexToRustColor($"#{color1}", value);
+							Singleton.Draw(ap.Player);
+						});
+					tab.AddColor(0, "Button Warned Color", () => Singleton.DataInstance.Colors.ButtonWarnedColor,
+						(ap, color1, color2, value) =>
+						{
+							Singleton.DataInstance.Colors.ButtonWarnedColor = CUI.HexToRustColor($"#{color1}", value);
+							Singleton.Draw(ap.Player);
+						});
+					tab.AddColor(0, "Button Important Color", () => Singleton.DataInstance.Colors.ButtonImportantColor,
+						(ap, color1, color2, value) =>
+						{
+							Singleton.DataInstance.Colors.ButtonImportantColor = CUI.HexToRustColor($"#{color1}", value);
+							Singleton.Draw(ap.Player);
+						});
+
+					tab.AddColor(0, "Option Color (1st)", () => Singleton.DataInstance.Colors.OptionColor,
+						(ap, color1, color2, value) =>
+						{
+							Singleton.DataInstance.Colors.OptionColor = CUI.HexToRustColor($"#{color1}", value);
+							Singleton.Draw(ap.Player);
+						});
+					tab.AddColor(0, "Option Color (2nd)", () => Singleton.DataInstance.Colors.OptionColor2,
+						(ap, color1, color2, value) =>
+						{
+							Singleton.DataInstance.Colors.OptionColor2 = CUI.HexToRustColor($"#{color1}", value);
+							Singleton.Draw(ap.Player);
+						});
 				}
 
 				tab.ClearColumn(1);
