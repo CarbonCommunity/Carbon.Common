@@ -242,6 +242,8 @@ public class BaseHookable
 
 		HasBuiltHookCache = true;
 		Logger.Debug(Name, $"Built hook cache", 2);
+
+		InternalCallHook(0, null);
 	}
 	public virtual object InternalCallHook(uint hook, object[] args)
 	{
