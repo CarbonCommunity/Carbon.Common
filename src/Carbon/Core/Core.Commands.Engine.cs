@@ -63,9 +63,9 @@ public partial class CorePlugin : CarbonPlugin
 						IEnumerable<RustPlugin> array = mode switch
 						{
 							"-abc" => mod.Plugins.OrderBy(x => x.Name),
-							"-t" => (flip ? mod.Plugins.OrderBy(x => x.HookCache.Max(x => x.Value.Sum(x => x.HookTime))) : mod.Plugins.OrderByDescending(x => x.HookCache.Max(x => x.Value.Sum(x => x.HookTime)))),
-							"-m" => (flip ? mod.Plugins.OrderBy(x => x.HookCache.Max(x => x.Value.Sum(x => x.MemoryUsage))) : mod.Plugins.OrderByDescending(x => x.HookCache.Max(x => x.Value.Sum(x => x.MemoryUsage)))),
-							"-f" => (flip ? mod.Plugins.OrderBy(x => x.HookCache.Max(x => x.Value.Sum(x => x.TimesFired))) : mod.Plugins.OrderByDescending(x => x.HookCache.Max(x => x.Value.Sum(x => x.TimesFired)))),
+							"-t" => (flip ? mod.Plugins.OrderBy(x => x.TotalHookTime) : mod.Plugins.OrderByDescending(x => x.TotalHookTime)),
+							"-m" => (flip ? mod.Plugins.OrderBy(x => x.TotalMemoryUsed) : mod.Plugins.OrderByDescending(x => x.TotalMemoryUsed)),
+							"-f" => (flip ? mod.Plugins.OrderBy(x => x.CurrentHookFires) : mod.Plugins.OrderByDescending(x => x.CurrentHookFires)),
 							_ => (flip ? mod.Plugins.AsEnumerable().Reverse() : mod.Plugins.AsEnumerable())
 						};
 
@@ -93,7 +93,7 @@ public partial class CorePlugin : CarbonPlugin
 								$"{plugin.TotalHookTime:0}ms{hookTimeAverage}",
 								$"{plugin.CurrentHookFires:n0}",
 								$"{ByteEx.Format(plugin.TotalMemoryUsed, shortName: true, stringFormat: "{0}{1}").ToLower()}{memoryAverage}",
-								plugin.IsPrecompiled ? string.Empty : $"{plugin.CompileTime:0}ms",
+								plugin.IsPrecompiled ? string.Empty : $"{plugin.CompileTime:0}ms [int. {plugin.InternalCallHookGenTime:0}ms]",
 								$"{TimeEx.Format(plugin.Uptime)}");
 						}
 

@@ -32,6 +32,8 @@ namespace Oxide.Core.Plugins
 		[JsonProperty]
 		public double CompileTime { get; set; }
 		[JsonProperty]
+		public double InternalCallHookGenTime { get; set; }
+		[JsonProperty]
 		public ModLoader.FailedMod.Error[] CompileWarnings { get; set; }
 
 		[JsonProperty]
