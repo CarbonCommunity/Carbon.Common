@@ -1294,7 +1294,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 			using (TimeMeasure.New($"{Name}.Exit"))
 			{
-				var shift = tab.Fullscreen ? 15 : 0;
+				var shift = tab == null || tab.Fullscreen ? 15 : 0;
 
 				var configButton = cui.CreateProtectedButton(container, main,
 					color: "0.2 0.6 0.2 0.9",
