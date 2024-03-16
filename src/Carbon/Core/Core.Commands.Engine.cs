@@ -56,8 +56,6 @@ public partial class CorePlugin : CarbonPlugin
 
 					foreach (var mod in ModLoader.LoadedPackages.AsEnumerable())
 					{
-						if (mod.IsCoreMod) continue;
-
 						body.AddRow($"{count:n0}", $"{mod.Name}{(mod.Plugins.Count >= 1 ? $" ({mod.Plugins.Count:n0})" : string.Empty)}", string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
 
 						IEnumerable<RustPlugin> array = mode switch
