@@ -21,7 +21,8 @@ public partial class AdminModule
 		{
 		}
 
-		internal static TimeSince _applyChangesTimeSince = 0;
+		internal const float _applyChangesCooldown = 60;
+		internal static TimeSince _applyChangesTimeSince = _applyChangesCooldown / 2;
 
 		public static readonly string[] AuthLevels = new[]
 		{
@@ -57,14 +58,14 @@ public partial class AdminModule
 						ap => !Singleton.ConfigInstance.DisablePluginsTab);
 					tab.AddButton(0, "Apply Changes", ap =>
 					{
-						if (_applyChangesTimeSince > 10)
+						if (_applyChangesTimeSince > _applyChangesCooldown)
 						{
 							Singleton.GenerateTabs();
 							_applyChangesTimeSince = 0;
 							Refresh(tab, session);
 							Singleton.Draw(ap.Player);
 						}
-					}, ap => _applyChangesTimeSince > 10 ? OptionButton.Types.Selected : OptionButton.Types.None);
+					}, ap => _applyChangesTimeSince > _applyChangesCooldown ? OptionButton.Types.Selected : OptionButton.Types.None);
 					tab.AddToggle(0, "Spectating Info Overlay",
 						ap => Singleton.ConfigInstance.SpectatingInfoOverlay = !Singleton.ConfigInstance.SpectatingInfoOverlay,
 						ap => !Singleton.ConfigInstance.SpectatingInfoOverlay);
