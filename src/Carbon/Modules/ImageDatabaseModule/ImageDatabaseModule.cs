@@ -106,9 +106,11 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 
 		if(!initial) return;
 
-		if (!Validate()) return;
+		if (Validate())
+		{
+			Save();
+		}
 
-		Save();
 		LoadDefaultImages();
 	}
 	public override void OnServerSaved()
@@ -164,7 +166,8 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 	}
 	private void LoadDefaultImages()
 	{
-		Queue(_defaultImages);
+		Queue(_defaultImages.Where(x => !HasImage(x.Key))
+			.ToDictionary(x => x.Key, x => x.Value));
 	}
 
 	public override bool PreLoadShouldSave(bool newConfig, bool newData)
