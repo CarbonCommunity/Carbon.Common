@@ -109,6 +109,10 @@ public class Community
 
 	public static bool IsConfigReady => Runtime != null && Runtime.Config != null;
 
+	public static bool AllProcessorsFinalized => Runtime.ScriptProcessor.AllPendingScriptsComplete() &&
+	                                             Runtime.ZipScriptProcessor.AllPendingScriptsComplete() &&
+	                                             Runtime.ZipDevScriptProcessor.AllPendingScriptsComplete();
+
 	public Config Config
 	{ get; set; }
 
