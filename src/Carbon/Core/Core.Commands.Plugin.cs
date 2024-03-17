@@ -326,13 +326,14 @@ public partial class CorePlugin : CarbonPlugin
 			builder.AppendLine($"{plugin.Name} v{plugin.Version} by {plugin.Author}{(plugin.IsCorePlugin ? $" [core]" : string.Empty)}");
 			builder.AppendLine($"  Path:                   {plugin.FilePath}");
 			builder.AppendLine($"  Compile Time:           {plugin.CompileTime}ms{(plugin.IsPrecompiled ? " [precompiled]" : string.Empty)}{(plugin.IsExtension ? " [ext]" : string.Empty)}");
+			builder.AppendLine($"  Int.CallHook Gen Time:  {plugin.InternalCallHookGenTime}ms{(plugin.IsPrecompiled ? " [precompiled]" : string.Empty)}{(plugin.IsExtension ? " [ext]" : string.Empty)}");
 			builder.AppendLine($"  Uptime:                 {TimeEx.Format(plugin.Uptime, true).ToLower()}");
 			builder.AppendLine($"  Total Hook Time:        {plugin.TotalHookTime:0}ms");
 			builder.AppendLine($"  Total Memory Used:      {ByteEx.Format(plugin.TotalMemoryUsed, shortName: true).ToLower()}");
 			builder.AppendLine($"  Internal Hook Override: {plugin.InternalCallHookOverriden}");
 			builder.AppendLine($"  Has Conditionals:       {plugin.HasConditionals}");
 			builder.AppendLine($"  Mod Package:            {plugin.Package?.Name} ({plugin.Package?.Plugins.Count}){((plugin.Package?.IsCoreMod).GetValueOrDefault() ? $" [core]" : string.Empty)}");
-			builder.AppendLine($"  Processor:              {plugin.Processor.Name} [{plugin.Processor.Extension}]");
+			builder.AppendLine($"  Processor:              {(plugin.Processor == null ? "[standalone]" : $"{plugin.Processor.Name} [{plugin.Processor.Extension}]")}");
 
 			if (plugin is CarbonPlugin carbonPlugin)
 			{
