@@ -18,8 +18,6 @@ public partial class CorePlugin : CarbonPlugin
 {
 	public static Dictionary<string, string> OrderedFiles { get; } = new Dictionary<string, string>();
 
-	internal int _originalMaxPlayers = 0;
-
 	public static void RefreshOrderedFiles()
 	{
 		OrderedFiles.Clear();
@@ -87,9 +85,6 @@ public partial class CorePlugin : CarbonPlugin
 		});
 
 		cmd.AddConsoleCommand("help", this, nameof(Help), authLevel: 2);
-
-		_originalMaxPlayers = ConVar.Server.maxplayers;
-		ConVar.Server.maxplayers = 0;
 
 		return true;
 	}
