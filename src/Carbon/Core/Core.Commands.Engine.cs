@@ -51,21 +51,19 @@ public partial class CorePlugin : CarbonPlugin
 
 				// Loaded plugins
 				{
-					using var body = new StringTable("#", "Mod", "Author", "Version", "Hook Time", "Hook Fires", "Memory Usage", "Compile Time", "Uptime");
+					using var body = new StringTable("#", "Mod", "Author", "Version", "Hook Time", "Hook Fires", "Memory Usage", "Compile Time", "Int.CallHook Gen Time", "Uptime");
 					var count = 1;
 
 					foreach (var mod in ModLoader.LoadedPackages.AsEnumerable())
 					{
-						if (mod.IsCoreMod) continue;
-
-						body.AddRow($"{count:n0}", $"{mod.Name}{(mod.Plugins.Count >= 1 ? $" ({mod.Plugins.Count:n0})" : string.Empty)}", string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
+						body.AddRow($"{count:n0}", $"{mod.Name}{(mod.Plugins.Count >= 1 ? $" ({mod.Plugins.Count:n0})" : string.Empty)}", string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
 
 						IEnumerable<RustPlugin> array = mode switch
 						{
 							"-abc" => mod.Plugins.OrderBy(x => x.Name),
-							"-t" => (flip ? mod.Plugins.OrderBy(x => x.HookCache.Max(x => x.Value.Sum(x => x.HookTime))) : mod.Plugins.OrderByDescending(x => x.HookCache.Max(x => x.Value.Sum(x => x.HookTime)))),
-							"-m" => (flip ? mod.Plugins.OrderBy(x => x.HookCache.Max(x => x.Value.Sum(x => x.MemoryUsage))) : mod.Plugins.OrderByDescending(x => x.HookCache.Max(x => x.Value.Sum(x => x.MemoryUsage)))),
-							"-f" => (flip ? mod.Plugins.OrderBy(x => x.HookCache.Max(x => x.Value.Sum(x => x.TimesFired))) : mod.Plugins.OrderByDescending(x => x.HookCache.Max(x => x.Value.Sum(x => x.TimesFired)))),
+							"-t" => (flip ? mod.Plugins.OrderBy(x => x.TotalHookTime) : mod.Plugins.OrderByDescending(x => x.TotalHookTime)),
+							"-m" => (flip ? mod.Plugins.OrderBy(x => x.TotalMemoryUsed) : mod.Plugins.OrderByDescending(x => x.TotalMemoryUsed)),
+							"-f" => (flip ? mod.Plugins.OrderBy(x => x.CurrentHookFires) : mod.Plugins.OrderByDescending(x => x.CurrentHookFires)),
 							_ => (flip ? mod.Plugins.AsEnumerable().Reverse() : mod.Plugins.AsEnumerable())
 						};
 
@@ -94,6 +92,7 @@ public partial class CorePlugin : CarbonPlugin
 								$"{plugin.CurrentHookFires:n0}",
 								$"{ByteEx.Format(plugin.TotalMemoryUsed, shortName: true, stringFormat: "{0}{1}").ToLower()}{memoryAverage}",
 								plugin.IsPrecompiled ? string.Empty : $"{plugin.CompileTime:0}ms",
+								plugin.IsPrecompiled ? string.Empty : $"{plugin.InternalCallHookGenTime:0}ms",
 								$"{TimeEx.Format(plugin.Uptime)}");
 						}
 

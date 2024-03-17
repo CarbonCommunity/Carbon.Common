@@ -1,6 +1,6 @@
 ﻿/*
  *
- * Copyright (c) 2022-2024 Carbon Community 
+ * Copyright (c) 2022-2024 Carbon Community
  * All rights reserved.
  *
  */
@@ -15,7 +15,7 @@ public class Entities : IDisposable
 		{
 			Community.Runtime.Entities?.Dispose();
 
-			foreach (var type in _findSubClassesOf<BaseEntity>())
+			foreach (var type in _findAssignablesFrom<BaseEntity>())
 			{
 				Mapping.Add(type, new List<BaseEntity>(100000));
 			}
@@ -57,14 +57,14 @@ public class Entities : IDisposable
 		Mapping.Clear();
 	}
 
-	public static Dictionary<Type, List<BaseEntity>> Mapping { get; internal set; } = new Dictionary<Type, List<BaseEntity>>();
+	public static Dictionary<Type, List<BaseEntity>> Mapping { get; internal set; } = new();
 
-	internal static IEnumerable<Type> _findSubClassesOf<TBaseType>()
+	internal static IEnumerable<Type> _findAssignablesFrom<TBaseType>()
 	{
 		var baseType = typeof(TBaseType);
 		var assembly = baseType.Assembly;
 
-		return assembly.GetTypes().Where(t => t.IsSubclassOf(baseType));
+		return assembly.GetTypes().Where(t => baseType.IsAssignableFrom(t));
 	}
 
 	public static Map<T> Get<T>(bool inherited = false) where T : BaseEntity
@@ -78,7 +78,7 @@ public class Entities : IDisposable
 		{
 			foreach (var entry in Mapping)
 			{
-				if (entry.Key.IsSubclassOf(typeof(T)))
+				if (typeof(T).IsAssignableFrom(entry.Key))
 				{
 					foreach (var entity in entry.Value)
 					{
@@ -111,7 +111,7 @@ public class Entities : IDisposable
 		{
 			foreach (var entry in Mapping)
 			{
-				if (entry.Key.IsSubclassOf(typeof(BaseEntity)))
+				if (typeof(BaseEntity).IsAssignableFrom(entry.Key))
 				{
 					foreach (var entity in entry.Value)
 					{

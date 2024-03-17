@@ -21,3 +21,4 @@
 # Code gen
 [Bb]uild.cs
 [Gg]enerated/
+*-Generated.cs

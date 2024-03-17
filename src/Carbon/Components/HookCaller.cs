@@ -1332,20 +1332,20 @@ public static class HookCaller
 	internal static string _ifDirective = "#if";
 	internal static string _elifDirective = "#elif";
 
-	public static void GenerateInternalCallHook(CompilationUnitSyntax input, out CompilationUnitSyntax output, out MethodDeclarationSyntax generatedMethod, out bool isPartial, List<ClassDeclarationSyntax> _classList = null)
+	public static void GenerateInternalCallHook(CompilationUnitSyntax input, out CompilationUnitSyntax output, out MethodDeclarationSyntax generatedMethod, out bool isPartial, bool baseCall = false, string baseName = "plugin", List<ClassDeclarationSyntax> classList = null)
 	{
-		var methodContents = "\n\tvar result = (object)null;\n\ttry\n\t{\n\t\tswitch(hook)\n\t\t{\n";
+		var methodContents = $"\n\tvar result = {(baseCall ? "base.InternalCallHook(hook, args)" : "(object)null")}; try {{ switch(hook) {{ ";
 
 		var @namespace = (BaseNamespaceDeclarationSyntax)null;
 		var namespaceIndex = 0;
 		var classIndex = 0;
 		var isTemp = false;
 
-		if (_classList == null)
+		if (classList == null)
 		{
-			_classList = Pool.GetList<ClassDeclarationSyntax>();
+			classList = Pool.GetList<ClassDeclarationSyntax>();
 			isTemp = true;
-			FindPluginInfo(input, out @namespace, out _, out _, _classList);
+			FindPluginInfo(input, out @namespace, out _, out _, classList);
 		}
 		else
 		{
@@ -1354,7 +1354,7 @@ public static class HookCaller
 			namespaceIndex = classIndex = 0;
 		}
 
-		var @class = _classList[0];
+		var @class = classList[0];
 
 		if (@namespace == null)
 		{
@@ -1364,11 +1364,11 @@ public static class HookCaller
 		isPartial = @class.Modifiers.Any(x => x.IsKind(SyntaxKind.PartialKeyword));
 
 		var methodDeclarations = new List<MethodDeclarationSyntax>();
-		methodDeclarations.AddRange(_classList.SelectMany(x => x.ChildNodes()).OfType<MethodDeclarationSyntax>());
+		methodDeclarations.AddRange(classList.SelectMany(x => x.ChildNodes()).OfType<MethodDeclarationSyntax>());
 
 		if (isTemp)
 		{
-			Pool.FreeList(ref _classList);
+			Pool.FreeList(ref classList);
 		}
 
 		var hookableMethods = new Dictionary<uint, List<MethodDeclarationSyntax>>();
@@ -1415,7 +1415,7 @@ public static class HookCaller
 				else if (context.ToString().Contains("\""))
 				{
 					var value = AccessTools
-						.Field(AccessTools.TypeByName(_classList.FirstOrDefault().Identifier.Text),
+						.Field(AccessTools.TypeByName(classList.FirstOrDefault().Identifier.Text),
 							context.ToString().Replace("\"", string.Empty))?.GetValue(null)?.ToString();
 
 					if (!string.IsNullOrEmpty(value))
@@ -1525,7 +1525,7 @@ public static class HookCaller
 			methodContents += "\t\t\t\tbreak;\n\t\t\t}\n";
 		}
 
-		methodContents += "}\n}\ncatch (System.Exception ex)\n{\nCarbon.Logger.Error($\"Failed to call internal hook '{Carbon.Pooling.HookStringPool.GetOrAdd(hook)}' on plugin '{base.Name} v{base.Version}' [{hook}]\", ex);\n}\nreturn result;";
+		methodContents += "}\n}\ncatch (System.Exception ex)\n{\nCarbon.Logger.Error($\"Failed to call internal hook '{Carbon.Pooling.HookStringPool.GetOrAdd(hook)}' on " + baseName + " '{" + (baseName == "plugin" ? "base.Name" : "this.Name") + "} v{ " + (baseName == "plugin" ? "base.Version" : "this.Version") + "}' [{hook}]\", ex);\n}\nreturn result;";
 
 		generatedMethod = SyntaxFactory.MethodDeclaration(
 			SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword).WithTrailingTrivia(SyntaxFactory.Space)),
@@ -1563,7 +1563,7 @@ public static class HookCaller
 
 	public static void GeneratePartial(CompilationUnitSyntax input, out CompilationUnitSyntax output, CSharpParseOptions options, string fileName, List<ClassDeclarationSyntax> classes = null)
 	{
-		GenerateInternalCallHook(input, out _, out var method, out var isPartial, classes);
+		GenerateInternalCallHook(input, out _, out var method, out var isPartial, classList: classes);
 
 		var @namespace = (BaseNamespaceDeclarationSyntax)null;
 		var @class = (ClassDeclarationSyntax)null;

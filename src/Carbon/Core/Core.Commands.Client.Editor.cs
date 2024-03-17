@@ -11,7 +11,7 @@ namespace Carbon.Core;
 
 public partial class CorePlugin : CarbonPlugin
 {
-	[ConsoleCommand("client.editor.addon_live_update")]
+	[ConsoleCommand("client.editor.addon_live_update", "Carbon Editor requested RCon command for loading an addon.")]
 	[AuthLevel(2)]
 	private void ClientEditorAddonLiveUpdate(ConsoleSystem.Arg args)
 	{

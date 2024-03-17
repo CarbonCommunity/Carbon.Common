@@ -10,14 +10,13 @@ namespace Carbon.Base.Interfaces;
 public interface IModule : IDisposable
 {
 	string Name { get; }
-	bool HasOSI { get; internal set; }
 
 	void Init();
 	bool InitEnd();
 	void Save();
 	void Load();
 	void Reload();
-	void Unload();
+	void OnUnload();
 	void Shutdown();
 
 	void OnServerInit(bool initial);
