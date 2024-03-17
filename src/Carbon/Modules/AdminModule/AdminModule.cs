@@ -40,7 +40,6 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 	public readonly Handler Handler = new();
 
-	internal const float OptionWidth = 0.475f;
 	internal const float TooltipOffset = 15;
 	internal const int RangeCuts = 50;
 	internal readonly string[] EmptyElement = new string[] { string.Empty };
@@ -78,7 +77,6 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		"plugins.use",
 		"plugins.setup"
 	};
-	private const string OptionColor = "0.2 0.2 0.2 0.75";
 
 	internal bool _logRegistration;
 
@@ -414,7 +412,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 	public void TabPanelName(CUI cui, CuiElementContainer container, string parent, string text, float height, float offset, TextAnchor align)
 	{
 		var cuiText = cui.CreateText(container, parent,
-			color: "1 1 1 0.7",
+			color: DataInstance.Colors.NameTextColor,
 			text: text?.ToUpper(), 12,
 			xMin: 0.025f, xMax: 0.98f, yMin: offset, yMax: offset + height,
 			align: align,
@@ -452,10 +450,10 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 	{
 		var color = type switch
 		{
-			Tab.OptionButton.Types.Selected => "0.4 0.7 0.2 0.75",
-			Tab.OptionButton.Types.Warned => "0.8 0.7 0.2 0.75",
-			Tab.OptionButton.Types.Important => "0.97 0.2 0.1 0.75",
-			_ => OptionColor
+			Tab.OptionButton.Types.Selected => DataInstance.Colors.ButtonSelectedColor,
+			Tab.OptionButton.Types.Warned => DataInstance.Colors.ButtonWarnedColor,
+			Tab.OptionButton.Types.Important => DataInstance.Colors.ButtonImportantColor,
+			_ => DataInstance.Colors.OptionColor
 		};
 
 		cui.CreateProtectedButton(container, parent: parent,
@@ -478,7 +476,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		if (!string.IsNullOrEmpty(text))
 		{
 			cui.CreateText(container, panel,
-				color: $"1 1 1 {DataInstance.Colors.OptionNameOpacity}",
+				color: DataInstance.Colors.OptionNameColor,
 				text: $"{text}:", 12,
 				xMin: 0.025f, xMax: 0.98f, yMin: 0, yMax: 1,
 				align: TextAnchor.MiddleLeft,
@@ -490,7 +488,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		}
 
 		var button = cui.CreateProtectedButton(container, parent,
-			color: OptionColor,
+			color: DataInstance.Colors.OptionColor,
 			textColor: "1 1 1 0.5",
 			text: string.Empty, 11,
 			xMin: toggleButtonScale, xMax: 0.985f, yMin: offset, yMax: offset + height,
@@ -501,7 +499,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		{
 			cui.CreateImage(container, button,
 				url: "checkmark",
-				color: "0.4 0.7 0.2 0.7",
+				color: DataInstance.Colors.ButtonSelectedColor,
 				xMin: 0.15f, xMax: 0.85f, yMin: 0.15f, yMax: 0.85f);
 		}
 	}
@@ -509,10 +507,10 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 	{
 		var color = type switch
 		{
-			Tab.OptionButton.Types.Selected => "0.4 0.7 0.2 0.75",
-			Tab.OptionButton.Types.Warned => "0.8 0.7 0.2 0.75",
-			Tab.OptionButton.Types.Important => "0.97 0.2 0.1 0.75",
-			_ => OptionColor
+			Tab.OptionButton.Types.Selected => DataInstance.Colors.ButtonSelectedColor,
+			Tab.OptionButton.Types.Warned => DataInstance.Colors.ButtonWarnedColor,
+			Tab.OptionButton.Types.Important => DataInstance.Colors.ButtonImportantColor,
+			_ => DataInstance.Colors.OptionColor
 		};
 
 		var panel = cui.CreatePanel(container, parent,
@@ -522,7 +520,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		if (!string.IsNullOrEmpty(text))
 		{
 			cui.CreateText(container, panel,
-				color: $"1 1 1 {DataInstance.Colors.OptionNameOpacity}",
+				color: DataInstance.Colors.OptionNameColor,
 				text: $"{text}:", 12,
 				xMin: 0.025f, xMax: 0.98f, yMin: 0, yMax: 1,
 				align: TextAnchor.MiddleLeft,
@@ -530,12 +528,12 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 			cui.CreatePanel(container, panel,
 				color: color,
-				xMin: 0, xMax: OptionWidth, yMin: 0, yMax: 0.015f);
+				xMin: 0, xMax: DataInstance.Colors.OptionWidth, yMin: 0, yMax: 0.015f);
 		}
 
 		var inPanel = cui.CreatePanel(container, panel,
 			color: color,
-			xMin: OptionWidth, xMax: 0.985f, yMin: 0, yMax: 1);
+			xMin: DataInstance.Colors.OptionWidth, xMax: 0.985f, yMin: 0, yMax: 1);
 
 		cui.CreateProtectedInputField(container, parent: inPanel,
 			color: $"1 1 1 {(readOnly ? 0.2f : 1f)}",
@@ -566,10 +564,10 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 	{
 		var color = type switch
 		{
-			Tab.OptionButton.Types.Selected => "0.4 0.7 0.2 0.75",
-			Tab.OptionButton.Types.Warned => "0.8 0.7 0.2 0.75",
-			Tab.OptionButton.Types.Important => "0.97 0.2 0.1 0.75",
-			_ => OptionColor
+			Tab.OptionButton.Types.Selected => DataInstance.Colors.ButtonSelectedColor,
+			Tab.OptionButton.Types.Warned => DataInstance.Colors.ButtonWarnedColor,
+			Tab.OptionButton.Types.Important => DataInstance.Colors.ButtonImportantColor,
+			_ => DataInstance.Colors.OptionColor
 		};
 
 		var panel = cui.CreatePanel(container, parent,
@@ -579,7 +577,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		if (!string.IsNullOrEmpty(text))
 		{
 			cui.CreateText(container, panel,
-				color: $"1 1 1 {DataInstance.Colors.OptionNameOpacity}",
+				color: DataInstance.Colors.OptionNameColor,
 				text: $"{text}:", 12,
 				xMin: 0.025f, xMax: 0.98f, yMin: 0, yMax: 1,
 				align: TextAnchor.MiddleLeft,
@@ -587,12 +585,12 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 			cui.CreatePanel(container, panel,
 				color: "0.2 0.2 0.2 0.5",
-				xMin: 0, xMax: OptionWidth, yMin: 0, yMax: 0.015f);
+				xMin: 0, xMax: DataInstance.Colors.OptionWidth, yMin: 0, yMax: 0.015f);
 		}
 
 		var inPanel = cui.CreatePanel(container, panel,
-			color: OptionColor,
-			xMin: OptionWidth, xMax: 0.985f, yMin: 0, yMax: 1);
+			color: DataInstance.Colors.OptionColor,
+			xMin: DataInstance.Colors.OptionWidth, xMax: 0.985f, yMin: 0, yMax: 1);
 
 		cui.CreateText(container, inPanel,
 			color: "1 1 1 0.7",
@@ -630,7 +628,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		if (!string.IsNullOrEmpty(text))
 		{
 			cui.CreateText(container, panel,
-				color: $"1 1 1 {DataInstance.Colors.OptionNameOpacity}",
+				color: DataInstance.Colors.OptionNameColor,
 				text: $"{text}:", 12,
 				xMin: 0.025f, xMax: 0.98f, yMin: 0, yMax: 1,
 				align: TextAnchor.MiddleLeft,
@@ -642,7 +640,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		}
 
 		var button = cui.CreateProtectedButton(container, parent,
-			color: OptionColor,
+			color: DataInstance.Colors.OptionColor,
 			textColor: "1 1 1 0.5",
 			text: string.Empty, 11,
 			xMin: toggleButtonScale, xMax: 0.985f, yMin: offset, yMax: offset + height,
@@ -660,10 +658,10 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 	{
 		var color = type switch
 		{
-			Tab.OptionButton.Types.Selected => "0.4 0.7 0.2",
-			Tab.OptionButton.Types.Warned => "0.8 0.7 0.2",
-			Tab.OptionButton.Types.Important => "0.97 0.2 0.1",
-			_ => "0.2 0.2 0.2 1",
+			Tab.OptionButton.Types.Selected => DataInstance.Colors.ButtonSelectedColor,
+			Tab.OptionButton.Types.Warned => DataInstance.Colors.ButtonWarnedColor,
+			Tab.OptionButton.Types.Important => DataInstance.Colors.ButtonImportantColor,
+			_ => DataInstance.Colors.OptionColor2,
 		};
 
 		var panel = cui.CreatePanel(container, parent,
@@ -673,29 +671,29 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		if (!string.IsNullOrEmpty(text))
 		{
 			cui.CreateText(container, panel,
-				color: $"1 1 1 {DataInstance.Colors.OptionNameOpacity}",
+				color: DataInstance.Colors.OptionNameColor,
 				text: $"{text}:", 12,
 				xMin: 0.025f, xMax: 0.98f, yMin: 0, yMax: 1,
 				align: TextAnchor.MiddleLeft,
 				font: Handler.FontTypes.RobotoCondensedRegular);
 
 			cui.CreatePanel(container, panel,
-				color: OptionColor,
-				xMin: 0, xMax: OptionWidth, yMin: 0, yMax: 0.015f);
+				color: DataInstance.Colors.OptionColor,
+				xMin: 0, xMax: DataInstance.Colors.OptionWidth, yMin: 0, yMax: 0.015f);
 		}
 
 		var inPanel = cui.CreatePanel(container, panel,
-			color: OptionColor,
-			xMin: OptionWidth, xMax: 0.985f, yMin: 0, yMax: 1);
+			color: DataInstance.Colors.OptionColor,
+			xMin: DataInstance.Colors.OptionWidth, xMax: 0.985f, yMin: 0, yMax: 1);
 
 		var icon = optionsIcons != null && index <= optionsIcons.Length - 1 ? optionsIcons[index] : null;
-		var iconXmin = 0.015f;
-		var iconXmax = 0.072f;
-		var iconYmin = 0.2f;
-		var iconYmax = 0.8f;
+		const float iconXmin = 0.015f;
+		const float iconXmax = 0.072f;
+		const float iconYmin = 0.2f;
+		const float iconYmax = 0.8f;
 
 		var button = cui.CreateProtectedButton(container, inPanel,
-			color: OptionColor,
+			color: DataInstance.Colors.OptionColor,
 			textColor: Cache.CUI.BlankColor,
 			text: string.Empty, 0,
 			xMin: 0f, xMax: 1f, yMin: 0, yMax: 1,
@@ -714,9 +712,9 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 		if (display)
 		{
-			var _spacing = 22;
+			const float _spacing = 22;
 			var _offset = -_spacing;
-			var contentsPerPage = 10;
+			const int contentsPerPage = 10;
 			var rowPage = options.Skip(contentsPerPage * page.CurrentPage).Take(contentsPerPage);
 			var rowPageCount = rowPage.Count();
 			var shiftOffset = 15;
@@ -732,7 +730,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				var subIcon = optionsIcons != null && actualI <= optionsIcons.Length - 1 ? optionsIcons[actualI] : null;
 
 				var subButton = cui.CreateProtectedButton(container, inPanel,
-					color: isSelected ? $"{color} 1" : "0.1 0.1 0.1 1",
+					color: isSelected ? RustToHexColor(color, 1f) : "0.1 0.1 0.1 1",
 					textColor: Cache.CUI.BlankColor,
 					text: string.Empty, 0,
 					xMin: 0f, xMax: 1f, yMin: 0, yMax: 1,
@@ -817,10 +815,10 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 	{
 		var color = type switch
 		{
-			Tab.OptionButton.Types.Selected => "0.4 0.7 0.2 0.75",
-			Tab.OptionButton.Types.Warned => "0.8 0.7 0.2 0.75",
-			Tab.OptionButton.Types.Important => "0.97 0.2 0.1 0.75",
-			_ => OptionColor
+			Tab.OptionButton.Types.Selected => DataInstance.Colors.ButtonSelectedColor,
+			Tab.OptionButton.Types.Warned => DataInstance.Colors.ButtonWarnedColor,
+			Tab.OptionButton.Types.Important => DataInstance.Colors.ButtonImportantColor,
+			_ => DataInstance.Colors.OptionColor
 		};
 
 		var panel = cui.CreatePanel(container, parent,
@@ -830,7 +828,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		if (!string.IsNullOrEmpty(text))
 		{
 			cui.CreateText(container, panel,
-				color: $"1 1 1 {DataInstance.Colors.OptionNameOpacity}",
+				color: DataInstance.Colors.OptionNameColor,
 				text: $"{text}:", 12,
 				xMin: 0.025f, xMax: 0.98f, yMin: 0, yMax: 1,
 				align: TextAnchor.MiddleLeft,
@@ -838,12 +836,12 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 			cui.CreatePanel(container, panel,
 				color: color,
-				xMin: 0, xMax: OptionWidth, yMin: 0, yMax: 0.015f);
+				xMin: 0, xMax: DataInstance.Colors.OptionWidth, yMin: 0, yMax: 0.015f);
 		}
 
 		var inPanel = cui.CreatePanel(container, panel,
 			color: color,
-			xMin: OptionWidth, xMax: 0.985f, yMin: 0, yMax: 1);
+			xMin: DataInstance.Colors.OptionWidth, xMax: 0.985f, yMin: 0, yMax: 1);
 
 		cui.CreatePanel(container, inPanel,
 			color: HexToRustColor("#f54242", 0.8f),
@@ -878,10 +876,10 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			var button = buttons[i];
 			var color = (button.Type == null ? Tab.OptionButton.Types.None : button.Type(session)) switch
 			{
-				Tab.OptionButton.Types.Selected => "0.4 0.7 0.2 0.75",
-				Tab.OptionButton.Types.Warned => "0.8 0.7 0.2 0.75",
-				Tab.OptionButton.Types.Important => "0.97 0.2 0.1 0.75",
-				_ => OptionColor
+				Tab.OptionButton.Types.Selected => DataInstance.Colors.ButtonSelectedColor,
+				Tab.OptionButton.Types.Warned => DataInstance.Colors.ButtonWarnedColor,
+				Tab.OptionButton.Types.Important => DataInstance.Colors.ButtonImportantColor,
+				_ => DataInstance.Colors.OptionColor
 			};
 			cui.CreateProtectedButton(container, panel, color, "1 1 1 0.5", button.Name, 11,
 				xMin: currentOffset, xMax: currentOffset + cuts, yMin: 0, yMax: 1,
@@ -892,13 +890,13 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 	}
 	public void TabPanelInputButton(CUI cui, CuiElementContainer container, string parent, string text, string command, float buttonPriority, Tab.OptionInput input, Tab.OptionButton button, PlayerSession session, float height, float offset, Tab.Option option = null)
 	{
-		var color = OptionColor;
+		var color = DataInstance.Colors.OptionColor;
 		var buttonColor = (button.Type == null ? Tab.OptionButton.Types.None : button.Type(null)) switch
 		{
-			Tab.OptionButton.Types.Selected => "0.4 0.7 0.2 0.75",
-			Tab.OptionButton.Types.Warned => "0.8 0.7 0.2 0.75",
-			Tab.OptionButton.Types.Important => "0.97 0.2 0.1 0.75",
-			_ => OptionColor
+			Tab.OptionButton.Types.Selected => DataInstance.Colors.ButtonSelectedColor,
+			Tab.OptionButton.Types.Warned => DataInstance.Colors.ButtonWarnedColor,
+			Tab.OptionButton.Types.Important => DataInstance.Colors.ButtonImportantColor,
+			_ => DataInstance.Colors.OptionColor
 		};
 
 		var panel = cui.CreatePanel(container, parent,
@@ -908,7 +906,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		if (!string.IsNullOrEmpty(text))
 		{
 			cui.CreateText(container, panel,
-				color: $"1 1 1 {DataInstance.Colors.OptionNameOpacity}",
+				color: DataInstance.Colors.OptionNameColor,
 				text: $"{text}:", 12,
 				xMin: 0.025f, xMax: 0.98f, yMin: 0, yMax: 1,
 				align: TextAnchor.MiddleLeft,
@@ -917,11 +915,11 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 		var inPanel = cui.CreatePanel(container, panel,
 			color: color,
-			xMin: OptionWidth, xMax: 0.985f, yMin: 0, yMax: 1);
+			xMin: DataInstance.Colors.OptionWidth, xMax: 0.985f, yMin: 0, yMax: 1);
 
 		cui.CreatePanel(container, panel,
 			color: color,
-			xMin: 0, xMax: OptionWidth, yMin: 0, yMax: 0.015f);
+			xMin: 0, xMax: DataInstance.Colors.OptionWidth, yMin: 0, yMax: 0.015f);
 
 		cui.CreateProtectedInputField(container, parent: inPanel,
 			color: $"1 1 1 {(input.ReadOnly ? 0.2f : 1f)}",
@@ -968,14 +966,14 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		if (!string.IsNullOrEmpty(text))
 		{
 			cui.CreateText(container, panel,
-				color: $"1 1 1 {DataInstance.Colors.OptionNameOpacity}",
+				color: DataInstance.Colors.OptionNameColor,
 				text: $"{text}:", 12,
 				xMin: 0.025f, xMax: 0.98f, yMin: 0, yMax: 1,
 				align: TextAnchor.MiddleLeft,
 				font: Handler.FontTypes.RobotoCondensedRegular);
 
 			cui.CreatePanel(container, panel,
-				color: OptionColor,
+				color: DataInstance.Colors.OptionColor,
 				xMin: 0, xMax: toggleButtonScale, yMin: 0, yMax: 0.015f);
 		}
 
@@ -1003,7 +1001,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		if (!string.IsNullOrEmpty(tooltip.Tooltip))
 		{
 			cui.CreateProtectedButton(container, parent, Cache.CUI.BlankColor, Cache.CUI.BlankColor, string.Empty, 0,
-				xMin: 0, xMax: OptionWidth, yMin: offset, yMax: offset + height,
+				xMin: 0, xMax: DataInstance.Colors.OptionWidth, yMin: offset, yMax: offset + height,
 				command: $"{command} tooltip");
 		}
 	}
@@ -1168,33 +1166,33 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 										case Tab.OptionInput input:
 											TabPanelInput(cui, container, panel, input.Name, input.Placeholder?.Invoke(ap), PanelId + $".callaction {i} {actualI}", input.CharacterLimit, input.ReadOnly, rowHeight, rowIndex, ap, option: input);
-											HandleReveal(OptionWidth);
-											HandleInputHighlight(OptionWidth);
+											HandleReveal(DataInstance.Colors.OptionWidth);
+											HandleInputHighlight(DataInstance.Colors.OptionWidth);
 											break;
 
 										case Tab.OptionEnum @enum:
 											TabPanelEnum(cui, container, panel, @enum.Name, @enum.Text?.Invoke(ap), PanelId + $".callaction {i} {actualI}", rowHeight, rowIndex);
-											HandleReveal(OptionWidth);
+											HandleReveal(DataInstance.Colors.OptionWidth);
 											break;
 
 										case Tab.OptionToggle toggle:
 											TabPanelToggle(cui, container, panel, toggle.Name, PanelId + $".callaction {i} {actualI}", rowHeight, rowIndex, toggle.IsOn != null ? toggle.IsOn.Invoke(ap) : false, tab);
-											HandleReveal(OptionWidth);
+											HandleReveal(DataInstance.Colors.OptionWidth);
 											break;
 
 										case Tab.OptionRadio radio:
 											TabPanelRadio(cui, container, panel, radio.Name, radio.Index == tab.Radios[radio.Id].Selected, PanelId + $".callaction {i} {actualI}", rowHeight, rowIndex);
-											HandleReveal(OptionWidth);
+											HandleReveal(DataInstance.Colors.OptionWidth);
 											break;
 
 										case Tab.OptionDropdown dropdown:
 											TabPanelDropdown(cui, ap._selectedDropdownPage, container, panel, dropdown.Name, PanelId + $".callaction {i} {actualI}", rowHeight, rowIndex, dropdown.Index.Invoke(ap), dropdown.Options, dropdown.OptionsIcons, dropdown.OptionsIconScale, ap._selectedDropdown == dropdown);
-											HandleReveal(OptionWidth);
+											HandleReveal(DataInstance.Colors.OptionWidth);
 											break;
 
 										case Tab.OptionRange range:
 											TabPanelRange(cui, container, panel, range.Name, PanelId + $".callaction {i} {actualI}", range.Text?.Invoke(ap), range.Min, range.Max, range.Value == null ? 0 : range.Value.Invoke(ap), rowHeight, rowIndex);
-											HandleReveal(OptionWidth);
+											HandleReveal(DataInstance.Colors.OptionWidth);
 											break;
 
 										case Tab.OptionButtonArray array:
@@ -1203,13 +1201,13 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 										case Tab.OptionInputButton inputButton:
 											TabPanelInputButton(cui, container, panel, inputButton.Name, PanelId + $".callaction {i} {actualI}", inputButton.ButtonPriority, inputButton.Input, inputButton.Button, ap, rowHeight, rowIndex, option: inputButton);
-											HandleReveal(OptionWidth);
-											HandleInputHighlight(OptionWidth, 1f - inputButton.ButtonPriority, "input");
+											HandleReveal(DataInstance.Colors.OptionWidth);
+											HandleInputHighlight(DataInstance.Colors.OptionWidth, 1f - inputButton.ButtonPriority, "input");
 											break;
 
 										case Tab.OptionColor color:
 											TabPanelColor(cui, container, panel, color.Name, color.Color?.Invoke() ?? "0.1 0.1 0.1 0.5", PanelId + $".callaction {i} {actualI}", rowHeight, rowIndex);
-											HandleReveal(OptionWidth);
+											HandleReveal(DataInstance.Colors.OptionWidth);
 											break;
 									}
 
@@ -1296,7 +1294,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 			using (TimeMeasure.New($"{Name}.Exit"))
 			{
-				var shift = tab.Fullscreen ? 15 : 0;
+				var shift = tab == null || tab.Fullscreen ? 15 : 0;
 
 				var configButton = cui.CreateProtectedButton(container, main,
 					color: "0.2 0.6 0.2 0.9",
@@ -1799,7 +1797,14 @@ public class AdminData
 	{
 		public string SelectedTabColor = "0.4 0.7 0.2";
 		public string EditableInputHighlight = "0.259 0.529 0.961";
-		public float OptionNameOpacity = 0.7f;
+		public string NameTextColor = "1 1 1 0.7";
+		public string ButtonSelectedColor = "0.4 0.7 0.2 0.75";
+		public string ButtonWarnedColor = "0.8 0.7 0.2 0.75";
+		public string ButtonImportantColor = "0.97 0.2 0.1 0.75";
+		public string OptionColor = "0.2 0.2 0.2 0.75";
+		public string OptionColor2 = "0.2 0.2 0.2 0.1";
+		public string OptionNameColor = $"1 1 1 0.7";
 		public float TitleUnderlineOpacity = 0.9f;
+		public float OptionWidth = 0.475f;
 	}
 }

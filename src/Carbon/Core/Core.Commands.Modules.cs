@@ -120,13 +120,26 @@ public partial class CorePlugin : CarbonPlugin
 		}
 	}
 
-	[ConsoleCommand("modules", "Prints a list of all available modules.")]
+	[ConsoleCommand("modules", "Prints a list of all available modules. Eg. c.modules [-abc|--json|-t|-m|-f] [-asc]")]
 	[AuthLevel(2)]
 	private void Modules(ConsoleSystem.Arg arg)
 	{
+		var mode = arg.GetString(0);
+		var flip = arg.GetString(0).Equals("-asc") || arg.GetString(1).Equals("-asc");
+
 		var count = 1;
-		using var print = new StringTable("#", "Name", "Enabled", "Version", "Hook Time", "Memory Usage", "Uptime", "Quick");
-		foreach (var hookable in Community.Runtime.ModuleProcessor.Modules)
+		using var print = new StringTable("#", "Name", "Enabled", "Version", "Hook Time", "Hook Fires", "Memory Usage", "Uptime");
+
+		IEnumerable<BaseHookable> array = mode switch
+		{
+			"-abc" => Community.Runtime.ModuleProcessor.Modules.OrderBy(x => x.Name),
+			"-t" => (flip ? Community.Runtime.ModuleProcessor.Modules.OrderBy(x => x.TotalHookTime) : Community.Runtime.ModuleProcessor.Modules.OrderByDescending(x => x.TotalHookTime)),
+			"-m" => (flip ? Community.Runtime.ModuleProcessor.Modules.OrderBy(x => x.TotalMemoryUsed) : Community.Runtime.ModuleProcessor.Modules.OrderByDescending(x => x.TotalMemoryUsed)),
+			"-f" => (flip ? Community.Runtime.ModuleProcessor.Modules.OrderBy(x => x.CurrentHookFires) : Community.Runtime.ModuleProcessor.Modules.OrderByDescending(x => x.CurrentHookFires)),
+			_ => (flip ? Community.Runtime.ModuleProcessor.Modules.AsEnumerable().Reverse() : Community.Runtime.ModuleProcessor.Modules.AsEnumerable())
+		};
+
+		foreach (var hookable in array)
 		{
 			if (hookable is not BaseModule module)
 			{
@@ -148,7 +161,11 @@ public partial class CorePlugin : CarbonPlugin
 #endif
 			var hookTimeAverage = Mathf.RoundToInt(hookTimeAverageValue) == 0 ? string.Empty : $" (avg {hookTimeAverageValue:0}ms)";
 			var memoryAverage = Mathf.RoundToInt(memoryAverageValue) == 0 ? string.Empty : $" (avg {ByteEx.Format(memoryAverageValue, shortName: true, stringFormat: "{0}{1}").ToLower()})";
-			print.AddRow(count, hookable.Name, module.GetEnabled(), module.Version, $"{module.TotalHookTime:0}ms{hookTimeAverage}", $"{ByteEx.Format(module.TotalMemoryUsed, shortName: true, stringFormat: "{0}{1}").ToLower()}{memoryAverage}", $"{TimeEx.Format(module.Uptime)}", $"c.setmodule \"{hookable.Name}\" [0|1]");
+			print.AddRow(count, hookable.Name, module.GetEnabled(), module.Version,
+				$"{module.TotalHookTime:0}ms{hookTimeAverage}",
+				$"{module.CurrentHookFires:0}",
+				$"{ByteEx.Format(module.TotalMemoryUsed, shortName: true, stringFormat: "{0}{1}").ToLower()}{memoryAverage}",
+				$"{TimeEx.Format(module.Uptime)}");
 			count++;
 		}
 

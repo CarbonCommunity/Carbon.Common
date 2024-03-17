@@ -70,6 +70,20 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 		arg.ReplyWith($"Loading all default images.");
 	}
 
+	[ConsoleCommand("imagedb.deleteimage")]
+	[AuthLevel(2)]
+	private void DeleteImg(ConsoleSystem.Arg arg)
+	{
+		if (DeleteImage(arg.GetString(0), arg.GetFloat(1)))
+		{
+			arg.ReplyWith($"Deleted image.");
+		}
+		else
+		{
+			arg.ReplyWith($"Couldn't delete image. Probably because it doesn't exist.");
+		}
+	}
+
 	[ConsoleCommand("imagedb.pending")]
 	[AuthLevel(2)]
 	private void ShowPending(ConsoleSystem.Arg arg)
@@ -106,9 +120,11 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 
 		if(!initial) return;
 
-		if (!Validate()) return;
+		if (Validate())
+		{
+			Save();
+		}
 
-		Save();
 		LoadDefaultImages();
 	}
 	public override void OnServerSaved()
@@ -164,7 +180,8 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 	}
 	private void LoadDefaultImages()
 	{
-		Queue(_defaultImages);
+		Queue(_defaultImages.Where(x => !HasImage(x.Key))
+			.ToDictionary(x => x.Key, x => x.Value));
 	}
 
 	public override bool PreLoadShouldSave(bool newConfig, bool newData)
