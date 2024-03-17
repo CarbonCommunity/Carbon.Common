@@ -43,7 +43,9 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 		["update-pending"] = "https://carbonmod.gg/assets/media/cui/update-pending.png",
 		["magnifying-glass"] = "https://carbonmod.gg/assets/media/cui/magnifying-glass.png",
 		["star"] = "https://carbonmod.gg/assets/media/cui/star.png",
-		["glow"] = "https://carbonmod.gg/assets/media/cui/glow.png"
+		["glow"] = "https://carbonmod.gg/assets/media/cui/glow.png",
+		["gear"] = "https://carbonmod.gg/assets/media/cui/gear.png",
+		["close"] = "https://carbonmod.gg/assets/media/cui/close.png"
 	};
 	internal IEnumerator _executeQueue(QueuedThread thread, Action<List<QueuedThreadResult>> onFinished)
 	{
@@ -59,6 +61,28 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 	}
 
 	internal const int MaximumBytes = 4104304;
+
+	[ConsoleCommand("imagedb.loaddefaults")]
+	[AuthLevel(2)]
+	private void LoadDefaults(ConsoleSystem.Arg arg)
+	{
+		LoadDefaultImages();
+		arg.ReplyWith($"Loading all default images.");
+	}
+
+	[ConsoleCommand("imagedb.deleteimage")]
+	[AuthLevel(2)]
+	private void DeleteImg(ConsoleSystem.Arg arg)
+	{
+		if (DeleteImage(arg.GetString(0), arg.GetFloat(1)))
+		{
+			arg.ReplyWith($"Deleted image.");
+		}
+		else
+		{
+			arg.ReplyWith($"Couldn't delete image. Probably because it doesn't exist.");
+		}
+	}
 
 	[ConsoleCommand("imagedb.pending")]
 	[AuthLevel(2)]
@@ -96,9 +120,11 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 
 		if(!initial) return;
 
-		if (!Validate()) return;
+		if (Validate())
+		{
+			Save();
+		}
 
-		Save();
 		LoadDefaultImages();
 	}
 	public override void OnServerSaved()
@@ -138,6 +164,7 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 
 		SaveDatabase();
 	}
+
 	public void SaveDatabase()
 	{
 		var path = _getProtoDataPath();
@@ -153,7 +180,8 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 	}
 	private void LoadDefaultImages()
 	{
-		Queue(_defaultImages);
+		Queue(_defaultImages.Where(x => !HasImage(x.Key))
+			.ToDictionary(x => x.Key, x => x.Value));
 	}
 
 	public override bool PreLoadShouldSave(bool newConfig, bool newData)

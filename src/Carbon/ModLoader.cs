@@ -624,21 +624,6 @@ public static class ModLoader
 
 			Facepunch.Pool.FreeList(ref plugins);
 
-			foreach (var plugin in Community.Runtime.ModuleProcessor.Modules)
-			{
-				if (plugin is IModule module && (!module.GetEnabled() || module.HasOSI)) continue;
-
-				try
-				{
-					HookCaller.CallHook(plugin, 1330569572, Community.IsServerInitialized);
-					((IModule)plugin).HasOSI = true;
-				}
-				catch (Exception initException)
-				{
-					Logger.Error($"[{plugin.Name}] Failed OnServerInitialized.", initException);
-				}
-			}
-
 			if (counter > 1)
 			{
 				Analytics.batch_plugin_types();
