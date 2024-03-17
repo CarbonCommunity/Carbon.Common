@@ -21,6 +21,9 @@ public partial class AdminModule
 		{
 		}
 
+		internal const float _applyChangesCooldown = 60;
+		internal static TimeSince _applyChangesTimeSince = _applyChangesCooldown / 2;
+
 		public static readonly string[] AuthLevels = new[]
 		{
 			"User",
@@ -53,7 +56,16 @@ public partial class AdminModule
 					tab.AddToggle(0, "Display Plugins",
 						ap => Singleton.ConfigInstance.DisablePluginsTab = !Singleton.ConfigInstance.DisablePluginsTab,
 						ap => !Singleton.ConfigInstance.DisablePluginsTab);
-					tab.AddButton(0, "Apply Changes", ap => Singleton.GenerateTabs());
+					tab.AddButton(0, "Apply Changes", ap =>
+					{
+						if (_applyChangesTimeSince > _applyChangesCooldown)
+						{
+							Singleton.GenerateTabs();
+							_applyChangesTimeSince = 0;
+							Refresh(tab, session);
+							Singleton.Draw(ap.Player);
+						}
+					}, ap => _applyChangesTimeSince > _applyChangesCooldown ? OptionButton.Types.Selected : OptionButton.Types.None);
 					tab.AddToggle(0, "Spectating Info Overlay",
 						ap => Singleton.ConfigInstance.SpectatingInfoOverlay = !Singleton.ConfigInstance.SpectatingInfoOverlay,
 						ap => !Singleton.ConfigInstance.SpectatingInfoOverlay);
@@ -69,7 +81,7 @@ public partial class AdminModule
 							Singleton.DataInstance.Colors.TitleUnderlineOpacity = value * 0.01f;
 							Singleton.Draw(ap.Player);
 						}, ap => Singleton.DataInstance.Colors.TitleUnderlineOpacity.ToString("0.0"));
-					tab.AddRange(0, "Option Width", 20f, 100f, ap => Singleton.DataInstance.Colors.OptionWidth * 100f,
+					tab.AddRange(0, "Option Width", 20f, 80f, ap => Singleton.DataInstance.Colors.OptionWidth * 100f,
 						(ap, value) =>
 						{
 							Singleton.DataInstance.Colors.OptionWidth = value * 0.01f;
