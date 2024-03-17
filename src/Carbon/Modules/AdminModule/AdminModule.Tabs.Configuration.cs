@@ -81,7 +81,7 @@ public partial class AdminModule
 							Singleton.DataInstance.Colors.TitleUnderlineOpacity = value * 0.01f;
 							Singleton.Draw(ap.Player);
 						}, ap => Singleton.DataInstance.Colors.TitleUnderlineOpacity.ToString("0.0"));
-					tab.AddRange(0, "Option Width", 20f, 100f, ap => Singleton.DataInstance.Colors.OptionWidth * 100f,
+					tab.AddRange(0, "Option Width", 20f, 80f, ap => Singleton.DataInstance.Colors.OptionWidth * 100f,
 						(ap, value) =>
 						{
 							Singleton.DataInstance.Colors.OptionWidth = value * 0.01f;
