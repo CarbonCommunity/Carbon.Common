@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Facepunch;
+using Newtonsoft.Json;
 
 /*
  *
@@ -26,6 +27,30 @@ public partial class CorePlugin : CarbonPlugin
 			$"To list all currently loaded plugins, execute `c.plugins`.\n" +
 			$"For more information, please visit https://docs.carbonmod.gg or join the Discord server at https://discord.gg/carbonmod\n" +
 			$"You're currently running {Community.Runtime.Analytics.InformationalVersion}.");
+	}
+
+	[ConsoleCommand("commit", "Information about the Git commit of this build.")]
+	[AuthLevel(2)]
+	private void Commit(ConsoleSystem.Arg arg)
+	{
+		var builder = PoolEx.GetStringBuilder();
+
+		var added = Build.Git.Changes.Count(x => x.Type == Build.Git.AssetChange.ChangeTypes.Added);
+		var modified = Build.Git.Changes.Count(x => x.Type == Build.Git.AssetChange.ChangeTypes.Modified);
+		var deleted = Build.Git.Changes.Count(x => x.Type == Build.Git.AssetChange.ChangeTypes.Deleted);
+
+		builder.AppendLine($"Branch:    {Build.Git.Branch}");
+		builder.AppendLine($"Author:    {Build.Git.Author}");
+		builder.AppendLine($"Comment:   {Build.Git.Comment}");
+		builder.AppendLine($"Date:      {Build.Git.Date}");
+		builder.AppendLine($"Tag:       {Build.Git.Tag}");
+		builder.AppendLine($"Hash:      {Build.Git.HashShort} ({Build.Git.HashLong})");
+		builder.AppendLine($"Url:       {Build.Git.Url}");
+		builder.AppendLine($"Is Debug:  {Build.IsDebug}");
+		builder.AppendLine($"Changes:   {added} added, {modified} modified, {deleted} deleted");
+
+		arg.ReplyWith(builder.ToString());
+		PoolEx.FreeStringBuilder(ref builder);
 	}
 
 	[ConsoleCommand("plugins", "Prints the list of mods and their loaded plugins. Eg. c.plugins [-j|--j|-json|-abc|--json|-t|-m|-f] [-asc]")]
