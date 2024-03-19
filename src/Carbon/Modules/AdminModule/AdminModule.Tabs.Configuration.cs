@@ -24,6 +24,7 @@ public partial class AdminModule
 		{
 		}
 
+		internal static ConfigurationTab _instance;
 		internal const float _applyChangesCooldown = 60;
 		internal static TimeSince _applyChangesTimeSince = _applyChangesCooldown / 2;
 
@@ -34,6 +35,8 @@ public partial class AdminModule
 			ConVars,
 			Items
 		}
+
+		public static ConfigurationTab GetOrCache() => _instance ?? (_instance = Make());
 
 		public static ConfigurationTab Make()
 		{
