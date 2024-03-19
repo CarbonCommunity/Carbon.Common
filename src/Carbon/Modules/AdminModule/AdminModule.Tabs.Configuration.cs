@@ -205,7 +205,7 @@ public partial class AdminModule
 							!Singleton.ConfigInstance.SpectatingInfoOverlay,
 						ap => !Singleton.ConfigInstance.SpectatingInfoOverlay);
 					tab.AddToggle(0, "Hide Plugin Icons (Plugins tab)",
-						ap => Singleton.DataInstance.HidePluginIcons = Singleton.DataInstance.HidePluginIcons,
+						ap => Singleton.DataInstance.HidePluginIcons = !Singleton.DataInstance.HidePluginIcons,
 						ap => Singleton.DataInstance.HidePluginIcons);
 
 					tab.AddName(0, "Customization");
