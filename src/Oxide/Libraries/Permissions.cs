@@ -102,6 +102,8 @@ public class Permission : Library
 			userdata.Clear();
 			userdata = null;
 			userdata = validatedUsers;
+
+			CovalencePlugin.PlayerManager.RefreshDatabase(userdata);
 		}
 
 		groupdata = (ProtoStorage.Load<Dictionary<string, GroupData>>("oxide.groups") ?? new Dictionary<string, GroupData>());
@@ -351,6 +353,7 @@ public class Permission : Library
 			if (!addIfNotExisting) return _blankUser;
 
 			userdata.Add(id, result = new UserData());
+			CovalencePlugin.PlayerManager.RefreshDatabase(userdata);
 		}
 
 		return result;
@@ -417,6 +420,7 @@ public class Permission : Library
 
 			// OnUserNameUpdated
 			HookCaller.CallStaticHook(945289215, id, lastSeenNickname, obj);
+			CovalencePlugin.PlayerManager.RefreshDatabase(userdata);
 		}
 	}
 
