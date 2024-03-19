@@ -493,8 +493,8 @@ public partial class AdminModule
 		}
 	}
 
-	[ProtectedCommand("adminmodule.itemsetting")]
 	[Conditional("!MINIMAL")]
+	[ProtectedCommand("adminmodule.itemsetting")]
 	private void ItemSetting(ConsoleSystem.Arg arg)
 	{
 		var player = arg.Player();
@@ -528,8 +528,8 @@ public partial class AdminModule
 		Draw(player);
 	}
 
-	[ProtectedCommand("adminmodule.itemcreate")]
 	[Conditional("!MINIMAL")]
+	[ProtectedCommand("adminmodule.itemcreate")]
 	private void ItemCreate(ConsoleSystem.Arg arg)
 	{
 		var player = arg.Player();
@@ -559,8 +559,8 @@ public partial class AdminModule
 		Draw(session.Player);
 	}
 
-	[ProtectedCommand("adminmodule.itemclear")]
 	[Conditional("!MINIMAL")]
+	[ProtectedCommand("adminmodule.itemclear")]
 	private void ItemClear(ConsoleSystem.Arg arg)
 	{
 		var player = arg.Player();
