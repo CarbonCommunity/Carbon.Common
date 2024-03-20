@@ -43,6 +43,7 @@ public class Permission : Library
 	public Dictionary<string, GroupData> groupdata = new();
 	public readonly Dictionary<BaseHookable, HashSet<string>> permset;
 
+	private Dictionary<string, UserData> userdatacache = new();
 	private Func<string, bool> validate;
 
 	internal static readonly UserData _blankUser = new();
@@ -204,7 +205,7 @@ public class Permission : Library
 		if (!IsLoaded || validate == null) return;
 
 		var array = (from k in userdata.Keys
-					 where !validate(k)
+					 where !UserIdValid(k)
 					 select k).ToArray();
 
 		if (array.Length == 0) return;
@@ -268,7 +269,6 @@ public class Permission : Library
 		// OnPermissionRegistered
 		HookCaller.CallStaticHook(3007604742, name, owner);
 	}
-
 	public virtual void UnregisterPermissions(BaseHookable owner)
 	{
 		if (owner == null) return;
@@ -282,7 +282,6 @@ public class Permission : Library
 			HookCaller.CallStaticHook(1374013157, owner);
 		}
 	}
-
 	public virtual bool PermissionExists(string name, BaseHookable owner = null)
 	{
 		if (string.IsNullOrEmpty(name))
@@ -354,6 +353,20 @@ public class Permission : Library
 
 			userdata.Add(id, result = new UserData());
 			CovalencePlugin.PlayerManager.RefreshDatabase(userdata);
+		}
+
+		return result;
+	}
+
+	public virtual UserData GetUserDataCache(string id)
+	{
+		if (!userdatacache.TryGetValue(id, out var result))
+		{
+			var userData = GetUserData(id);
+
+			if (userData == null) return _blankUser;
+
+			userdatacache.Add(id, result = userData);
 		}
 
 		return result;
@@ -473,7 +486,7 @@ public class Permission : Library
 		if (string.IsNullOrEmpty(perm) || string.IsNullOrEmpty(id)) return false;
 		if (id.Equals("server_console")) return true;
 
-		var userData = GetUserData(id);
+		var userData = GetUserDataCache(id);
 
 		if (GroupsHavePermission(userData.Groups, perm))
 		{

@@ -121,7 +121,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 		foreach (var perm in AdminPermissions)
 		{
-			RegisterPermission($"adminmodule.{perm}");
+			Permissions.RegisterPermission($"adminmodule.{perm}", this);
 		}
 
 		if (!_logRegistration)
@@ -277,7 +277,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 	{
 		if ((player != null && player.Connection.authLevel == 2)) return true;
 
-		if (HasPermission(player.UserIDString, $"adminmodule.{access}"))
+		if (Permissions.UserHasPermission(player.UserIDString, $"adminmodule.{access}"))
 		{
 			return true;
 		}
