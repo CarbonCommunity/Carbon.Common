@@ -57,7 +57,7 @@ public partial class CorePlugin : CarbonPlugin
 			foreach (var plugin in plugins)
 			{
 				var hook = plugin.Value[0];
-				pluginsTable.AddRow(string.Empty, $"{plugin.Key.Name}", hook.IsByRef, hook.IsAsync, $"{hook.TimesFired:n0}", $"{hook.HookTime:0}ms", ByteEx.Format(hook.MemoryUsage, stringFormat: byteFormat).ToLower());
+				pluginsTable.AddRow(string.Empty, $"{plugin.Key.Name}", hook.IsByRef, hook.IsAsync, $"{hook.TimesFired:n0}", $"{hook.HookTime.TotalMilliseconds:0}ms", ByteEx.Format(hook.MemoryUsage, stringFormat: byteFormat).ToLower());
 			}
 
 			output.AppendLine(pluginsTable.ToStringMinimal());
@@ -82,7 +82,7 @@ public partial class CorePlugin : CarbonPlugin
 			foreach (var module in modules)
 			{
 				var hook = module.Value[0];
-				modulesTable.AddRow(string.Empty, $"{module.Key.Name}", hook.IsByRef, hook.IsAsync, $"{hook.TimesFired:n0}", $"{hook.HookTime:0}ms", ByteEx.Format(hook.MemoryUsage, stringFormat: byteFormat).ToLower());
+				modulesTable.AddRow(string.Empty, $"{module.Key.Name}", hook.IsByRef, hook.IsAsync, $"{hook.TimesFired:n0}", $"{hook.HookTime.TotalMilliseconds:0}ms", ByteEx.Format(hook.MemoryUsage, stringFormat: byteFormat).ToLower());
 			}
 
 			output.AppendLine(modulesTable.ToStringMinimal());
