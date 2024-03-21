@@ -35,7 +35,7 @@ public class BaseHookable
 		public bool IsDebugged;
 
 		public int TimesFired;
-		public double HookTime;
+		public TimeSpan HookTime;
 		public double MemoryUsage;
 
 		public void Debug()
@@ -83,7 +83,7 @@ public class BaseHookable
 	public virtual VersionNumber Version { get; set; }
 
 	[JsonProperty]
-	public double TotalHookTime { get; internal set; }
+	public TimeSpan TotalHookTime { get; internal set; }
 
 	[JsonProperty]
 	public double TotalMemoryUsed { get; internal set; }
@@ -108,7 +108,7 @@ public class BaseHookable
 	public MemoryAverage MemoryAverage { get; protected set; }
 #endif
 
-	public double CurrentHookTime { get; internal set; }
+	public TimeSpan CurrentHookTime { get; internal set; }
 	public static long CurrentMemory => GC.GetTotalMemory(false);
 	public static int CurrentGcCount => GC.CollectionCount(0);
 	public int CurrentHookFires => HookCache.Sum(x => x.Value.Sum(y => y.TimesFired));
@@ -163,7 +163,7 @@ public class BaseHookable
 			return;
 		}
 
-		CurrentHookTime = stopwatch.Elapsed.TotalMilliseconds;
+		CurrentHookTime = stopwatch.Elapsed;
 		var memoryUsed = (CurrentMemory - _currentMemory).Clamp(0, long.MaxValue);
 
 #if DEBUG

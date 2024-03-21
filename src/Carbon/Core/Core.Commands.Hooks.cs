@@ -87,7 +87,7 @@ public partial class CorePlugin : CarbonPlugin
 			output.AppendLine(modulesTable.ToStringMinimal());
 
 			output.AppendLine($"Total hook fires:   {plugins.Sum(x => x.Value.Sum(y => y.TimesFired)) + modules.Sum(x => x.Value.Sum(y => y.TimesFired)):n0}");
-			output.AppendLine($"Total hook time:    {plugins.Sum(x => x.Value.Sum(y => y.HookTime)) + modules.Sum(x => x.Value.Sum(y => y.HookTime)):0}ms");
+			output.AppendLine($"Total hook time:    {plugins.Sum(x => x.Value.Sum(y => y.HookTime.TotalMilliseconds)) + modules.Sum(x => x.Value.Sum(y => y.HookTime.TotalMilliseconds)):0}ms");
 			output.AppendLine($"Total hook memory:  {ByteEx.Format(plugins.Sum(x => x.Value.Sum(y => y.MemoryUsage)) + modules.Sum(x => x.Value.Sum(y => y.MemoryUsage))).ToLower()}");
 
 			arg.ReplyWith(output.ToString());

@@ -641,6 +641,13 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 							cui.CreateText(container, mainButton, "1 1 1 0.7", status, 11, xMax: 0.88f, align: TextAnchor.MiddleRight);
 							cui.CreateImage(container, mainButton, icon, elementColor, xMin: 0.1f, xMax: 0.3f, yMin: 0.2f, yMax: 0.8f);
 						}
+
+						if (selectedPlugin.IsInstalled())
+						{
+							var secondaryButton = cui.CreateProtectedButton(container, mainPanel, "", "0 0 0 0", string.Empty, 0, xMin: 0.48f, xMax: scale, yMin: 0.175f, yMax: 0.235f, align: TextAnchor.MiddleRight, command: selectedPlugin.IsBusy ? "" : $"pluginbrowser.interact {callMode} {selectedPlugin.Id}");
+							cui.CreateText(container, secondaryButton, "1 1 1 0.7", status, 11, xMax: 0.88f, align: TextAnchor.MiddleRight);
+							cui.CreateImage(container, secondaryButton, icon, elementColor, xMin: 0.1f, xMax: 0.3f, yMin: 0.2f, yMax: 0.8f);
+						}
 					}
 					if (selectedPlugin.IsInstalled())
 					{

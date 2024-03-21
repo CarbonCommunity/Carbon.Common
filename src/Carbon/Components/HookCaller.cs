@@ -86,9 +86,9 @@ public static class HookCaller
 {
 	public static HookCallerCommon Caller { get; set; }
 
-	public static double GetHookTotalTime(uint hook)
+	public static TimeSpan GetHookTotalTime(uint hook)
 	{
-		var finalTime = 0.0;
+		TimeSpan finalTime = default;
 
 		foreach (var package in ModLoader.LoadedPackages)
 		{

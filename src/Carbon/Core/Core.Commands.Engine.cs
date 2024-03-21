@@ -113,11 +113,11 @@ public partial class CorePlugin : CarbonPlugin
 								? string.Empty
 								: $" (avg {ByteEx.Format(memoryAverageValue, shortName: true, stringFormat: "{0}{1}").ToLower()})";
 							body.AddRow(string.Empty, plugin.Name, plugin.Author, $"v{plugin.Version}",
-								$"{plugin.TotalHookTime:0}ms{hookTimeAverage}",
+								$"{plugin.TotalHookTime.TotalMilliseconds:0}ms{hookTimeAverage}",
 								$"{plugin.CurrentHookFires:n0}",
 								$"{ByteEx.Format(plugin.TotalMemoryUsed, shortName: true, stringFormat: "{0}{1}").ToLower()}{memoryAverage}",
-								plugin.IsPrecompiled ? string.Empty : $"{plugin.CompileTime:0}ms",
-								plugin.IsPrecompiled ? string.Empty : $"{plugin.InternalCallHookGenTime:0}ms",
+								plugin.IsPrecompiled ? string.Empty : $"{plugin.CompileTime.TotalMilliseconds:0}ms",
+								plugin.IsPrecompiled ? string.Empty : $"{plugin.InternalCallHookGenTime.TotalMilliseconds:0}ms",
 								$"{TimeEx.Format(plugin.Uptime)}");
 						}
 

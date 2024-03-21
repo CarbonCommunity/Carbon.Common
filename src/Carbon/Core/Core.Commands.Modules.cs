@@ -162,7 +162,7 @@ public partial class CorePlugin : CarbonPlugin
 			var hookTimeAverage = Mathf.RoundToInt(hookTimeAverageValue) == 0 ? string.Empty : $" (avg {hookTimeAverageValue:0}ms)";
 			var memoryAverage = Mathf.RoundToInt(memoryAverageValue) == 0 ? string.Empty : $" (avg {ByteEx.Format(memoryAverageValue, shortName: true, stringFormat: "{0}{1}").ToLower()})";
 			print.AddRow(count, hookable.Name, module.GetEnabled(), module.Version,
-				$"{module.TotalHookTime:0}ms{hookTimeAverage}",
+				$"{module.TotalHookTime.TotalMilliseconds:0}ms{hookTimeAverage}",
 				$"{module.CurrentHookFires:0}",
 				$"{ByteEx.Format(module.TotalMemoryUsed, shortName: true, stringFormat: "{0}{1}").ToLower()}{memoryAverage}",
 				$"{TimeEx.Format(module.Uptime)}");
@@ -214,7 +214,7 @@ public partial class CorePlugin : CarbonPlugin
 		{
 			IEnumerable<List<CachedHook>> array = mode switch
 			{
-				"-t" => (flip ? module.HookCache.OrderBy(x => x.Value.Sum(x => x.HookTime)) : module.HookCache.OrderByDescending(x => x.Value.Sum(x => x.HookTime))).Select(x => x.Value),
+				"-t" => (flip ? module.HookCache.OrderBy(x => x.Value.Sum(x => x.HookTime.TotalMilliseconds)) : module.HookCache.OrderByDescending(x => x.Value.Sum(x => x.HookTime.TotalMilliseconds))).Select(x => x.Value),
 				"-m" => (flip ? module.HookCache.OrderBy(x => x.Value.Sum(x => x.MemoryUsage)) : module.HookCache.OrderByDescending(x => x.Value.Sum(x => x.MemoryUsage))).Select(x => x.Value),
 				"-f" => (flip ? module.HookCache.OrderBy(x => x.Value.Sum(x => x.TimesFired)) : module.HookCache.OrderByDescending(x => x.Value.Sum(x => x.TimesFired))).Select(x => x.Value),
 				_ => module.HookCache.Select(x => x.Value)
@@ -237,7 +237,7 @@ public partial class CorePlugin : CarbonPlugin
 
 				var hookName = current.Method.Name;
 
-				var hookTime = hook.Sum(x => x.HookTime);
+				var hookTime = hook.Sum(x => x.HookTime.TotalMilliseconds);
 				var hookMemoryUsage = hook.Sum(x => x.MemoryUsage);
 				var hookCount = hook.Count;
 				var hookAsyncCount = hook.Count(x => x.IsAsync);
@@ -260,7 +260,7 @@ public partial class CorePlugin : CarbonPlugin
 			builder.AppendLine($"  Enabled (default):      {module.EnabledByDefault}");
 			builder.AppendLine($"  Context:                {module.Context}");
 			builder.AppendLine($"  Uptime:                 {TimeEx.Format(module.Uptime, true).ToLower()}");
-			builder.AppendLine($"  Total Hook Time:        {module.TotalHookTime:0}ms");
+			builder.AppendLine($"  Total Hook Time:        {module.TotalHookTime.TotalMilliseconds:0}ms");
 			builder.AppendLine($"  Total Memory Used:      {ByteEx.Format(module.TotalMemoryUsed, shortName: true).ToLower()}");
 			builder.AppendLine($"  Internal Hook Override: {module.InternalCallHookOverriden}");
 			builder.AppendLine($"Hooks:");
