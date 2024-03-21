@@ -101,6 +101,7 @@ public partial class CorePlugin : CarbonPlugin
 	#if DEBUG
 	private uint _debuggedHook;
 
+	[Conditional("DEBUG")]
 	[ConsoleCommand("debughook", "Enables debugging on a specific hook, which logs each time it fires. This can affect server performance, depending on how ofter the hook is firing.")]
 	[AuthLevel(2)]
 	private void DebugHook(ConsoleSystem.Arg arg)
