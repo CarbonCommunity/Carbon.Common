@@ -97,4 +97,72 @@ public partial class CorePlugin : CarbonPlugin
 			PoolEx.FreeDictionary(ref modules);
 		}
 	}
+
+	#if DEBUG
+	private uint _debuggedHook;
+
+	[ConsoleCommand("debughook", "Enables debugging on a specific hook, which logs each time it fires. This can affect server performance, depending on how ofter the hook is firing.")]
+	[AuthLevel(2)]
+	private void DebugHook(ConsoleSystem.Arg arg)
+	{
+		var hookString = arg.GetString(0);
+
+		if (string.IsNullOrEmpty(hookString))
+		{
+			if (_debuggedHook != 0)
+			{
+				var hooksDisabled = 0;
+				LoopHookableProcess(_debuggedHook, true, ref hooksDisabled);
+				arg.ReplyWith($"Disabled debugging hook {HookStringPool.GetOrAdd(_debuggedHook)}[{_debuggedHook}] (found {hooksDisabled:n0} {hooksDisabled.Plural("hook", "hooks")})");
+			}
+			else
+			{
+				arg.ReplyWith("Empty string. Trust me, that won't work.");
+			}
+
+			return;
+		}
+
+		var hookId = uint.TryParse(hookString, out var alreadyIdValue) ? alreadyIdValue : HookStringPool.GetOrAdd(hookString);
+		var alreadyDebugging = hookId == _debuggedHook;
+		var hooksFound = 0;
+
+		LoopHookableProcess(hookId, alreadyDebugging, ref hooksFound);
+
+		static void LoopHookableProcess(uint hookId, bool alreadyDebugging, ref int hooksFound)
+		{
+			foreach (var package in ModLoader.LoadedPackages)
+			{
+				foreach (var plugin in package.Plugins)
+				{
+					ProcessHookable(plugin, hookId, alreadyDebugging, ref hooksFound);
+				}
+			}
+			foreach (var module in Community.Runtime.ModuleProcessor.Modules)
+			{
+				ProcessHookable(module, hookId, alreadyDebugging, ref hooksFound);
+			}
+		}
+		static void ProcessHookable(BaseHookable hookable, uint hookId, bool alreadyDebugging, ref int hooksFound)
+		{
+			foreach (var cache in hookable.HookCache)
+			{
+				if (cache.Key != hookId)
+				{
+					continue;
+				}
+
+				foreach (var hook in cache.Value)
+				{
+					hooksFound++;
+					hook.IsDebugged = !alreadyDebugging;
+				}
+			}
+		}
+
+		_debuggedHook = alreadyDebugging ? default : hookId;
+
+		arg.ReplyWith($"{(alreadyDebugging ? $"Disabled debugging hook {hookString}[{hookId}]" : $"Started debugging hook {hookString}[{hookId}]")} (found {hooksFound:n0} {hooksFound.Plural("hook", "hooks")})");
+	}
+	#endif
 }

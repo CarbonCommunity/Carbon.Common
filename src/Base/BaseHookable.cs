@@ -23,27 +23,47 @@ public class BaseHookable
 
 	public class CachedHook
 	{
+		public string Name;
+		public uint Id;
+		public BaseHookable Hookable;
+		public string HookableName;
 		public MethodInfo Method;
 		public Type[] Parameters;
 		public ParameterInfo[] InfoParameters;
 		public bool IsByRef;
 		public bool IsAsync;
+		public bool IsDebugged;
 
 		public int TimesFired;
 		public double HookTime;
 		public double MemoryUsage;
 
+		public void Debug()
+		{
+			if (!IsDebugged)
+			{
+				return;
+			}
+
+			Logger.Log($" {Name}[{Id}] fired by {HookableName} {Hookable.ToPrettyString()} [{TimesFired:n0}|{HookTime:0}ms|{ByteEx.Format(MemoryUsage, shortName: true, stringFormat: "{0}{1}").ToLower()}]");
+		}
 		public void Tick()
 		{
 			TimesFired++;
+			
+			Debug();
 		}
 
-		public static CachedHook Make(MethodInfo method)
+		public static CachedHook Make(string hookName, uint hookId, BaseHookable hookable, MethodInfo method)
 		{
 			var parameters = method.GetParameters();
 			var isByRef = parameters.Any(x => x.ParameterType.IsByRef);
 			var hook = new CachedHook
 			{
+				Name = hookName,
+				Id = hookId,
+				Hookable = hookable,
+				HookableName = hookable is BaseModule ? "module" : "plugin",
 				Method = method,
 				IsByRef = isByRef,
 				IsAsync = method.ReturnType?.GetMethod("GetAwaiter") != null ||
@@ -196,7 +216,7 @@ public class BaseHookable
 				HookCache.Add(id, hooks = new());
 			}
 
-			var hook = CachedHook.Make(method);
+			var hook = CachedHook.Make(method.Name, id, this, method);
 
 			if (hooks.Count > 0 && hooks[0].Parameters.Length < hook.Parameters.Length)
 			{
@@ -228,7 +248,7 @@ public class BaseHookable
 				continue;
 			}
 
-			var hook = CachedHook.Make(method);
+			var hook = CachedHook.Make(method.Name, id, this, method);
 
 			if (hooks.Count > 0 && hooks[0].Parameters.Length < hook.Parameters.Length)
 			{
