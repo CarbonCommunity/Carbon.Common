@@ -45,12 +45,12 @@ public class BaseHookable
 				return;
 			}
 
-			Logger.Log($" {Name}[{Id}] fired by {HookableName} {Hookable.ToPrettyString()} [{TimesFired:n0}|{HookTime:0}ms|{ByteEx.Format(MemoryUsage, shortName: true, stringFormat: "{0}{1}").ToLower()}]");
+			Logger.Log($" {Name}[{Id}] fired on {HookableName} {Hookable.ToPrettyString()} [{TimesFired:n0}|{HookTime:0}ms|{ByteEx.Format(MemoryUsage, shortName: true, stringFormat: "{0}{1}").ToLower()}]");
 		}
 		public void Tick()
 		{
 			TimesFired++;
-			
+
 			Debug();
 		}
 
