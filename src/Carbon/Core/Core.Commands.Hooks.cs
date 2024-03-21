@@ -7,6 +7,7 @@
 
 using System.Text;
 using Facepunch;
+using Timer = Oxide.Plugins.Timer;
 
 namespace Carbon.Core;
 
@@ -100,25 +101,32 @@ public partial class CorePlugin : CarbonPlugin
 
 	#if DEBUG
 	private uint _debuggedHook;
+	private Timer _debuggedTimer;
 
 	[Conditional("DEBUG")]
 	[ConsoleCommand("debughook", "Enables debugging on a specific hook, which logs each time it fires. This can affect server performance, depending on how ofter the hook is firing.")]
 	[AuthLevel(2)]
 	private void DebugHook(ConsoleSystem.Arg arg)
 	{
-		var hookString = arg.GetString(0);
+		DebugHookImpl(arg.GetString(0), arg.GetFloat(1), out var response);
 
+		arg.ReplyWith(response);
+	}
+
+	[Conditional("DEBUG")]
+	private void DebugHookImpl(string hookString, float time, out string response)
+	{
 		if (string.IsNullOrEmpty(hookString))
 		{
 			if (_debuggedHook != 0)
 			{
 				var hooksDisabled = 0;
 				LoopHookableProcess(_debuggedHook, true, ref hooksDisabled);
-				arg.ReplyWith($"Disabled debugging hook {HookStringPool.GetOrAdd(_debuggedHook)}[{_debuggedHook}] (found {hooksDisabled:n0} {hooksDisabled.Plural("hook", "hooks")})");
+				response = $"Disabled debugging hook {HookStringPool.GetOrAdd(_debuggedHook)}[{_debuggedHook}] (found {hooksDisabled:n0} {hooksDisabled.Plural("use", "uses")})";
 			}
 			else
 			{
-				arg.ReplyWith("Empty string. Trust me, that won't work.");
+				response = "Empty string. Trust me, that won't work.";
 			}
 
 			return;
@@ -163,7 +171,18 @@ public partial class CorePlugin : CarbonPlugin
 
 		_debuggedHook = alreadyDebugging ? default : hookId;
 
-		arg.ReplyWith($"{(alreadyDebugging ? $"Disabled debugging hook {hookString}[{hookId}]" : $"Started debugging hook {hookString}[{hookId}]")} (found {hooksFound:n0} {hooksFound.Plural("hook", "hooks")})");
+		response = $"{(alreadyDebugging ? $"Disabled debugging hook {hookString}[{hookId}]" : $"Started debugging hook {hookString}[{hookId}]")} (found {hooksFound:n0} {hooksFound.Plural("use", "uses")})";
+
+		_debuggedTimer?.Destroy();
+
+		if (time > 0)
+		{
+			_debuggedTimer = timer.In(time, () =>
+			{
+				DebugHookImpl(hookString, 0, out var response);
+				Logger.Log(response);
+			});
+		}
 	}
 	#endif
 }

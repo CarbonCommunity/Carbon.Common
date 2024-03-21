@@ -252,7 +252,7 @@ public static class ModLoader
 
 		Interface.Oxide.RootPluginManager.AddPlugin(plugin);
 
-		Logger.Log($"Loaded plugin {plugin.ToPrettyString()}{(precompiled ? string.Empty : $"  [{plugin.CompileTime.TotalMilliseconds:0}ms]")}");
+		Logger.Log($"Loaded plugin {plugin.ToPrettyString()}{(precompiled ? string.Empty : $" [{plugin.CompileTime.TotalMilliseconds:0}ms]")}");
 		return true;
 	}
 	public static bool UninitializePlugin(RustPlugin plugin, bool premature = false)
