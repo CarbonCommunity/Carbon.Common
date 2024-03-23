@@ -320,8 +320,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 			var eraseAllBeforehand = false;
 
-			if (images.Count > 0) Singleton.ImageDatabase.QueueBatchCallback(vendor.IconScale, eraseAllBeforehand, result => { }, images.ToArray());
-			if (imagesSafe.Count > 0) Singleton.ImageDatabase.QueueBatch(vendor.SafeIconScale, eraseAllBeforehand, imagesSafe.ToArray());
+			if (images.Count > 0) Singleton.ImageDatabase.QueueBatchCallback(vendor.IconScale, eraseAllBeforehand, result => { }, images);
+			if (imagesSafe.Count > 0) Singleton.ImageDatabase.QueueBatch(vendor.SafeIconScale, eraseAllBeforehand, imagesSafe);
 
 			Facepunch.Pool.FreeList(ref plugins);
 			Facepunch.Pool.FreeList(ref images);
@@ -741,12 +741,12 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 			public virtual string BarInfo { get; }
 
-			public Plugin[] PriceData { get; set; }
-			public Plugin[] AuthorData { get; set; }
-			public Plugin[] InstalledData { get; set; }
-			public Plugin[] OutOfDateData { get; set; }
-			public Plugin[] OwnedData { get; set; }
-			public string[] PopularTags { get; set; }
+			public IEnumerable<Plugin> PriceData { get; set; }
+			public IEnumerable<Plugin> AuthorData { get; set; }
+			public IEnumerable<Plugin> InstalledData { get; set; }
+			public IEnumerable<Plugin> OutOfDateData { get; set; }
+			public IEnumerable<Plugin> OwnedData { get; set; }
+			public IEnumerable<string> PopularTags { get; set; }
 
 			public virtual string ListEndpoint { get; }
 			public virtual string DownloadEndpoint { get; }
@@ -864,6 +864,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			public string List2Endpoint => "https://codefling.com/db/?category=21";
 			public override string DownloadEndpoint => "https://codefling.com/files/file/[ID]-a?do=download";
 
+			internal Dictionary<string, string> _headers = new();
+
 			public const string _backSlashes = "\\";
 
 			public override void Refresh()
@@ -877,7 +879,6 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 				var plugins = Community.Runtime.CorePlugin.plugins.GetAll();
 				var auth = this as IVendorAuthenticated;
-				var invalids = Path.GetInvalidFileNameChars();
 
 				foreach (var plugin in FetchedPlugins)
 				{
@@ -904,20 +905,11 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				Array.Clear(plugins, 0, plugins.Length);
 				plugins = null;
 
-				if (PriceData != null)
-				{
-					Array.Clear(PriceData, 0, PriceData.Length);
-					Array.Clear(AuthorData, 0, AuthorData.Length);
-					Array.Clear(InstalledData, 0, InstalledData.Length);
-					Array.Clear(OwnedData, 0, OwnedData.Length);
-					PriceData = AuthorData = InstalledData = OwnedData = null;
-				}
-
-				PriceData = FetchedPlugins.Where(x => x.Status == Status.Approved).OrderBy(x => x.OriginalPrice.ToFloat()).ToArray();
-				AuthorData = FetchedPlugins.Where(x => x.Status == Status.Approved).OrderBy(x => x.Author).ToArray();
-				InstalledData = FetchedPlugins.Where(x => x.IsInstalled()).ToArray();
-				OutOfDateData = FetchedPlugins.Where(x => x.Status == Status.Approved).Where(x => x.IsInstalled() && !x.IsUpToDate()).ToArray();
-				OwnedData = FetchedPlugins.Where(x => x.Owned).ToArray();
+				PriceData = FetchedPlugins.Where(x => x.Status == Status.Approved).OrderBy(x => x.OriginalPrice.ToFloat());
+				AuthorData = FetchedPlugins.Where(x => x.Status == Status.Approved).OrderBy(x => x.Author);
+				InstalledData = FetchedPlugins.Where(x => x.IsInstalled());
+				OutOfDateData = FetchedPlugins.Where(x => x.Status == Status.Approved).Where(x => x.IsInstalled() && !x.IsUpToDate());
+				OwnedData = FetchedPlugins.Where(x => x.Owned);
 
 				var tags = Facepunch.Pool.GetList<string>();
 				foreach (var plugin in FetchedPlugins)
@@ -934,8 +926,11 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 						}
 					}
 				}
-				PopularTags = tags.ToArray();
+				PopularTags = tags;
 				Facepunch.Pool.FreeList(ref tags);
+
+				_headers.Clear();
+				_headers[AuthHeader.Key.ToString()] = string.Format(AuthHeader.Value, User.AccessToken);
 			}
 			public override void FetchList(Action<Vendor> callback = null)
 			{
@@ -1038,10 +1033,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 				if (IsLoggedIn)
 				{
-					var headers = new Dictionary<string, string>
-					{
-						[AuthHeader.Key.ToString()] = string.Format(AuthHeader.Value, User.AccessToken)
-					};
+
 					var extension = Path.GetExtension(plugin.File);
 
 					switch (extension)
@@ -1133,14 +1125,21 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 									Singleton.Puts($"Downloaded {plugin.Name}");
 									OsEx.File.Create(path, source);
-								}, core, headers: headers);
+								}, core, headers: _headers);
 
-							}, core, headers: headers);
+							}, core, headers: _headers);
 							break;
 
 						case ".cs":
 							core.webrequest.Enqueue(string.Format(AuthDownloadFileEndpoint, plugin.Id), null, (error, source) =>
 							{
+								if (error != 200)
+								{
+									Logger.Error($"Auth token for Codefling is expired! Please log in once again.");
+									User = null;
+									return;
+								}
+
 								var jobject = JObject.Parse(source);
 								var name = jobject["files"][0]["name"].ToString();
 								var file = jobject["files"][0]["url"].ToString();
@@ -1153,9 +1152,9 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 									Singleton.Puts($"Downloaded {plugin.Name}");
 									OsEx.File.Create(path, source);
-								}, core, headers: headers);
+								}, core, headers: _headers);
 
-							}, core, headers: headers);
+							}, core, headers: _headers);
 							break;
 					}
 				}
@@ -1406,20 +1405,11 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				Array.Clear(plugins, 0, plugins.Length);
 				plugins = null;
 
-				if (PriceData != null)
-				{
-					Array.Clear(PriceData, 0, PriceData.Length);
-					Array.Clear(AuthorData, 0, AuthorData.Length);
-					Array.Clear(InstalledData, 0, InstalledData.Length);
-					Array.Clear(OwnedData, 0, OwnedData.Length);
-					PriceData = AuthorData = InstalledData = OwnedData = null;
-				}
-
-				PriceData = FetchedPlugins.OrderBy(x => x.OriginalPrice).ToArray();
-				AuthorData = FetchedPlugins.OrderBy(x => x.Author).ToArray();
-				InstalledData = FetchedPlugins.Where(x => x.IsInstalled()).ToArray();
-				OutOfDateData = FetchedPlugins.Where(x => x.IsInstalled() && !x.IsUpToDate()).ToArray();
-				OwnedData = FetchedPlugins.Where(x => x.Owned).ToArray();
+				PriceData = FetchedPlugins.OrderBy(x => x.OriginalPrice);
+				AuthorData = FetchedPlugins.OrderBy(x => x.Author);
+				InstalledData = FetchedPlugins.Where(x => x.IsInstalled());
+				OutOfDateData = FetchedPlugins.Where(x => x.IsInstalled() && !x.IsUpToDate());
+				OwnedData = FetchedPlugins.Where(x => x.Owned);
 
 				var tags = Facepunch.Pool.GetList<string>();
 				foreach (var plugin in FetchedPlugins)
@@ -1434,7 +1424,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 						}
 					}
 				}
-				PopularTags = tags.ToArray();
+				PopularTags = tags;
 				Facepunch.Pool.FreeList(ref tags);
 			}
 			public override void FetchList(Action<Vendor> callback = null)
@@ -1674,20 +1664,11 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					}
 				}
 
-				if (PriceData != null)
-				{
-					Array.Clear(PriceData, 0, PriceData.Length);
-					Array.Clear(AuthorData, 0, AuthorData.Length);
-					Array.Clear(InstalledData, 0, InstalledData.Length);
-					Array.Clear(OwnedData, 0, OwnedData.Length);
-					PriceData = AuthorData = InstalledData = OwnedData = null;
-				}
-
-				PriceData = FetchedPlugins.OrderBy(x => x.OriginalPrice).ToArray();
-				AuthorData = FetchedPlugins.OrderBy(x => x.Author).ToArray();
-				InstalledData = FetchedPlugins.Where(x => x.IsInstalled()).ToArray();
-				OutOfDateData = FetchedPlugins.Where(x => x.IsInstalled() && !x.IsUpToDate()).ToArray();
-				OwnedData = FetchedPlugins.Where(x => x.Owned).ToArray();
+				PriceData = FetchedPlugins.OrderBy(x => x.OriginalPrice);
+				AuthorData = FetchedPlugins.OrderBy(x => x.Author);
+				InstalledData = FetchedPlugins.Where(x => x.IsInstalled());
+				OutOfDateData = FetchedPlugins.Where(x => x.IsInstalled() && !x.IsUpToDate());
+				OwnedData = FetchedPlugins.Where(x => x.Owned);
 
 				var tags = Facepunch.Pool.GetList<string>();
 				foreach (var plugin in FetchedPlugins)
@@ -1704,7 +1685,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 						}
 					}
 				}
-				PopularTags = tags.ToArray();
+				PopularTags = tags;
 				Facepunch.Pool.FreeList(ref tags);
 			}
 			public override void FetchList(Action<Vendor> callback = null)
@@ -1732,7 +1713,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 							File = token["filename"]?.ToString(),
 							Image = image,
 							Thumbnail = image,
-							Tags = token["tags"]?.Select(x => x["name"]?.ToString())?.ToArray(),
+							Tags = token["tags"]?.Select(x => x["name"]?.ToString()),
 							Rating = (token["rating"]?.ToString().ToFloat()).GetValueOrDefault(),
 							HasLookup = true
 						};
@@ -1911,11 +1892,11 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				}
 
 				FetchedPlugins = FetchedPlugins.OrderBy(x => x.Name).ToList();
-				PriceData = FetchedPlugins.OrderBy(x => x.OriginalPrice).ToArray();
-				AuthorData = FetchedPlugins.OrderBy(x => x.Author).ToArray();
-				InstalledData = FetchedPlugins.Where(x => x.IsInstalled()).ToArray();
-				OutOfDateData = FetchedPlugins.Where(x => x.IsInstalled() && !x.IsUpToDate()).ToArray();
-				OwnedData = FetchedPlugins.OrderBy(x => x.Owned).ToArray();
+				PriceData = FetchedPlugins.OrderBy(x => x.OriginalPrice);
+				AuthorData = FetchedPlugins.OrderBy(x => x.Author);
+				InstalledData = FetchedPlugins.Where(x => x.IsInstalled());
+				OutOfDateData = FetchedPlugins.Where(x => x.IsInstalled() && !x.IsUpToDate());
+				OwnedData = FetchedPlugins.OrderBy(x => x.Owned);
 			}
 
 			public void Save()

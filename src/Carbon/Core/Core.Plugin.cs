@@ -201,4 +201,9 @@ public partial class CorePlugin : CarbonPlugin
 			Application.SetStackTraceLogType(LogType.Exception, StackTraceLogType.None);
 		}
 	}
+
+	protected override void LoadDefaultMessages()
+	{
+		lang.RegisterMessages(Localisation.Phrases, this);
+	}
 }

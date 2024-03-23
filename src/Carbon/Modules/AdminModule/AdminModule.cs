@@ -252,7 +252,6 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				["scriptdebugorigin"] = "Script Debugging Origin",
 				["scriptdebugorigin_help"] = "Whenever a debugger is attached on server boot, the compiler will replace the debugging origin of the plugin file.",
 				["conditionals"] = "Conditionals"
-
 			}
 		};
 	}
@@ -977,16 +976,14 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				xMin: 0, xMax: toggleButtonScale, yMin: 0, yMax: 0.015f);
 		}
 
-		var split = color.Split(' ');
+		using var split = TemporaryArray<string>.New(color.Split(' '));
 		cui.CreateProtectedButton(container, parent,
 			color: color,
 			textColor: "1 1 1 1",
-			text: split.Length > 1 ? $"#{ColorUtility.ToHtmlStringRGB(new Color(split[0].ToFloat(), split[1].ToFloat(), split[2].ToFloat(), 1))}" : string.Empty, 10,
+			text: split.Length > 1 ? $"#{ColorUtility.ToHtmlStringRGB(new Color(split.Get(0).ToFloat(), split.Get(1).ToFloat(), split.Get(2).ToFloat(), 1))}" : string.Empty, 10,
 			xMin: toggleButtonScale, xMax: 0.985f, yMin: offset, yMax: offset + height,
 			command: command,
 			font: Handler.FontTypes.RobotoCondensedRegular);
-		Array.Clear(split, 0, split.Length);
-		split = null;
 	}
 	public void TabTooltip(CUI cui, CuiElementContainer container, string parent, Tab.Option tooltip, string command, PlayerSession admin, float height, float offset)
 	{
@@ -1641,7 +1638,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			case Tab.OptionColor color:
 				if (color.Callback != null)
 				{
-					ColorPicker.Draw(player, (rustColor, hexColor, alpha) => { color.Callback?.Invoke(ap, rustColor, hexColor, alpha); });
+					ColorPicker.Open(player, (rustColor, hexColor, alpha) => { color.Callback?.Invoke(ap, rustColor, hexColor, alpha); });
 					return false;
 				}
 				break;
