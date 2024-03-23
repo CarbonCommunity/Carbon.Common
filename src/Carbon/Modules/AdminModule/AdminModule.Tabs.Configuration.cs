@@ -157,7 +157,7 @@ public partial class AdminModule
 							OyMax: yOffset, OyMin: yOffset, command: string.Empty);
 
 						cui.CreateProtectedInputField(container, name, "1 1 1 1",
-							ap.GetStorage(null, "itemstext", string.Empty).ToString(), 12, xMin: 0.02f, yMax: 0.9f,
+							ap.GetStorage(null, "itemstext", string.Empty), 12, xMin: 0.02f, yMax: 0.9f,
 							characterLimit: 0, readOnly: false, command: "adminmodule.itemsetting text",
 							align: TextAnchor.UpperLeft, needsKeyboard: true, lineType: InputField.LineType.MultiLineNewline);
 					}
@@ -543,9 +543,9 @@ public partial class AdminModule
 		var resultItem = ItemManager.CreateByName(isBlueprint ? "blueprintbase" : item.shortname, session.GetStorage<int>(null, "itemsamount", 1),
 			session.GetStorage<ulong>(null, "itemsskin", 0));
 
-		resultItem.name = session.GetStorage<string>(null, "itemscustomname", string.Empty);
+		resultItem.name = session.GetStorage(null, "itemscustomname", string.Empty);
 		resultItem.skin = session.GetStorage<ulong>(null, "itemsskin");
-		resultItem.text = session.GetStorage<string>(null, "itemstext", string.Empty);
+		resultItem.text = session.GetStorage(null, "itemstext", string.Empty);
 
 		if (isBlueprint)
 		{
