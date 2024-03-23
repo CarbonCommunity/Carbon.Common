@@ -22,8 +22,7 @@ public class Lang : Library
 
 			if (messages != null)
 			{
-				if (!Phrases.ContainsKey(lang)) Phrases.Add(lang, messages);
-				else Phrases[lang] = messages;
+				Phrases[lang] = messages;
 			}
 		}
 	}
