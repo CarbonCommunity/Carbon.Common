@@ -638,17 +638,24 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 						if (isAdmin || selectedPlugin.Owned || !selectedPlugin.IsPaid() || selectedPlugin.IsInstalled())
 						{
 							var mainButton = cui.CreateProtectedButton(container, mainPanel, buttonColor, "0 0 0 0", string.Empty, 0, xMin: 0.48f, xMax: scale, yMin: 0.175f, yMax: 0.235f, align: TextAnchor.MiddleRight, command: selectedPlugin.IsBusy ? "" : $"pluginbrowser.interact {callMode} {selectedPlugin.Id}");
-							cui.CreateText(container, mainButton, "1 1 1 0.7", status, 11, xMax: 0.88f, align: TextAnchor.MiddleRight);
+							cui.CreateText(container, mainButton, elementColor, status, 11, xMax: 0.88f, align: TextAnchor.MiddleRight);
 							cui.CreateImage(container, mainButton, icon, elementColor, xMin: 0.1f, xMax: 0.3f, yMin: 0.2f, yMax: 0.8f);
 						}
 
-						if (selectedPlugin.IsInstalled())
+						if(selectedPlugin.IsInstalled())
 						{
-							var secondaryButton = cui.CreateProtectedButton(container, mainPanel, "", "0 0 0 0", string.Empty, 0, xMin: 0.48f, xMax: scale, yMin: 0.175f, yMax: 0.235f, align: TextAnchor.MiddleRight, command: selectedPlugin.IsBusy ? "" : $"pluginbrowser.interact {callMode} {selectedPlugin.Id}");
-							cui.CreateText(container, secondaryButton, "1 1 1 0.7", status, 11, xMax: 0.88f, align: TextAnchor.MiddleRight);
-							cui.CreateImage(container, secondaryButton, icon, elementColor, xMin: 0.1f, xMax: 0.3f, yMin: 0.2f, yMax: 0.8f);
+							var secondaryButton = cui.CreateProtectedButton(container, mainPanel, "#802f2f", "0 0 0 0", string.Empty, 0, xMin: 0.48f, xMax: scale, yMin: 0.175f, yMax: 0.235f, OxMin: 85, OxMax: 85, align: TextAnchor.MiddleRight, command: selectedPlugin.IsBusy ? "" : $"pluginbrowser.interact 4 {selectedPlugin.Id}");
+							cui.CreateText(container, secondaryButton, "#c35b5b", "RELOAD", 11, xMax: 0.88f, align: TextAnchor.MiddleRight);
+							cui.CreateImage(container, secondaryButton, "reload", "#c35b5b", xMin: 0.075f, xMax: 0.315f, yMin: 0.2f, yMax: 0.8f);
 						}
 					}
+					else if(selectedPlugin.IsInstalled())
+					{
+						var secondaryButton = cui.CreateProtectedButton(container, mainPanel, "#802f2f", "0 0 0 0", string.Empty, 0, xMin: 0.48f, xMax: scale, yMin: 0.175f, yMax: 0.235f, align: TextAnchor.MiddleRight, command: selectedPlugin.IsBusy ? "" : $"pluginbrowser.interact 4 {selectedPlugin.Id}");
+						cui.CreateText(container, secondaryButton, "#c35b5b", "RELOAD", 11, xMax: 0.88f, align: TextAnchor.MiddleRight);
+						cui.CreateImage(container, secondaryButton, "reload", "#c35b5b", xMin: 0.075f, xMax: 0.315f, yMin: 0.2f, yMax: 0.8f);
+					}
+
 					if (selectedPlugin.IsInstalled())
 					{
 						var path = Path.Combine(Defines.GetConfigsFolder(), selectedPlugin.ExistentPlugin.Config.Filename);
@@ -2084,6 +2091,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				break;
 
 			case "3":
+			{
 				var plugin = vendor.FetchedPlugins.FirstOrDefault(x => x.Id == args.Args[1]).ExistentPlugin;
 				var path = Path.Combine(Defines.GetConfigsFolder(), plugin.Config.Filename);
 				Singleton.SetTab(ap.Player, ConfigEditor.Make(OsEx.File.ReadText(path),
@@ -2104,6 +2112,19 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					}));
 				Array.Clear(arg, 0, arg.Length);
 				break;
+			}
+
+			case "4":
+			{
+				var plugin = vendor.FetchedPlugins.FirstOrDefault(x => x.Id == args.Args[1]).ExistentPlugin;
+
+				if (plugin != null)
+				{
+					plugin.ProcessorProcess.SetDirty();
+					Community.Runtime.CorePlugin.NextTick(() => Singleton.SetTab(ap.Player, "plugins", false));
+				}
+				break;
+			}
 
 			case "10":
 				{
