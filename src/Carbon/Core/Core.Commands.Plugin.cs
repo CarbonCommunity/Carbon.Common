@@ -332,7 +332,7 @@ public partial class CorePlugin : CarbonPlugin
 			builder.AppendLine($"  Total Memory Used:      {ByteEx.Format(plugin.TotalMemoryUsed, shortName: true).ToLower()}");
 			builder.AppendLine($"  Internal Hook Override: {plugin.InternalCallHookOverriden}");
 			builder.AppendLine($"  Has Conditionals:       {plugin.HasConditionals}");
-			builder.AppendLine($"  Mod Package:            {plugin.Package?.Name} ({plugin.Package?.Plugins.Count}){((plugin.Package?.IsCoreMod).GetValueOrDefault() ? $" [core]" : string.Empty)}");
+			builder.AppendLine($"  Mod Package:            {plugin.Package.Name} ({plugin.Package.PluginCount}){((plugin.Package.IsCoreMod) ? $" [core]" : string.Empty)}");
 			builder.AppendLine($"  Processor:              {(plugin.Processor == null ? "[standalone]" : $"{plugin.Processor.Name} [{plugin.Processor.Extension}]")}");
 
 			if (plugin is CarbonPlugin carbonPlugin)
