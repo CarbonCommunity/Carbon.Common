@@ -14,12 +14,12 @@ namespace Carbon.Base;
 
 public class BaseHookable
 {
-	public HashSet<uint> Hooks;
-	public HashSet<HookMethodAttribute> HookMethods;
-	public HashSet<PluginReferenceAttribute> PluginReferences;
+	public List<uint> Hooks;
+	public List<HookMethodAttribute> HookMethods;
+	public List<PluginReferenceAttribute> PluginReferences;
 
-	public Dictionary<uint, HashSet<CachedHook>> HookCache = new();
-	public HashSet<uint> IgnoredHooks = new();
+	public Dictionary<uint, List<CachedHook>> HookCache = new();
+	public List<uint> IgnoredHooks = new();
 
 	public struct CachedHook
 	{

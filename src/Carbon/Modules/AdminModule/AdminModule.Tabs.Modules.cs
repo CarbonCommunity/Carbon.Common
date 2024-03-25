@@ -100,7 +100,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			{
 				tab.AddButton(1, "Edit Config", ap =>
 				{
-					var moduleConfigFile = Path.Combine(Core.Defines.GetModulesFolder(), module.Name, "config.json");
+					var moduleConfigFile = Path.Combine(Defines.GetModulesFolder(), module.Name, "config.json");
 					ap.SelectedTab = ConfigEditor.Make(OsEx.File.ReadText(moduleConfigFile),
 						(ap, jobject) =>
 						{

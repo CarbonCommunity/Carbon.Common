@@ -35,7 +35,7 @@ public partial class CorePlugin : CarbonPlugin
 
 		output.AppendLine($"Information for {hookName}[{hookId}]");
 		{
-			var plugins = PoolEx.GetDictionary<BaseHookable, HashSet<CachedHook>>();
+			var plugins = PoolEx.GetDictionary<BaseHookable, List<CachedHook>>();
 			{
 				foreach (var package in ModLoader.LoadedPackages)
 				{
@@ -62,7 +62,7 @@ public partial class CorePlugin : CarbonPlugin
 
 			output.AppendLine(pluginsTable.ToStringMinimal());
 
-			var modules = PoolEx.GetDictionary<BaseHookable, HashSet<CachedHook>>();
+			var modules = PoolEx.GetDictionary<BaseHookable, List<CachedHook>>();
 			{
 				foreach (var module in Community.Runtime.ModuleProcessor.Modules)
 				{
