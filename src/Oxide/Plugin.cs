@@ -30,9 +30,9 @@ namespace Oxide.Core.Plugins
 		public bool HasConditionals { get; set; }
 
 		[JsonProperty]
-		public double CompileTime { get; set; }
+		public TimeSpan CompileTime { get; set; }
 		[JsonProperty]
-		public double InternalCallHookGenTime { get; set; }
+		public TimeSpan InternalCallHookGenTime { get; set; }
 		[JsonProperty]
 		public ModLoader.FailedMod.Error[] CompileWarnings { get; set; }
 

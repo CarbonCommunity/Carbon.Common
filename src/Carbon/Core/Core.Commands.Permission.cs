@@ -37,6 +37,12 @@ public partial class CorePlugin : CarbonPlugin
 		var perm = arg.GetString(2);
 		var user = permission.FindUser(name);
 
+		if (!permission.PermissionExists(perm))
+		{
+			arg.ReplyWith($"Couldn't grant permission - permission does not exist.");
+			return;
+		}
+
 		switch (action)
 		{
 			case "user":
@@ -103,6 +109,11 @@ public partial class CorePlugin : CarbonPlugin
 		var perm = arg.GetString(2);
 		var user = permission.FindUser(name);
 
+		if (!permission.PermissionExists(perm))
+		{
+			arg.ReplyWith($"Couldn't revoke permission - permission does not exist.");
+			return;
+		}
 		switch (action)
 		{
 			case "user":

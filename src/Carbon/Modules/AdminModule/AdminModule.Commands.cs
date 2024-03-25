@@ -89,7 +89,7 @@ public partial class AdminModule
 		}
 		else
 		{
-			SetTab(player, ConfigurationTab.Make());
+			SetTab(player, ConfigurationTab.GetOrCache());
 		}
 	}
 
