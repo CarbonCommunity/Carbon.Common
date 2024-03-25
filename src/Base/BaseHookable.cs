@@ -19,37 +19,63 @@ public class BaseHookable
 	public List<PluginReferenceAttribute> PluginReferences;
 
 	public Dictionary<uint, List<CachedHook>> HookCache = new();
-	public HashSet<uint> IgnoredHooks = new();
+	public List<uint> IgnoredHooks = new();
 
-	public class CachedHook
+	public struct CachedHook
 	{
+		public string Name;
+		public uint Id;
+		public BaseHookable Hookable;
+		public string HookableName;
 		public MethodInfo Method;
 		public Type[] Parameters;
 		public ParameterInfo[] InfoParameters;
 		public bool IsByRef;
 		public bool IsAsync;
+		public bool IsDebugged;
+		public bool IsValid;
 
 		public int TimesFired;
-		public double HookTime;
+		public TimeSpan HookTime;
 		public double MemoryUsage;
 
+		public void EnableDebug(bool wants)
+		{
+			IsDebugged = wants;
+		}
+		public void Debug()
+		{
+			if (!IsDebugged)
+			{
+				return;
+			}
+
+			Logger.Log($" {Name}[{Id}] fired on {HookableName} {Hookable.ToPrettyString()} [{TimesFired:n0}|{HookTime.TotalMilliseconds:0}ms|{ByteEx.Format(MemoryUsage, shortName: true, stringFormat: "{0}{1}").ToLower()}]");
+		}
 		public void Tick()
 		{
 			TimesFired++;
+
+			Debug();
 		}
 
-		public static CachedHook Make(MethodInfo method)
+		public static CachedHook Make(string hookName, uint hookId, BaseHookable hookable, MethodInfo method)
 		{
 			var parameters = method.GetParameters();
 			var isByRef = parameters.Any(x => x.ParameterType.IsByRef);
 			var hook = new CachedHook
 			{
+				Name = hookName,
+				Id = hookId,
+				Hookable = hookable,
+				HookableName = hookable is BaseModule ? "module" : "plugin",
 				Method = method,
 				IsByRef = isByRef,
 				IsAsync = method.ReturnType?.GetMethod("GetAwaiter") != null ||
 						  method.GetCustomAttribute<AsyncStateMachineAttribute>() != null,
 				Parameters = parameters.Select(x => x.ParameterType).ToArray(),
-				InfoParameters = parameters
+				InfoParameters = parameters,
+				IsValid = true
 			};
 
 			return hook;
@@ -63,7 +89,7 @@ public class BaseHookable
 	public virtual VersionNumber Version { get; set; }
 
 	[JsonProperty]
-	public double TotalHookTime { get; internal set; }
+	public TimeSpan TotalHookTime { get; internal set; }
 
 	[JsonProperty]
 	public double TotalMemoryUsed { get; internal set; }
@@ -88,7 +114,7 @@ public class BaseHookable
 	public MemoryAverage MemoryAverage { get; protected set; }
 #endif
 
-	public double CurrentHookTime { get; internal set; }
+	public TimeSpan CurrentHookTime { get; internal set; }
 	public static long CurrentMemory => GC.GetTotalMemory(false);
 	public static int CurrentGcCount => GC.CollectionCount(0);
 	public int CurrentHookFires => HookCache.Sum(x => x.Value.Sum(y => y.TimesFired));
@@ -143,7 +169,7 @@ public class BaseHookable
 			return;
 		}
 
-		CurrentHookTime = stopwatch.Elapsed.TotalMilliseconds;
+		CurrentHookTime = stopwatch.Elapsed;
 		var memoryUsed = (CurrentMemory - _currentMemory).Clamp(0, long.MaxValue);
 
 #if DEBUG
@@ -196,16 +222,7 @@ public class BaseHookable
 				HookCache.Add(id, hooks = new());
 			}
 
-			var hook = CachedHook.Make(method);
-
-			if (hooks.Count > 0 && hooks[0].Parameters.Length < hook.Parameters.Length)
-			{
-				hooks.Insert(0, hook);
-			}
-			else
-			{
-				hooks.Add(hook);
-			}
+			hooks.Add(CachedHook.Make(method.Name, id, this, method));
 		}
 
 		var methodAttributes = Type.GetMethods(flag | BindingFlags.Public);
@@ -228,16 +245,7 @@ public class BaseHookable
 				continue;
 			}
 
-			var hook = CachedHook.Make(method);
-
-			if (hooks.Count > 0 && hooks[0].Parameters.Length < hook.Parameters.Length)
-			{
-				hooks.Insert(0, hook);
-			}
-			else
-			{
-				hooks.Add(hook);
-			}
+			hooks.Add(CachedHook.Make(method.Name, id, this, method));
 		}
 
 		HasBuiltHookCache = true;

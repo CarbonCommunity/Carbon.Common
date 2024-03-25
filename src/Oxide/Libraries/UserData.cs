@@ -23,4 +23,6 @@ public class UserData
 
 	[ProtoMember(50)]
 	public string Language { get; set; } = "en";
+
+	public RustPlayer Player { get; set; }
 }
