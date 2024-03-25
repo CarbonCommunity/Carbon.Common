@@ -29,7 +29,7 @@ public class PluginManager
 	public bool RemovePlugin(RustPlugin plugin)
 	{
 		OnPluginRemoved?.Invoke(plugin);
-		return plugin.Package.Plugins?.RemoveAll(x => x == plugin) > 0;
+		return plugin.Package.Plugins?.RemoveWhere(x => x == plugin) > 0;
 	}
 
 	public Plugin GetPlugin(string name)

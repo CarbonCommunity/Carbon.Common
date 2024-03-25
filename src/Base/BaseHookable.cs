@@ -14,14 +14,14 @@ namespace Carbon.Base;
 
 public class BaseHookable
 {
-	public List<uint> Hooks;
-	public List<HookMethodAttribute> HookMethods;
-	public List<PluginReferenceAttribute> PluginReferences;
+	public HashSet<uint> Hooks;
+	public HashSet<HookMethodAttribute> HookMethods;
+	public HashSet<PluginReferenceAttribute> PluginReferences;
 
-	public Dictionary<uint, List<CachedHook>> HookCache = new();
+	public Dictionary<uint, HashSet<CachedHook>> HookCache = new();
 	public HashSet<uint> IgnoredHooks = new();
 
-	public class CachedHook
+	public struct CachedHook
 	{
 		public string Name;
 		public uint Id;
@@ -33,11 +33,16 @@ public class BaseHookable
 		public bool IsByRef;
 		public bool IsAsync;
 		public bool IsDebugged;
+		public bool IsValid;
 
 		public int TimesFired;
 		public TimeSpan HookTime;
 		public double MemoryUsage;
 
+		public void SetDebug(bool wants)
+		{
+			IsDebugged = wants;
+		}
 		public void Debug()
 		{
 			if (!IsDebugged)
@@ -69,7 +74,8 @@ public class BaseHookable
 				IsAsync = method.ReturnType?.GetMethod("GetAwaiter") != null ||
 						  method.GetCustomAttribute<AsyncStateMachineAttribute>() != null,
 				Parameters = parameters.Select(x => x.ParameterType).ToArray(),
-				InfoParameters = parameters
+				InfoParameters = parameters,
+				IsValid = true
 			};
 
 			return hook;
@@ -216,16 +222,7 @@ public class BaseHookable
 				HookCache.Add(id, hooks = new());
 			}
 
-			var hook = CachedHook.Make(method.Name, id, this, method);
-
-			if (hooks.Count > 0 && hooks[0].Parameters.Length < hook.Parameters.Length)
-			{
-				hooks.Insert(0, hook);
-			}
-			else
-			{
-				hooks.Add(hook);
-			}
+			hooks.Add(CachedHook.Make(method.Name, id, this, method));
 		}
 
 		var methodAttributes = Type.GetMethods(flag | BindingFlags.Public);
@@ -248,16 +245,7 @@ public class BaseHookable
 				continue;
 			}
 
-			var hook = CachedHook.Make(method.Name, id, this, method);
-
-			if (hooks.Count > 0 && hooks[0].Parameters.Length < hook.Parameters.Length)
-			{
-				hooks.Insert(0, hook);
-			}
-			else
-			{
-				hooks.Add(hook);
-			}
+			hooks.Add(CachedHook.Make(method.Name, id, this, method));
 		}
 
 		HasBuiltHookCache = true;

@@ -35,7 +35,7 @@ public partial class CorePlugin : CarbonPlugin
 
 		output.AppendLine($"Information for {hookName}[{hookId}]");
 		{
-			var plugins = PoolEx.GetDictionary<BaseHookable, List<CachedHook>>();
+			var plugins = PoolEx.GetDictionary<BaseHookable, HashSet<CachedHook>>();
 			{
 				foreach (var package in ModLoader.LoadedPackages)
 				{
@@ -56,13 +56,13 @@ public partial class CorePlugin : CarbonPlugin
 
 			foreach (var plugin in plugins)
 			{
-				var hook = plugin.Value[0];
+				var hook = plugin.Value.FirstOrDefault();
 				pluginsTable.AddRow(string.Empty, $"{plugin.Key.Name}", hook.IsByRef, hook.IsAsync, $"{hook.TimesFired:n0}", $"{hook.HookTime.TotalMilliseconds:0}ms", ByteEx.Format(hook.MemoryUsage, stringFormat: byteFormat).ToLower());
 			}
 
 			output.AppendLine(pluginsTable.ToStringMinimal());
 
-			var modules = PoolEx.GetDictionary<BaseHookable, List<CachedHook>>();
+			var modules = PoolEx.GetDictionary<BaseHookable, HashSet<CachedHook>>();
 			{
 				foreach (var module in Community.Runtime.ModuleProcessor.Modules)
 				{
@@ -81,7 +81,7 @@ public partial class CorePlugin : CarbonPlugin
 
 			foreach (var module in modules)
 			{
-				var hook = module.Value[0];
+				var hook = module.Value.FirstOrDefault();
 				modulesTable.AddRow(string.Empty, $"{module.Key.Name}", hook.IsByRef, hook.IsAsync, $"{hook.TimesFired:n0}", $"{hook.HookTime.TotalMilliseconds:0}ms", ByteEx.Format(hook.MemoryUsage, stringFormat: byteFormat).ToLower());
 			}
 
@@ -164,7 +164,7 @@ public partial class CorePlugin : CarbonPlugin
 				foreach (var hook in cache.Value)
 				{
 					hooksFound++;
-					hook.IsDebugged = !alreadyDebugging;
+					hook.SetDebug(!alreadyDebugging);
 				}
 			}
 		}

@@ -16,13 +16,13 @@ namespace Carbon.Core;
 public static class ModLoader
 {
 	public static bool IsBatchComplete { get; set; }
-	public static List<ModPackage> LoadedPackages = new();
-	public static List<FailedMod> FailedMods = new();
+	public static HashSet<ModPackage> LoadedPackages = new();
+	public static HashSet<FailedMod> FailedMods = new();
 
-	internal static List<Assembly> AssemblyCache { get; } = new();
+	internal static HashSet<Assembly> AssemblyCache { get; } = new();
 	internal static Dictionary<string, Assembly> AssemblyDictionaryCache { get; } = new();
 	internal static Dictionary<string, List<string>> PendingRequirees { get; } = new();
-	internal static List<string> PostBatchFailedRequirees { get; } = new();
+	internal static HashSet<string> PostBatchFailedRequirees { get; } = new();
 	internal static bool FirstLoadSinceStartup { get; set; } = true;
 
 	internal const string CARBON_PLUGIN = "CarbonPlugin";
@@ -31,10 +31,13 @@ public static class ModLoader
 
 	public static void RegisterPackage(ModPackage package)
 	{
-		if (!LoadedPackages.Contains(package))
+		Community.Runtime.CarbonProcessor.CurrentFrameQueue.Add(() =>
 		{
-			LoadedPackages.Add(package);
-		}
+			if (!LoadedPackages.Contains(package))
+			{
+				LoadedPackages.Add(package);
+			}
+		});
 	}
 
 	static ModLoader()
@@ -649,7 +652,7 @@ public static class ModLoader
 		[JsonProperty] public string Name;
 		[JsonProperty] public string File;
 		[JsonProperty] public bool IsCoreMod;
-		[JsonProperty] public List<RustPlugin> Plugins;
+		[JsonProperty] public HashSet<RustPlugin> Plugins;
 
 		public bool IsValid { get; internal set; }
 		public readonly int PluginCount => IsValid ? Plugins.Count : default;
