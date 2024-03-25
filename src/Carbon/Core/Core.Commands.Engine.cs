@@ -133,7 +133,7 @@ public partial class CorePlugin : CarbonPlugin
 					{
 						var count = 1;
 
-						foreach (var mod in ModLoader.FailedMods)
+						foreach (var mod in ModLoader.FailedCompilations)
 						{
 							body.AddRow($"{count:n0}", $"{Path.GetFileName(mod.File)}", $"{mod.Errors.Length:n0}", $"{mod.Errors.Select(x => x.Message).ToString(", ").Truncate(75, "...")}");
 
@@ -193,7 +193,7 @@ public partial class CorePlugin : CarbonPlugin
 			case "--j":
 			case "-json":
 			case "--json":
-				arg.ReplyWith(ModLoader.FailedMods);
+				arg.ReplyWith(ModLoader.FailedCompilations);
 				break;
 
 			default:
@@ -201,7 +201,7 @@ public partial class CorePlugin : CarbonPlugin
 				var count = 1;
 				var index = 1;
 
-				foreach (var mod in ModLoader.FailedMods)
+				foreach (var mod in ModLoader.FailedCompilations)
 				{
 					result += $"{count:n0}. {mod.File}\n";
 

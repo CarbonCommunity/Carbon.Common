@@ -17,7 +17,7 @@ public static class ModLoader
 {
 	public static bool IsBatchComplete { get; set; }
 	public static List<ModPackage> LoadedPackages = new();
-	public static List<FailedMod> FailedMods = new();
+	public static List<FailedCompilation> FailedCompilations = new();
 
 	internal static List<Assembly> AssemblyCache { get; } = new();
 	internal static Dictionary<string, Assembly> AssemblyDictionaryCache { get; } = new();
@@ -104,12 +104,12 @@ public static class ModLoader
 	}
 	public static void ClearAllErrored()
 	{
-		foreach (var mod in FailedMods)
+		foreach (var mod in FailedCompilations)
 		{
 			Array.Clear(mod.Errors, 0, mod.Errors.Length);
 		}
 
-		FailedMods.Clear();
+		FailedCompilations.Clear();
 	}
 
 	public static void RegisterAssembly(Assembly assembly)
@@ -218,6 +218,9 @@ public static class ModLoader
 		catch (Exception ex)
 		{
 			Analytics.plugin_constructor_failure(plugin);
+
+			// OnConstructorFail
+			HookCaller.CallStaticHook(937285752, plugin, ex);
 
 			Logger.Error($"Failed executing constructor for {plugin.ToPrettyString()}. This is fatal! Unloading plugin.", ex);
 			return false;
@@ -690,14 +693,14 @@ public static class ModLoader
 	}
 
 	[JsonObject(MemberSerialization.OptIn)]
-	public struct FailedMod
+	public struct FailedCompilation
 	{
 		[JsonProperty] public string File;
-		[JsonProperty] public Error[] Errors;
-		[JsonProperty] public Error[] Warnings;
+		[JsonProperty] public Trace[] Errors;
+		[JsonProperty] public Trace[] Warnings;
 
 		[JsonObject(MemberSerialization.OptIn)]
-		public struct Error
+		public struct Trace
 		{
 			[JsonProperty] public string Number;
 			[JsonProperty] public string Message;

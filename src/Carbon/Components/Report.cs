@@ -55,7 +55,7 @@ public class Report : IDisposable
 				var result = "";
 				var count = 1;
 
-				foreach (var mod in ModLoader.FailedMods)
+				foreach (var mod in ModLoader.FailedCompilations)
 				{
 					result += $"{count:n0}. {mod.File}\n";
 
