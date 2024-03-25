@@ -109,7 +109,7 @@ public static class HookCaller
 			}
 		}
 
-		void LoopCache(uint loopHook, HashSet<BaseHookable.CachedHook> cache)
+		void LoopCache(uint loopHook, List<BaseHookable.CachedHook> cache)
 		{
 			if (loopHook != hook) return;
 
@@ -152,10 +152,14 @@ public static class HookCaller
 			}
 		}
 
-		foreach(var package in ModLoader.LoadedPackages)
+		for (int i = 0; i < ModLoader.LoadedPackages.Count; i++)
 		{
-			foreach(var plugin in package.Plugins)
+			var package = ModLoader.LoadedPackages[i];
+
+			for(int o = 0; o < package.Plugins.Count; o++)
 			{
+				var plugin = package.Plugins[o];
+
 				try
 				{
 					var methodResult = Caller.CallHook(plugin, hookId, flags: flag, args: args);

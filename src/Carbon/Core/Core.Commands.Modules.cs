@@ -212,7 +212,7 @@ public partial class CorePlugin : CarbonPlugin
 
 		using (var table = new StringTable("#", "Id", "Hook", "Time", "Memory", "Fires", "Subscribed", "Async/Overrides"))
 		{
-			IEnumerable<HashSet<CachedHook>> array = mode switch
+			IEnumerable<List<CachedHook>> array = mode switch
 			{
 				"-t" => (flip ? module.HookCache.OrderBy(x => x.Value.Sum(x => x.HookTime.TotalMilliseconds)) : module.HookCache.OrderByDescending(x => x.Value.Sum(x => x.HookTime.TotalMilliseconds))).Select(x => x.Value),
 				"-m" => (flip ? module.HookCache.OrderBy(x => x.Value.Sum(x => x.MemoryUsage)) : module.HookCache.OrderByDescending(x => x.Value.Sum(x => x.MemoryUsage))).Select(x => x.Value),
@@ -227,7 +227,7 @@ public partial class CorePlugin : CarbonPlugin
 					continue;
 				}
 
-				var current = hook.FirstOrDefault();
+				var current = hook[0];
 				var hookId = HookStringPool.GetOrAdd(current.Method.Name);
 
 				if (!module.Hooks.Contains(hookId))
