@@ -39,7 +39,7 @@ public class BaseHookable
 		public TimeSpan HookTime;
 		public double MemoryUsage;
 
-		public void SetDebug(bool wants)
+		public void EnableDebug(bool wants)
 		{
 			IsDebugged = wants;
 		}

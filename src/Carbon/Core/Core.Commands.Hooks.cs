@@ -164,7 +164,7 @@ public partial class CorePlugin : CarbonPlugin
 				foreach (var hook in cache.Value)
 				{
 					hooksFound++;
-					hook.SetDebug(!alreadyDebugging);
+					hook.EnableDebug(!alreadyDebugging);
 				}
 			}
 		}
