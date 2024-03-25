@@ -7,6 +7,7 @@
 
 using System.Text;
 using Facepunch;
+using Timer = Oxide.Plugins.Timer;
 
 namespace Carbon.Core;
 
@@ -34,7 +35,7 @@ public partial class CorePlugin : CarbonPlugin
 
 		output.AppendLine($"Information for {hookName}[{hookId}]");
 		{
-			var plugins = PoolEx.GetDictionary<BaseHookable, List<CachedHook>>();
+			var plugins = PoolEx.GetDictionary<BaseHookable, HashSet<CachedHook>>();
 			{
 				foreach (var package in ModLoader.LoadedPackages)
 				{
@@ -55,13 +56,13 @@ public partial class CorePlugin : CarbonPlugin
 
 			foreach (var plugin in plugins)
 			{
-				var hook = plugin.Value[0];
-				pluginsTable.AddRow(string.Empty, $"{plugin.Key.Name}", hook.IsByRef, hook.IsAsync, $"{hook.TimesFired:n0}", $"{hook.HookTime:0}ms", ByteEx.Format(hook.MemoryUsage, stringFormat: byteFormat).ToLower());
+				var hook = plugin.Value.FirstOrDefault();
+				pluginsTable.AddRow(string.Empty, $"{plugin.Key.Name}", hook.IsByRef, hook.IsAsync, $"{hook.TimesFired:n0}", $"{hook.HookTime.TotalMilliseconds:0}ms", ByteEx.Format(hook.MemoryUsage, stringFormat: byteFormat).ToLower());
 			}
 
 			output.AppendLine(pluginsTable.ToStringMinimal());
 
-			var modules = PoolEx.GetDictionary<BaseHookable, List<CachedHook>>();
+			var modules = PoolEx.GetDictionary<BaseHookable, HashSet<CachedHook>>();
 			{
 				foreach (var module in Community.Runtime.ModuleProcessor.Modules)
 				{
@@ -80,14 +81,14 @@ public partial class CorePlugin : CarbonPlugin
 
 			foreach (var module in modules)
 			{
-				var hook = module.Value[0];
-				modulesTable.AddRow(string.Empty, $"{module.Key.Name}", hook.IsByRef, hook.IsAsync, $"{hook.TimesFired:n0}", $"{hook.HookTime:0}ms", ByteEx.Format(hook.MemoryUsage, stringFormat: byteFormat).ToLower());
+				var hook = module.Value.FirstOrDefault();
+				modulesTable.AddRow(string.Empty, $"{module.Key.Name}", hook.IsByRef, hook.IsAsync, $"{hook.TimesFired:n0}", $"{hook.HookTime.TotalMilliseconds:0}ms", ByteEx.Format(hook.MemoryUsage, stringFormat: byteFormat).ToLower());
 			}
 
 			output.AppendLine(modulesTable.ToStringMinimal());
 
 			output.AppendLine($"Total hook fires:   {plugins.Sum(x => x.Value.Sum(y => y.TimesFired)) + modules.Sum(x => x.Value.Sum(y => y.TimesFired)):n0}");
-			output.AppendLine($"Total hook time:    {plugins.Sum(x => x.Value.Sum(y => y.HookTime)) + modules.Sum(x => x.Value.Sum(y => y.HookTime)):0}ms");
+			output.AppendLine($"Total hook time:    {plugins.Sum(x => x.Value.Sum(y => y.HookTime.TotalMilliseconds)) + modules.Sum(x => x.Value.Sum(y => y.HookTime.TotalMilliseconds)):0}ms");
 			output.AppendLine($"Total hook memory:  {ByteEx.Format(plugins.Sum(x => x.Value.Sum(y => y.MemoryUsage)) + modules.Sum(x => x.Value.Sum(y => y.MemoryUsage))).ToLower()}");
 
 			arg.ReplyWith(output.ToString());
@@ -97,4 +98,91 @@ public partial class CorePlugin : CarbonPlugin
 			PoolEx.FreeDictionary(ref modules);
 		}
 	}
+
+	#if DEBUG
+	private uint _debuggedHook;
+	private Timer _debuggedTimer;
+
+	[Conditional("DEBUG")]
+	[ConsoleCommand("debughook", "Enables debugging on a specific hook, which logs each time it fires. This can affect server performance, depending on how ofter the hook is firing.")]
+	[AuthLevel(2)]
+	private void DebugHook(ConsoleSystem.Arg arg)
+	{
+		DebugHookImpl(arg.GetString(0), arg.GetFloat(1), out var response);
+
+		arg.ReplyWith(response);
+	}
+
+	[Conditional("DEBUG")]
+	private void DebugHookImpl(string hookString, float time, out string response)
+	{
+		if (string.IsNullOrEmpty(hookString))
+		{
+			if (_debuggedHook != 0)
+			{
+				var hooksDisabled = 0;
+				LoopHookableProcess(_debuggedHook, true, ref hooksDisabled);
+				response = $"Disabled debugging hook {HookStringPool.GetOrAdd(_debuggedHook)}[{_debuggedHook}] (found {hooksDisabled:n0} {hooksDisabled.Plural("use", "uses")})";
+			}
+			else
+			{
+				response = "Empty string. Trust me, that won't work.";
+			}
+
+			return;
+		}
+
+		var hookId = uint.TryParse(hookString, out var alreadyIdValue) ? alreadyIdValue : HookStringPool.GetOrAdd(hookString);
+		var alreadyDebugging = hookId == _debuggedHook;
+		var hooksFound = 0;
+
+		LoopHookableProcess(hookId, alreadyDebugging, ref hooksFound);
+
+		static void LoopHookableProcess(uint hookId, bool alreadyDebugging, ref int hooksFound)
+		{
+			foreach (var package in ModLoader.LoadedPackages)
+			{
+				foreach (var plugin in package.Plugins)
+				{
+					ProcessHookable(plugin, hookId, alreadyDebugging, ref hooksFound);
+				}
+			}
+			foreach (var module in Community.Runtime.ModuleProcessor.Modules)
+			{
+				ProcessHookable(module, hookId, alreadyDebugging, ref hooksFound);
+			}
+		}
+		static void ProcessHookable(BaseHookable hookable, uint hookId, bool alreadyDebugging, ref int hooksFound)
+		{
+			foreach (var cache in hookable.HookCache)
+			{
+				if (cache.Key != hookId)
+				{
+					continue;
+				}
+
+				foreach (var hook in cache.Value)
+				{
+					hooksFound++;
+					hook.EnableDebug(!alreadyDebugging);
+				}
+			}
+		}
+
+		_debuggedHook = alreadyDebugging ? default : hookId;
+
+		response = $"{(alreadyDebugging ? $"Disabled debugging hook {hookString}[{hookId}]" : $"Started debugging hook {hookString}[{hookId}]")} (found {hooksFound:n0} {hooksFound.Plural("use", "uses")})";
+
+		_debuggedTimer?.Destroy();
+
+		if (time > 0)
+		{
+			_debuggedTimer = timer.In(time, () =>
+			{
+				DebugHookImpl(hookString, 0, out var response);
+				Logger.Log(response);
+			});
+		}
+	}
+	#endif
 }

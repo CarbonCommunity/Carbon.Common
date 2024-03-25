@@ -318,7 +318,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 								null, hidden: true);
 						}
 
-						if (!multiSelection && (Singleton.HasPermission(ap3?.Player, "carbon.cmod") ||
+						if (!multiSelection && (Singleton.Permissions.UserHasPermission(ap3?.Player.UserIDString, "carbon.cmod") ||
 						                        player.userID.IsSteamId()))
 						{
 							tab.AddButtonArray(1, new Tab.OptionButton("Kick", ap =>

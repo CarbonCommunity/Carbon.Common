@@ -27,6 +27,14 @@ namespace Oxide.Game.Rust.Libraries.Covalence
 			IsServer = false;
 			perms = Interface.Oxide.GetLibrary<Permission>();
 		}
+		public RustPlayer(string id, UserData data)
+		{
+			Id = id;
+			Name = Oxide.Plugins.ExtensionMethods.Sanitize(data.LastSeenNickname);
+			LastCommand = 0;
+			IsServer = false;
+			perms = Interface.Oxide.GetLibrary<Permission>();
+		}
 
 		private static Permission perms;
 

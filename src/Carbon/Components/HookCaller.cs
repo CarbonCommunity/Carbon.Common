@@ -86,9 +86,9 @@ public static class HookCaller
 {
 	public static HookCallerCommon Caller { get; set; }
 
-	public static double GetHookTotalTime(uint hook)
+	public static TimeSpan GetHookTotalTime(uint hook)
 	{
-		var finalTime = 0.0;
+		TimeSpan finalTime = default;
 
 		foreach (var package in ModLoader.LoadedPackages)
 		{
@@ -109,7 +109,7 @@ public static class HookCaller
 			}
 		}
 
-		void LoopCache(uint loopHook, List<BaseHookable.CachedHook> cache)
+		void LoopCache(uint loopHook, HashSet<BaseHookable.CachedHook> cache)
 		{
 			if (loopHook != hook) return;
 
@@ -152,14 +152,10 @@ public static class HookCaller
 			}
 		}
 
-		for (int i = 0; i < ModLoader.LoadedPackages.Count; i++)
+		foreach(var package in ModLoader.LoadedPackages)
 		{
-			var package = ModLoader.LoadedPackages[i];
-
-			for(int o = 0; o < package.Plugins.Count; o++)
+			foreach(var plugin in package.Plugins)
 			{
-				var plugin = package.Plugins[o];
-
 				try
 				{
 					var methodResult = Caller.CallHook(plugin, hookId, flags: flag, args: args);

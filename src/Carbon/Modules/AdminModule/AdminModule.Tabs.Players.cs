@@ -114,7 +114,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				}
 			}
 
-			if (Singleton.HasPermission(aap.Player, "carbon.cmod"))
+			if (Singleton.Permissions.UserHasPermission(aap.Player.UserIDString, "carbon.cmod"))
 			{
 				tab.AddButtonArray(1, new Tab.OptionButton("Kick", _ =>
 				{

@@ -138,7 +138,7 @@ public partial class ColorPickerModule : CarbonModule<EmptyModuleConfig, EmptyMo
 		var input = cui.CreatePanel(container, main, "0.1 0.1 0.1 0.5",
 			xMin: 0.805f, xMax: 0.94f, yMin: 0.085f, yMax: 0.15f, OyMin: -30, OyMax: -30);
 		cui.CreateProtectedInputField(container, input, "1 1 1 1", "#", 10, 0, false,
-			xMin: 0.075f, command: PanelId + ".pickhexcolor ", align: TextAnchor.MiddleLeft, needsKeyboard: true);
+			xMin: 0.075f, command: PanelId + ".pickhexcolor", align: TextAnchor.MiddleLeft, needsKeyboard: true);
 
 		//
 		// Alpha input field
@@ -277,7 +277,7 @@ public partial class ColorPickerModule : CarbonModule<EmptyModuleConfig, EmptyMo
 	{
 		var player = args.Player();
 		var ap = Admin.GetPlayerSession (player);
-		var hex = args.Args[0];
+		var hex = args.GetString(0);
 		var alpha = ap.GetStorage(ap.SelectedTab, Alpha, 1f);
 
 		if (args.Args.Length == 0 || string.IsNullOrEmpty(hex) || hex == "#")
@@ -285,7 +285,7 @@ public partial class ColorPickerModule : CarbonModule<EmptyModuleConfig, EmptyMo
 			return;
 		}
 
-		var onColorPicked = ap.GetStorage<Action<string, string, float>>(ap.SelectedTab, OnColorPicked );
+		var onColorPicked = ap.GetStorage<Action<string, string, float>>(ap.SelectedTab, OnColorPicked);
 
 		if (!hex.StartsWith("#")) hex = $"#{hex}";
 		var rawColor = HexToRustColor(hex, includeAlpha: false);

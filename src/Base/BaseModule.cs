@@ -61,6 +61,7 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 	public C ConfigInstance { get; private set; }
 
 	public new virtual string Name => "Not set";
+	public Permission Permissions;
 
 	protected void Puts(object message)
 		=> Logger.Log($"[{Name}] {message}");
@@ -82,6 +83,8 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 		base.Type ??= Type;
 
 		if (ForceDisabled) return;
+
+		Permissions = Interface.Oxide.Permission;
 
 		TrackInit();
 	}
@@ -309,7 +312,7 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 		if (initialized) ModLoader.RemoveCommands(this);
 
 		UnsubscribeAll();
-		UnregisterPermissions();
+		Permissions.UnregisterPermissions(this);
 
 		if (Hooks.Count > 0) Puts($"Unsubscribed from {Hooks.Count:n0} {Hooks.Count.Plural("hook", "hooks")}.");
 
@@ -382,46 +385,6 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 
 		Community.Runtime.ModuleProcessor.Uninstall(this);
 	}
-
-	#region Permission
-
-	public virtual bool GroupExists(string group)
-	{
-		return Community.Runtime.CorePlugin.permission.GroupExists(group);
-	}
-	public virtual bool HasGroup(string userId, string group)
-	{
-		return Community.Runtime.CorePlugin.permission.UserHasGroup(userId, group);
-	}
-	public virtual bool HasGroup(BasePlayer player, string group)
-	{
-		return HasGroup(player.UserIDString, group);
-	}
-
-	public virtual bool PermissionExists(string permission)
-	{
-		return Community.Runtime.CorePlugin.permission.PermissionExists(permission, this);
-	}
-	public virtual void RegisterPermission(string permission)
-	{
-		if (PermissionExists(permission)) return;
-
-		Community.Runtime.CorePlugin.permission.RegisterPermission(permission, this);
-	}
-	public virtual void UnregisterPermissions()
-	{
-		Community.Runtime.CorePlugin.permission.UnregisterPermissions(this);
-	}
-	public virtual bool HasPermission(string userId, string permission)
-	{
-		return Community.Runtime.CorePlugin.permission.UserHasPermission(userId, permission);
-	}
-	public virtual bool HasPermission(BasePlayer player, string permission)
-	{
-		return HasPermission(player.UserIDString, permission);
-	}
-
-	#endregion
 
 	#region Localisation
 
