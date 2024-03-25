@@ -2,7 +2,7 @@
 
 /*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -26,8 +26,8 @@ public partial class CorePlugin : CarbonPlugin
 
 			if (command.Token != null)
 			{
-				if (command.Token is FieldInfo field) value = field.GetValue(command.Reference as RustPlugin)?.ToString();
-				else if (command.Token is PropertyInfo property) value = property.GetValue(command.Reference as RustPlugin)?.ToString();
+				if (command.Token is FieldInfo field) value = field.GetValue(command.Reference)?.ToString();
+				else if (command.Token is PropertyInfo property) value = property.GetValue(command.Reference)?.ToString();
 			}
 
 			if (command.HasFlag(CommandFlags.Protected))

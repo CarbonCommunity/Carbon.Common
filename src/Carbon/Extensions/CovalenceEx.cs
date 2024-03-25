@@ -1,6 +1,6 @@
 ﻿/*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -15,5 +15,14 @@ public static class CovalenceEx
 			Permission.iPlayerField.SetValue(player, rustPlayer = new RustPlayer(player));
 
 		return rustPlayer;
+	}
+
+	public static RustPlayer AsIPlayer(this KeyValuePair<string, UserData> user)
+	{
+		if (user.Value == null) return default;
+
+		if (user.Value.Player == null) user.Value.Player = new RustPlayer(user.Key, user.Value);
+
+		return user.Value.Player;
 	}
 }

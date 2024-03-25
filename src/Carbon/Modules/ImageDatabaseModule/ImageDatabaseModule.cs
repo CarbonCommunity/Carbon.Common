@@ -325,9 +325,9 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 			}
 		});
 	}
-	public void QueueBatchCallback(float scale, bool @override, Action<List<QueuedThreadResult>> onComplete, params string[] urls)
+	public void QueueBatchCallback(float scale, bool @override, Action<List<QueuedThreadResult>> onComplete, IEnumerable<string> urls)
 	{
-		if (urls == null || urls.Length == 0)
+		if (!urls.Any())
 		{
 			return;
 		}
@@ -338,7 +338,7 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 			{
 				if (result.Data.Length >= MaximumBytes)
 				{
-					Puts($"Failed storing {urls.Length:n0} jobs [scale:{scale}]: {result.Data.Length} more or equal than {MaximumBytes}");
+					Puts($"Failed storing {urls.Count():n0} jobs [scale:{scale}]: {result.Data.Length} more or equal than {MaximumBytes}");
 					continue;
 				}
 

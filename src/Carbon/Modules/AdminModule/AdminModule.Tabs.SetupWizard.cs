@@ -173,7 +173,7 @@ public partial class AdminModule
 			var chatCommandCount = chatCommands.Count();
 
 			content = $"The <b>{module.Name}</b> uses <b>{module.Hooks.Count:n0}</b> total {module.Hooks.Count.Plural("hook", "hooks")}, with currently <b>{module.IgnoredHooks.Count:n0}</b> ignored {module.IgnoredHooks.Count.Plural("hook", "hooks")}, " +
-				$"and so far has used {module.TotalHookTime:0.000}ms of server time during those hook calls. " +
+				$"and so far has used {module.TotalHookTime.TotalMilliseconds:0.0}ms of server time during those hook calls. " +
 				$"This module is {(module.EnabledByDefault ? "enabled" : "disabled")} by default. " +
 				$"This module has <b>{consoleCommandCount:n0}</b> console and <b>{chatCommandCount:n0}</b> chat {(consoleCommandCount == 1 && chatCommandCount == 1 ? "command" : "commands")} and will{(!module.ForceModded ? " <b>not</b>" : "")} enforce this server to modded when enabled.{((consoleCommandCount + chatCommandCount) == 0 ? "" : "\n\n")}" +
 				((consoleCommandCount > 0 ? $"<b>Console commands:</b> {consoleCommands.Select(x => $"{x.Name}").ToString(", ")}\n" : "") +
@@ -342,7 +342,7 @@ public partial class AdminModule
 		var tab = GetTab(ap.Player) as SetupWizard;
 
 		var module = FindModule(arg.GetString(0));
-		var moduleConfigFile = Path.Combine(Core.Defines.GetModulesFolder(), module.Name, "config.json");
+		var moduleConfigFile = Path.Combine(Defines.GetModulesFolder(), module.Name, "config.json");
 		ap.SelectedTab = ConfigEditor.Make(OsEx.File.ReadText(moduleConfigFile),
 			(ap, _) =>
 			{
@@ -368,7 +368,7 @@ public partial class AdminModule
 		var tab = GetTab(ap.Player) as SetupWizard;
 
 		var module = FindModule(arg.GetString(0));
-		Application.OpenURL(Path.Combine(Core.Defines.GetModulesFolder(), module.Name));
+		Application.OpenURL(Path.Combine(Carbon.Core.Defines.GetModulesFolder(), module.Name));
 
 		Draw(ap.Player);
 	}

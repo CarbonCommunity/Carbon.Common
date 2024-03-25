@@ -5,7 +5,7 @@ using System.Linq;
 
 public class Build
 {
-	public bool IsDebug =>
+	public static bool IsDebug =>
 #if DEBUG
 		true;
 #else
