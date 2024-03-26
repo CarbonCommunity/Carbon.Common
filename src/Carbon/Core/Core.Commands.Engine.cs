@@ -115,9 +115,9 @@ public partial class CorePlugin : CarbonPlugin
 								: $" (avg {ByteEx.Format(memoryAverageValue, shortName: true, stringFormat: "{0}{1}").ToLower()})";
 							body.AddRow(string.Empty, plugin.Name, plugin.Author, $"v{plugin.Version}",
 								$"{plugin.TotalHookTime.TotalMilliseconds:0}ms{hookTimeAverage}",
-								$"{plugin.CurrentHookFires:n0}",
+								plugin.CurrentHookFires == 0 ? string.Empty : $"{plugin.CurrentHookFires:n0}",
 								$"{ByteEx.Format(plugin.TotalMemoryUsed, shortName: true, stringFormat: "{0}{1}").ToLower()}{memoryAverage}",
-								$"{plugin.CurrentLagSpikes:n0}",
+								plugin.CurrentLagSpikes == 0 ? string.Empty : $"{plugin.CurrentLagSpikes:n0}",
 								plugin.IsPrecompiled ? string.Empty : $"{plugin.CompileTime.TotalMilliseconds:0}ms [{plugin.InternalCallHookGenTime.TotalMilliseconds:0}ms]",
 								$"{TimeEx.Format(plugin.Uptime)}");
 						}

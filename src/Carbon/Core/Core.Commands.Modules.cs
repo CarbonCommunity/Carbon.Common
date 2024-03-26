@@ -164,9 +164,9 @@ public partial class CorePlugin : CarbonPlugin
 			var memoryAverage = Mathf.RoundToInt(memoryAverageValue) == 0 ? string.Empty : $" (avg {ByteEx.Format(memoryAverageValue, shortName: true, stringFormat: "{0}{1}").ToLower()})";
 			print.AddRow(count, hookable.Name, module.GetEnabled(), module.Version,
 				$"{module.TotalHookTime.TotalMilliseconds:0}ms{hookTimeAverage}",
-				$"{module.CurrentHookFires:0}",
+				module.CurrentHookFires == 0 ? string.Empty :$"{module.CurrentHookFires:0}",
 				$"{ByteEx.Format(module.TotalMemoryUsed, shortName: true, stringFormat: "{0}{1}").ToLower()}{memoryAverage}",
-				$"{module.CurrentLagSpikes:n0}",
+				module.CurrentLagSpikes == 0 ? string.Empty : $"{module.CurrentLagSpikes:n0}",
 				$"{TimeEx.Format(module.Uptime)}");
 			count++;
 		}
@@ -216,11 +216,11 @@ public partial class CorePlugin : CarbonPlugin
 		{
 			IEnumerable<List<CachedHook>> array = mode switch
 			{
-				"-t" => (flip ? module.HookCache.OrderBy(x => x.Value.Sum(x => x.HookTime.TotalMilliseconds)) : module.HookCache.OrderByDescending(x => x.Value.Sum(x => x.HookTime.TotalMilliseconds))).Select(x => x.Value),
-				"-m" => (flip ? module.HookCache.OrderBy(x => x.Value.Sum(x => x.MemoryUsage)) : module.HookCache.OrderByDescending(x => x.Value.Sum(x => x.MemoryUsage))).Select(x => x.Value),
-				"-f" => (flip ? module.HookCache.OrderBy(x => x.Value.Sum(x => x.TimesFired)) : module.HookCache.OrderByDescending(x => x.Value.Sum(x => x.TimesFired))).Select(x => x.Value),
-				"-ls" => (flip ? module.HookCache.OrderBy(x => x.Value.Sum(x => x.LagSpikes)) : module.HookCache.OrderByDescending(x => x.Value.Sum(x => x.LagSpikes))).Select(x => x.Value),
-				_ => module.HookCache.Select(x => x.Value)
+				"-t" => (flip ? module.HookPool.OrderBy(x => x.Value.Sum(x => x.HookTime.TotalMilliseconds)) : module.HookPool.OrderByDescending(x => x.Value.Sum(x => x.HookTime.TotalMilliseconds))).Select(x => x.Value),
+				"-m" => (flip ? module.HookPool.OrderBy(x => x.Value.Sum(x => x.MemoryUsage)) : module.HookPool.OrderByDescending(x => x.Value.Sum(x => x.MemoryUsage))).Select(x => x.Value),
+				"-f" => (flip ? module.HookPool.OrderBy(x => x.Value.Sum(x => x.TimesFired)) : module.HookPool.OrderByDescending(x => x.Value.Sum(x => x.TimesFired))).Select(x => x.Value),
+				"-ls" => (flip ? module.HookPool.OrderBy(x => x.Value.Sum(x => x.LagSpikes)) : module.HookPool.OrderByDescending(x => x.Value.Sum(x => x.LagSpikes))).Select(x => x.Value),
+				_ => module.HookPool.Select(x => x.Value)
 			};
 
 			foreach (var hook in array)
@@ -252,8 +252,8 @@ public partial class CorePlugin : CarbonPlugin
 					$"{hookName}",
 					$"{hookTime:0}ms",
 					$"{ByteEx.Format(hookMemoryUsage, shortName: true).ToLower()}",
-					$"{hookTimesFired:n0}",
-					$"{hookLagSpikes:n0}",
+					hookTimesFired == 0 ? string.Empty : $"{hookTimesFired:n0}",
+					hookLagSpikes == 0 ? string.Empty : $"{hookLagSpikes:n0}",
 					!module.IgnoredHooks.Contains(hookId),
 					$"{hookAsyncCount:n0}/{hookCount:n0}");
 

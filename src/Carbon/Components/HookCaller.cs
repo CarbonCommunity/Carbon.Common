@@ -92,7 +92,7 @@ public static class HookCaller
 		{
 			foreach (var plugin in package.Plugins)
 			{
-				foreach (var cache in plugin.HookCache)
+				foreach (var cache in plugin.HookPool)
 				{
 					LoopCache(cache.Key, cache.Value);
 				}
@@ -101,7 +101,7 @@ public static class HookCaller
 
 		foreach (var module in Community.Runtime.ModuleProcessor.Modules)
 		{
-			foreach (var cache in module.HookCache)
+			foreach (var cache in module.HookPool)
 			{
 				LoopCache(cache.Key, cache.Value);
 			}

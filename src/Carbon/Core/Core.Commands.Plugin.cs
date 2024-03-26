@@ -288,11 +288,11 @@ public partial class CorePlugin : CarbonPlugin
 		{
 			IEnumerable<List<CachedHook>> array = mode switch
 			{
-				"-t" => (flip ? plugin.HookCache.OrderBy(x => x.Value.Sum(x => x.HookTime.TotalMilliseconds)) : plugin.HookCache.OrderByDescending(x => x.Value.Sum(x => x.HookTime.TotalMilliseconds))).Select(x => x.Value),
-				"-m" => (flip ? plugin.HookCache.OrderBy(x => x.Value.Sum(x => x.MemoryUsage)) : plugin.HookCache.OrderByDescending(x => x.Value.Sum(x => x.MemoryUsage))).Select(x => x.Value),
-				"-f" => (flip ? plugin.HookCache.OrderBy(x => x.Value.Sum(x => x.TimesFired)) : plugin.HookCache.OrderByDescending(x => x.Value.Sum(x => x.TimesFired))).Select(x => x.Value),
-				"-ls" => (flip ? plugin.HookCache.OrderBy(x => x.Value.Sum(x => x.LagSpikes)) : plugin.HookCache.OrderByDescending(x => x.Value.Sum(x => x.LagSpikes))).Select(x => x.Value),
-				_ => plugin.HookCache.Select(x => x.Value)
+				"-t" => (flip ? plugin.HookPool.OrderBy(x => x.Value.Sum(x => x.HookTime.TotalMilliseconds)) : plugin.HookPool.OrderByDescending(x => x.Value.Sum(x => x.HookTime.TotalMilliseconds))).Select(x => x.Value),
+				"-m" => (flip ? plugin.HookPool.OrderBy(x => x.Value.Sum(x => x.MemoryUsage)) : plugin.HookPool.OrderByDescending(x => x.Value.Sum(x => x.MemoryUsage))).Select(x => x.Value),
+				"-f" => (flip ? plugin.HookPool.OrderBy(x => x.Value.Sum(x => x.TimesFired)) : plugin.HookPool.OrderByDescending(x => x.Value.Sum(x => x.TimesFired))).Select(x => x.Value),
+				"-ls" => (flip ? plugin.HookPool.OrderBy(x => x.Value.Sum(x => x.LagSpikes)) : plugin.HookPool.OrderByDescending(x => x.Value.Sum(x => x.LagSpikes))).Select(x => x.Value),
+				_ => plugin.HookPool.Select(x => x.Value)
 			};
 
 			foreach (var hook in array)
@@ -324,8 +324,8 @@ public partial class CorePlugin : CarbonPlugin
 					$"{hookName}",
 					$"{hookTime:0}ms",
 					$"{ByteEx.Format(hookMemoryUsage, shortName: true).ToLower()}",
-					$"{hookTimesFired:n0}",
-					$"{hookLagSpikes:n0}",
+					hookTimesFired == 0 ? string.Empty : $"{hookTimesFired:n0}",
+					hookLagSpikes == 0 ? string.Empty : $"{hookLagSpikes:n0}",
 					!plugin.IgnoredHooks.Contains(hookId),
 					$"{hookAsyncCount:n0}/{hookCount:n0}");
 

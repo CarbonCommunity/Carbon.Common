@@ -41,7 +41,7 @@ public partial class CorePlugin : CarbonPlugin
 				{
 					foreach (var plugin in package.Plugins)
 					{
-						foreach (var hookCache in plugin.HookCache)
+						foreach (var hookCache in plugin.HookPool)
 						{
 							if (hookCache.Key == hookId)
 							{
@@ -52,12 +52,18 @@ public partial class CorePlugin : CarbonPlugin
 				}
 			}
 
-			using var pluginsTable = new StringTable("", $"Plugins ({plugins.Count:n0})", "IsByRef", "IsAsync", "Fires", "Time", "Memory");
+			using var pluginsTable = new StringTable("", $"Plugins ({plugins.Count:n0})", "IsByRef", "IsAsync", "Fires", "Time", "Memory", "Lag Spikes");
 
 			foreach (var plugin in plugins)
 			{
 				var hook = plugin.Value.FirstOrDefault();
-				pluginsTable.AddRow(string.Empty, $"{plugin.Key.Name}", hook.IsByRef, hook.IsAsync, $"{hook.TimesFired:n0}", $"{hook.HookTime.TotalMilliseconds:0}ms", ByteEx.Format(hook.MemoryUsage, stringFormat: byteFormat).ToLower());
+				pluginsTable.AddRow(string.Empty,
+					$"{plugin.Key.Name}",
+					hook.IsByRef, hook.IsAsync,
+					$"{hook.TimesFired:n0}",
+					$"{hook.HookTime.TotalMilliseconds:0}ms",
+					ByteEx.Format(hook.MemoryUsage, stringFormat: byteFormat).ToLower(),
+					hook.LagSpikes == 0 ? string.Empty : $"{hook.LagSpikes:n0}");
 			}
 
 			output.AppendLine(pluginsTable.ToStringMinimal());
@@ -66,7 +72,7 @@ public partial class CorePlugin : CarbonPlugin
 			{
 				foreach (var module in Community.Runtime.ModuleProcessor.Modules)
 				{
-					foreach (var hookCache in module.HookCache)
+					foreach (var hookCache in module.HookPool)
 					{
 						if (hookCache.Key == hookId)
 						{
@@ -102,6 +108,8 @@ public partial class CorePlugin : CarbonPlugin
 	#if DEBUG
 	private uint _debuggedHook;
 	private Timer _debuggedTimer;
+
+	internal static bool EnforceHookDebugging;
 
 	[Conditional("DEBUG")]
 	[ConsoleCommand("debughook", "Enables debugging on a specific hook, which logs each time it fires. This can affect server performance, depending on how ofter the hook is firing.")]
@@ -154,7 +162,7 @@ public partial class CorePlugin : CarbonPlugin
 		}
 		static void ProcessHookable(BaseHookable hookable, uint hookId, bool alreadyDebugging, ref int hooksFound)
 		{
-			foreach (var cache in hookable.HookCache)
+			foreach (var cache in hookable.HookPool)
 			{
 				if (cache.Key != hookId)
 				{
@@ -164,7 +172,7 @@ public partial class CorePlugin : CarbonPlugin
 				foreach (var hook in cache.Value)
 				{
 					hooksFound++;
-					hook.EnableDebug(!alreadyDebugging);
+					hook.EnableDebugging(!alreadyDebugging);
 				}
 			}
 		}
@@ -183,6 +191,28 @@ public partial class CorePlugin : CarbonPlugin
 				Logger.Log(response);
 			});
 		}
+	}
+
+	[Conditional("DEBUG")]
+	[ConsoleCommand("debugallhooks", "Enables debugging on all hooks and future hooks that will be processed (defaults debugging enabled on hooks).")]
+	[AuthLevel(2)]
+	private void DebugAllHooks(ConsoleSystem.Arg arg)
+	{
+		foreach (var package in ModLoader.LoadedPackages)
+		{
+			foreach (var plugin in package.Plugins)
+			{
+				plugin.HookPool.EnableDebugging(!EnforceHookDebugging);
+			}
+		}
+		foreach (var module in Community.Runtime.ModuleProcessor.Modules)
+		{
+			module.HookPool.EnableDebugging(!EnforceHookDebugging);
+		}
+
+		EnforceHookDebugging = true;
+
+		arg.ReplyWith($"{(EnforceHookDebugging ? "Enabled" : "Disabled")} debugging across all hooks in plugins and modules (as well as future hooks that will be processed).");
 	}
 	#endif
 }

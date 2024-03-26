@@ -158,13 +158,13 @@ namespace Oxide.Core.Plugins
 				using (TimeMeasure.New($"IUnload.Disposal on '{this}'"))
 				{
 					IgnoredHooks?.Clear();
-					HookCache?.Clear();
+					HookPool?.Clear();
 					Hooks?.Clear();
 					HookMethods?.Clear();
 					PluginReferences?.Clear();
 
 					IgnoredHooks = null;
-					HookCache = null;
+					HookPool = null;
 					Hooks = null;
 					HookMethods = null;
 					PluginReferences = null;
