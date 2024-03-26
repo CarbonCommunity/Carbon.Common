@@ -284,13 +284,14 @@ public partial class CorePlugin : CarbonPlugin
 			return;
 		}
 
-		using (var table = new StringTable("#", "Id", "Hook", "Time", "Memory", "Fires", "Subscribed", "Async/Overrides"))
+		using (var table = new StringTable("#", "Id", "Hook", "Time", "Memory", "Fires", "Lag Spikes", "Subscribed", "Async/Overrides"))
 		{
 			IEnumerable<List<CachedHook>> array = mode switch
 			{
 				"-t" => (flip ? plugin.HookCache.OrderBy(x => x.Value.Sum(x => x.HookTime.TotalMilliseconds)) : plugin.HookCache.OrderByDescending(x => x.Value.Sum(x => x.HookTime.TotalMilliseconds))).Select(x => x.Value),
 				"-m" => (flip ? plugin.HookCache.OrderBy(x => x.Value.Sum(x => x.MemoryUsage)) : plugin.HookCache.OrderByDescending(x => x.Value.Sum(x => x.MemoryUsage))).Select(x => x.Value),
 				"-f" => (flip ? plugin.HookCache.OrderBy(x => x.Value.Sum(x => x.TimesFired)) : plugin.HookCache.OrderByDescending(x => x.Value.Sum(x => x.TimesFired))).Select(x => x.Value),
+				"-ls" => (flip ? plugin.HookCache.OrderBy(x => x.Value.Sum(x => x.LagSpikes)) : plugin.HookCache.OrderByDescending(x => x.Value.Sum(x => x.LagSpikes))).Select(x => x.Value),
 				_ => plugin.HookCache.Select(x => x.Value)
 			};
 
@@ -305,18 +306,28 @@ public partial class CorePlugin : CarbonPlugin
 				var hookName = current.Method.Name;
 
 				var hookId = HookStringPool.GetOrAdd(hookName);
-				var hookTime = hook.Sum(x => x.HookTime.TotalMilliseconds);
-				var hookMemoryUsage = hook.Sum(x => x.MemoryUsage);
-				var hookCount = hook.Count;
-				var hookAsyncCount = hook.Count(x => x.IsAsync);
-				var hooksTimesFired = hook.Sum(x => x.TimesFired);
 
 				if (!plugin.Hooks.Contains(hookId))
 				{
 					continue;
 				}
 
-				table.AddRow(count, hookId, $"{hookName}", $"{hookTime:0}ms", $"{ByteEx.Format(hookMemoryUsage, shortName: true).ToLower()}", $"{hooksTimesFired:n0}", !plugin.IgnoredHooks.Contains(hookId), $"{hookAsyncCount:n0}/{hookCount:n0}");
+				var hookTime = hook.Sum(x => x.HookTime.TotalMilliseconds);
+				var hookMemoryUsage = hook.Sum(x => x.MemoryUsage);
+				var hookCount = hook.Count;
+				var hookAsyncCount = hook.Count(x => x.IsAsync);
+				var hookTimesFired = hook.Sum(x => x.TimesFired);
+				var hookLagSpikes = hook.Sum(x => x.LagSpikes);
+
+				table.AddRow(count,
+					hookId,
+					$"{hookName}",
+					$"{hookTime:0}ms",
+					$"{ByteEx.Format(hookMemoryUsage, shortName: true).ToLower()}",
+					$"{hookTimesFired:n0}",
+					$"{hookLagSpikes:n0}",
+					!plugin.IgnoredHooks.Contains(hookId),
+					$"{hookAsyncCount:n0}/{hookCount:n0}");
 
 				count++;
 			}

@@ -53,7 +53,7 @@ public partial class CorePlugin : CarbonPlugin
 		PoolEx.FreeStringBuilder(ref builder);
 	}
 
-	[ConsoleCommand("plugins", "Prints the list of mods and their loaded plugins. Eg. c.plugins [-j|--j|-json|-abc|--json|-t|-m|-f] [-asc]")]
+	[ConsoleCommand("plugins", "Prints the list of mods and their loaded plugins. Eg. c.plugins [-j|--j|-json|-abc|--json|-t|-m|-f|-ls] [-asc]")]
 	[AuthLevel(2)]
 	private void Plugins(ConsoleSystem.Arg arg)
 	{
@@ -76,10 +76,10 @@ public partial class CorePlugin : CarbonPlugin
 
 				// Loaded plugins
 				{
-					using var body = new StringTable("#", "Mod", "Author", "Version", "Hook Time", "Hook Fires", "Memory Usage", "Compile Time", "Int.CallHook Gen Time", "Uptime");
+					using var body = new StringTable("#", "Mod", "Author", "Version", "Hook Time", "Hook Fires", "Memory Usage", "Lag Spikes", "Compile Time", "Uptime");
 					var count = 1;
 
-					foreach (var mod in ModLoader.LoadedPackages.AsEnumerable())
+					foreach (var mod in ModLoader.LoadedPackages)
 					{
 						body.AddRow($"{count:n0}", $"{mod.Name}{(mod.Plugins.Count >= 1 ? $" ({mod.Plugins.Count:n0})" : string.Empty)}", string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
 
@@ -89,6 +89,7 @@ public partial class CorePlugin : CarbonPlugin
 							"-t" => (flip ? mod.Plugins.OrderBy(x => x.TotalHookTime) : mod.Plugins.OrderByDescending(x => x.TotalHookTime)),
 							"-m" => (flip ? mod.Plugins.OrderBy(x => x.TotalMemoryUsed) : mod.Plugins.OrderByDescending(x => x.TotalMemoryUsed)),
 							"-f" => (flip ? mod.Plugins.OrderBy(x => x.CurrentHookFires) : mod.Plugins.OrderByDescending(x => x.CurrentHookFires)),
+							"-ls" => (flip ? mod.Plugins.OrderBy(x => x.CurrentLagSpikes) : mod.Plugins.OrderByDescending(x => x.CurrentLagSpikes)),
 							_ => (flip ? mod.Plugins.AsEnumerable().Reverse() : mod.Plugins.AsEnumerable())
 						};
 
@@ -116,8 +117,8 @@ public partial class CorePlugin : CarbonPlugin
 								$"{plugin.TotalHookTime.TotalMilliseconds:0}ms{hookTimeAverage}",
 								$"{plugin.CurrentHookFires:n0}",
 								$"{ByteEx.Format(plugin.TotalMemoryUsed, shortName: true, stringFormat: "{0}{1}").ToLower()}{memoryAverage}",
-								plugin.IsPrecompiled ? string.Empty : $"{plugin.CompileTime.TotalMilliseconds:0}ms",
-								plugin.IsPrecompiled ? string.Empty : $"{plugin.InternalCallHookGenTime.TotalMilliseconds:0}ms",
+								$"{plugin.CurrentLagSpikes:n0}",
+								plugin.IsPrecompiled ? string.Empty : $"{plugin.CompileTime.TotalMilliseconds:0}ms [{plugin.InternalCallHookGenTime.TotalMilliseconds:0}ms]",
 								$"{TimeEx.Format(plugin.Uptime)}");
 						}
 

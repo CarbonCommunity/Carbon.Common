@@ -35,6 +35,7 @@ public class BaseHookable
 		public bool IsDebugged;
 		public bool IsValid;
 
+		public int LagSpikes;
 		public int TimesFired;
 		public TimeSpan HookTime;
 		public double MemoryUsage;
@@ -43,7 +44,17 @@ public class BaseHookable
 		{
 			IsDebugged = wants;
 		}
-		public void Debug()
+
+		public void AppendHookTime(TimeSpan span)
+		{
+			HookTime += span;
+		}
+		public void AppendMemoryUsage(double memory)
+		{
+			MemoryUsage += memory;
+		}
+
+		public void OnDebug()
 		{
 			if (!IsDebugged)
 			{
@@ -52,11 +63,15 @@ public class BaseHookable
 
 			Logger.Log($" {Name}[{Id}] fired on {HookableName} {Hookable.ToPrettyString()} [{TimesFired:n0}|{HookTime.TotalMilliseconds:0}ms|{ByteEx.Format(MemoryUsage, shortName: true, stringFormat: "{0}{1}").ToLower()}]");
 		}
-		public void Tick()
+		public void OnFire()
 		{
 			TimesFired++;
 
-			Debug();
+			OnDebug();
+		}
+		public void OnLagSpike()
+		{
+			LagSpikes++;
 		}
 
 		public static CachedHook Make(string hookName, uint hookId, BaseHookable hookable, MethodInfo method)
@@ -118,6 +133,7 @@ public class BaseHookable
 	public static long CurrentMemory => GC.GetTotalMemory(false);
 	public static int CurrentGcCount => GC.CollectionCount(0);
 	public int CurrentHookFires => HookCache.Sum(x => x.Value.Sum(y => y.TimesFired));
+	public int CurrentLagSpikes => HookCache.Sum(x => x.Value.Sum(y => y.LagSpikes));
 	public bool HasGCCollected => _currentGcCount != CurrentGcCount;
 
 	public virtual void TrackInit()

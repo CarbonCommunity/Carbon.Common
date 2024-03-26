@@ -45,9 +45,7 @@ public class HookCallerCommon
 		public object[] Take()
 		{
 			return _pool.Count != 0 ? _pool.Dequeue() : new object[_length];
-
 		}
-
 		public void Return(object[] array)
 		{
 			for (int i = 0; i < array.Length; i++)
