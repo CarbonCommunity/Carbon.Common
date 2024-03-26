@@ -109,7 +109,9 @@ public class BaseHookable
 						  method.GetCustomAttribute<AsyncStateMachineAttribute>() != null,
 				Parameters = parameters.Select(x => x.ParameterType).ToArray(),
 				InfoParameters = parameters,
+#if DEBUG
 				IsDebugged = CorePlugin.EnforceHookDebugging,
+#endif
 				IsValid = true
 			};
 
