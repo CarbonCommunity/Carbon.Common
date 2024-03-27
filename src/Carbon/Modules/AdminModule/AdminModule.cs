@@ -33,7 +33,6 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 	internal static AdminModule Singleton { get; set; }
 
-	public static RustPlugin Core = Community.Runtime.CorePlugin;
 	public ImageDatabaseModule ImageDatabase;
 	public ColorPickerModule ColorPicker;
 	public DatePickerModule DatePicker;
@@ -119,7 +118,6 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		Unsubscribe("CanDismountEntity");
 		Unsubscribe("OnEntityVisibilityCheck");
 		Unsubscribe("OnEntityDistanceCheck");
-		Unsubscribe("CanAcceptItem");
 
 		foreach (var perm in AdminPermissions)
 		{
@@ -1771,58 +1769,6 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		EntitiesTab.SelectEntity(tab, ap, spectated);
 		EntitiesTab.DrawEntitySettings(tab, 1, ap);
 		Singleton.Draw(player);
-	}
-
-	internal static void OpenPlayerContainer(PlayerSession ap, BasePlayer player, Tab tab)
-	{
-		Singleton.Subscribe("OnEntityVisibilityCheck");
-		Singleton.Subscribe("OnEntityDistanceCheck");
-		Singleton.Subscribe("CanAcceptItem");
-
-		EntitiesTab.LastContainerLooter = ap;
-		ap.SetStorage(tab, "lootedent", player);
-		EntitiesTab.SendEntityToPlayer(ap.Player, player);
-
-		Core.timer.In(0.2f, () => Singleton.Close(ap.Player));
-		Core.timer.In(0.5f, () =>
-		{
-			EntitiesTab.SendEntityToPlayer(ap.Player, player);
-
-			ap.Player.inventory.loot.Clear();
-			ap.Player.inventory.loot.PositionChecks = false;
-			ap.Player.inventory.loot.entitySource = RelationshipManager.ServerInstance;
-			ap.Player.inventory.loot.itemSource = null;
-			ap.Player.inventory.loot.AddContainer(player.inventory.containerMain);
-			ap.Player.inventory.loot.AddContainer(player.inventory.containerWear);
-			ap.Player.inventory.loot.AddContainer(player.inventory.containerBelt);
-			ap.Player.inventory.loot.MarkDirty();
-			ap.Player.inventory.loot.SendImmediate();
-
-			ap.Player.ClientRPCPlayer(null, ap.Player, "RPC_OpenLootPanel", "player_corpse");
-		});
-	}
-
-	internal static void OpenContainer(PlayerSession ap, ItemContainer container, Tab tab)
-	{
-		EntitiesTab.LastContainerLooter = null;
-		ap.ClearStorage(tab, "lootedent");
-
-		ap.Player.inventory.loot.Clear();
-
-		Core.timer.In(0.5f, () =>
-		{
-			EntitiesTab.LastContainerLooter = ap;
-			ap.SetStorage(tab, "lootedent", ap.Player);
-
-			ap.Player.inventory.loot.PositionChecks = false;
-			ap.Player.inventory.loot.entitySource = RelationshipManager.ServerInstance;
-			ap.Player.inventory.loot.itemSource = null;
-			ap.Player.inventory.loot.AddContainer(container);
-			ap.Player.inventory.loot.MarkDirty();
-			ap.Player.inventory.loot.SendImmediate();
-
-			ap.Player.ClientRPCPlayer(null, ap.Player, "RPC_OpenLootPanel", "generic");
-		});
 	}
 
 #endif

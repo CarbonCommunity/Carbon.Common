@@ -342,7 +342,7 @@ public partial class AdminModule
 		var tab = GetTab(ap.Player) as SetupWizard;
 
 		var module = FindModule(arg.GetString(0));
-		var moduleConfigFile = Path.Combine(Defines.GetModulesFolder(), module.Name, "config.json");
+		var moduleConfigFile = Path.Combine(Core.Defines.GetModulesFolder(), module.Name, "config.json");
 		ap.SelectedTab = ConfigEditor.Make(OsEx.File.ReadText(moduleConfigFile),
 			(ap, _) =>
 			{
@@ -368,7 +368,7 @@ public partial class AdminModule
 		var tab = GetTab(ap.Player) as SetupWizard;
 
 		var module = FindModule(arg.GetString(0));
-		Application.OpenURL(Path.Combine(Carbon.Core.Defines.GetModulesFolder(), module.Name));
+		Application.OpenURL(Path.Combine(Core.Defines.GetModulesFolder(), module.Name));
 
 		Draw(ap.Player);
 	}
