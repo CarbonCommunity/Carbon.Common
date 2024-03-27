@@ -374,7 +374,7 @@ public class RustPlugin : Plugin
 
 		if (!player.IsSpectating() || (double)Vector3.Distance(player.transform.position, destination) > 25.0)
 		{
-			player.ClientRPCPlayer(null, player, "ForcePositionTo", destination);
+			player.ClientRPC(RpcTarget.Player("ForcePositionTo", player), destination);
 			return;
 		}
 
