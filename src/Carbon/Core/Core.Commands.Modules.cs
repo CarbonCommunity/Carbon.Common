@@ -127,7 +127,7 @@ public partial class CorePlugin : CarbonPlugin
 		var mode = arg.GetString(0);
 		var flip = arg.GetString(0).Equals("-asc") || arg.GetString(1).Equals("-asc");
 
-		using var print = new StringTable("#", "Name", "Enabled", "Version", "Hook Time", "Hook Fires", "Memory Usage", "Lag Spikes", "Uptime");
+		using var print = new StringTable(string.Empty, "Name", "Enabled", "Version", "Hook Time", "Hook Fires", "Lag Spikes", "Memory Usage", "Uptime");
 
 		IEnumerable<BaseHookable> array = mode switch
 		{
@@ -164,8 +164,8 @@ public partial class CorePlugin : CarbonPlugin
 			print.AddRow(string.Empty, hookable.Name, module.GetEnabled(), module.Version,
 				$"{module.TotalHookTime.TotalMilliseconds:0}ms{hookTimeAverage}",
 				module.CurrentHookFires == 0 ? string.Empty :$"{module.CurrentHookFires}",
-				$"{ByteEx.Format(module.TotalMemoryUsed, shortName: true, stringFormat: "{0}{1}").ToLower()}{memoryAverage}",
 				module.CurrentLagSpikes == 0 ? string.Empty : $"{module.CurrentLagSpikes}",
+				$"{ByteEx.Format(module.TotalMemoryUsed, shortName: true, stringFormat: "{0}{1}").ToLower()}{memoryAverage}",
 				$"{TimeEx.Format(module.Uptime)}");
 		}
 
@@ -201,7 +201,7 @@ public partial class CorePlugin : CarbonPlugin
 		var name = arg.GetString(0);
 		var mode = arg.GetString(1);
 		var flip = arg.GetString(2).Equals("-asc");
-		var module = Community.Runtime.ModuleProcessor.Modules.FirstOrDefault(x => x.Name == name) as BaseModule;
+		var module = Community.Runtime.ModuleProcessor.Modules.FirstOrDefault(x => x.Name.Equals(name, StringComparison.OrdinalIgnoreCase)) as BaseModule;
 
 		if (module == null)
 		{
@@ -209,7 +209,7 @@ public partial class CorePlugin : CarbonPlugin
 			return;
 		}
 
-		using (var table = new StringTable("#", "Id", "Hook", "Time", "Memory", "Fires", "Lag Spikes", "Subscribed", "Async/Overrides"))
+		using (var table = new StringTable(string.Empty, "Id", "Hook", "Time", "Memory", "Fires", "Lag Spikes", "Subscribed", "Async/Overrides"))
 		{
 			IEnumerable<List<CachedHook>> array = mode switch
 			{
