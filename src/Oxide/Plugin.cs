@@ -34,7 +34,7 @@ namespace Oxide.Core.Plugins
 		[JsonProperty]
 		public TimeSpan InternalCallHookGenTime { get; set; }
 		[JsonProperty]
-		public ModLoader.FailedMod.Error[] CompileWarnings { get; set; }
+		public ModLoader.FailedCompilation.Trace[] CompileWarnings { get; set; }
 
 		[JsonProperty]
 		public string FilePath { get; set; }
@@ -158,13 +158,13 @@ namespace Oxide.Core.Plugins
 				using (TimeMeasure.New($"IUnload.Disposal on '{this}'"))
 				{
 					IgnoredHooks?.Clear();
-					HookCache?.Clear();
+					HookPool?.Clear();
 					Hooks?.Clear();
 					HookMethods?.Clear();
 					PluginReferences?.Clear();
 
 					IgnoredHooks = null;
-					HookCache = null;
+					HookPool = null;
 					Hooks = null;
 					HookMethods = null;
 					PluginReferences = null;
@@ -184,7 +184,7 @@ namespace Oxide.Core.Plugins
 			{
 				var field = attribute.Field;
 				var name = string.IsNullOrEmpty(attribute.Name) ? field.Name : attribute.Name;
-				var path = Path.Combine(Defines.GetScriptFolder(), $"{name}.cs");
+				var path = Path.Combine(Defines.GetScriptsFolder(), $"{name}.cs");
 
 				try
 				{

@@ -127,8 +127,7 @@ public partial class CorePlugin : CarbonPlugin
 		var mode = arg.GetString(0);
 		var flip = arg.GetString(0).Equals("-asc") || arg.GetString(1).Equals("-asc");
 
-		var count = 1;
-		using var print = new StringTable("#", "Name", "Enabled", "Version", "Hook Time", "Hook Fires", "Memory Usage", "Uptime");
+		using var print = new StringTable(string.Empty, "Name", "Enabled", "Version", "Hook Time", "Hook Fires", "Lag Spikes", "Memory Usage", "Uptime");
 
 		IEnumerable<BaseHookable> array = mode switch
 		{
@@ -136,6 +135,7 @@ public partial class CorePlugin : CarbonPlugin
 			"-t" => (flip ? Community.Runtime.ModuleProcessor.Modules.OrderBy(x => x.TotalHookTime) : Community.Runtime.ModuleProcessor.Modules.OrderByDescending(x => x.TotalHookTime)),
 			"-m" => (flip ? Community.Runtime.ModuleProcessor.Modules.OrderBy(x => x.TotalMemoryUsed) : Community.Runtime.ModuleProcessor.Modules.OrderByDescending(x => x.TotalMemoryUsed)),
 			"-f" => (flip ? Community.Runtime.ModuleProcessor.Modules.OrderBy(x => x.CurrentHookFires) : Community.Runtime.ModuleProcessor.Modules.OrderByDescending(x => x.CurrentHookFires)),
+			"-ls" => (flip ? Community.Runtime.ModuleProcessor.Modules.OrderBy(x => x.CurrentLagSpikes) : Community.Runtime.ModuleProcessor.Modules.OrderByDescending(x => x.CurrentLagSpikes)),
 			_ => (flip ? Community.Runtime.ModuleProcessor.Modules.AsEnumerable().Reverse() : Community.Runtime.ModuleProcessor.Modules.AsEnumerable())
 		};
 
@@ -161,12 +161,12 @@ public partial class CorePlugin : CarbonPlugin
 #endif
 			var hookTimeAverage = Mathf.RoundToInt(hookTimeAverageValue) == 0 ? string.Empty : $" (avg {hookTimeAverageValue:0}ms)";
 			var memoryAverage = Mathf.RoundToInt(memoryAverageValue) == 0 ? string.Empty : $" (avg {ByteEx.Format(memoryAverageValue, shortName: true, stringFormat: "{0}{1}").ToLower()})";
-			print.AddRow(count, hookable.Name, module.GetEnabled(), module.Version,
+			print.AddRow(string.Empty, hookable.Name, module.GetEnabled(), module.Version,
 				$"{module.TotalHookTime.TotalMilliseconds:0}ms{hookTimeAverage}",
-				$"{module.CurrentHookFires:0}",
+				module.CurrentHookFires == 0 ? string.Empty :$"{module.CurrentHookFires}",
+				module.CurrentLagSpikes == 0 ? string.Empty : $"{module.CurrentLagSpikes}",
 				$"{ByteEx.Format(module.TotalMemoryUsed, shortName: true, stringFormat: "{0}{1}").ToLower()}{memoryAverage}",
 				$"{TimeEx.Format(module.Uptime)}");
-			count++;
 		}
 
 		arg.ReplyWith(print.Write(StringTable.FormatTypes.None));
@@ -201,8 +201,7 @@ public partial class CorePlugin : CarbonPlugin
 		var name = arg.GetString(0);
 		var mode = arg.GetString(1);
 		var flip = arg.GetString(2).Equals("-asc");
-		var module = Community.Runtime.ModuleProcessor.Modules.FirstOrDefault(x => x.Name == name) as BaseModule;
-		var count = 1;
+		var module = Community.Runtime.ModuleProcessor.Modules.FirstOrDefault(x => x.Name.Equals(name, StringComparison.OrdinalIgnoreCase)) as BaseModule;
 
 		if (module == null)
 		{
@@ -210,14 +209,15 @@ public partial class CorePlugin : CarbonPlugin
 			return;
 		}
 
-		using (var table = new StringTable("#", "Id", "Hook", "Time", "Memory", "Fires", "Subscribed", "Async/Overrides"))
+		using (var table = new StringTable(string.Empty, "Id", "Hook", "Time", "Memory", "Fires", "Lag Spikes", "Subscribed", "Async/Overrides"))
 		{
 			IEnumerable<List<CachedHook>> array = mode switch
 			{
-				"-t" => (flip ? module.HookCache.OrderBy(x => x.Value.Sum(x => x.HookTime.TotalMilliseconds)) : module.HookCache.OrderByDescending(x => x.Value.Sum(x => x.HookTime.TotalMilliseconds))).Select(x => x.Value),
-				"-m" => (flip ? module.HookCache.OrderBy(x => x.Value.Sum(x => x.MemoryUsage)) : module.HookCache.OrderByDescending(x => x.Value.Sum(x => x.MemoryUsage))).Select(x => x.Value),
-				"-f" => (flip ? module.HookCache.OrderBy(x => x.Value.Sum(x => x.TimesFired)) : module.HookCache.OrderByDescending(x => x.Value.Sum(x => x.TimesFired))).Select(x => x.Value),
-				_ => module.HookCache.Select(x => x.Value)
+				"-t" => (flip ? module.HookPool.OrderBy(x => x.Value.Sum(x => x.HookTime.TotalMilliseconds)) : module.HookPool.OrderByDescending(x => x.Value.Sum(x => x.HookTime.TotalMilliseconds))).Select(x => x.Value),
+				"-m" => (flip ? module.HookPool.OrderBy(x => x.Value.Sum(x => x.MemoryUsage)) : module.HookPool.OrderByDescending(x => x.Value.Sum(x => x.MemoryUsage))).Select(x => x.Value),
+				"-f" => (flip ? module.HookPool.OrderBy(x => x.Value.Sum(x => x.TimesFired)) : module.HookPool.OrderByDescending(x => x.Value.Sum(x => x.TimesFired))).Select(x => x.Value),
+				"-ls" => (flip ? module.HookPool.OrderBy(x => x.Value.Sum(x => x.LagSpikes)) : module.HookPool.OrderByDescending(x => x.Value.Sum(x => x.LagSpikes))).Select(x => x.Value),
+				_ => module.HookPool.Select(x => x.Value)
 			};
 
 			foreach (var hook in array)
@@ -228,29 +228,31 @@ public partial class CorePlugin : CarbonPlugin
 				}
 
 				var current = hook[0];
-				var hookId = HookStringPool.GetOrAdd(current.Method.Name);
+				var hookName = current.Method.Name;
+
+				var hookId = HookStringPool.GetOrAdd(hookName);
 
 				if (!module.Hooks.Contains(hookId))
 				{
 					continue;
 				}
-
-				var hookName = current.Method.Name;
 
 				var hookTime = hook.Sum(x => x.HookTime.TotalMilliseconds);
 				var hookMemoryUsage = hook.Sum(x => x.MemoryUsage);
 				var hookCount = hook.Count;
 				var hookAsyncCount = hook.Count(x => x.IsAsync);
-				var hooksTimesFired = hook.Sum(x => x.TimesFired);
+				var hookTimesFired = hook.Sum(x => x.TimesFired);
+				var hookLagSpikes = hook.Sum(x => x.LagSpikes);
 
-				if (!module.Hooks.Contains(hookId))
-				{
-					continue;
-				}
-
-				table.AddRow(count, hookId, $"{hookName}", $"{hookTime:0}ms", $"{ByteEx.Format(hookMemoryUsage, shortName: true).ToLower()}", $"{hooksTimesFired:n0}", !module.IgnoredHooks.Contains(hookId), $"{hookAsyncCount:n0}/{hookCount:n0}");
-
-				count++;
+				table.AddRow(string.Empty,
+					hookId,
+					$"{hookName}",
+					$"{hookTime:0}ms",
+					$"{ByteEx.Format(hookMemoryUsage, shortName: true).ToLower()}",
+					hookTimesFired == 0 ? string.Empty : $"{hookTimesFired}",
+					hookLagSpikes == 0 ? string.Empty : $"{hookLagSpikes}",
+					!module.IgnoredHooks.Contains(hookId),
+					$"{hookAsyncCount:n0}/{hookCount:n0}");
 			}
 
 			var builder = new StringBuilder();

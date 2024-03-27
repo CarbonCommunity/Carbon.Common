@@ -97,7 +97,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 		public static Tab Get()
 		{
-			OsEx.Folder.Create(Path.Combine(Defines.GetScriptFolder(), "backups"));
+			OsEx.Folder.Create(Path.Combine(Defines.GetScriptsFolder(), "backups"));
 
 			var tab = new Tab("plugins", "Plugins", Community.Runtime.CorePlugin, (ap, t) =>
 			{
@@ -1058,7 +1058,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 								var jobject = JObject.Parse(source);
 								var name = jobject["files"][0]["name"].ToString();
 								var file = jobject["files"][0]["url"].ToString();
-								var path = Path.Combine(Defines.GetScriptFolder(), name);
+								var path = Path.Combine(Defines.GetScriptsFolder(), name);
 								jobject = null;
 
 								core.webrequest.EnqueueData(file, null, (error, source) =>
@@ -1094,7 +1094,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 													using var reader = new StreamReader(file.Open());
 													var fileSource = reader.ReadToEnd();
 
-													OsEx.File.Create(Path.Combine(Defines.GetScriptFolder(), file.Name), fileSource);
+													OsEx.File.Create(Path.Combine(Defines.GetScriptsFolder(), file.Name), fileSource);
 													Singleton.Puts($" Extracted plugin file {file.Name}");
 												}
 												break;
@@ -1150,7 +1150,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 								var jobject = JObject.Parse(source);
 								var name = jobject["files"][0]["name"].ToString();
 								var file = jobject["files"][0]["url"].ToString();
-								var path = Path.Combine(Defines.GetScriptFolder(), name);
+								var path = Path.Combine(Defines.GetScriptsFolder(), name);
 								jobject = null;
 
 								core.webrequest.Enqueue(file, null, (error, source) =>
@@ -1167,7 +1167,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				}
 				else
 				{
-					var path = Path.Combine(Defines.GetScriptFolder(), plugin.File);
+					var path = Path.Combine(Defines.GetScriptsFolder(), plugin.File);
 					var url = DownloadEndpoint.Replace("[ID]", id);
 
 					core.webrequest.Enqueue(url, null, (error, source) =>
@@ -1189,7 +1189,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			public override void Uninstall(string id)
 			{
 				var plugin = FetchedPlugins.FirstOrDefault(x => x.Id == id);
-				OsEx.File.Move(plugin.ExistentPlugin.FilePath, Path.Combine(Defines.GetScriptFolder(), "backups", $"{plugin.ExistentPlugin.FileName}.cs"), true);
+				OsEx.File.Move(plugin.ExistentPlugin.FilePath, Path.Combine(Defines.GetScriptsFolder(), "backups", $"{plugin.ExistentPlugin.FileName}.cs"), true);
 				plugin.ExistentPlugin = null;
 			}
 			public override void CheckMetadata(string id, Action onMetadataRetrieved)
@@ -1460,7 +1460,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			public override void Download(string id, Action onTimeout = null)
 			{
 				var plugin = FetchedPlugins.FirstOrDefault(x => x.Id == id);
-				var path = Path.Combine(Defines.GetScriptFolder(), plugin.File);
+				var path = Path.Combine(Defines.GetScriptsFolder(), plugin.File);
 				var url = DownloadEndpoint.Replace("[ID]", plugin.Name);
 
 				plugin.IsBusy = true;
@@ -1491,7 +1491,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			public override void Uninstall(string id)
 			{
 				var plugin = FetchedPlugins.FirstOrDefault(x => x.Id == id);
-				OsEx.File.Move(plugin.ExistentPlugin.FilePath, Path.Combine(Defines.GetScriptFolder(), "backups", $"{plugin.ExistentPlugin.FileName}.cs"), true);
+				OsEx.File.Move(plugin.ExistentPlugin.FilePath, Path.Combine(Defines.GetScriptsFolder(), "backups", $"{plugin.ExistentPlugin.FileName}.cs"), true);
 				plugin.ExistentPlugin = null;
 			}
 			public override void CheckMetadata(string id, Action onMetadataRetrieved)
@@ -1750,7 +1750,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				plugin.IsBusy = true;
 				plugin.DownloadCount++;
 
-				var path = Path.Combine(Defines.GetScriptFolder(), plugin.File);
+				var path = Path.Combine(Defines.GetScriptsFolder(), plugin.File);
 				var url = DownloadEndpoint.Replace("[ID]", id);
 
 				Community.Runtime.CorePlugin.timer.In(2f, () =>
@@ -1780,7 +1780,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			public override void Uninstall(string id)
 			{
 				var plugin = FetchedPlugins.FirstOrDefault(x => x.Id == id);
-				OsEx.File.Move(plugin.ExistentPlugin.FilePath, Path.Combine(Defines.GetScriptFolder(), "backups", $"{plugin.ExistentPlugin.FileName}.cs"), true);
+				OsEx.File.Move(plugin.ExistentPlugin.FilePath, Path.Combine(Defines.GetScriptsFolder(), "backups", $"{plugin.ExistentPlugin.FileName}.cs"), true);
 				plugin.ExistentPlugin = null;
 			}
 			public override void CheckMetadata(string id, Action onMetadataRetrieved)
@@ -1913,7 +1913,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			public override void Uninstall(string id)
 			{
 				var plugin = FetchedPlugins.FirstOrDefault(x => x.Id == id);
-				OsEx.File.Move(plugin.ExistentPlugin.FilePath, Path.Combine(Defines.GetScriptFolder(), "backups", $"{plugin.ExistentPlugin.FileName}.cs"), true);
+				OsEx.File.Move(plugin.ExistentPlugin.FilePath, Path.Combine(Defines.GetScriptsFolder(), "backups", $"{plugin.ExistentPlugin.FileName}.cs"), true);
 				plugin.ExistentPlugin = null;
 			}
 		}
