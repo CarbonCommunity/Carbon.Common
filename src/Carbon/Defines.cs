@@ -16,11 +16,10 @@ public class Defines
 		GetConfigsFolder();
 		GetModulesFolder();
 		GetDataFolder();
-		GetScriptFolder();
+		GetScriptsFolder();
 		GetExtensionsFolder();
 		GetLogsFolder();
 		GetLangFolder();
-		GetReportsFolder();
 
 		try
 		{
@@ -132,7 +131,7 @@ public class Defines
 
 		return folder;
 	}
-	public static string GetScriptFolder()
+	public static string GetScriptsFolder()
 	{
 		_initializeCommandLine();
 		var folder = Path.GetFullPath(string.IsNullOrEmpty(_customScriptFolder) ? Path.Combine(GetRootFolder(), "plugins") : _customScriptFolder);
@@ -143,7 +142,7 @@ public class Defines
 	public static string GetScriptBackupFolder()
 	{
 		_initializeCommandLine();
-		var folder = Path.GetFullPath(Path.Combine(GetScriptFolder(), "backups"));
+		var folder = Path.GetFullPath(Path.Combine(GetScriptsFolder(), "backups"));
 		Directory.CreateDirectory(folder);
 
 		return folder;
@@ -151,14 +150,14 @@ public class Defines
 	public static string GetScriptDebugFolder()
 	{
 		_initializeCommandLine();
-		var folder = Path.GetFullPath(Path.Combine(GetScriptFolder(), "debug"));
+		var folder = Path.GetFullPath(Path.Combine(GetScriptsFolder(), "debug"));
 		Directory.CreateDirectory(folder);
 
 		return folder;
 	}
 	public static string GetZipDevFolder()
 	{
-		var folder = Path.Combine(GetScriptFolder(), "cszip_dev");
+		var folder = Path.Combine(GetScriptsFolder(), "cszip_dev");
 		Directory.CreateDirectory(folder);
 
 		return folder;
@@ -207,14 +206,6 @@ public class Defines
 	{
 		_initializeCommandLine();
 		var folder = Path.Combine($"{GetRootFolder()}", "temp");
-		Directory.CreateDirectory(folder);
-
-		return folder;
-	}
-	public static string GetReportsFolder()
-	{
-		_initializeCommandLine();
-		var folder = Path.Combine($"{GetRootFolder()}", "reports");
 		Directory.CreateDirectory(folder);
 
 		return folder;

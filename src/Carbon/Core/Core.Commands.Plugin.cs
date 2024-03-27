@@ -585,7 +585,7 @@ public partial class CorePlugin : CarbonPlugin
 						return;
 					}
 
-					OsEx.File.Move(path, Path.Combine(Defines.GetScriptFolder(), Path.GetFileName(path)));
+					OsEx.File.Move(path, Path.Combine(Defines.GetScriptsFolder(), Path.GetFileName(path)));
 					break;
 				}
 		}

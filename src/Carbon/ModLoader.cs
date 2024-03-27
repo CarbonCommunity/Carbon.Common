@@ -1,8 +1,5 @@
-﻿using API.Commands;
-using API.Events;
-using Carbon.Base.Interfaces;
+﻿using API.Events;
 using Newtonsoft.Json;
-using Report = Carbon.Components.Report;
 
 /*
  *
@@ -35,6 +32,14 @@ public static class ModLoader
 		{
 			LoadedPackages.Add(package);
 		}
+	}
+	public static ModPackage GetPackage(string name)
+	{
+		return LoadedPackages.FirstOrDefault(mod => mod.Name.StartsWith(name, StringComparison.OrdinalIgnoreCase));
+	}
+	public static RustPlugin FindPlugin(string name)
+	{
+		return LoadedPackages.SelectMany(package => package.Plugins).FirstOrDefault(plugin => plugin.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
 	}
 
 	static ModLoader()
@@ -633,14 +638,8 @@ public static class ModLoader
 				Logger.Log($" Batch completed! OSI on {counter:n0} {counter.Plural("plugin", "plugins")}.");
 			}
 
-			Report.OnProcessEnded?.Invoke();
 			Community.Runtime.Events.Trigger(CarbonEvent.AllPluginsLoaded, EventArgs.Empty);
 		}
-	}
-
-	internal static ModPackage GetPackage(string name)
-	{
-		return LoadedPackages.FirstOrDefault(mod => mod.Name.StartsWith(name, StringComparison.OrdinalIgnoreCase));
 	}
 
 	[JsonObject(MemberSerialization.OptIn)]

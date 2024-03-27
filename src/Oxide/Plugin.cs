@@ -184,7 +184,7 @@ namespace Oxide.Core.Plugins
 			{
 				var field = attribute.Field;
 				var name = string.IsNullOrEmpty(attribute.Name) ? field.Name : attribute.Name;
-				var path = Path.Combine(Defines.GetScriptFolder(), $"{name}.cs");
+				var path = Path.Combine(Defines.GetScriptsFolder(), $"{name}.cs");
 
 				try
 				{
