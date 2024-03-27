@@ -5,6 +5,9 @@
  *
  */
 
+using System.Reflection.Emit;
+using HarmonyLib;
+
 namespace Carbon.Extensions;
 
 public static class AccessToolsEx
@@ -74,5 +77,11 @@ public static class AccessToolsEx
 
 		return AccessToolsEx.AllTypes().Where(type =>
 			type.IsSubclassOf(@base) && type.GetInterfaces().Intersect(interfaces).Any());
+	}
+
+	public static CodeInstruction WithLabel(this CodeInstruction instruction, Label label)
+	{
+		instruction.labels.Add(label);
+		return instruction;
 	}
 }

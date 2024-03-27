@@ -45,9 +45,7 @@ public class HookCallerCommon
 		public object[] Take()
 		{
 			return _pool.Count != 0 ? _pool.Dequeue() : new object[_length];
-
 		}
-
 		public void Return(object[] array)
 		{
 			for (int i = 0; i < array.Length; i++)
@@ -86,15 +84,15 @@ public static class HookCaller
 {
 	public static HookCallerCommon Caller { get; set; }
 
-	public static double GetHookTotalTime(uint hook)
+	public static TimeSpan GetHookTotalTime(uint hook)
 	{
-		var finalTime = 0.0;
+		TimeSpan finalTime = default;
 
 		foreach (var package in ModLoader.LoadedPackages)
 		{
 			foreach (var plugin in package.Plugins)
 			{
-				foreach (var cache in plugin.HookCache)
+				foreach (var cache in plugin.HookPool)
 				{
 					LoopCache(cache.Key, cache.Value);
 				}
@@ -103,7 +101,7 @@ public static class HookCaller
 
 		foreach (var module in Community.Runtime.ModuleProcessor.Modules)
 		{
-			foreach (var cache in module.HookCache)
+			foreach (var cache in module.HookPool)
 			{
 				LoopCache(cache.Key, cache.Value);
 			}

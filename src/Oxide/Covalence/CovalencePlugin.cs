@@ -25,38 +25,38 @@ namespace Oxide.Plugins
 #endif
 		{
 #if !NOCOVALENCE
-			public IEnumerable<IPlayer> All => BasePlayer.allPlayerList.Select(x => x.AsIPlayer() as IPlayer);
+			public static void RefreshDatabase(Dictionary<string, UserData> data)
+			{
+				_all = data.Select(x => x.AsIPlayer());
+			}
 
-			public IEnumerable<IPlayer> Connected => BasePlayer.activePlayerList.Select(x => x.AsIPlayer() as IPlayer);
+			internal static IEnumerable<IPlayer> _all;
+
+			public IEnumerable<IPlayer> All => _all;
+
+			public IEnumerable<IPlayer> Connected => BasePlayer.activePlayerList.Select(x => x.AsIPlayer());
 
 			public IPlayer FindPlayer(string partialNameOrId)
 			{
-				var player = BasePlayer.FindAwakeOrSleeping(partialNameOrId);
-				if (player == null) return new RustPlayer { Id = partialNameOrId };
-
-				return player.AsIPlayer();
+				return All.FirstOrDefault(x => x.Id.Contains(partialNameOrId) || x.Name.Contains(partialNameOrId, CompareOptions.OrdinalIgnoreCase));
 			}
 
 			public IPlayer FindPlayerById(string id)
 			{
-				var player = BasePlayer.FindAwakeOrSleeping(id);
-				if (player == null) return new RustPlayer { Id = id };
-
-				return player.AsIPlayer();
+				return All.FirstOrDefault(x => x.Id.Contains(id));
 			}
 
 			public IPlayer FindPlayerByObj(object obj)
 			{
-				var value = obj.ToString();
-				var player = BasePlayer.FindAwakeOrSleeping(value);
-				if (player == null) return new RustPlayer { Id = value };
+				var value = obj?.ToString();
+				if (string.IsNullOrEmpty(value)) return default;
 
-				return player.AsIPlayer();
+				return FindPlayer(value);
 			}
 
 			public IEnumerable<IPlayer> FindPlayers(string partialNameOrId)
 			{
-				return BasePlayer.allPlayerList.Where(x => x.displayName.Contains(partialNameOrId) || x.UserIDString == partialNameOrId).Select(x => x.AsIPlayer() as IPlayer);
+				return All.Where(x => x.Id.Contains(partialNameOrId) || x.Name.Contains(partialNameOrId, CompareOptions.OrdinalIgnoreCase));
 			}
 #endif
 		}

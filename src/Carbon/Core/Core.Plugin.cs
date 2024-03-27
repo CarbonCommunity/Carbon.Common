@@ -25,7 +25,7 @@ public partial class CorePlugin : CarbonPlugin
 		var config = Community.Runtime.Config;
 		var processor = Community.Runtime.ScriptProcessor;
 
-		foreach (var file in OsEx.Folder.GetFilesWithExtension(Defines.GetScriptFolder(), "cs", config.Watchers.ScriptWatcherOption))
+		foreach (var file in OsEx.Folder.GetFilesWithExtension(Defines.GetScriptsFolder(), "cs", config.Watchers.ScriptWatcherOption))
 		{
 			if (processor.IsBlacklisted(file)) continue;
 
@@ -200,5 +200,10 @@ public partial class CorePlugin : CarbonPlugin
 			Application.SetStackTraceLogType(LogType.Assert, StackTraceLogType.None);
 			Application.SetStackTraceLogType(LogType.Exception, StackTraceLogType.None);
 		}
+	}
+
+	protected override void LoadDefaultMessages()
+	{
+		lang.RegisterMessages(Localisation.Phrases, this);
 	}
 }

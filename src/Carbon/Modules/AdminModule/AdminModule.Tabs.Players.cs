@@ -11,9 +11,14 @@ namespace Carbon.Modules;
 
 public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 {
+	readonly int[] _backpacks = new[]
+	{
+		-907422733,
+		2068884361
+	};
+
 	public class PlayersTab
 	{
-		internal static RustPlugin Core = Community.Runtime.CorePlugin;
 		internal static List<BasePlayer> BlindedPlayers = new();
 
 		public static Tab Get()
@@ -114,7 +119,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				}
 			}
 
-			if (Singleton.HasPermission(aap.Player, "carbon.cmod"))
+			if (Singleton.Permissions.UserHasPermission(aap.Player.UserIDString, "carbon.cmod"))
 			{
 				tab.AddButtonArray(1, new Tab.OptionButton("Kick", _ =>
 				{
@@ -203,27 +208,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				tab.AddButtonArray(1,
 					new Tab.OptionButton("Loot", ap =>
 					{
-						EntitiesTab.LastContainerLooter = ap;
-						ap.SetStorage(tab, "lootedent", player);
-						EntitiesTab.SendEntityToPlayer(ap.Player, player);
-
-						Core.timer.In(0.2f, () => Singleton.Close(ap.Player));
-						Core.timer.In(0.5f, () =>
-						{
-							EntitiesTab.SendEntityToPlayer(ap.Player, player);
-
-							ap.Player.inventory.loot.Clear();
-							ap.Player.inventory.loot.PositionChecks = false;
-							ap.Player.inventory.loot.entitySource = RelationshipManager.ServerInstance;
-							ap.Player.inventory.loot.itemSource = null;
-							ap.Player.inventory.loot.AddContainer(player.inventory.containerMain);
-							ap.Player.inventory.loot.AddContainer(player.inventory.containerWear);
-							ap.Player.inventory.loot.AddContainer(player.inventory.containerBelt);
-							ap.Player.inventory.loot.MarkDirty();
-							ap.Player.inventory.loot.SendImmediate();
-
-							ap.Player.ClientRPCPlayer(null, ap.Player, "RPC_OpenLootPanel", "player_corpse");
-						});
+						OpenPlayerContainer(ap, player, tab);
 					}),
 					new Tab.OptionButton("Respawn", _ =>
 					{
@@ -234,6 +219,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 							player.EndSleeping();
 						}, null);
 					}));
+				tab.AddText(1, "To loot a backpack, drag the backpack item over any hotbar slots while looting a player", 10, "1 1 1 0.4");
 			}
 
 			if (Singleton.HasAccess(aap.Player, "players.inventory_management"))

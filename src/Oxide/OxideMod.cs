@@ -48,7 +48,7 @@ public class OxideMod
 		DataDirectory = Defines.GetDataFolder();
 		LangDirectory = Defines.GetLangFolder();
 		LogDirectory = Defines.GetLogsFolder();
-		PluginDirectory = Defines.GetScriptFolder();
+		PluginDirectory = Defines.GetScriptsFolder();
 		TempDirectory = Defines.GetTempFolder();
 		ExtensionDirectory = Defines.GetExtensionsFolder();
 
@@ -71,6 +71,8 @@ public class OxideMod
 		}
 
 		_extensions.Add(new Extension { Name = "Rust", Author = "Carbon Community LTD", Branch = "none", Filename = "Carbon.dll", Version = new VersionNumber(1, 0, 0) });
+
+		CovalencePlugin.PlayerManager.RefreshDatabase(Permission.userdata);
 	}
 
 	public void NextTick(Action callback)

@@ -1,8 +1,5 @@
-﻿using API.Commands;
-using API.Events;
-using Carbon.Base.Interfaces;
+﻿using API.Events;
 using Newtonsoft.Json;
-using Report = Carbon.Components.Report;
 
 /*
  *
@@ -15,12 +12,35 @@ namespace Carbon.Core;
 
 public static class ModLoader
 {
-	public static List<Assembly> AssemblyCache { get; } = new();
-	public static Dictionary<string, Assembly> AssemblyDictionaryCache { get; } = new();
-	public static Dictionary<string, List<string>> PendingRequirees { get; } = new();
 	public static bool IsBatchComplete { get; set; }
-	public static List<string> PostBatchFailedRequirees { get; } = new();
-	public static bool FirstLoadSinceStartup { get; internal set; } = true;
+	public static List<ModPackage> LoadedPackages = new();
+	public static List<FailedCompilation> FailedCompilations = new();
+
+	internal static List<Assembly> AssemblyCache { get; } = new();
+	internal static Dictionary<string, Assembly> AssemblyDictionaryCache { get; } = new();
+	internal static Dictionary<string, List<string>> PendingRequirees { get; } = new();
+	internal static List<string> PostBatchFailedRequirees { get; } = new();
+	internal static bool FirstLoadSinceStartup { get; set; } = true;
+
+	internal const string CARBON_PLUGIN = "CarbonPlugin";
+	internal const string RUST_PLUGIN = "RustPlugin";
+	internal const string COVALENCE_PLUGIN = "CovalencePlugin";
+
+	public static void RegisterPackage(ModPackage package)
+	{
+		if (!LoadedPackages.Contains(package))
+		{
+			LoadedPackages.Add(package);
+		}
+	}
+	public static ModPackage GetPackage(string name)
+	{
+		return LoadedPackages.FirstOrDefault(mod => mod.Name.StartsWith(name, StringComparison.OrdinalIgnoreCase));
+	}
+	public static RustPlugin FindPlugin(string name)
+	{
+		return LoadedPackages.SelectMany(package => package.Plugins).FirstOrDefault(plugin => plugin.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+	}
 
 	static ModLoader()
 	{
@@ -41,6 +61,7 @@ public static class ModLoader
 
 		return null;
 	}
+
 	public static void AddPendingRequiree(string initial, string requiree)
 	{
 		if (!PendingRequirees.TryGetValue(initial, out var requirees))
@@ -57,6 +78,11 @@ public static class ModLoader
 	{
 		AddPendingRequiree(initial.FilePath, requiree.FilePath);
 	}
+	public static void AddPostBatchFailedRequiree(string requiree)
+	{
+		PostBatchFailedRequirees.Add(requiree);
+	}
+
 	public static void ClearPendingRequirees(Plugin initial)
 	{
 		if (PendingRequirees.TryGetValue(initial.FilePath, out var requirees))
@@ -83,21 +109,24 @@ public static class ModLoader
 	}
 	public static void ClearAllErrored()
 	{
-		foreach (var mod in FailedMods)
+		foreach (var mod in FailedCompilations)
 		{
 			Array.Clear(mod.Errors, 0, mod.Errors.Length);
 		}
 
-		FailedMods.Clear();
+		FailedCompilations.Clear();
 	}
 
-	public static void AppendAssembly(string key, Assembly assembly)
+	public static void RegisterAssembly(Assembly assembly)
 	{
-		if (!AssemblyDictionaryCache.ContainsKey(key)) AssemblyDictionaryCache.Add(key, assembly);
-		else AssemblyDictionaryCache[key] = assembly;
+		AssemblyCache.Add(assembly);
+	}
+	public static void RegisterAssembly(string key, Assembly assembly)
+	{
+		AssemblyDictionaryCache[key] = assembly;
 	}
 
-	public static void UnloadCarbonMods(bool full = false)
+	public static void UnloadCarbonMods(bool includeCore = false)
 	{
 		ClearAllRequirees();
 
@@ -106,7 +135,7 @@ public static class ModLoader
 
 		foreach (var mod in list)
 		{
-			if (!full && mod.IsCoreMod) continue;
+			if (!includeCore && mod.IsCoreMod) continue;
 
 			UnloadCarbonMod(mod.Name);
 		}
@@ -116,32 +145,15 @@ public static class ModLoader
 	public static bool UnloadCarbonMod(string name)
 	{
 		var mod = GetPackage(name);
-		if (mod == null)
+
+		if (!mod.IsValid)
 		{
 			return false;
 		}
 
-		//FIXMENOW
-		// foreach (var hook in mod.Hooks)
-		// {
-		// 	try
-		// 	{
-		// 		var type = hook.GetType();
-		// 		if (type.Name.Equals("CarbonInitializer")) continue;
-
-		// 		hook.OnUnloaded(new EventArgs());
-		// 	}
-		// 	catch (Exception arg)
-		// 	{
-		// 		LogError(mod.Name, $"Failed to call hook 'OnLoaded' {arg}");
-		// 	}
-		// }
-
 		UninitializePlugins(mod);
 		return true;
 	}
-
-	#region Carbon
 
 	public static void InitializePlugins(ModPackage mod)
 	{
@@ -180,7 +192,7 @@ public static class ModLoader
 		Facepunch.Pool.FreeList(ref plugins);
 	}
 
-	public static bool InitializePlugin(Type type, out RustPlugin plugin, ModPackage package = null, Action<RustPlugin> preInit = null, bool precompiled = false)
+	public static bool InitializePlugin(Type type, out RustPlugin plugin, ModPackage package = default, Action<RustPlugin> preInit = null, bool precompiled = false)
 	{
 		var constructor = type.GetConstructor(Type.EmptyTypes);
 		var instance = FormatterServices.GetUninitializedObject(type);
@@ -212,6 +224,9 @@ public static class ModLoader
 		{
 			Analytics.plugin_constructor_failure(plugin);
 
+			// OnConstructorFail
+			HookCaller.CallStaticHook(937285752, plugin, ex);
+
 			Logger.Error($"Failed executing constructor for {plugin.ToPrettyString()}. This is fatal! Unloading plugin.", ex);
 			return false;
 		}
@@ -226,7 +241,7 @@ public static class ModLoader
 			plugin.InternalCallHookOverriden = false;
 		}
 
-		package?.Plugins.Add(plugin);
+		package.AddPlugin(plugin);
 
 		preInit?.Invoke(plugin);
 
@@ -237,11 +252,7 @@ public static class ModLoader
 		{
 			if (UninitializePlugin(plugin, true))
 			{
-				if (package != null && package.Plugins.Contains(plugin))
-				{
-					package.Plugins.Remove(plugin);
-				}
-
+				package.RemovePlugin(plugin);
 				return false;
 			}
 		}
@@ -252,7 +263,7 @@ public static class ModLoader
 
 		Interface.Oxide.RootPluginManager.AddPlugin(plugin);
 
-		Logger.Log($"Loaded plugin {plugin.ToPrettyString()} [{plugin.CompileTime:0}ms]");
+		Logger.Log($"{(precompiled ? "Preloaded" : "Loaded")} plugin {plugin.ToPrettyString()}{(precompiled ? string.Empty : $" [{plugin.CompileTime.TotalMilliseconds:0}ms]")}");
 		return true;
 	}
 	public static bool UninitializePlugin(RustPlugin plugin, bool premature = false)
@@ -329,10 +340,6 @@ public static class ModLoader
 			Logger.Error($"Failed ProcessPrecompiledType for plugin '{plugin.ToPrettyString()}'", ex);
 		}
 	}
-
-	public const string CARBON_PLUGIN = "CarbonPlugin";
-	public const string RUST_PLUGIN = "RustPlugin";
-	public const string COVALENCE_PLUGIN = "CovalencePlugin";
 
 	public static bool IsValidPlugin(Type type, bool recursive)
 	{
@@ -631,66 +638,73 @@ public static class ModLoader
 				Logger.Log($" Batch completed! OSI on {counter:n0} {counter.Plural("plugin", "plugins")}.");
 			}
 
-			Report.OnProcessEnded?.Invoke();
 			Community.Runtime.Events.Trigger(CarbonEvent.AllPluginsLoaded, EventArgs.Empty);
 		}
 	}
 
-	#endregion
-
-	internal static ModPackage GetPackage(string name)
+	[JsonObject(MemberSerialization.OptIn)]
+	public struct ModPackage
 	{
-		return LoadedPackages.FirstOrDefault(mod => mod.Name.StartsWith(name, StringComparison.OrdinalIgnoreCase));
+		public Assembly Assembly;
+		public Type[] AllTypes;
+
+		[JsonProperty] public string Name;
+		[JsonProperty] public string File;
+		[JsonProperty] public bool IsCoreMod;
+		[JsonProperty] public List<RustPlugin> Plugins;
+
+		public bool IsValid { get; internal set; }
+		public readonly int PluginCount => IsValid ? Plugins.Count : default;
+
+		public ModPackage AddPlugin(RustPlugin plugin)
+		{
+			if (!IsValid || Plugins == null || Plugins.Contains(plugin))
+			{
+				return this;
+			}
+
+			Plugins.Add(plugin);
+			return this;
+		}
+		public ModPackage RemovePlugin(RustPlugin plugin)
+		{
+			if (!IsValid || Plugins == null || !Plugins.Contains(plugin))
+			{
+				return this;
+			}
+
+			Plugins.Remove(plugin);
+			return this;
+		}
+
+		public static ModPackage Get(string name, bool isCoreMod, string file = null)
+		{
+			ModPackage package = default;
+
+			package.Name = name;
+			package.File = file;
+			package.IsCoreMod = isCoreMod;
+			package.Plugins = new();
+			package.IsValid = true;
+
+			return package;
+		}
 	}
 
-	public static List<ModPackage> LoadedPackages = new();
-	public static List<FailedMod> FailedMods = new();
-
 	[JsonObject(MemberSerialization.OptIn)]
-	public class ModPackage
+	public struct FailedCompilation
 	{
-		public Assembly Assembly { get; set; }
-		public Type[] AllTypes { get; set; }
-
-		[JsonProperty]
-		public string Name { get; set; } = string.Empty;
-
-		[JsonProperty]
-		public string File { get; set; } = string.Empty;
-
-		[JsonProperty]
-		public bool IsCoreMod { get; set; } = false;
-
-		[JsonProperty]
-		public List<RustPlugin> Plugins { get; set; } = new List<RustPlugin>();
-	}
-
-	[JsonObject(MemberSerialization.OptIn)]
-	public class FailedMod
-	{
-		[JsonProperty]
-		public string File { get; set; } = string.Empty;
-
-		[JsonProperty]
-		public Error[] Errors { get; set; }
-
-		[JsonProperty]
-		public Error[] Warnings { get; set; }
+		[JsonProperty] public string File;
+		[JsonProperty] public Trace[] Errors;
+		[JsonProperty] public Trace[] Warnings;
 
 		[JsonObject(MemberSerialization.OptIn)]
-		public class Error
+		public struct Trace
 		{
-			[JsonProperty]
-			public string Number { get; set; }
-
-			[JsonProperty]
-			public string Message { get; set; }
-
-			[JsonProperty]
-			public int Column { get; set; }
-
-			[JsonProperty]
-			public int Line { get; set; }
+			[JsonProperty] public string Number;
+			[JsonProperty] public string Message;
+			[JsonProperty] public int Column;
+			[JsonProperty] public int Line;
 		}
 	}
 }
