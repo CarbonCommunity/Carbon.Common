@@ -319,13 +319,13 @@ public partial class CorePlugin : CarbonPlugin
 				var hookTimesFired = hook.Sum(x => x.TimesFired);
 				var hookLagSpikes = hook.Sum(x => x.LagSpikes);
 
-				table.AddRow(count,
+				table.AddRow(string.Empty,
 					hookId,
 					$"{hookName}",
 					$"{hookTime:0}ms",
 					$"{ByteEx.Format(hookMemoryUsage, shortName: true).ToLower()}",
-					hookTimesFired == 0 ? string.Empty : $"{hookTimesFired:n0}",
-					hookLagSpikes == 0 ? string.Empty : $"{hookLagSpikes:n0}",
+					hookTimesFired == 0 ? string.Empty : $"{hookTimesFired}",
+					hookLagSpikes == 0 ? string.Empty : $"{hookLagSpikes}",
 					!plugin.IgnoredHooks.Contains(hookId),
 					$"{hookAsyncCount:n0}/{hookCount:n0}");
 

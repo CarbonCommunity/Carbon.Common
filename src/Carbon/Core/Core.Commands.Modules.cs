@@ -127,7 +127,6 @@ public partial class CorePlugin : CarbonPlugin
 		var mode = arg.GetString(0);
 		var flip = arg.GetString(0).Equals("-asc") || arg.GetString(1).Equals("-asc");
 
-		var count = 1;
 		using var print = new StringTable("#", "Name", "Enabled", "Version", "Hook Time", "Hook Fires", "Memory Usage", "Lag Spikes", "Uptime");
 
 		IEnumerable<BaseHookable> array = mode switch
@@ -162,13 +161,12 @@ public partial class CorePlugin : CarbonPlugin
 #endif
 			var hookTimeAverage = Mathf.RoundToInt(hookTimeAverageValue) == 0 ? string.Empty : $" (avg {hookTimeAverageValue:0}ms)";
 			var memoryAverage = Mathf.RoundToInt(memoryAverageValue) == 0 ? string.Empty : $" (avg {ByteEx.Format(memoryAverageValue, shortName: true, stringFormat: "{0}{1}").ToLower()})";
-			print.AddRow(count, hookable.Name, module.GetEnabled(), module.Version,
+			print.AddRow(string.Empty, hookable.Name, module.GetEnabled(), module.Version,
 				$"{module.TotalHookTime.TotalMilliseconds:0}ms{hookTimeAverage}",
-				module.CurrentHookFires == 0 ? string.Empty :$"{module.CurrentHookFires:0}",
+				module.CurrentHookFires == 0 ? string.Empty :$"{module.CurrentHookFires}",
 				$"{ByteEx.Format(module.TotalMemoryUsed, shortName: true, stringFormat: "{0}{1}").ToLower()}{memoryAverage}",
-				module.CurrentLagSpikes == 0 ? string.Empty : $"{module.CurrentLagSpikes:n0}",
+				module.CurrentLagSpikes == 0 ? string.Empty : $"{module.CurrentLagSpikes}",
 				$"{TimeEx.Format(module.Uptime)}");
-			count++;
 		}
 
 		arg.ReplyWith(print.Write(StringTable.FormatTypes.None));
@@ -204,7 +202,6 @@ public partial class CorePlugin : CarbonPlugin
 		var mode = arg.GetString(1);
 		var flip = arg.GetString(2).Equals("-asc");
 		var module = Community.Runtime.ModuleProcessor.Modules.FirstOrDefault(x => x.Name == name) as BaseModule;
-		var count = 1;
 
 		if (module == null)
 		{
@@ -247,17 +244,15 @@ public partial class CorePlugin : CarbonPlugin
 				var hookTimesFired = hook.Sum(x => x.TimesFired);
 				var hookLagSpikes = hook.Sum(x => x.LagSpikes);
 
-				table.AddRow(count,
+				table.AddRow(string.Empty,
 					hookId,
 					$"{hookName}",
 					$"{hookTime:0}ms",
 					$"{ByteEx.Format(hookMemoryUsage, shortName: true).ToLower()}",
-					hookTimesFired == 0 ? string.Empty : $"{hookTimesFired:n0}",
-					hookLagSpikes == 0 ? string.Empty : $"{hookLagSpikes:n0}",
+					hookTimesFired == 0 ? string.Empty : $"{hookTimesFired}",
+					hookLagSpikes == 0 ? string.Empty : $"{hookLagSpikes}",
 					!module.IgnoredHooks.Contains(hookId),
 					$"{hookAsyncCount:n0}/{hookCount:n0}");
-
-				count++;
 			}
 
 			var builder = new StringBuilder();
