@@ -62,9 +62,9 @@ namespace Oxide.Core.Plugins
 		public IBaseProcessor Processor;
 		public IBaseProcessor.IProcess ProcessorProcess;
 
-		public static implicit operator bool(Plugin other)
+		public static implicit operator bool(Plugin target)
 		{
-			return other != null && other.HasInitialized;
+			return target != null && target.HasInitialized;
 		}
 
 		public static bool operator ==(Plugin target, object compared)
