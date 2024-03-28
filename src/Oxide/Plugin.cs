@@ -66,32 +66,6 @@ namespace Oxide.Core.Plugins
 		{
 			return target != null && target.HasInitialized;
 		}
-		public static bool operator ==(Plugin target, object compared)
-		{
-			return IsComparedValue(target, compared);
-		}
-		public static bool operator !=(Plugin target, object compared)
-		{
-			return !IsComparedValue(target, compared);
-		}
-		public override int GetHashCode()
-		{
-			return base.GetHashCode();
-		}
-		public override bool Equals(object obj)
-		{
-			return base.Equals(obj);
-		}
-
-		internal static bool IsComparedValue(object target, object compared)
-		{
-			if(compared == null && target is Plugin plugin && !plugin.HasInitialized)
-			{
-				return true;
-			}
-
-			return target?.GetHashCode() == compared?.GetHashCode();
-		}
 
 		public virtual bool IInit()
 		{
@@ -257,13 +231,18 @@ namespace Oxide.Core.Plugins
 							}
 						}
 					}
-					else if (attribute.IsRequired)
+					else
 					{
-						ModLoader.PostBatchFailedRequirees.Add(FilePath);
-						ModLoader.AddPendingRequiree(path, FilePath);
-						Logger.Warn(
-							$"Plugin '{Name} by {Author} v{Version}' references a required plugin which is not loaded: {name}");
-						return false;
+						field.SetValue(this, null);
+
+						if (attribute.IsRequired)
+						{
+							ModLoader.PostBatchFailedRequirees.Add(FilePath);
+							ModLoader.AddPendingRequiree(path, FilePath);
+							Logger.Warn(
+								$"Plugin '{Name} by {Author} v{Version}' references a required plugin which is not loaded: {name}");
+							return false;
+						}
 					}
 				}
 				catch (Exception ex)
