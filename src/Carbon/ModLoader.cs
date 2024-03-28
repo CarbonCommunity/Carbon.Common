@@ -623,8 +623,8 @@ public static class ModLoader
 				if (plugin.HasInitialized) continue;
 				counter++;
 
-				plugin.HasInitialized = true;
 				plugin.CallHook("OnServerInitialized", FirstLoadSinceStartup);
+				plugin.HasInitialized = true;
 			}
 
 			FirstLoadSinceStartup = false;

@@ -64,7 +64,26 @@ namespace Oxide.Core.Plugins
 
 		public static implicit operator bool(Plugin other)
 		{
-			return other != null && other.IsLoaded;
+			return other != null && other.HasInitialized;
+		}
+
+		public static bool operator ==(Plugin target, object compared)
+		{
+			return IsComparedValue(target, compared);
+		}
+		public static bool operator !=(Plugin target, object compared)
+		{
+			return !IsComparedValue(target, compared);
+		}
+
+		internal static bool IsComparedValue(Plugin target, object compared)
+		{
+			if(compared == null && !target.HasInitialized)
+			{
+				return true;
+			}
+
+			return target?.GetHashCode() == compared?.GetHashCode();
 		}
 
 		public virtual bool IInit()
