@@ -174,6 +174,8 @@ namespace Oxide.Core.Plugins
 			{
 				Logger.Error($"Failed calling Plugin.IUnload.Disposal on {this}", ex);
 			}
+
+			HasInitialized = false;
 		}
 
 		internal bool InternalApplyPluginReferences()
