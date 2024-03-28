@@ -205,7 +205,7 @@ public class Permission : Library
 		if (!IsLoaded || validate == null) return;
 
 		var array = (from k in userdata.Keys
-					 where !UserIdValid(k)
+					 where !validate(k)
 					 select k).ToArray();
 
 		if (array.Length == 0) return;
@@ -357,7 +357,6 @@ public class Permission : Library
 
 		return result;
 	}
-
 	public virtual UserData GetUserDataCache(string id)
 	{
 		if (!userdatacache.TryGetValue(id, out var result))
@@ -371,6 +370,7 @@ public class Permission : Library
 
 		return result;
 	}
+
 	public virtual GroupData GetGroupData(string id)
 	{
 		if (groupdata.TryGetValue(id, out var result))
@@ -486,7 +486,7 @@ public class Permission : Library
 		if (string.IsNullOrEmpty(perm) || string.IsNullOrEmpty(id)) return false;
 		if (id.Equals("server_console")) return true;
 
-		var userData = GetUserDataCache(id);
+		var userData = GetUserData(id);
 
 		if (GroupsHavePermission(userData.Groups, perm))
 		{
