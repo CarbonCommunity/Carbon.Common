@@ -52,7 +52,6 @@ public class BaseHookable
 		public bool IsByRef;
 		public bool IsAsync;
 		public bool IsDebugged;
-		public bool IsValid;
 
 		public int LagSpikes;
 		public int TimesFired;
@@ -74,11 +73,6 @@ public class BaseHookable
 
 		public void OnFired(TimeSpan hookTime, double memoryUsed)
 		{
-			if (!IsValid)
-			{
-				return;
-			}
-
 			HookTime += hookTime;
 			MemoryUsage += memoryUsed;
 
@@ -112,7 +106,6 @@ public class BaseHookable
 #if DEBUG
 				IsDebugged = CorePlugin.EnforceHookDebugging,
 #endif
-				IsValid = true
 			};
 
 			return hook;
