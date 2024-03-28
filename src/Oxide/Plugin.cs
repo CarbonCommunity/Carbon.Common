@@ -76,9 +76,9 @@ namespace Oxide.Core.Plugins
 			return !IsComparedValue(target, compared);
 		}
 
-		internal static bool IsComparedValue(Plugin target, object compared)
+		internal static bool IsComparedValue(object target, object compared)
 		{
-			if(compared == null && !target.HasInitialized)
+			if(compared == null && target is Plugin plugin && !plugin.HasInitialized)
 			{
 				return true;
 			}
