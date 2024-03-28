@@ -295,6 +295,8 @@ public static class ModLoader
 		{
 			Logger.Log($"Unloaded plugin {plugin.ToPrettyString()}");
 			Interface.Oxide.RootPluginManager.RemovePlugin(plugin);
+
+			Plugin.InternalApplyAllPluginReferences();
 		}
 		return true;
 	}

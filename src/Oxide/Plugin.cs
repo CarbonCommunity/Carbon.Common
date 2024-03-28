@@ -62,9 +62,9 @@ namespace Oxide.Core.Plugins
 		public IBaseProcessor Processor;
 		public IBaseProcessor.IProcess ProcessorProcess;
 
-		public static implicit operator bool(Plugin other)
+		public static implicit operator bool(Plugin target)
 		{
-			return other != null && other.IsLoaded;
+			return target != null && target.HasInitialized;
 		}
 
 		public virtual bool IInit()
@@ -231,13 +231,18 @@ namespace Oxide.Core.Plugins
 							}
 						}
 					}
-					else if (attribute.IsRequired)
+					else
 					{
-						ModLoader.PostBatchFailedRequirees.Add(FilePath);
-						ModLoader.AddPendingRequiree(path, FilePath);
-						Logger.Warn(
-							$"Plugin '{Name} by {Author} v{Version}' references a required plugin which is not loaded: {name}");
-						return false;
+						field.SetValue(this, null);
+
+						if (attribute.IsRequired)
+						{
+							ModLoader.PostBatchFailedRequirees.Add(FilePath);
+							ModLoader.AddPendingRequiree(path, FilePath);
+							Logger.Warn(
+								$"Plugin '{Name} by {Author} v{Version}' references a required plugin which is not loaded: {name}");
+							return false;
+						}
 					}
 				}
 				catch (Exception ex)
