@@ -175,7 +175,7 @@ public partial class CorePlugin : CarbonPlugin
 					}
 				}
 
-				arg.ReplyWith($"{body.Write(StringTable.FormatTypes.None)}\n{unloaded.Write(StringTable.FormatTypes.None)}\n\n{failed.Write(StringTable.FormatTypes.None)}");
+				arg.ReplyWith($"{body.Write(StringTable.FormatTypes.None)}\n{unloaded.Write(StringTable.FormatTypes.None)}\n{failed.Write(StringTable.FormatTypes.None)}");
 				break;
 			}
 		}
