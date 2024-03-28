@@ -76,6 +76,11 @@ namespace Oxide.Core.Plugins
 			return !IsComparedValue(target, compared);
 		}
 
+		public override int GetHashCode()
+		{
+			return base.GetHashCode();
+		}
+
 		internal static bool IsComparedValue(object target, object compared)
 		{
 			if(compared == null && target is Plugin plugin && !plugin.HasInitialized)
