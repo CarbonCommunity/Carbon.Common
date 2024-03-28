@@ -935,9 +935,6 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				}
 				PopularTags = tags;
 				Facepunch.Pool.FreeList(ref tags);
-
-				_headers.Clear();
-				_headers[AuthHeader.Key.ToString()] = string.Format(AuthHeader.Value, User.AccessToken);
 			}
 			public override void FetchList(Action<Vendor> callback = null)
 			{
@@ -1237,6 +1234,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 						ValidationTimer.Destroy();
 						ValidationTimer = null;
 						jobject = null;
+						_headers[AuthHeader.Key.ToString()] = string.Format(AuthHeader.Value, User.AccessToken);
 
 						User.PendingResult = LoggedInUser.RequestResult.Complete;
 						onComplete?.Invoke();
@@ -1330,6 +1328,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					if (User != null && !string.IsNullOrEmpty(User.AccessTokenEncoded))
 					{
 						User.AccessToken = Encoding.UTF8.GetString(Convert.FromBase64String(User.AccessTokenEncoded));
+						_headers[AuthHeader.Key.ToString()] = string.Format(AuthHeader.Value, User.AccessToken);
 					}
 
 					if ((DateTime.Now - new DateTime(value.LastTick)).TotalHours >= 24)
