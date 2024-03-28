@@ -284,7 +284,7 @@ public partial class CorePlugin : CarbonPlugin
 			return;
 		}
 
-		using (var table = new StringTable("#", "Id", "Hook", "Time", "Memory", "Fires", "Lag Spikes", "Subscribed", "Async/Overrides"))
+		using (var table = new StringTable(string.Empty, "Id", "Hook", "Time", "Memory", "Fires", "Lag Spikes", "Subscribed", "Async/Overrides"))
 		{
 			IEnumerable<List<CachedHook>> array = mode switch
 			{
@@ -358,13 +358,8 @@ public partial class CorePlugin : CarbonPlugin
 
 			builder.AppendLine(string.Empty);
 
-			if (count == 1)
+			if (count != 1)
 			{
-				builder.AppendLine($"No hooks found.");
-			}
-			else
-			{
-				builder.AppendLine($"Hooks:");
 				builder.AppendLine(table.ToStringMinimal());
 			}
 
