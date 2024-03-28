@@ -66,7 +66,6 @@ namespace Oxide.Core.Plugins
 		{
 			return target != null && target.HasInitialized;
 		}
-
 		public static bool operator ==(Plugin target, object compared)
 		{
 			return IsComparedValue(target, compared);
@@ -75,10 +74,13 @@ namespace Oxide.Core.Plugins
 		{
 			return !IsComparedValue(target, compared);
 		}
-
 		public override int GetHashCode()
 		{
 			return base.GetHashCode();
+		}
+		public override bool Equals(object obj)
+		{
+			return base.Equals(obj);
 		}
 
 		internal static bool IsComparedValue(object target, object compared)
