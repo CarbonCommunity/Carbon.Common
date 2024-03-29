@@ -14,6 +14,7 @@ public partial class AdminModule
 {
 	public class CarbonTab
 	{
+		public static Tab Instance;
 		public static Config Config => Community.Runtime.Config;
 
 		internal static readonly string[] LogFileModes = new string[]
@@ -37,14 +38,34 @@ public partial class AdminModule
 			"Primary",
 			"All"
 		};
+		internal static Tab.OptionButton[] TabButtons;
+
+		internal static readonly string[] TabTypes = new string[]
+		{
+			"Quick Actions"
+		};
 
 		public static Tab Get()
 		{
-			var tab = new Tab("carbon", "Carbon", Community.Runtime.CorePlugin, (ap, t) => { Refresh(t, ap); }, "carbon.use");
-			tab.AddColumn(0);
-			tab.AddColumn(1);
+			Instance = new Tab("carbon", "Carbon", Community.Runtime.CorePlugin, (ap, t) => { Refresh(t, ap); }, "carbon.use");
+			Instance.AddColumn(0);
+			Instance.AddColumn(1);
 
-			return tab;
+			TabButtons = TabTypes.Select(x => new Tab.OptionButton(x.Replace("_", string.Empty), ap =>
+			{
+				if (ap.GetStorage<string>(null, "carbontabtype", string.Empty) == x)
+				{
+					ap.ClearStorage(null, "carbontabtype");
+				}
+				else
+				{
+					ap.SetStorage(null, "carbontabtype", x);
+				}
+
+				Refresh(Instance, ap);
+			}, ap => ap.GetStorage<string>(null, "carbontabtype", string.Empty) == x ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.None)).ToArray();
+
+			return Instance;
 		}
 
 		public static void Refresh(Tab tab, PlayerSession ap)
@@ -111,16 +132,57 @@ public partial class AdminModule
 				}
 			}
 
-
 			if (Singleton.HasAccess(ap.Player, "carbon.server_config"))
 			{
 				tab.AddName(1, Singleton.GetPhrase("config", ap.Player.UserIDString), TextAnchor.MiddleLeft);
 				{
+					tab.AddButtonArray(1, TabButtons);
+
+					var selectedTabButton = ap.GetStorage(null, "carbontabtype", string.Empty);
+					switch (selectedTabButton)
+					{
+						case "Quick Actions":
+							var editMode = ap.GetStorage(tab, "carbontabedit", false);
+							foreach (var action in Singleton.ConfigInstance.QuickActions)
+							{
+								tab.AddButton(1, action.Key, ap =>
+								{
+									if (editMode)
+									{
+										Singleton.ConfigInstance.QuickActions.Remove(action.Key);
+										Refresh(tab, ap);
+										return;
+									}
+
+									ConsoleSystem.Run(ConsoleSystem.Option.Server, action.Value);
+								}, ap => Tab.OptionButton.Types.Warned);
+							}
+							tab.AddButton(1, editMode ? "Stop Editing" : "Edit", ap =>
+							{
+								ap.SetStorage(tab, "carbontabedit", !editMode);
+								Refresh(tab, ap);
+							}, ap => editMode ? Tab.OptionButton.Types.Important : Tab.OptionButton.Types.None);
+							if (editMode)
+							{
+								tab.AddInput(1, "New Button Name", ap => ap.GetStorage(tab, "carbontabbtnname", string.Empty), (ap, args) =>
+								{
+									ap.SetStorage(tab, "carbontabbtnname", args.ToString(" "));
+								});
+								tab.AddInputButton(1, null, 0.15f, new Tab.OptionInput(null, ap => ap.GetStorage(tab, "carbontabbtncmd", string.Empty), 30, false, (ap, args) =>
+								{
+									ap.SetStorage(tab, "carbontabbtncmd", args.ToString(" "));
+								}), new Tab.OptionButton("Add", ap =>
+								{
+									Singleton.ConfigInstance.QuickActions[ap.GetStorage(tab, "carbontabbtnname", string.Empty)] = ap.GetStorage(tab, "carbontabbtncmd", string.Empty);
+									Refresh(tab, ap);
+								}, ap => Tab.OptionButton.Types.Selected));
+							}
+							break;
+					}
+
 					tab.AddToggle(1, Singleton.GetPhrase("ismodded", ap.Player.UserIDString), ap => { Config.IsModded = !Config.IsModded; Community.Runtime.SaveConfig(); }, ap => Config.IsModded, Singleton.GetPhrase("ismodded_help", ap.Player.UserIDString));
 
 					tab.AddName(1, Singleton.GetPhrase("general", ap.Player.UserIDString), TextAnchor.MiddleLeft);
-
-					tab.AddName(1, Singleton.GetPhrase("watchers", ap.Player.UserIDString), TextAnchor.MiddleLeft);
 					tab.AddToggle(1, Singleton.GetPhrase("scriptwatchers", ap.Player.UserIDString), ap => { Config.Watchers.ScriptWatchers = !Config.Watchers.ScriptWatchers; Community.Runtime.SaveConfig(); }, ap => Config.Watchers.ScriptWatchers, Singleton.GetPhrase("scriptwatchers_help", ap.Player.UserIDString));
 					tab.AddDropdown(1, Singleton.GetPhrase("scriptwatchersoption", ap.Player.UserIDString), ap => (int)Config.Watchers.ScriptWatcherOption, (ap, index) =>
 					{

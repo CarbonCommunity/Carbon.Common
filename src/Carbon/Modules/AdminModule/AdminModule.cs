@@ -1836,6 +1836,7 @@ public class AdminConfig
 	public bool DisableEntitiesTab = true;
 	public bool DisablePluginsTab = false;
 	public bool SpectatingInfoOverlay = true;
+	public Dictionary<string, string> QuickActions = new();
 }
 public class AdminData
 {
