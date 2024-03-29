@@ -54,6 +54,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 	{
 		"wizard",
 		"carbon.use",
+		"carbon.quick_actions",
 		"carbon.server_settings",
 		"carbon.server_config",
 		"carbon.server_info",
@@ -253,7 +254,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				["debugging"] = "Debugging",
 				["scriptdebugorigin"] = "Script Debugging Origin",
 				["scriptdebugorigin_help"] = "Whenever a debugger is attached on server boot, the compiler will replace the debugging origin of the plugin file.",
-				["conditionals"] = "Conditionals"
+				["conditionals"] = "Conditionals",
+				["quickactions"] = "Quick Actions"
 			}
 		};
 	}
