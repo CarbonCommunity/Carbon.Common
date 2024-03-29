@@ -1228,18 +1228,6 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 					core.webrequest.Enqueue(url, null, (code, result) =>
 					{
-						var jobject = JObject.Parse(result);
-						User.AccessToken = jobject["accesstoken"].ToString();
-						User.AccessTokenEncoded = Convert.ToBase64String(Encoding.UTF8.GetBytes(User.AccessToken));
-						ValidationTimer.Destroy();
-						ValidationTimer = null;
-						jobject = null;
-						_headers[AuthHeader.Key.ToString()] = string.Format(AuthHeader.Value, User.AccessToken);
-
-						User.PendingResult = LoggedInUser.RequestResult.Complete;
-						onComplete?.Invoke();
-					}, null, onException: (code, str, ex) =>
-					{
 						switch (code)
 						{
 							case 401:
@@ -1251,8 +1239,22 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 									Singleton.Draw(session.Player);
 								}
 								break;
+
+							default:
+								var jobject = JObject.Parse(result);
+								User.AccessToken = jobject["accesstoken"].ToString();
+								User.AccessTokenEncoded = Convert.ToBase64String(Encoding.UTF8.GetBytes(User.AccessToken));
+								ValidationTimer.Destroy();
+								ValidationTimer = null;
+								jobject = null;
+								_headers[AuthHeader.Key.ToString()] = string.Format(AuthHeader.Value, User.AccessToken);
+
+								User.PendingResult = LoggedInUser.RequestResult.Complete;
+								onComplete?.Invoke();
+								break;
 						}
-					});
+
+					}, null);
 				});
 			}
 			public void RefreshUser(PlayerSession session)
