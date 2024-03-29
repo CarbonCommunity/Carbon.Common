@@ -158,7 +158,7 @@ public partial class AdminModule
 								ap.SetStorage(tab, "carbontabbtnname", args.ToString(" "));
 							});
 						tab.AddInputButton(1, "Command", 0.15f, new Tab.OptionInput(null,
-							ap => ap.GetStorage(tab, "carbontabbtncmd", string.Empty), 30, false, (ap, args) =>
+							ap => ap.GetStorage(tab, "carbontabbtncmd", string.Empty), 0, false, (ap, args) =>
 							{
 								ap.SetStorage(tab, "carbontabbtncmd", args.ToString(" "));
 							}), new Tab.OptionButton("Add", ap =>
