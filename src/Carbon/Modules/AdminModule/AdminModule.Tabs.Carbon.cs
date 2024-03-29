@@ -133,13 +133,25 @@ public partial class AdminModule
 								return;
 							}
 
-							ConsoleSystem.Run(ConsoleSystem.Option.Server, action.Value);
+							if (!action.Value.Contains("|"))
+							{
+								ConsoleSystem.Run(ConsoleSystem.Option.Server, action.Value);
+							}
+							else
+							{
+								using var commands = TemporaryArray<string>.New(action.Value.Split('|'));
+
+								foreach (var command in commands.Array)
+								{
+									ConsoleSystem.Run(ConsoleSystem.Option.Server, command);
+								}
+							}
 						}, ap => Tab.OptionButton.Types.Selected);
 					}
 
 					if (editMode)
 					{
-						tab.AddText(1, "Click on existent buttons above to delete.", 10, "1 1 1 0.5");
+						tab.AddText(1, "Click on existent buttons above to delete. Separate commands with | if you want multiple commands per button.", 10, "1 1 1 0.5");
 						tab.AddInput(1, "Button Name", ap => ap.GetStorage(tab, "carbontabbtnname", string.Empty),
 							(ap, args) =>
 							{
