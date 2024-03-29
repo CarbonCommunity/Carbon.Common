@@ -34,7 +34,7 @@ namespace Oxide.Core.Plugins
 		[JsonProperty]
 		public TimeSpan InternalCallHookGenTime { get; set; }
 		[JsonProperty]
-		public ModLoader.FailedCompilation.Trace[] CompileWarnings { get; set; }
+		public ModLoader.Trace[] CompileWarnings { get; set; }
 
 		[JsonProperty]
 		public string FilePath { get; set; }
