@@ -255,7 +255,10 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				["scriptdebugorigin"] = "Script Debugging Origin",
 				["scriptdebugorigin_help"] = "Whenever a debugger is attached on server boot, the compiler will replace the debugging origin of the plugin file.",
 				["conditionals"] = "Conditionals",
-				["quickactions"] = "Quick Actions"
+				["quickactions"] = "Quick Actions",
+				["quickactions_name"] = "Button Name",
+				["quickactions_name_help"] = "The name of the button for the Quick Action.",
+				["quickactions_command"] = "Command (separated with | for multiple) of the Quick Action button."
 			}
 		};
 	}

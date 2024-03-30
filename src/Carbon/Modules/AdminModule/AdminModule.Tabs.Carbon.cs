@@ -121,11 +121,11 @@ public partial class AdminModule
 				}
 			}
 
-			if (Singleton.HasAccess(ap.Player, "carbon.quick_actions"))
+			if (Singleton.HasAccess(ap.Player, "carbon.quickactions"))
 			{
 				tab.AddName(1, Singleton.GetPhrase("quickactions", ap.Player.UserIDString), TextAnchor.MiddleLeft);
 				{
-					var editMode = ap.GetStorage(tab, "carbontabedit", false);
+					var editMode = Singleton.HasAccess(ap.Player, "carbon.quickactions.edit") && ap.GetStorage(tab, "carbontabedit", false);
 					foreach (var action in Singleton.ConfigInstance.QuickActions)
 					{
 						tab.AddButton(1, editMode ? $"{action.Name} ({action.Command}){(action.User ? " [user]" : string.Empty)}{(action.IncludeUserId ? " [incl.user]" : string.Empty)}" : action.Name, ap =>
@@ -170,28 +170,28 @@ public partial class AdminModule
 					if (editMode)
 					{
 						tab.AddText(1, "Click on existent buttons above to delete. Separate commands with | if you want multiple commands per button.", 10, "1 1 1 0.5");
-						tab.AddInput(1, "Button Name", ap => ap.GetStorage(tab, "carbontabbtnname", string.Empty),
+						tab.AddInput(1, Singleton.GetPhrase("quickactions_name", ap.Player.UserIDString), ap => ap.GetStorage(tab, "carbontabbtnname", string.Empty),
 							(ap, args) =>
 							{
 								ap.SetStorage(tab, "carbontabbtnname", args.ToString(" "));
-							});
-						tab.AddInput(1, "Button Command", ap => ap.GetStorage(tab, "carbontabbtncmd", string.Empty),
+							}, tooltip: Singleton.GetPhrase("quickactions_name_help", ap.Player.UserIDString));
+						tab.AddInput(1, Singleton.GetPhrase("quickactions_command", ap.Player.UserIDString), ap => ap.GetStorage(tab, "carbontabbtncmd", string.Empty),
 							(ap, args) =>
 							{
 								ap.SetStorage(tab, "carbontabbtncmd", args.ToString(" "));
-							});
-						tab.AddToggle(1, "User",
+							}, tooltip: Singleton.GetPhrase("quickactions_command_help", ap.Player.UserIDString));
+						tab.AddToggle(1, Singleton.GetPhrase("quickactions_user", ap.Player.UserIDString),
 							ap =>
 							{
 								ap.SetStorage(tab, "carbontabbtnuser", !ap.GetStorage(tab, "carbontabbtnuser", false));
-							}, ap => ap.GetStorage(tab, "carbontabbtnuser", false));
+							}, ap => ap.GetStorage(tab, "carbontabbtnuser", false), tooltip: Singleton.GetPhrase("quickactions_user_help", ap.Player.UserIDString));
 
-						tab.AddToggle(1, "Include User ID",
+						tab.AddToggle(1, Singleton.GetPhrase("quickactions_incluserid", ap.Player.UserIDString),
 							ap =>
 							{
 								ap.SetStorage(tab, "carbontabbtnincludeuserid", !ap.GetStorage(tab, "carbontabbtnincludeuserid", false));
-							}, ap => ap.GetStorage(tab, "carbontabbtnincludeuserid", false));
-						tab.AddButton(1, "Add", ap =>
+							}, ap => ap.GetStorage(tab, "carbontabbtnincludeuserid", false), tooltip: Singleton.GetPhrase("quickactions_incluserid_help", ap.Player.UserIDString));
+						tab.AddButton(1, Singleton.GetPhrase("quickactions_add", ap.Player.UserIDString), ap =>
 						{
 							var name = ap.GetStorage(tab, "carbontabbtnname", string.Empty);
 							var cmd = ap.GetStorage(tab, "carbontabbtncmd", string.Empty);
@@ -219,11 +219,14 @@ public partial class AdminModule
 						}, ap => Tab.OptionButton.Types.Selected);
 					}
 
-					tab.AddButton(1, editMode ? "Stop Editing" : "Edit", ap =>
+					if (Singleton.HasAccess(ap.Player, "carbon.quickactions.edit"))
 					{
-						ap.SetStorage(tab, "carbontabedit", !editMode);
-						Refresh(tab, ap);
-					}, ap => editMode ? Tab.OptionButton.Types.Important : Tab.OptionButton.Types.None);
+						tab.AddButton(1, Singleton.GetPhrase(editMode ? "quickactions_stopedit" : "quickactions_edit", ap.Player.UserIDString), ap =>
+						{
+							ap.SetStorage(tab, "carbontabedit", !editMode);
+							Refresh(tab, ap);
+						}, ap => editMode ? Tab.OptionButton.Types.Important : Tab.OptionButton.Types.None);
+					}
 				}
 			}
 
