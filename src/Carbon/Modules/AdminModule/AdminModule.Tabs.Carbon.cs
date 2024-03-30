@@ -46,7 +46,11 @@ public partial class AdminModule
 
 		public static Tab Get()
 		{
-			Instance = new Tab("carbon", "Carbon", Community.Runtime.CorePlugin, (ap, t) => { Refresh(t, ap); }, "carbon.use");
+			Instance = new Tab("carbon", "Carbon", Community.Runtime.CorePlugin, (ap, t) =>
+			{
+				ap.SetStorage(t, "carbontabedit", false);
+				Refresh(t, ap);
+			}, "carbon.use");
 			Instance.AddColumn(0);
 			Instance.AddColumn(1);
 
