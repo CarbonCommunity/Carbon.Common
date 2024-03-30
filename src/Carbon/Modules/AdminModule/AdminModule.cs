@@ -54,7 +54,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 	{
 		"wizard",
 		"carbon.use",
-		"carbon.quick_actions",
+		"carbon.quickactions",
+		"carbon.quickactions.edit",
 		"carbon.server_settings",
 		"carbon.server_config",
 		"carbon.server_info",
@@ -122,11 +123,6 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		Unsubscribe("OnEntityDistanceCheck");
 		Unsubscribe("CanAcceptItem");
 
-		foreach (var perm in AdminPermissions)
-		{
-			Permissions.RegisterPermission($"adminmodule.{perm}", this);
-		}
-
 		if (!_logRegistration)
 		{
 			Application.logMessageReceived += OnLog;
@@ -171,6 +167,11 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 			Community.Runtime.CorePlugin.cmd.AddChatCommand(command, this, action, silent: true);
 			Community.Runtime.CorePlugin.cmd.AddConsoleCommand(command, this, action, silent: true);
+		}
+
+		foreach (var perm in AdminPermissions)
+		{
+			Permissions.RegisterPermission($"adminmodule.{perm}", this);
 		}
 	}
 	public override void OnDisabled(bool initialized)
@@ -258,7 +259,15 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				["quickactions"] = "Quick Actions",
 				["quickactions_name"] = "Button Name",
 				["quickactions_name_help"] = "The name of the button for the Quick Action.",
-				["quickactions_command"] = "Command (separated with | for multiple) of the Quick Action button."
+				["quickactions_command"] = "Button Command",
+				["quickactions_command_help"] = "Command (separated with | for multiple) of the Quick Action button.",
+				["quickactions_user"] = "User Mode",
+				["quickactions_user_help"] = "When the command gets executed, it'll call it with user permissions.",
+				["quickactions_incluserid"] = "Include User ID",
+				["quickactions_incluserid_help"] = "When the command gets executed, append the player's Steam ID at the end of the command after a space.",
+				["quickactions_add"] = "Add",
+				["quickactions_edit"] = "Edit",
+				["quickactions_stopedit"] = "Stop Editing"
 			}
 		};
 	}
