@@ -124,26 +124,40 @@ public partial class AdminModule
 					var editMode = ap.GetStorage(tab, "carbontabedit", false);
 					foreach (var action in Singleton.ConfigInstance.QuickActions)
 					{
-						tab.AddButton(1, editMode ? $"{action.Key} ({action.Value})" : action.Key, ap =>
+						tab.AddButton(1, editMode ? $"{action.Name} ({action.Command}){(action.User ? " [user]" : string.Empty)}{(action.IncludeUserId ? " [incl.user]" : string.Empty)}" : action.Name, ap =>
 						{
 							if (editMode)
 							{
-								Singleton.ConfigInstance.QuickActions.Remove(action.Key);
+								Singleton.ConfigInstance.QuickActions.RemoveAll(x => x.Name == action.Name);
 								Refresh(tab, ap);
 								return;
 							}
 
-							if (!action.Value.Contains("|"))
+							if (!action.Command.Contains("|"))
 							{
-								ConsoleSystem.Run(ConsoleSystem.Option.Server, action.Value);
+								if (action.User)
+								{
+									ap.Player.SendConsoleCommand(action.IncludeUserId ? $"{action.Command} {ap.Player.UserIDString}" : action.Command);
+								}
+								else
+								{
+									ConsoleSystem.Run(ConsoleSystem.Option.Server, action.IncludeUserId ? $"{action.Command} {ap.Player.UserIDString}" : action.Command);
+								}
 							}
 							else
 							{
-								using var commands = TemporaryArray<string>.New(action.Value.Split('|'));
+								using var commands = TemporaryArray<string>.New(action.Command.Split('|'));
 
 								foreach (var command in commands.Array)
 								{
-									ConsoleSystem.Run(ConsoleSystem.Option.Server, command);
+									if (action.User)
+									{
+										ap.Player.SendConsoleCommand(action.IncludeUserId ? $"{command} {ap.Player.UserIDString}" : command);
+									}
+									else
+									{
+										ConsoleSystem.Run(ConsoleSystem.Option.Server, action.IncludeUserId ? $"{command} {ap.Player.UserIDString}" : command);
+									}
 								}
 							}
 						}, ap => Tab.OptionButton.Types.Selected);
@@ -157,26 +171,48 @@ public partial class AdminModule
 							{
 								ap.SetStorage(tab, "carbontabbtnname", args.ToString(" "));
 							});
-						tab.AddInputButton(1, "Command", 0.15f, new Tab.OptionInput(null,
-							ap => ap.GetStorage(tab, "carbontabbtncmd", string.Empty), 0, false, (ap, args) =>
+						tab.AddInput(1, "Button Command", ap => ap.GetStorage(tab, "carbontabbtncmd", string.Empty),
+							(ap, args) =>
 							{
 								ap.SetStorage(tab, "carbontabbtncmd", args.ToString(" "));
-							}), new Tab.OptionButton("Add", ap =>
+							});
+						tab.AddToggle(1, "User",
+							ap =>
+							{
+								ap.SetStorage(tab, "carbontabbtnuser", !ap.GetStorage(tab, "carbontabbtnuser", false));
+							}, ap => ap.GetStorage(tab, "carbontabbtnuser", false));
+
+						tab.AddToggle(1, "Include User ID",
+							ap =>
+							{
+								ap.SetStorage(tab, "carbontabbtnincludeuserid", !ap.GetStorage(tab, "carbontabbtnincludeuserid", false));
+							}, ap => ap.GetStorage(tab, "carbontabbtnincludeuserid", false));
+						tab.AddButton(1, "Add", ap =>
 						{
 							var name = ap.GetStorage(tab, "carbontabbtnname", string.Empty);
 							var cmd = ap.GetStorage(tab, "carbontabbtncmd", string.Empty);
+							var user = ap.GetStorage(tab, "carbontabbtnuser", false);
+							var includeUserId = ap.GetStorage(tab, "carbontabbtnincludeuserid", false);
 
 							if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(cmd))
 							{
 								return;
 							}
 
-							Singleton.ConfigInstance.QuickActions[name] = cmd;
-							ap.ClearStorage(tab, "carbontabbtnname");
-							ap.ClearStorage(tab, "carbontabbtncmd");
+							Singleton.ConfigInstance.QuickActions.Add(new AdminConfig.ActionButton
+							{
+								Name = name,
+								Command = cmd,
+								User = user,
+								IncludeUserId = includeUserId
+							});
+							ap.SetStorage(tab, "carbontabbtnname", string.Empty);
+							ap.SetStorage(tab, "carbontabbtncmd", string.Empty);
+							ap.SetStorage(tab, "carbontabbtnuser", false);
+							ap.SetStorage(tab, "carbontabbtnincludeuserid", false);
 
 							Refresh(tab, ap);
-						}, ap => Tab.OptionButton.Types.Selected));
+						}, ap => Tab.OptionButton.Types.Selected);
 					}
 
 					tab.AddButton(1, editMode ? "Stop Editing" : "Edit", ap =>
