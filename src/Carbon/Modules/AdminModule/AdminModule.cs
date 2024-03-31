@@ -53,6 +53,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 	readonly string[] AdminPermissions = new[]
 	{
 		"wizard",
+		"config.use",
 		"carbon.use",
 		"carbon.quickactions",
 		"carbon.quickactions.edit",
@@ -1309,18 +1310,21 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			{
 				var shift = tab == null || tab.Fullscreen ? 15 : 0;
 
-				var configButton = cui.CreateProtectedButton(container, main,
-					color: "0.2 0.6 0.2 0.9",
-					textColor: Cache.CUI.BlankColor,
-					text: string.Empty, 0,
-					xMin: 0.9675f, xMax: 0.99f, yMin: 0.955f, yMax: 0.99f,
-					OxMin: -25, OxMax: -25,
-					OyMin: shift, OyMax: shift,
-					command: PanelId + ".config");
+				if (HasAccess(ap.Player, "config.use"))
+				{
+					var configButton = cui.CreateProtectedButton(container, main,
+						color: "0.2 0.6 0.2 0.9",
+						textColor: Cache.CUI.BlankColor,
+						text: string.Empty, 0,
+						xMin: 0.9675f, xMax: 0.99f, yMin: 0.955f, yMax: 0.99f,
+						OxMin: -25, OxMax: -25,
+						OyMin: shift, OyMax: shift,
+						command: PanelId + ".config");
 
-				cui.CreateImage(container, configButton, "gear", "0.5 1 0.5 1",
-					xMin: 0.15f, xMax: 0.85f,
-					yMin: 0.15f, yMax: 0.85f);
+					cui.CreateImage(container, configButton, "gear", "0.5 1 0.5 1",
+						xMin: 0.15f, xMax: 0.85f,
+						yMin: 0.15f, yMax: 0.85f);
+				}
 
 				var closeButton = cui.CreateProtectedButton(container, main,
 					color: "0.6 0.2 0.2 0.9",
@@ -1467,7 +1471,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		var ap = GetPlayerSession(player);
 		var previous = ap.SelectedTab;
 
-		tab = HasAccess(player, tab.Access) ? tab : Tabs.FirstOrDefault(x => HasAccess(player, x.Access));
+		tab = string.IsNullOrEmpty(tab.Access) ? tab : HasAccess(player, tab.Access) ? tab : Tabs.FirstOrDefault(x => HasAccess(player, x.Access));
 		if (tab != null)
 		{
 			ap.Tooltip = null;

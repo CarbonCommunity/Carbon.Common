@@ -45,7 +45,7 @@ public partial class AdminModule
 				{
 					session.ClearStorage(null, "itemtabitem");
 					Refresh(tab, session);
-				}) { Fullscreen = true };
+				}) { Fullscreen = true, Access = "config.use" };
 			tab.Over = (t, cui, container, panel, ap) =>
 			{
 				var currentItem = ap.GetStorage<ItemDefinition>(null, "itemtabitem");
@@ -65,19 +65,41 @@ public partial class AdminModule
 					cui.CreateItemImage(container, icon, currentItem.itemid, 0, "1 1 1 1",
 						xMin: 0.05f, xMax: 0.95f, yMin: 0.05f, yMax: 0.95f);
 
-					cui.CreateText(container, main, "1 1 1 1", currentItem.displayName.english, 16,
-						xMin: 0.45f, yMax: 0.88f, align: TextAnchor.UpperLeft,
-						font: CUI.Handler.FontTypes.RobotoCondensedBold);
 					cui.CreateText(container, main, "0.8 0.2 0.15 1",
 						currentItem.category.ToString().ToUpper().SpacedString(1), 10,
-						xMin: 0.45f, yMax: 0.84f, align: TextAnchor.UpperLeft,
+						xMin: 0.45f, yMax: 0.88f, align: TextAnchor.UpperLeft,
+						font: CUI.Handler.FontTypes.RobotoCondensedBold);
+
+					cui.CreateInputField(container, main, "1 1 1 1", currentItem.displayName.english, 16, 0, true,
+						xMin: 0.45f, yMax: 0.8525f, align: TextAnchor.UpperLeft,
+						font: CUI.Handler.FontTypes.RobotoCondensedBold);
+
+					cui.CreateText(container, main, "1 1 1 0.4",
+						"ID", 10,
+						xMin: 0.45f, yMax: 0.81f, align: TextAnchor.UpperLeft,
+						font: CUI.Handler.FontTypes.RobotoCondensedBold);
+
+					cui.CreateInputField(container, main, "0.8 0.2 0.15 1",
+						currentItem.itemid.ToString(), 10, 0, true,
+						xMin: 0.475f, yMax: 0.81f, align: TextAnchor.UpperLeft,
+						font: CUI.Handler.FontTypes.RobotoCondensedBold);
+
+					cui.CreateText(container, main, "1 1 1 0.4",
+						"SN", 10,
+						xMin: 0.63f, yMax: 0.81f, align: TextAnchor.UpperLeft,
+						font: CUI.Handler.FontTypes.RobotoCondensedBold);
+
+					cui.CreateInputField(container, main, "0.8 0.2 0.15 1",
+						currentItem.shortname, 10, 0, true,
+						xMin: 0.667f, yMax: 0.81f, align: TextAnchor.UpperLeft,
 						font: CUI.Handler.FontTypes.RobotoCondensedBold);
 
 					cui.CreateText(container, main, "0.8 0.8 0.8 1", "DESCRIPTION", 11,
-						xMin: 0.45f, yMax: 0.79f, align: TextAnchor.UpperLeft,
+						xMin: 0.45f, yMax: 0.76f, align: TextAnchor.UpperLeft,
 						font: CUI.Handler.FontTypes.RobotoCondensedBold);
-					cui.CreateText(container, main, "0.8 0.8 0.8 0.6", currentItem.displayDescription.english, 11,
-						xMin: 0.45f, xMax: 0.8f, yMax: 0.75f, align: TextAnchor.UpperLeft,
+					cui.CreateInputField(container, main, "0.8 0.8 0.8 0.6", currentItem.displayDescription.english, 11,
+						0, true,
+						xMin: 0.45f, xMax: 0.8f, yMax: 0.73f, align: TextAnchor.UpperLeft,
 						font: CUI.Handler.FontTypes.RobotoCondensedRegular);
 
 					cui.CreatePanel(container, main, "0.8 0.8 0.8 0.2",
@@ -159,11 +181,13 @@ public partial class AdminModule
 						cui.CreateProtectedInputField(container, name, "1 1 1 1",
 							ap.GetStorage(null, "itemstext", string.Empty), 12, xMin: 0.02f, yMax: 0.9f,
 							characterLimit: 0, readOnly: false, command: "adminmodule.itemsetting text",
-							align: TextAnchor.UpperLeft, needsKeyboard: true, lineType: InputField.LineType.MultiLineNewline);
+							align: TextAnchor.UpperLeft, needsKeyboard: true,
+							lineType: InputField.LineType.MultiLineNewline);
 					}
 
 					cui.CreateProtectedButton(container, main, "0.4 0.6 0.3 1", "0.8 1 0.7 1", "CREATE ITEM", 10,
-						xMin: 0.07f, xMax: 0.25f, yMin: 0.1f, yMax: 0.15f, OyMin: 200f, OyMax: 200f, OxMin: 290, OxMax: 290,
+						xMin: 0.07f, xMax: 0.25f, yMin: 0.1f, yMax: 0.15f, OyMin: 200f, OyMax: 200f, OxMin: 290,
+						OxMax: 290,
 						font: CUI.Handler.FontTypes.RobotoCondensedBold, command: "adminmodule.itemcreate");
 				}
 			};
@@ -292,10 +316,13 @@ public partial class AdminModule
 
 					tab.AddButtonArray(1,
 						new OptionButton("ConVars", ap =>
-						{
-							session.SetStorage(tab, "configtab", ConfigTabs.ConVars);
-							Refresh(tab, ap);
-						}, ap => configTab == ConfigTabs.ConVars ? OptionButton.Types.Selected : OptionButton.Types.None),
+							{
+								session.SetStorage(tab, "configtab", ConfigTabs.ConVars);
+								Refresh(tab, ap);
+							},
+							ap => configTab == ConfigTabs.ConVars
+								? OptionButton.Types.Selected
+								: OptionButton.Types.None),
 						new OptionButton("Items", ap =>
 						{
 							session.SetStorage(tab, "configtab", ConfigTabs.Items);
@@ -436,8 +463,10 @@ public partial class AdminModule
 						{
 							var itemSearch = session.GetStorage(tab, "itemsearch", string.Empty);
 							var items = ItemManager.itemList.Where(x =>
-								string.IsNullOrEmpty(itemSearch) || ((x.displayName.english.Contains(itemSearch, CompareOptions.IgnoreCase)) ||
-								                                     x.shortname.Contains(itemSearch, CompareOptions.IgnoreCase) || x.itemid.ToString().Contains(itemSearch)));
+								string.IsNullOrEmpty(itemSearch) ||
+								((x.displayName.english.Contains(itemSearch, CompareOptions.IgnoreCase)) ||
+								 x.shortname.Contains(itemSearch, CompareOptions.IgnoreCase) ||
+								 x.itemid.ToString().Contains(itemSearch)));
 							var currentlyDisplaying = items.Count();
 
 							if (string.IsNullOrEmpty(itemSearch))
@@ -509,7 +538,8 @@ public partial class AdminModule
 				break;
 
 			case "amount":
-				session.SetStorage(null, "itemsamount", (int.TryParse(value, out var intValue) ? intValue : 1).Clamp(1, int.MaxValue));
+				session.SetStorage(null, "itemsamount",
+					(int.TryParse(value, out var intValue) ? intValue : 1).Clamp(1, int.MaxValue));
 				break;
 
 			case "skin":
@@ -540,7 +570,8 @@ public partial class AdminModule
 
 		var isBlueprint = session.GetStorage(null, "itemsblueprint", false);
 
-		var resultItem = ItemManager.CreateByName(isBlueprint ? "blueprintbase" : item.shortname, session.GetStorage<int>(null, "itemsamount", 1),
+		var resultItem = ItemManager.CreateByName(isBlueprint ? "blueprintbase" : item.shortname,
+			session.GetStorage<int>(null, "itemsamount", 1),
 			session.GetStorage<ulong>(null, "itemsskin", 0));
 
 		resultItem.name = session.GetStorage(null, "itemscustomname", string.Empty);
