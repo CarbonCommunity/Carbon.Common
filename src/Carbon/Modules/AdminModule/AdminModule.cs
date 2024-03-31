@@ -1816,7 +1816,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			ap.Player.inventory.loot.MarkDirty();
 			ap.Player.inventory.loot.SendImmediate();
 
-			ap.Player.ClientRPCPlayer(null, ap.Player, "RPC_OpenLootPanel", "player_corpse");
+			ap.Player.ClientRPC(RpcTarget.Player("RPC_OpenLootPanel", ap.Player), "player_corpse");
 		});
 	}
 
@@ -1839,7 +1839,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			ap.Player.inventory.loot.MarkDirty();
 			ap.Player.inventory.loot.SendImmediate();
 
-			ap.Player.ClientRPCPlayer(null, ap.Player, "RPC_OpenLootPanel", "generic");
+			ap.Player.ClientRPC(RpcTarget.Player("RPC_OpenLootPanel", ap.Player), "generic");
 		});
 	}
 
