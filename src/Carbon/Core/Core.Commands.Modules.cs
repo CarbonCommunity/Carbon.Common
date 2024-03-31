@@ -127,7 +127,7 @@ public partial class CorePlugin : CarbonPlugin
 		var mode = arg.GetString(0);
 		var flip = arg.GetString(0).Equals("-asc") || arg.GetString(1).Equals("-asc");
 
-		using var print = new StringTable(string.Empty, "Name", "Enabled", "Version", "Hook Time", "Hook Fires", "Lag Spikes", "Memory Usage", "Uptime");
+		using var print = new StringTable(string.Empty, "Name", "Enabled", "Version", "Time", "Fires", "Memory", "Lag", "Uptime");
 
 		IEnumerable<BaseHookable> array = mode switch
 		{
@@ -162,10 +162,10 @@ public partial class CorePlugin : CarbonPlugin
 			var hookTimeAverage = Mathf.RoundToInt(hookTimeAverageValue) == 0 ? string.Empty : $" (avg {hookTimeAverageValue:0}ms)";
 			var memoryAverage = Mathf.RoundToInt(memoryAverageValue) == 0 ? string.Empty : $" (avg {ByteEx.Format(memoryAverageValue, shortName: true, stringFormat: "{0}{1}").ToLower()})";
 			print.AddRow(string.Empty, hookable.Name, module.GetEnabled(), module.Version,
-				$"{module.TotalHookTime.TotalMilliseconds:0}ms{hookTimeAverage}",
+				module.TotalHookTime.TotalMilliseconds == 0 ? string.Empty : $"{module.TotalHookTime.TotalMilliseconds:0}ms{hookTimeAverage}",
 				module.CurrentHookFires == 0 ? string.Empty :$"{module.CurrentHookFires}",
+				module.TotalMemoryUsed == 0 ? string.Empty : $"{ByteEx.Format(module.TotalMemoryUsed, shortName: true, stringFormat: "{0}{1}").ToLower()}{memoryAverage}",
 				module.CurrentLagSpikes == 0 ? string.Empty : $"{module.CurrentLagSpikes}",
-				$"{ByteEx.Format(module.TotalMemoryUsed, shortName: true, stringFormat: "{0}{1}").ToLower()}{memoryAverage}",
 				$"{TimeEx.Format(module.Uptime)}");
 		}
 
@@ -209,7 +209,7 @@ public partial class CorePlugin : CarbonPlugin
 			return;
 		}
 
-		using (var table = new StringTable(string.Empty, "Id", "Hook", "Time", "Memory", "Fires", "Lag Spikes", "Subscribed", "Async/Overrides"))
+		using (var table = new StringTable(string.Empty, "Id", "Hook", "Time", "Fires", "Memory", "Lag", "Subscribed", "Async & Overrides"))
 		{
 			IEnumerable<List<CachedHook>> array = mode switch
 			{
@@ -247,12 +247,12 @@ public partial class CorePlugin : CarbonPlugin
 				table.AddRow(string.Empty,
 					hookId,
 					$"{hookName}",
-					$"{hookTime:0}ms",
-					$"{ByteEx.Format(hookMemoryUsage, shortName: true).ToLower()}",
+					hookTime == 0 ? string.Empty : $"{hookTime:0}ms",
 					hookTimesFired == 0 ? string.Empty : $"{hookTimesFired}",
+					hookMemoryUsage == 0 ? string.Empty : $"{ByteEx.Format(hookMemoryUsage, shortName: true).ToLower()}",
 					hookLagSpikes == 0 ? string.Empty : $"{hookLagSpikes}",
-					!module.IgnoredHooks.Contains(hookId),
-					$"{hookAsyncCount:n0}/{hookCount:n0}");
+					!module.IgnoredHooks.Contains(hookId) ? "*" : string.Empty,
+					$"{hookAsyncCount:n0} / {hookCount:n0}");
 			}
 
 			var builder = new StringBuilder();

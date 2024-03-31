@@ -73,7 +73,7 @@ public partial class CorePlugin : CarbonPlugin
 
 			default:
 			{
-				using var body = new StringTable("#", "Package", "Author", "Version", "Hook Time", "Hook Fires", "Memory Usage", "Lag Spikes", "Compile Time", "Uptime");
+				using var body = new StringTable("#", "Package", "Author", "Version", "Hook Time", "Hook Fires", "Hook Memory", "Hook Lag", "Compile Time", "Uptime");
 				var count = 1;
 
 				foreach (var mod in ModLoader.LoadedPackages)
@@ -122,9 +122,9 @@ public partial class CorePlugin : CarbonPlugin
 							? string.Empty
 							: $" (avg {ByteEx.Format(memoryAverageValue, shortName: true, stringFormat: "{0}{1}").ToLower()})";
 						body.AddRow(string.Empty, plugin.Name, plugin.Author, $"v{plugin.Version}",
-							$"{plugin.TotalHookTime.TotalMilliseconds:0}ms{hookTimeAverage}",
+							plugin.TotalHookTime.TotalMilliseconds == 0 ? string.Empty : $"{plugin.TotalHookTime.TotalMilliseconds:0}ms{hookTimeAverage}",
 							plugin.CurrentHookFires == 0 ? string.Empty : $"{plugin.CurrentHookFires}",
-							$"{ByteEx.Format(plugin.TotalMemoryUsed, shortName: true, stringFormat: "{0}{1}").ToLower()}{memoryAverage}",
+							plugin.TotalMemoryUsed == 0 ? string.Empty : $"{ByteEx.Format(plugin.TotalMemoryUsed, shortName: true, stringFormat: "{0}{1}").ToLower()}{memoryAverage}",
 							plugin.CurrentLagSpikes == 0 ? string.Empty : $"{plugin.CurrentLagSpikes}",
 							plugin.IsPrecompiled
 								? string.Empty

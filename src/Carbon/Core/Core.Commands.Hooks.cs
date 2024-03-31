@@ -52,21 +52,21 @@ public partial class CorePlugin : CarbonPlugin
 				}
 			}
 
-			using var pluginsTable = new StringTable("", $"Plugins ({plugins.Count:n0})", "IsByRef", "IsAsync", "Fires", "Time", "Memory", "Lag Spikes");
+			using var pluginsTable = new StringTable(string.Empty, $"Plugins ({plugins.Count:n0})", "Time", "Fires", "Memory", "Lag", "Async & Overrides");
 
 			foreach (var plugin in plugins)
 			{
 				var hook = plugin.Value.FirstOrDefault();
 				pluginsTable.AddRow(string.Empty,
 					$"{plugin.Key.Name}",
-					hook.IsByRef, hook.IsAsync,
-					$"{hook.TimesFired:n0}",
-					$"{hook.HookTime.TotalMilliseconds:0}ms",
-					ByteEx.Format(hook.MemoryUsage, stringFormat: byteFormat).ToLower(),
-					hook.LagSpikes == 0 ? string.Empty : $"{hook.LagSpikes:n0}");
+					hook.HookTime.TotalMilliseconds == 0 ? string.Empty : $"{hook.HookTime.TotalMilliseconds:0}ms",
+					hook.TimesFired == 0 ? string.Empty : $"{hook.TimesFired:n0}",
+					hook.MemoryUsage == 0 ? string.Empty : ByteEx.Format(hook.MemoryUsage, stringFormat: byteFormat).ToLower(),
+					hook.LagSpikes == 0 ? string.Empty : $"{hook.LagSpikes:n0}",
+					$"{plugin.Value.Count(x => x.IsAsync):n0} / {plugin.Value.Count:n0}");
 			}
 
-			output.AppendLine(pluginsTable.ToStringMinimal());
+			output.AppendLine(pluginsTable.ToStringMinimal().TrimEnd());
 
 			var modules = PoolEx.GetDictionary<BaseHookable, List<CachedHook>>();
 			{
@@ -83,7 +83,7 @@ public partial class CorePlugin : CarbonPlugin
 				}
 			}
 
-			using var modulesTable = new StringTable("", $"Modules ({modules.Count:n0})", "IsByRef", "IsAsync", "Fires", "Time", "Memory");
+			using var modulesTable = new StringTable(string.Empty, $"Modules ({modules.Count:n0})", "IsByRef", "IsAsync", "Fires", "Time", "Memory");
 
 			foreach (var module in modules)
 			{
@@ -93,9 +93,13 @@ public partial class CorePlugin : CarbonPlugin
 
 			output.AppendLine(modulesTable.ToStringMinimal());
 
-			output.AppendLine($"Total hook fires:   {plugins.Sum(x => x.Value.Sum(y => y.TimesFired)) + modules.Sum(x => x.Value.Sum(y => y.TimesFired)):n0}");
-			output.AppendLine($"Total hook time:    {plugins.Sum(x => x.Value.Sum(y => y.HookTime.TotalMilliseconds)) + modules.Sum(x => x.Value.Sum(y => y.HookTime.TotalMilliseconds)):0}ms");
-			output.AppendLine($"Total hook memory:  {ByteEx.Format(plugins.Sum(x => x.Value.Sum(y => y.MemoryUsage)) + modules.Sum(x => x.Value.Sum(y => y.MemoryUsage))).ToLower()}");
+			using var totalsTable = new StringTable(string.Empty, "Total", "Fires", "Time", "Memory");
+			totalsTable.AddRow(string.Empty, string.Empty,
+				$"{plugins.Sum(x => x.Value.Sum(y => y.TimesFired)) + modules.Sum(x => x.Value.Sum(y => y.TimesFired)):n0}",
+				$"{plugins.Sum(x => x.Value.Sum(y => y.HookTime.TotalMilliseconds)) + modules.Sum(x => x.Value.Sum(y => y.HookTime.TotalMilliseconds)):0}ms",
+				$"{ByteEx.Format(plugins.Sum(x => x.Value.Sum(y => y.MemoryUsage)) + modules.Sum(x => x.Value.Sum(y => y.MemoryUsage))).ToLower()}");
+
+			output.AppendLine(totalsTable.ToStringMinimal());
 
 			arg.ReplyWith(output.ToString());
 

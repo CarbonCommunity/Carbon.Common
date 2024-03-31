@@ -284,7 +284,7 @@ public partial class CorePlugin : CarbonPlugin
 			return;
 		}
 
-		using (var table = new StringTable(string.Empty, "Id", "Hook", "Time", "Memory", "Fires", "Lag Spikes", "Subscribed", "Async/Overrides"))
+		using (var table = new StringTable(string.Empty, "Id", "Hook", "Time", "Fires", "Memory", "Lag", "Subscribed", "Async & Overrides"))
 		{
 			IEnumerable<List<CachedHook>> array = mode switch
 			{
@@ -322,12 +322,12 @@ public partial class CorePlugin : CarbonPlugin
 				table.AddRow(string.Empty,
 					hookId,
 					$"{hookName}",
-					$"{hookTime:0}ms",
-					$"{ByteEx.Format(hookMemoryUsage, shortName: true).ToLower()}",
+					hookTime == 0 ? string.Empty : $"{hookTime:0}ms",
 					hookTimesFired == 0 ? string.Empty : $"{hookTimesFired}",
+					hookMemoryUsage == 0 ? string.Empty : $"{ByteEx.Format(hookMemoryUsage, shortName: true).ToLower()}",
 					hookLagSpikes == 0 ? string.Empty : $"{hookLagSpikes}",
-					!plugin.IgnoredHooks.Contains(hookId),
-					$"{hookAsyncCount:n0}/{hookCount:n0}");
+					!plugin.IgnoredHooks.Contains(hookId) ? "*" : string.Empty,
+					$"{hookAsyncCount:n0} / {hookCount:n0}");
 
 				count++;
 			}
@@ -336,8 +336,8 @@ public partial class CorePlugin : CarbonPlugin
 
 			builder.AppendLine($"{plugin.Name} v{plugin.Version} by {plugin.Author}{(plugin.IsCorePlugin ? $" [core]" : string.Empty)}");
 			builder.AppendLine($"  Path:                   {plugin.FilePath}");
-			builder.AppendLine($"  Compile Time:           {plugin.CompileTime.TotalMilliseconds}ms{(plugin.IsPrecompiled ? " [precompiled]" : string.Empty)}{(plugin.IsExtension ? " [ext]" : string.Empty)}");
-			builder.AppendLine($"  Int.CallHook Gen Time:  {plugin.InternalCallHookGenTime.TotalMilliseconds}ms{(plugin.IsPrecompiled ? " [precompiled]" : string.Empty)}{(plugin.IsExtension ? " [ext]" : string.Empty)}");
+			builder.AppendLine($"  Compile Time:           {plugin.CompileTime.TotalMilliseconds:0}ms{(plugin.IsPrecompiled ? " [precompiled]" : string.Empty)}{(plugin.IsExtension ? " [ext]" : string.Empty)}");
+			builder.AppendLine($"  Int.CallHook Gen Time:  {plugin.InternalCallHookGenTime.TotalMilliseconds:0}ms{(plugin.IsPrecompiled ? " [precompiled]" : string.Empty)}{(plugin.IsExtension ? " [ext]" : string.Empty)}");
 			builder.AppendLine($"  Uptime:                 {TimeEx.Format(plugin.Uptime, true).ToLower()}");
 			builder.AppendLine($"  Total Hook Time:        {plugin.TotalHookTime.TotalMilliseconds:0}ms");
 			builder.AppendLine($"  Total Memory Used:      {ByteEx.Format(plugin.TotalMemoryUsed, shortName: true).ToLower()}");
