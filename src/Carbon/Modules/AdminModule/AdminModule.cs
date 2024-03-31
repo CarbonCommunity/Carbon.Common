@@ -53,7 +53,10 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 	readonly string[] AdminPermissions = new[]
 	{
 		"wizard",
+		"config.use",
 		"carbon.use",
+		"carbon.quickactions",
+		"carbon.quickactions.edit",
 		"carbon.server_settings",
 		"carbon.server_config",
 		"carbon.server_info",
@@ -121,11 +124,6 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		Unsubscribe("OnEntityDistanceCheck");
 		Unsubscribe("CanAcceptItem");
 
-		foreach (var perm in AdminPermissions)
-		{
-			Permissions.RegisterPermission($"adminmodule.{perm}", this);
-		}
-
 		if (!_logRegistration)
 		{
 			Application.logMessageReceived += OnLog;
@@ -170,6 +168,11 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 			Community.Runtime.CorePlugin.cmd.AddChatCommand(command, this, action, silent: true);
 			Community.Runtime.CorePlugin.cmd.AddConsoleCommand(command, this, action, silent: true);
+		}
+
+		foreach (var perm in AdminPermissions)
+		{
+			Permissions.RegisterPermission($"adminmodule.{perm}", this);
 		}
 	}
 	public override void OnDisabled(bool initialized)
@@ -253,7 +256,19 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				["debugging"] = "Debugging",
 				["scriptdebugorigin"] = "Script Debugging Origin",
 				["scriptdebugorigin_help"] = "Whenever a debugger is attached on server boot, the compiler will replace the debugging origin of the plugin file.",
-				["conditionals"] = "Conditionals"
+				["conditionals"] = "Conditionals",
+				["quickactions"] = "Quick Actions",
+				["quickactions_name"] = "Button Name",
+				["quickactions_name_help"] = "The name of the button for the Quick Action.",
+				["quickactions_command"] = "Button Command",
+				["quickactions_command_help"] = "Command (separated with | for multiple) of the Quick Action button.",
+				["quickactions_user"] = "User Mode",
+				["quickactions_user_help"] = "When the command gets executed, it'll call it with user permissions.",
+				["quickactions_incluserid"] = "Include User ID",
+				["quickactions_incluserid_help"] = "When the command gets executed, append the player's Steam ID at the end of the command after a space.",
+				["quickactions_add"] = "Add",
+				["quickactions_edit"] = "Edit",
+				["quickactions_stopedit"] = "Stop Editing"
 			}
 		};
 	}
@@ -1295,18 +1310,21 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			{
 				var shift = tab == null || tab.Fullscreen ? 15 : 0;
 
-				var configButton = cui.CreateProtectedButton(container, main,
-					color: "0.2 0.6 0.2 0.9",
-					textColor: Cache.CUI.BlankColor,
-					text: string.Empty, 0,
-					xMin: 0.9675f, xMax: 0.99f, yMin: 0.955f, yMax: 0.99f,
-					OxMin: -25, OxMax: -25,
-					OyMin: shift, OyMax: shift,
-					command: PanelId + ".config");
+				if (HasAccess(ap.Player, "config.use"))
+				{
+					var configButton = cui.CreateProtectedButton(container, main,
+						color: "0.2 0.6 0.2 0.9",
+						textColor: Cache.CUI.BlankColor,
+						text: string.Empty, 0,
+						xMin: 0.9675f, xMax: 0.99f, yMin: 0.955f, yMax: 0.99f,
+						OxMin: -25, OxMax: -25,
+						OyMin: shift, OyMax: shift,
+						command: PanelId + ".config");
 
-				cui.CreateImage(container, configButton, "gear", "0.5 1 0.5 1",
-					xMin: 0.15f, xMax: 0.85f,
-					yMin: 0.15f, yMax: 0.85f);
+					cui.CreateImage(container, configButton, "gear", "0.5 1 0.5 1",
+						xMin: 0.15f, xMax: 0.85f,
+						yMin: 0.15f, yMax: 0.85f);
+				}
 
 				var closeButton = cui.CreateProtectedButton(container, main,
 					color: "0.6 0.2 0.2 0.9",
@@ -1453,7 +1471,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		var ap = GetPlayerSession(player);
 		var previous = ap.SelectedTab;
 
-		tab = HasAccess(player, tab.Access) ? tab : Tabs.FirstOrDefault(x => HasAccess(player, x.Access));
+		tab = string.IsNullOrEmpty(tab.Access) ? tab : HasAccess(player, tab.Access) ? tab : Tabs.FirstOrDefault(x => HasAccess(player, x.Access));
 		if (tab != null)
 		{
 			ap.Tooltip = null;
@@ -1836,6 +1854,15 @@ public class AdminConfig
 	public bool DisableEntitiesTab = true;
 	public bool DisablePluginsTab = false;
 	public bool SpectatingInfoOverlay = true;
+	public List<ActionButton> QuickActions = new();
+
+	public class ActionButton
+	{
+		public string Name;
+		public string Command;
+		public bool User;
+		public bool IncludeUserId;
+	}
 }
 public class AdminData
 {

@@ -25,7 +25,7 @@ namespace Oxide.Game.Rust.Libraries.Covalence
 			Name = Oxide.Plugins.ExtensionMethods.Sanitize(player.displayName);
 			LastCommand = 0;
 			IsServer = false;
-			perms = Interface.Oxide.GetLibrary<Permission>();
+			perms = Permission.Singleton;
 		}
 		public RustPlayer(string id, UserData data)
 		{
@@ -33,7 +33,7 @@ namespace Oxide.Game.Rust.Libraries.Covalence
 			Name = Oxide.Plugins.ExtensionMethods.Sanitize(data.LastSeenNickname);
 			LastCommand = 0;
 			IsServer = false;
-			perms = Interface.Oxide.GetLibrary<Permission>();
+			perms = Permission.Singleton;
 		}
 
 		private static Permission perms;
@@ -331,7 +331,7 @@ namespace Oxide.Game.Rust.Libraries.Covalence
 
 	public struct RustConsolePlayer : IPlayer
 	{
-		public object Object => null;
+		public object Object { get; set; }
 
 		public CommandType LastCommand { get => CommandType.Console; set { } }
 

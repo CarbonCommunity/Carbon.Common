@@ -699,14 +699,14 @@ public static class ModLoader
 		[JsonProperty] public string File;
 		[JsonProperty] public Trace[] Errors;
 		[JsonProperty] public Trace[] Warnings;
+	}
 
-		[JsonObject(MemberSerialization.OptIn)]
-		public struct Trace
-		{
-			[JsonProperty] public string Number;
-			[JsonProperty] public string Message;
-			[JsonProperty] public int Column;
-			[JsonProperty] public int Line;
-		}
+	[JsonObject(MemberSerialization.OptIn)]
+	public struct Trace
+	{
+		[JsonProperty] public string Number;
+		[JsonProperty] public string Message;
+		[JsonProperty] public int Column;
+		[JsonProperty] public int Line;
 	}
 }

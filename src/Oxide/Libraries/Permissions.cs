@@ -12,6 +12,8 @@ namespace Oxide.Core.Libraries;
 
 public class Permission : Library
 {
+	public static Permission Singleton;
+
 	public enum SerializationMode
 	{
 		Storeless = -1,
@@ -25,6 +27,8 @@ public class Permission : Library
 
 	public Permission()
 	{
+		Singleton = this;
+
 		permset = new Dictionary<BaseHookable, HashSet<string>>();
 
 		RegisterValidate(delegate (string value)
@@ -399,6 +403,7 @@ public class Permission : Library
 		if (player == null) return;
 
 		var user = GetUserData(player.UserIDString, addIfNotExisting: true);
+		user.Player.Object = player;
 		user.LastSeenNickname = player.displayName;
 
 		if (player.net != null && player.net.connection != null && player.net.connection.info != null)
@@ -420,7 +425,12 @@ public class Permission : Library
 			}
 		}
 
-		if (iPlayerField.GetValue(player) == null) iPlayerField.SetValue(player, new RustPlayer(player));
+		var iplayerValue = (RustPlayer)null;
+
+		if (iPlayerField.GetValue(player) == null) iPlayerField.SetValue(player, iplayerValue = new RustPlayer(player));
+		else iplayerValue = (RustPlayer)iPlayerField.GetValue(player);
+
+		iplayerValue.Object = player;
 	}
 	public virtual void UpdateNickname(string id, string nickname)
 	{
