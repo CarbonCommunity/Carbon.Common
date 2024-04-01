@@ -137,30 +137,45 @@ public partial class AdminModule
 								return;
 							}
 
-							if (!action.Command.Contains("|"))
+							if (action.ConfirmDialog)
 							{
-								if (action.User)
+								tab.CreateDialog("Are you sure you want to execute?", ap =>
 								{
-									ap.Player.SendConsoleCommand(action.IncludeUserId ? $"{action.Command} {ap.Player.UserIDString}" : action.Command);
-								}
-								else
-								{
-									ConsoleSystem.Run(ConsoleSystem.Option.Server, action.IncludeUserId ? $"{action.Command} {ap.Player.UserIDString}" : action.Command);
-								}
+									Execute(action, ap);
+								}, null);
 							}
 							else
 							{
-								using var commands = TemporaryArray<string>.New(action.Command.Split('|'));
+								Execute(action, ap);
+							}
 
-								foreach (var command in commands.Array)
+							static void Execute(AdminConfig.ActionButton action, PlayerSession ap)
+							{
+								if (!action.Command.Contains("|"))
 								{
 									if (action.User)
 									{
-										ap.Player.SendConsoleCommand(action.IncludeUserId ? $"{command} {ap.Player.UserIDString}" : command);
+										ap.Player.SendConsoleCommand(action.IncludeUserId ? $"{action.Command} {ap.Player.UserIDString}" : action.Command);
 									}
 									else
 									{
-										ConsoleSystem.Run(ConsoleSystem.Option.Server, action.IncludeUserId ? $"{command} {ap.Player.UserIDString}" : command);
+										ConsoleSystem.Run(ConsoleSystem.Option.Server, action.IncludeUserId ? $"{action.Command} {ap.Player.UserIDString}" : action.Command);
+									}
+								}
+								else
+								{
+									using var commands = TemporaryArray<string>.New(action.Command.Split('|'));
+
+									foreach (var command in commands.Array)
+									{
+										if (action.User)
+										{
+											ap.Player.SendConsoleCommand(action.IncludeUserId ? $"{command} {ap.Player.UserIDString}" : command);
+										}
+										else
+										{
+											ConsoleSystem.Run(ConsoleSystem.Option.Server, action.IncludeUserId ? $"{command} {ap.Player.UserIDString}" : command);
+										}
 									}
 								}
 							}
@@ -191,12 +206,18 @@ public partial class AdminModule
 							{
 								ap.SetStorage(tab, "carbontabbtnincludeuserid", !ap.GetStorage(tab, "carbontabbtnincludeuserid", false));
 							}, ap => ap.GetStorage(tab, "carbontabbtnincludeuserid", false), tooltip: Singleton.GetPhrase("quickactions_incluserid_help", ap.Player.UserIDString));
+						tab.AddToggle(1, Singleton.GetPhrase("quickactions_confirmdialog", ap.Player.UserIDString),
+							ap =>
+							{
+								ap.SetStorage(tab, "carbontabbtnconfirmdialog", !ap.GetStorage(tab, "carbontabbtnconfirmdialog", false));
+							}, ap => ap.GetStorage(tab, "carbontabbtnconfirmdialog", false), tooltip: Singleton.GetPhrase("quickactions_confirmdialog_help", ap.Player.UserIDString));
 						tab.AddButton(1, Singleton.GetPhrase("quickactions_add", ap.Player.UserIDString), ap =>
 						{
 							var name = ap.GetStorage(tab, "carbontabbtnname", string.Empty);
 							var cmd = ap.GetStorage(tab, "carbontabbtncmd", string.Empty);
 							var user = ap.GetStorage(tab, "carbontabbtnuser", false);
 							var includeUserId = ap.GetStorage(tab, "carbontabbtnincludeuserid", false);
+							var confirmDialog = ap.GetStorage(tab, "carbontabbtnconfirmdialog", false);
 
 							if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(cmd))
 							{
@@ -208,12 +229,14 @@ public partial class AdminModule
 								Name = name,
 								Command = cmd,
 								User = user,
-								IncludeUserId = includeUserId
+								IncludeUserId = includeUserId,
+								ConfirmDialog = confirmDialog
 							});
 							ap.SetStorage(tab, "carbontabbtnname", string.Empty);
 							ap.SetStorage(tab, "carbontabbtncmd", string.Empty);
 							ap.SetStorage(tab, "carbontabbtnuser", false);
 							ap.SetStorage(tab, "carbontabbtnincludeuserid", false);
+							ap.SetStorage(tab, "carbontabbtnconfirmdialog", false);
 
 							Refresh(tab, ap);
 						}, ap => Tab.OptionButton.Types.Selected);

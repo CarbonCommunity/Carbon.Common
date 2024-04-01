@@ -266,6 +266,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				["quickactions_user_help"] = "When the command gets executed, it'll call it with user permissions.",
 				["quickactions_incluserid"] = "Include User ID",
 				["quickactions_incluserid_help"] = "When the command gets executed, append the player's Steam ID at the end of the command after a space.",
+				["quickactions_confirmdialog"] = "Confirm Dialog",
+				["quickactions_confirmdialog_help"] = "Show a dialog which asks you to confirm before executing sensitive command(s).",
 				["quickactions_add"] = "Add",
 				["quickactions_edit"] = "Edit",
 				["quickactions_stopedit"] = "Stop Editing"
@@ -1819,7 +1821,6 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			ap.Player.ClientRPC(RpcTarget.Player("RPC_OpenLootPanel", ap.Player), "player_corpse");
 		});
 	}
-
 	internal static void OpenContainer(PlayerSession ap, ItemContainer container, Tab tab)
 	{
 		EntitiesTab.LastContainerLooter = null;
@@ -1862,6 +1863,7 @@ public class AdminConfig
 		public string Command;
 		public bool User;
 		public bool IncludeUserId;
+		public bool ConfirmDialog;
 	}
 }
 public class AdminData
