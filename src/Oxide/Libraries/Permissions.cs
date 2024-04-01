@@ -12,6 +12,8 @@ namespace Oxide.Core.Libraries;
 
 public class Permission : Library
 {
+	public static Permission Singleton;
+
 	public enum SerializationMode
 	{
 		Storeless = -1,
@@ -25,6 +27,8 @@ public class Permission : Library
 
 	public Permission()
 	{
+		Singleton = this;
+
 		permset = new Dictionary<BaseHookable, HashSet<string>>();
 
 		RegisterValidate(delegate (string value)
@@ -205,7 +209,7 @@ public class Permission : Library
 		if (!IsLoaded || validate == null) return;
 
 		var array = (from k in userdata.Keys
-					 where !UserIdValid(k)
+					 where !validate(k)
 					 select k).ToArray();
 
 		if (array.Length == 0) return;
@@ -357,7 +361,6 @@ public class Permission : Library
 
 		return result;
 	}
-
 	public virtual UserData GetUserDataCache(string id)
 	{
 		if (!userdatacache.TryGetValue(id, out var result))
@@ -371,6 +374,7 @@ public class Permission : Library
 
 		return result;
 	}
+
 	public virtual GroupData GetGroupData(string id)
 	{
 		if (groupdata.TryGetValue(id, out var result))
@@ -399,6 +403,7 @@ public class Permission : Library
 		if (player == null) return;
 
 		var user = GetUserData(player.UserIDString, addIfNotExisting: true);
+		user.Player.Object = player;
 		user.LastSeenNickname = player.displayName;
 
 		if (player.net != null && player.net.connection != null && player.net.connection.info != null)
@@ -420,7 +425,12 @@ public class Permission : Library
 			}
 		}
 
-		if (iPlayerField.GetValue(player) == null) iPlayerField.SetValue(player, new RustPlayer(player));
+		var iplayerValue = (RustPlayer)null;
+
+		if (iPlayerField.GetValue(player) == null) iPlayerField.SetValue(player, iplayerValue = new RustPlayer(player));
+		else iplayerValue = (RustPlayer)iPlayerField.GetValue(player);
+
+		iplayerValue.Object = player;
 	}
 	public virtual void UpdateNickname(string id, string nickname)
 	{
@@ -486,7 +496,7 @@ public class Permission : Library
 		if (string.IsNullOrEmpty(perm) || string.IsNullOrEmpty(id)) return false;
 		if (id.Equals("server_console")) return true;
 
-		var userData = GetUserDataCache(id);
+		var userData = GetUserData(id);
 
 		if (GroupsHavePermission(userData.Groups, perm))
 		{

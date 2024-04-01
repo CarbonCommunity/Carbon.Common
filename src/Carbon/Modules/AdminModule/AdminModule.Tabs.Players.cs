@@ -93,7 +93,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			try
 			{
 				var position = player.transform.position;
-				tab.AddInput(1, "Position", _ => $"{position}", null);
+				tab.AddInput(1, "Position", _ => $"{position} [{PhoneController.PositionToGridCoord(position)}]", null);
 			}
 			catch { }
 
