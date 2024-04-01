@@ -1,6 +1,6 @@
 ﻿/*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -20,7 +20,7 @@ public interface IPlayer
 	float Health { get; set; }
 	float MaxHealth { get; set; }
 	int Ping { get; }
-	object Object { get; }
+	object Object { get; set; }
 	string Address { get; }
 	string Id { get; }
 	string Name { get; set; }

@@ -51,6 +51,7 @@ public class Config
 			true; // Set false when we're out of development
 #endif
 		public List<string> ConditionalCompilationSymbols { get; set; }
+		public int HookLagSpikeThreshold = 1000;
 	}
 
 	public class LoggingConfig

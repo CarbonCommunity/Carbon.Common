@@ -30,7 +30,7 @@
 			string File { get; set; }
 
 			void Execute(IBaseProcessor processor);
-			void SetDirty();
+			void MarkDirty();
 			void MarkDeleted();
 		}
 		public interface IParser

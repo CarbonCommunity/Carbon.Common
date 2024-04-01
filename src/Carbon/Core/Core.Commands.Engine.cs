@@ -53,7 +53,7 @@ public partial class CorePlugin : CarbonPlugin
 		PoolEx.FreeStringBuilder(ref builder);
 	}
 
-	[ConsoleCommand("plugins", "Prints the list of mods and their loaded plugins. Eg. c.plugins [-j|--j|-json|-abc|--json|-t|-m|-f] [-asc]")]
+	[ConsoleCommand("plugins", "Prints the list of mods and their loaded plugins. Eg. c.plugins [-j|--j|-json|-abc|--json|-t|-m|-f|-ls] [-asc]")]
 	[AuthLevel(2)]
 	private void Plugins(ConsoleSystem.Arg arg)
 	{
@@ -72,223 +72,112 @@ public partial class CorePlugin : CarbonPlugin
 				break;
 
 			default:
-				var result = string.Empty;
-
-				// Loaded plugins
-				{
-					using var body = new StringTable("#", "Mod", "Author", "Version", "Hook Time", "Hook Fires", "Memory Usage", "Compile Time", "Int.CallHook Gen Time", "Uptime");
-					var count = 1;
-
-					foreach (var mod in ModLoader.LoadedPackages.AsEnumerable())
-					{
-						body.AddRow($"{count:n0}", $"{mod.Name}{(mod.Plugins.Count >= 1 ? $" ({mod.Plugins.Count:n0})" : string.Empty)}", string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
-
-						IEnumerable<RustPlugin> array = mode switch
-						{
-							"-abc" => mod.Plugins.OrderBy(x => x.Name),
-							"-t" => (flip ? mod.Plugins.OrderBy(x => x.TotalHookTime) : mod.Plugins.OrderByDescending(x => x.TotalHookTime)),
-							"-m" => (flip ? mod.Plugins.OrderBy(x => x.TotalMemoryUsed) : mod.Plugins.OrderByDescending(x => x.TotalMemoryUsed)),
-							"-f" => (flip ? mod.Plugins.OrderBy(x => x.CurrentHookFires) : mod.Plugins.OrderByDescending(x => x.CurrentHookFires)),
-							_ => (flip ? mod.Plugins.AsEnumerable().Reverse() : mod.Plugins.AsEnumerable())
-						};
-
-						foreach (var plugin in array)
-						{
-							var hookTimeAverageValue =
-#if DEBUG
-								(float)plugin.HookTimeAverage.CalculateAverage();
-#else
-								0;
-#endif
-							var memoryAverageValue =
-#if DEBUG
-								(float)plugin.MemoryAverage.CalculateAverage();
-#else
-								0;
-#endif
-							var hookTimeAverage = Mathf.RoundToInt(hookTimeAverageValue) == 0
-								? string.Empty
-								: $" (avg {hookTimeAverageValue:0}ms)";
-							var memoryAverage = Mathf.RoundToInt(memoryAverageValue) == 0
-								? string.Empty
-								: $" (avg {ByteEx.Format(memoryAverageValue, shortName: true, stringFormat: "{0}{1}").ToLower()})";
-							body.AddRow(string.Empty, plugin.Name, plugin.Author, $"v{plugin.Version}",
-								$"{plugin.TotalHookTime.TotalMilliseconds:0}ms{hookTimeAverage}",
-								$"{plugin.CurrentHookFires:n0}",
-								$"{ByteEx.Format(plugin.TotalMemoryUsed, shortName: true, stringFormat: "{0}{1}").ToLower()}{memoryAverage}",
-								plugin.IsPrecompiled ? string.Empty : $"{plugin.CompileTime.TotalMilliseconds:0}ms",
-								plugin.IsPrecompiled ? string.Empty : $"{plugin.InternalCallHookGenTime.TotalMilliseconds:0}ms",
-								$"{TimeEx.Format(plugin.Uptime)}");
-						}
-
-						count++;
-					}
-
-					result += $"{body.Write(StringTable.FormatTypes.None)}\n";
-				}
-
-				// Failed plugins
-				{
-					using (var body = new StringTable("#", "File", "Errors", "Stack"))
-					{
-						var count = 1;
-
-						foreach (var mod in ModLoader.FailedMods)
-						{
-							body.AddRow($"{count:n0}", $"{Path.GetFileName(mod.File)}", $"{mod.Errors.Length:n0}", $"{mod.Errors.Select(x => x.Message).ToString(", ").Truncate(75, "...")}");
-
-							count++;
-						}
-
-						result += $"Failed plugins:\n{body.Write(StringTable.FormatTypes.None)}\nTo list the full stack trace of failed plugins, run 'c.pluginsfailed'";
-					}
-
-					arg.ReplyWith(result);
-				}
-				break;
-		}
-	}
-
-	[ConsoleCommand("pluginsunloaded", "Prints the list of unloaded plugins.")]
-	[AuthLevel(2)]
-	private void PluginsUnloaded(ConsoleSystem.Arg arg)
-	{
-		var mode = arg.HasArgs(1) ? arg.GetString(0) : null;
-
-		switch (mode)
-		{
-			case "-j":
-			case "--j":
-			case "-json":
-			case "--json":
-				arg.ReplyWith(JsonConvert.SerializeObject(Community.Runtime.ScriptProcessor.IgnoreList, Formatting.Indented));
-				break;
-
-			default:
-				using (var body = new StringTable("#", "File"))
-				{
-					var count = 1;
-
-					foreach (var ignored in Community.Runtime.ScriptProcessor.IgnoreList)
-					{
-						body.AddRow($"{count:n0}", $"{ignored}");
-						count++;
-					}
-
-					arg.ReplyWith(body.Write(StringTable.FormatTypes.None));
-				}
-				break;
-		}
-	}
-
-	[ConsoleCommand("pluginsfailed", "Prints the list of plugins that failed to load (most likely due to compilation issues).")]
-	[AuthLevel(2)]
-	private void PluginsFailed(ConsoleSystem.Arg arg)
-	{
-		var mode = arg.HasArgs(1) ? arg.GetString(0) : null;
-
-		switch (mode)
-		{
-			case "-j":
-			case "--j":
-			case "-json":
-			case "--json":
-				arg.ReplyWith(ModLoader.FailedMods);
-				break;
-
-			default:
-				var result = string.Empty;
+			{
+				using var body = new StringTable("#", "Package", "Author", "Version", "Hook Time", "Hook Fires", "Hook Memory", "Hook Lag", "Compile Time", "Uptime");
 				var count = 1;
-				var index = 1;
 
-				foreach (var mod in ModLoader.FailedMods)
+				foreach (var mod in ModLoader.LoadedPackages)
 				{
-					result += $"{count:n0}. {mod.File}\n";
+					body.AddRow($"{count:n0}",
+						$"{mod.Name}{(mod.Plugins.Count >= 1 ? $" ({mod.Plugins.Count:n0})" : string.Empty)}",
+						string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty,
+						string.Empty, string.Empty);
 
-					foreach (var error in mod.Errors)
+					IEnumerable<RustPlugin> array = mode switch
 					{
-						result += $" {index}. {error.Message} [{error.Number}]\n" +
-								  $"   ({error.Column} line {error.Line})\n";
+						"-abc" => mod.Plugins.OrderBy(x => x.Name),
+						"-t" => (flip
+							? mod.Plugins.OrderBy(x => x.TotalHookTime)
+							: mod.Plugins.OrderByDescending(x => x.TotalHookTime)),
+						"-m" => (flip
+							? mod.Plugins.OrderBy(x => x.TotalMemoryUsed)
+							: mod.Plugins.OrderByDescending(x => x.TotalMemoryUsed)),
+						"-f" => (flip
+							? mod.Plugins.OrderBy(x => x.CurrentHookFires)
+							: mod.Plugins.OrderByDescending(x => x.CurrentHookFires)),
+						"-ls" => (flip
+							? mod.Plugins.OrderBy(x => x.CurrentLagSpikes)
+							: mod.Plugins.OrderByDescending(x => x.CurrentLagSpikes)),
+						_ => (flip ? mod.Plugins.AsEnumerable().Reverse() : mod.Plugins.AsEnumerable())
+					};
 
-						index++;
+					foreach (var plugin in array)
+					{
+						var hookTimeAverageValue =
+#if DEBUG
+							(float)plugin.HookTimeAverage.CalculateAverage();
+#else
+								0;
+#endif
+						var memoryAverageValue =
+#if DEBUG
+							(float)plugin.MemoryAverage.CalculateAverage();
+#else
+								0;
+#endif
+						var hookTimeAverage = Mathf.RoundToInt(hookTimeAverageValue) == 0
+							? string.Empty
+							: $" (avg {hookTimeAverageValue:0}ms)";
+						var memoryAverage = Mathf.RoundToInt(memoryAverageValue) == 0
+							? string.Empty
+							: $" (avg {ByteEx.Format(memoryAverageValue, shortName: true, stringFormat: "{0}{1}").ToLower()})";
+						body.AddRow(string.Empty, plugin.Name, plugin.Author, $"v{plugin.Version}",
+							plugin.TotalHookTime.TotalMilliseconds == 0 ? string.Empty : $"{plugin.TotalHookTime.TotalMilliseconds:0}ms{hookTimeAverage}",
+							plugin.CurrentHookFires == 0 ? string.Empty : $"{plugin.CurrentHookFires}",
+							plugin.TotalMemoryUsed == 0 ? string.Empty : $"{ByteEx.Format(plugin.TotalMemoryUsed, shortName: true, stringFormat: "{0}{1}").ToLower()}{memoryAverage}",
+							plugin.CurrentLagSpikes == 0 ? string.Empty : $"{plugin.CurrentLagSpikes}",
+							plugin.IsPrecompiled
+								? string.Empty
+								: $"{plugin.CompileTime.TotalMilliseconds:0}ms [{plugin.InternalCallHookGenTime.TotalMilliseconds:0}ms]",
+							$"{TimeEx.Format(plugin.Uptime)}");
 					}
 
-					index = 1;
-					result += "\n";
 					count++;
 				}
 
-				arg.ReplyWith(result);
+				using var unloaded = new StringTable("*", $"Unloaded Plugins ({Community.Runtime.ScriptProcessor.IgnoreList.Count})");
+
+				foreach (var unloadedPlugin in Community.Runtime.ScriptProcessor.IgnoreList)
+				{
+					unloaded.AddRow(string.Empty, Path.GetFileName(unloadedPlugin));
+				}
+
+				using var failed = new StringTable("*", $"Failed Plugins ({ModLoader.FailedCompilations.Count})", "Line", "Column", "Stacktrace");
+
+				foreach (var compilation in ModLoader.FailedCompilations)
+				{
+					var firstError = compilation.Errors[0];
+
+					SplitMessageUp(true, failed, compilation, firstError, 0);
+
+					foreach (var error in compilation.Errors.Skip(1))
+					{
+						SplitMessageUp(true, failed, compilation, error, 0);
+					}
+
+					static void SplitMessageUp(bool initial, StringTable table, ModLoader.FailedCompilation compilation, ModLoader.Trace trace, int skip)
+					{
+						const int size = 150;
+
+						var isAboveSize = (trace.Message.Length - skip) > size;
+
+						table.AddRow(
+							string.Empty,
+							initial ? Path.GetFileName(compilation.File) : string.Empty,
+							isAboveSize || initial ? $"{trace.Line}" : string.Empty,
+							isAboveSize || initial ? $"{trace.Column}" : string.Empty,
+							$"{trace.Message.Substring(skip, size.Clamp(0, trace.Message.Length - skip))}{(isAboveSize ? "..." : string.Empty)}");
+
+						if (isAboveSize)
+						{
+							SplitMessageUp(false, table, compilation, trace, skip + size);
+						}
+					}
+				}
+
+				arg.ReplyWith($"{body.Write(StringTable.FormatTypes.None)}\n{unloaded.Write(StringTable.FormatTypes.None)}\n{failed.Write(StringTable.FormatTypes.None)}");
 				break;
-		}
-	}
-
-	[ConsoleCommand("pluginwarns", "Prints the list of warnings of a specific plugin (or all if no arguments are set).")]
-	[AuthLevel(2)]
-	private void PluginWarns(ConsoleSystem.Arg arg)
-	{
-		var filter = arg.GetString(0);
-
-		if (string.IsNullOrEmpty(filter))
-		{
-			var r = string.Empty;
-
-			foreach (var mod in ModLoader.LoadedPackages)
-			{
-				foreach (var plugin in mod.Plugins)
-				{
-					r += $"{Print(plugin)}\n";
-				}
 			}
-
-			arg.ReplyWith(r);
-		}
-		else
-		{
-			var plugin = (Plugin)null;
-
-			foreach (var mod in ModLoader.LoadedPackages)
-			{
-				foreach (var p in mod.Plugins)
-				{
-					if (p.Name == filter)
-					{
-						plugin = p;
-						break;
-					}
-				}
-			}
-
-			if (plugin == null)
-			{
-				arg.ReplyWith($"Couldn't find a plugin with that name: '{filter}'");
-				return;
-			}
-
-			arg.ReplyWith(Print(plugin));
-		}
-
-		static string Print(Plugin plugin)
-		{
-			var result = string.Empty;
-			var count = 1;
-
-			result += $"{plugin.Name} v{plugin.Version} by {plugin.Author}:\n";
-
-			if (plugin.CompileWarnings == null || plugin.CompileWarnings.Length == 0)
-			{
-				result += $"  No warnings available.\n";
-			}
-			else
-			{
-				foreach (var warn in plugin.CompileWarnings)
-				{
-					result += $"  {count:n0}. {warn.Message} [{warn.Number}]\n     ({warn.Column} line {warn.Line})\n";
-					count++;
-				}
-			}
-
-			return result;
 		}
 	}
 

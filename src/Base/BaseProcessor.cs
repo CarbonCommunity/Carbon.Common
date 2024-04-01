@@ -252,13 +252,13 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 
 		if (InstanceBuffer.TryGetValue(e.FullPath, out var instance1))
 		{
-			instance1?.SetDirty();
+			instance1?.MarkDirty();
 			return;
 		}
 
 		if (InstanceBuffer.TryGetValue(Path.GetFileNameWithoutExtension(e.FullPath), out var instance2))
 		{
-			instance2?.SetDirty();
+			instance2?.MarkDirty();
 			return;
 		}
 
@@ -271,7 +271,7 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 
 		if (!EnableWatcher || IsBlacklisted(path)) return;
 
-		if (InstanceBuffer.TryGetValue(name, out var mod)) mod.SetDirty();
+		if (InstanceBuffer.TryGetValue(name, out var mod)) mod.MarkDirty();
 	}
 	public virtual void OnRenamed(object sender, RenamedEventArgs e)
 	{
@@ -330,7 +330,7 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 		public bool IsDirty => _hasChanged;
 		public bool IsRemoved => _hasRemoved;
 
-		public void SetDirty()
+		public void MarkDirty()
 		{
 			_hasRemoved = false;
 			_hasChanged = true;

@@ -284,14 +284,15 @@ public partial class CorePlugin : CarbonPlugin
 			return;
 		}
 
-		using (var table = new StringTable("#", "Id", "Hook", "Time", "Memory", "Fires", "Subscribed", "Async/Overrides"))
+		using (var table = new StringTable(string.Empty, "Id", "Hook", "Time", "Fires", "Memory", "Lag", "Subscribed", "Async & Overrides"))
 		{
 			IEnumerable<List<CachedHook>> array = mode switch
 			{
-				"-t" => (flip ? plugin.HookCache.OrderBy(x => x.Value.Sum(x => x.HookTime.TotalMilliseconds)) : plugin.HookCache.OrderByDescending(x => x.Value.Sum(x => x.HookTime.TotalMilliseconds))).Select(x => x.Value),
-				"-m" => (flip ? plugin.HookCache.OrderBy(x => x.Value.Sum(x => x.MemoryUsage)) : plugin.HookCache.OrderByDescending(x => x.Value.Sum(x => x.MemoryUsage))).Select(x => x.Value),
-				"-f" => (flip ? plugin.HookCache.OrderBy(x => x.Value.Sum(x => x.TimesFired)) : plugin.HookCache.OrderByDescending(x => x.Value.Sum(x => x.TimesFired))).Select(x => x.Value),
-				_ => plugin.HookCache.Select(x => x.Value)
+				"-t" => (flip ? plugin.HookPool.OrderBy(x => x.Value.Sum(x => x.HookTime.TotalMilliseconds)) : plugin.HookPool.OrderByDescending(x => x.Value.Sum(x => x.HookTime.TotalMilliseconds))).Select(x => x.Value),
+				"-m" => (flip ? plugin.HookPool.OrderBy(x => x.Value.Sum(x => x.MemoryUsage)) : plugin.HookPool.OrderByDescending(x => x.Value.Sum(x => x.MemoryUsage))).Select(x => x.Value),
+				"-f" => (flip ? plugin.HookPool.OrderBy(x => x.Value.Sum(x => x.TimesFired)) : plugin.HookPool.OrderByDescending(x => x.Value.Sum(x => x.TimesFired))).Select(x => x.Value),
+				"-ls" => (flip ? plugin.HookPool.OrderBy(x => x.Value.Sum(x => x.LagSpikes)) : plugin.HookPool.OrderByDescending(x => x.Value.Sum(x => x.LagSpikes))).Select(x => x.Value),
+				_ => plugin.HookPool.Select(x => x.Value)
 			};
 
 			foreach (var hook in array)
@@ -305,18 +306,28 @@ public partial class CorePlugin : CarbonPlugin
 				var hookName = current.Method.Name;
 
 				var hookId = HookStringPool.GetOrAdd(hookName);
-				var hookTime = hook.Sum(x => x.HookTime.TotalMilliseconds);
-				var hookMemoryUsage = hook.Sum(x => x.MemoryUsage);
-				var hookCount = hook.Count;
-				var hookAsyncCount = hook.Count(x => x.IsAsync);
-				var hooksTimesFired = hook.Sum(x => x.TimesFired);
 
 				if (!plugin.Hooks.Contains(hookId))
 				{
 					continue;
 				}
 
-				table.AddRow(count, hookId, $"{hookName}", $"{hookTime:0}ms", $"{ByteEx.Format(hookMemoryUsage, shortName: true).ToLower()}", $"{hooksTimesFired:n0}", !plugin.IgnoredHooks.Contains(hookId), $"{hookAsyncCount:n0}/{hookCount:n0}");
+				var hookTime = hook.Sum(x => x.HookTime.TotalMilliseconds);
+				var hookMemoryUsage = hook.Sum(x => x.MemoryUsage);
+				var hookCount = hook.Count;
+				var hookAsyncCount = hook.Count(x => x.IsAsync);
+				var hookTimesFired = hook.Sum(x => x.TimesFired);
+				var hookLagSpikes = hook.Sum(x => x.LagSpikes);
+
+				table.AddRow(string.Empty,
+					hookId,
+					$"{hookName}",
+					hookTime == 0 ? string.Empty : $"{hookTime:0}ms",
+					hookTimesFired == 0 ? string.Empty : $"{hookTimesFired}",
+					hookMemoryUsage == 0 ? string.Empty : $"{ByteEx.Format(hookMemoryUsage, shortName: true).ToLower()}",
+					hookLagSpikes == 0 ? string.Empty : $"{hookLagSpikes}",
+					!plugin.IgnoredHooks.Contains(hookId) ? "*" : string.Empty,
+					$"{hookAsyncCount:n0} / {hookCount:n0}");
 
 				count++;
 			}
@@ -325,8 +336,8 @@ public partial class CorePlugin : CarbonPlugin
 
 			builder.AppendLine($"{plugin.Name} v{plugin.Version} by {plugin.Author}{(plugin.IsCorePlugin ? $" [core]" : string.Empty)}");
 			builder.AppendLine($"  Path:                   {plugin.FilePath}");
-			builder.AppendLine($"  Compile Time:           {plugin.CompileTime.TotalMilliseconds}ms{(plugin.IsPrecompiled ? " [precompiled]" : string.Empty)}{(plugin.IsExtension ? " [ext]" : string.Empty)}");
-			builder.AppendLine($"  Int.CallHook Gen Time:  {plugin.InternalCallHookGenTime.TotalMilliseconds}ms{(plugin.IsPrecompiled ? " [precompiled]" : string.Empty)}{(plugin.IsExtension ? " [ext]" : string.Empty)}");
+			builder.AppendLine($"  Compile Time:           {plugin.CompileTime.TotalMilliseconds:0}ms{(plugin.IsPrecompiled ? " [precompiled]" : string.Empty)}{(plugin.IsExtension ? " [ext]" : string.Empty)}");
+			builder.AppendLine($"  Int.CallHook Gen Time:  {plugin.InternalCallHookGenTime.TotalMilliseconds:0}ms{(plugin.IsPrecompiled ? " [precompiled]" : string.Empty)}{(plugin.IsExtension ? " [ext]" : string.Empty)}");
 			builder.AppendLine($"  Uptime:                 {TimeEx.Format(plugin.Uptime, true).ToLower()}");
 			builder.AppendLine($"  Total Hook Time:        {plugin.TotalHookTime.TotalMilliseconds:0}ms");
 			builder.AppendLine($"  Total Memory Used:      {ByteEx.Format(plugin.TotalMemoryUsed, shortName: true).ToLower()}");
@@ -340,20 +351,13 @@ public partial class CorePlugin : CarbonPlugin
 				builder.AppendLine($"  Carbon CUI:             {carbonPlugin.CuiHandler.Pooled:n0} pooled, {carbonPlugin.CuiHandler.Used:n0} used");
 			}
 
-			builder.AppendLine(string.Empty);
-
 			var permissions = plugin.permission.GetPermissions(plugin);
 			builder.AppendLine($"  Permissions:            {(permissions.Length > 0 ? permissions.ToString("\n                          ") : "N/A")}");
 
 			builder.AppendLine(string.Empty);
 
-			if (count == 1)
+			if (count != 1)
 			{
-				builder.AppendLine($"No hooks found.");
-			}
-			else
-			{
-				builder.AppendLine($"Hooks:");
 				builder.AppendLine(table.ToStringMinimal());
 			}
 
@@ -574,7 +578,7 @@ public partial class CorePlugin : CarbonPlugin
 						return;
 					}
 
-					OsEx.File.Move(path, Path.Combine(Defines.GetScriptFolder(), Path.GetFileName(path)));
+					OsEx.File.Move(path, Path.Combine(Defines.GetScriptsFolder(), Path.GetFileName(path)));
 					break;
 				}
 		}
