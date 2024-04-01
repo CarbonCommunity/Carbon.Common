@@ -6,6 +6,7 @@
  */
 
 using System.Text;
+using API.Hooks;
 using Facepunch;
 using Timer = Oxide.Plugins.Timer;
 
@@ -83,21 +84,28 @@ public partial class CorePlugin : CarbonPlugin
 				}
 			}
 
-			using var modulesTable = new StringTable(string.Empty, $"Modules ({modules.Count:n0})", "IsByRef", "IsAsync", "Fires", "Time", "Memory");
+			using var modulesTable = new StringTable(string.Empty, $"Modules ({modules.Count:n0})", string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
 
 			foreach (var module in modules)
 			{
 				var hook = module.Value.FirstOrDefault();
-				modulesTable.AddRow(string.Empty, $"{module.Key.Name}", hook.IsByRef, hook.IsAsync, $"{hook.TimesFired:n0}", $"{hook.HookTime.TotalMilliseconds:0}ms", ByteEx.Format(hook.MemoryUsage, stringFormat: byteFormat).ToLower());
+				pluginsTable.AddRow(string.Empty,
+					$"{module.Key.Name}",
+					hook.HookTime.TotalMilliseconds == 0 ? string.Empty : $"{hook.HookTime.TotalMilliseconds:0}ms",
+					hook.TimesFired == 0 ? string.Empty : $"{hook.TimesFired:n0}",
+					hook.MemoryUsage == 0 ? string.Empty : ByteEx.Format(hook.MemoryUsage, stringFormat: byteFormat).ToLower(),
+					hook.LagSpikes == 0 ? string.Empty : $"{hook.LagSpikes:n0}",
+					$"{module.Value.Count(x => x.IsAsync):n0} / {module.Value.Count:n0}");
 			}
 
 			output.AppendLine(modulesTable.ToStringMinimal());
 
-			using var totalsTable = new StringTable(string.Empty, "Total", "Fires", "Time", "Memory");
+			using var totalsTable = new StringTable(string.Empty, "Total", "Fires", "Time", "Memory", "Lag");
 			totalsTable.AddRow(string.Empty, string.Empty,
 				$"{plugins.Sum(x => x.Value.Sum(y => y.TimesFired)) + modules.Sum(x => x.Value.Sum(y => y.TimesFired)):n0}",
 				$"{plugins.Sum(x => x.Value.Sum(y => y.HookTime.TotalMilliseconds)) + modules.Sum(x => x.Value.Sum(y => y.HookTime.TotalMilliseconds)):0}ms",
-				$"{ByteEx.Format(plugins.Sum(x => x.Value.Sum(y => y.MemoryUsage)) + modules.Sum(x => x.Value.Sum(y => y.MemoryUsage))).ToLower()}");
+				$"{ByteEx.Format(plugins.Sum(x => x.Value.Sum(y => y.MemoryUsage)) + modules.Sum(x => x.Value.Sum(y => y.MemoryUsage))).ToLower()}",
+				$"{plugins.Sum(x => x.Value.Sum(y => y.LagSpikes)) + modules.Sum(x => x.Value.Sum(y => y.LagSpikes)):n0}");
 
 			output.AppendLine(totalsTable.ToStringMinimal());
 
@@ -109,7 +117,164 @@ public partial class CorePlugin : CarbonPlugin
 		}
 	}
 
-	#if DEBUG
+	[ConsoleCommand("hooks")]
+	[AuthLevel(2)]
+	private void HooksCall(ConsoleSystem.Arg args)
+	{
+		using var table = new StringTable("#", "Hook", "Id", "Type", "Status", "Time", "Fires", "Memory", "Lag", "Subs");
+		var count =1;
+		var success = 0;
+		var warning = 0;
+		var failure = 0;
+
+		var option1 = args.GetString(0, null);
+		var option2 = args.GetString(1, null);
+
+		switch (option1)
+		{
+			case "loaded":
+			{
+				IEnumerable<IHook> hooks;
+
+				switch (option2)
+				{
+					case "-p":
+						hooks = Community.Runtime.HookManager.LoadedPatches.Where(x => !x.IsHidden);
+						break;
+
+					case "-s":
+						hooks = Community.Runtime.HookManager.LoadedStaticHooks.Where(x => !x.IsHidden);
+						break;
+
+					case "-d":
+						hooks = Community.Runtime.HookManager.LoadedDynamicHooks.Where(x => !x.IsHidden);
+						break;
+
+					default:
+						hooks = Community.Runtime.HookManager.LoadedPatches.Where(x => !x.IsHidden);
+						hooks = hooks.Concat(Community.Runtime.HookManager.LoadedStaticHooks.Where(x => !x.IsHidden));
+						hooks = hooks.Concat(Community.Runtime.HookManager.LoadedDynamicHooks.Where(x => !x.IsHidden));
+						break;
+				}
+
+				switch (option2)
+				{
+					case "-u":
+						hooks = hooks.OrderByDescending(x => HookCaller.GetTotalTime(HookStringPool.GetOrAdd(x.HookName)));
+						break;
+
+					default:
+						hooks = hooks.OrderBy(x => x.HookFullName);
+						break;
+				}
+
+				foreach (var iHook in hooks)
+				{
+					if (iHook.Status == HookState.Failure) failure++;
+					if (iHook.Status == HookState.Success) success++;
+					if (iHook.Status == HookState.Warning) warning++;
+
+					var hook = HookStringPool.GetOrAdd(iHook.HookName);
+					var time = HookCaller.GetTotalTime(hook).TotalMilliseconds;
+					var fires = HookCaller.GetTotalFires(hook);
+					var memory = HookCaller.GetTotalMemory(hook);
+					var lagSpikes = HookCaller.GetTotalLagSpikes(hook);
+
+					table.AddRow(
+						$"{count++:n0}",
+						iHook.IsHidden ? $"{iHook.HookFullName} (*)" : iHook.HookFullName,
+						iHook.Identifier[^6..],
+						iHook.IsStaticHook ? "Static" : iHook.IsPatch ? "Patch" : "Dynamic",
+						iHook.Status.ToString(),
+						time == 0 ? string.Empty : $"{time:0}ms",
+						fires == 0 ? string.Empty : $"{fires}",
+						memory == 0 ? string.Empty : $"{ByteEx.Format(memory, shortName: true).ToLower()}",
+						lagSpikes == 0 ? string.Empty : $"{lagSpikes}",
+						iHook.IsStaticHook ? "N/A" : $"{Community.Runtime.HookManager.GetHookSubscriberCount(iHook.Identifier),3}"
+					);
+				}
+
+				args.ReplyWith($"total:{count} success:{success} warning:{warning} failed:{failure}"
+				               + Environment.NewLine + Environment.NewLine + table.ToStringMinimal());
+				break;
+			}
+
+			default: // list installed
+			{
+				IEnumerable<IHook> hooks;
+
+				switch (option1)
+				{
+					case "-p":
+						hooks = Community.Runtime.HookManager.InstalledPatches.Where(x => !x.IsHidden);
+						break;
+
+					case "-s":
+						hooks = Community.Runtime.HookManager.InstalledStaticHooks.Where(x => !x.IsHidden);
+						break;
+
+					case "-d":
+						hooks = Community.Runtime.HookManager.InstalledDynamicHooks.Where(x => !x.IsHidden);
+						break;
+
+					default:
+#if DEBUG_VERBOSE
+							hooks = Community.Runtime.HookManager.InstalledPatches;
+							hooks = hooks.Concat(Community.Runtime.HookManager.InstalledStaticHooks);
+							hooks = hooks.Concat(Community.Runtime.HookManager.InstalledDynamicHooks);
+#else
+						hooks = Community.Runtime.HookManager.InstalledPatches.Where(x => !x.IsHidden);
+						hooks = hooks.Concat(
+							Community.Runtime.HookManager.InstalledStaticHooks.Where(x => !x.IsHidden));
+						hooks = hooks.Concat(
+							Community.Runtime.HookManager.InstalledDynamicHooks.Where(x => !x.IsHidden));
+#endif
+						break;
+				}
+
+				if (option1 == "-u" || option2 == "-u")
+				{
+					hooks = hooks.OrderByDescending(x => HookCaller.GetTotalTime(HookStringPool.GetOrAdd(x.HookName)));
+				}
+				else
+				{
+					hooks = hooks.OrderBy(x => x.HookFullName);
+				}
+
+				foreach (var iHook in hooks)
+				{
+					if (iHook.Status == HookState.Failure) failure++;
+					if (iHook.Status == HookState.Success) success++;
+					if (iHook.Status == HookState.Warning) warning++;
+
+					var hook = HookStringPool.GetOrAdd(iHook.HookName);
+					var time = HookCaller.GetTotalTime(hook).TotalMilliseconds;
+					var fires = HookCaller.GetTotalFires(hook);
+					var memory = HookCaller.GetTotalMemory(hook);
+					var lagSpikes = HookCaller.GetTotalLagSpikes(hook);
+
+					table.AddRow(
+						$"{count++:n0}",
+						iHook.IsHidden ? $"{iHook.HookFullName} (*)" : iHook.HookFullName,
+						iHook.Identifier[^6..],
+						iHook.IsStaticHook ? "Static" : iHook.IsPatch ? "Patch" : "Dynamic",
+						iHook.Status.ToString(),
+						time == 0 ? string.Empty : $"{time:0}ms",
+						fires == 0 ? string.Empty : $"{fires}",
+						memory == 0 ? string.Empty : $"{ByteEx.Format(memory, shortName: true).ToLower()}",
+						lagSpikes == 0 ? string.Empty : $"{lagSpikes}",
+						(iHook.IsStaticHook) ? "N/A" : $"{Community.Runtime.HookManager.GetHookSubscriberCount(iHook.Identifier),3}"
+					);
+				}
+
+				args.ReplyWith($"total:{count - 1} success:{success} warning:{warning} failed:{failure}"
+				              + Environment.NewLine + Environment.NewLine + table.ToStringMinimal());
+				break;
+			}
+		}
+	}
+
+#if DEBUG
 	private uint _debuggedHook;
 	private Timer _debuggedTimer;
 

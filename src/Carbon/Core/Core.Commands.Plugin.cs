@@ -351,8 +351,6 @@ public partial class CorePlugin : CarbonPlugin
 				builder.AppendLine($"  Carbon CUI:             {carbonPlugin.CuiHandler.Pooled:n0} pooled, {carbonPlugin.CuiHandler.Used:n0} used");
 			}
 
-			builder.AppendLine(string.Empty);
-
 			var permissions = plugin.permission.GetPermissions(plugin);
 			builder.AppendLine($"  Permissions:            {(permissions.Length > 0 ? permissions.ToString("\n                          ") : "N/A")}");
 
