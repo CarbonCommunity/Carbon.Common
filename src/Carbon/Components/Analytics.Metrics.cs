@@ -83,7 +83,7 @@ public partial struct Analytics
 			Include("from_server", option.FromRcon).
 			Submit("o_command_attempt");
 	}
-	public static void plugin_time_warn(string readableHook, Plugin basePlugin, double afterHookTime, double totalMemory, BaseHookable.CachedHook cachedHook, BaseHookable hookable)
+	public static void plugin_time_warn(string readableHook, Plugin basePlugin, double afterHookTime, double totalMemory, BaseHookable.CachedHook cachedHook, BaseHookable hookable, bool lagSpike)
 	{
 		if (!Enabled)
 		{
@@ -94,8 +94,9 @@ public partial struct Analytics
 			Include("name", $"{readableHook} ({basePlugin.ToPrettyString()})").
 			Include("time", $"{afterHookTime.RoundUpToNearestCount(50)}ms").
 			Include("memory", $"{ByteEx.Format(totalMemory, shortName: true).ToLower()}").
-			Include("fires", $"{cachedHook.TimesFired}").
+			Include("fires", $"{cachedHook?.TimesFired}").
 			Include("hasgc", hookable.HasGCCollected).
+			Include("lagspike", lagSpike).
 			Submit("plugin_time_warn");
 	}
 	public static void plugin_native_compile_fail(ISource initialSource, Exception ex)

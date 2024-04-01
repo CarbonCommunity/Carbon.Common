@@ -1,8 +1,5 @@
-﻿using API.Commands;
-using API.Events;
-using Carbon.Base.Interfaces;
+﻿using API.Events;
 using Newtonsoft.Json;
-using Report = Carbon.Components.Report;
 
 /*
  *
@@ -17,7 +14,7 @@ public static class ModLoader
 {
 	public static bool IsBatchComplete { get; set; }
 	public static List<ModPackage> LoadedPackages = new();
-	public static List<FailedMod> FailedMods = new();
+	public static List<FailedCompilation> FailedCompilations = new();
 
 	internal static List<Assembly> AssemblyCache { get; } = new();
 	internal static Dictionary<string, Assembly> AssemblyDictionaryCache { get; } = new();
@@ -35,6 +32,14 @@ public static class ModLoader
 		{
 			LoadedPackages.Add(package);
 		}
+	}
+	public static ModPackage GetPackage(string name)
+	{
+		return LoadedPackages.FirstOrDefault(mod => mod.Name.StartsWith(name, StringComparison.OrdinalIgnoreCase));
+	}
+	public static RustPlugin FindPlugin(string name)
+	{
+		return LoadedPackages.SelectMany(package => package.Plugins).FirstOrDefault(plugin => plugin.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
 	}
 
 	static ModLoader()
@@ -104,12 +109,12 @@ public static class ModLoader
 	}
 	public static void ClearAllErrored()
 	{
-		foreach (var mod in FailedMods)
+		foreach (var mod in FailedCompilations)
 		{
 			Array.Clear(mod.Errors, 0, mod.Errors.Length);
 		}
 
-		FailedMods.Clear();
+		FailedCompilations.Clear();
 	}
 
 	public static void RegisterAssembly(Assembly assembly)
@@ -219,6 +224,9 @@ public static class ModLoader
 		{
 			Analytics.plugin_constructor_failure(plugin);
 
+			// OnConstructorFail
+			HookCaller.CallStaticHook(937285752, plugin, ex);
+
 			Logger.Error($"Failed executing constructor for {plugin.ToPrettyString()}. This is fatal! Unloading plugin.", ex);
 			return false;
 		}
@@ -287,6 +295,8 @@ public static class ModLoader
 		{
 			Logger.Log($"Unloaded plugin {plugin.ToPrettyString()}");
 			Interface.Oxide.RootPluginManager.RemovePlugin(plugin);
+
+			Plugin.InternalApplyAllPluginReferences();
 		}
 		return true;
 	}
@@ -615,8 +625,8 @@ public static class ModLoader
 				if (plugin.HasInitialized) continue;
 				counter++;
 
-				plugin.CallHook("OnServerInitialized", FirstLoadSinceStartup);
 				plugin.HasInitialized = true;
+				plugin.CallHook("OnServerInitialized", FirstLoadSinceStartup);
 			}
 
 			FirstLoadSinceStartup = false;
@@ -630,14 +640,8 @@ public static class ModLoader
 				Logger.Log($" Batch completed! OSI on {counter:n0} {counter.Plural("plugin", "plugins")}.");
 			}
 
-			Report.OnProcessEnded?.Invoke();
 			Community.Runtime.Events.Trigger(CarbonEvent.AllPluginsLoaded, EventArgs.Empty);
 		}
-	}
-
-	internal static ModPackage GetPackage(string name)
-	{
-		return LoadedPackages.FirstOrDefault(mod => mod.Name.StartsWith(name, StringComparison.OrdinalIgnoreCase));
 	}
 
 	[JsonObject(MemberSerialization.OptIn)]
@@ -690,19 +694,19 @@ public static class ModLoader
 	}
 
 	[JsonObject(MemberSerialization.OptIn)]
-	public struct FailedMod
+	public struct FailedCompilation
 	{
 		[JsonProperty] public string File;
-		[JsonProperty] public Error[] Errors;
-		[JsonProperty] public Error[] Warnings;
+		[JsonProperty] public Trace[] Errors;
+		[JsonProperty] public Trace[] Warnings;
+	}
 
-		[JsonObject(MemberSerialization.OptIn)]
-		public struct Error
-		{
-			[JsonProperty] public string Number;
-			[JsonProperty] public string Message;
-			[JsonProperty] public int Column;
-			[JsonProperty] public int Line;
-		}
+	[JsonObject(MemberSerialization.OptIn)]
+	public struct Trace
+	{
+		[JsonProperty] public string Number;
+		[JsonProperty] public string Message;
+		[JsonProperty] public int Column;
+		[JsonProperty] public int Line;
 	}
 }

@@ -42,7 +42,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		}
 
 		public static bool DropdownShow { get; set; }
-		public static string[] DropdownOptions { get; } = new[] { "A-Z", "Price", "Author", "Installed", "Needs Update", "Favourites", "Owned" };
+		public static string[] DropdownOptions { get; } = new[] { "A-Z", "Price", "Author", "Installed", "Pending Update", "Favourites", "Owned" };
 		public static PlayerSession.Page PlaceboPage { get; } = new PlayerSession.Page();
 		public static List<string> TagFilter { get; set; } = new();
 		public static string[] PopularTags { get; } = new[]
@@ -97,7 +97,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 		public static Tab Get()
 		{
-			OsEx.Folder.Create(Path.Combine(Defines.GetScriptFolder(), "backups"));
+			OsEx.Folder.Create(Path.Combine(Defines.GetScriptsFolder(), "backups"));
 
 			var tab = new Tab("plugins", "Plugins", Community.Runtime.CorePlugin, (ap, t) =>
 			{
@@ -618,7 +618,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 							buttonColor = "#802f2f";
 							elementColor = "#c35b5b";
 							icon = "trashcan";
-							status = "REMOVE";
+							status = "UNINSTALL";
 							scale = 0.564f;
 							callMode = 2;
 						}
@@ -644,7 +644,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 						if(selectedPlugin.IsInstalled())
 						{
-							var secondaryButton = cui.CreateProtectedButton(container, mainPanel, "#802f2f", "0 0 0 0", string.Empty, 0, xMin: 0.48f, xMax: scale, yMin: 0.175f, yMax: 0.235f, OxMin: 85, OxMax: 85, align: TextAnchor.MiddleRight, command: selectedPlugin.IsBusy ? "" : $"pluginbrowser.interact 4 {selectedPlugin.Id}");
+							var secondaryButton = cui.CreateProtectedButton(container, mainPanel, "#802f2f", "0 0 0 0", string.Empty, 0, xMin: 0.48f, xMax: scale, yMin: 0.175f, yMax: 0.235f, OxMin: 82, OxMax: 82, align: TextAnchor.MiddleRight, command: selectedPlugin.IsBusy ? "" : $"pluginbrowser.interact 4 {selectedPlugin.Id}");
 							cui.CreateText(container, secondaryButton, "#c35b5b", "RELOAD", 11, xMax: 0.88f, align: TextAnchor.MiddleRight);
 							cui.CreateImage(container, secondaryButton, "reload", "#c35b5b", xMin: 0.075f, xMax: 0.315f, yMin: 0.2f, yMax: 0.8f);
 						}
@@ -660,7 +660,16 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					{
 						var path = Path.Combine(Defines.GetConfigsFolder(), selectedPlugin.ExistentPlugin.Config.Filename);
 
-						if (OsEx.File.Exists(path)) cui.CreateProtectedButton(container, mainPanel, "0.1 0.1 0.1 0.8", "1 1 1 0.7", "EDIT CONFIG", 11, xMin: 0.48f, xMax: 0.564f, yMin: 0.175f, yMax: 0.235f, OyMin: 35, OyMax: 35, command: selectedPlugin.IsBusy ? "" : $"pluginbrowser.interact 3 {selectedPlugin.Id}");
+						if (OsEx.File.Exists(path))
+						{
+							cui.CreateProtectedButton(container, mainPanel, "0.1 0.1 0.1 0.8", "0.7 0.7 0.7 0.7", "EDIT CONFIG", 11,
+								xMin: 0.48f, xMax: 0.564f, yMin: 0.175f, yMax: 0.235f, OyMin: 35, OyMax: 35,
+								command: selectedPlugin.IsBusy ? "" : $"pluginbrowser.interact 3 {selectedPlugin.Id}");
+
+							cui.CreateProtectedButton(container, mainPanel, "0.1 0.1 0.1 0.8", "0.7 0.7 0.7 0.7", "EDIT LANG", 11,
+								xMin: 0.48f, xMax: 0.56f, yMin: 0.175f, yMax: 0.235f, OyMin: 35, OyMax: 35, OxMin: 82, OxMax: 82,
+								command: selectedPlugin.IsBusy ? "" : $"pluginbrowser.interact 5 {selectedPlugin.Id}");
+						}
 					}
 				}
 			}
@@ -935,9 +944,6 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				}
 				PopularTags = tags;
 				Facepunch.Pool.FreeList(ref tags);
-
-				_headers.Clear();
-				_headers[AuthHeader.Key.ToString()] = string.Format(AuthHeader.Value, User.AccessToken);
 			}
 			public override void FetchList(Action<Vendor> callback = null)
 			{
@@ -1058,7 +1064,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 								var jobject = JObject.Parse(source);
 								var name = jobject["files"][0]["name"].ToString();
 								var file = jobject["files"][0]["url"].ToString();
-								var path = Path.Combine(Defines.GetScriptFolder(), name);
+								var path = Path.Combine(Defines.GetScriptsFolder(), name);
 								jobject = null;
 
 								core.webrequest.EnqueueData(file, null, (error, source) =>
@@ -1094,7 +1100,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 													using var reader = new StreamReader(file.Open());
 													var fileSource = reader.ReadToEnd();
 
-													OsEx.File.Create(Path.Combine(Defines.GetScriptFolder(), file.Name), fileSource);
+													OsEx.File.Create(Path.Combine(Defines.GetScriptsFolder(), file.Name), fileSource);
 													Singleton.Puts($" Extracted plugin file {file.Name}");
 												}
 												break;
@@ -1150,7 +1156,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 								var jobject = JObject.Parse(source);
 								var name = jobject["files"][0]["name"].ToString();
 								var file = jobject["files"][0]["url"].ToString();
-								var path = Path.Combine(Defines.GetScriptFolder(), name);
+								var path = Path.Combine(Defines.GetScriptsFolder(), name);
 								jobject = null;
 
 								core.webrequest.Enqueue(file, null, (error, source) =>
@@ -1167,7 +1173,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				}
 				else
 				{
-					var path = Path.Combine(Defines.GetScriptFolder(), plugin.File);
+					var path = Path.Combine(Defines.GetScriptsFolder(), plugin.File);
 					var url = DownloadEndpoint.Replace("[ID]", id);
 
 					core.webrequest.Enqueue(url, null, (error, source) =>
@@ -1189,7 +1195,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			public override void Uninstall(string id)
 			{
 				var plugin = FetchedPlugins.FirstOrDefault(x => x.Id == id);
-				OsEx.File.Move(plugin.ExistentPlugin.FilePath, Path.Combine(Defines.GetScriptFolder(), "backups", $"{plugin.ExistentPlugin.FileName}.cs"), true);
+				OsEx.File.Move(plugin.ExistentPlugin.FilePath, Path.Combine(Defines.GetScriptsFolder(), "backups", $"{plugin.ExistentPlugin.FileName}.cs"), true);
 				plugin.ExistentPlugin = null;
 			}
 			public override void CheckMetadata(string id, Action onMetadataRetrieved)
@@ -1231,17 +1237,6 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 					core.webrequest.Enqueue(url, null, (code, result) =>
 					{
-						var jobject = JObject.Parse(result);
-						User.AccessToken = jobject["accesstoken"].ToString();
-						User.AccessTokenEncoded = Convert.ToBase64String(Encoding.UTF8.GetBytes(User.AccessToken));
-						ValidationTimer.Destroy();
-						ValidationTimer = null;
-						jobject = null;
-
-						User.PendingResult = LoggedInUser.RequestResult.Complete;
-						onComplete?.Invoke();
-					}, null, onException: (code, str, ex) =>
-					{
 						switch (code)
 						{
 							case 401:
@@ -1253,8 +1248,22 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 									Singleton.Draw(session.Player);
 								}
 								break;
+
+							default:
+								var jobject = JObject.Parse(result);
+								User.AccessToken = jobject["accesstoken"].ToString();
+								User.AccessTokenEncoded = Convert.ToBase64String(Encoding.UTF8.GetBytes(User.AccessToken));
+								ValidationTimer.Destroy();
+								ValidationTimer = null;
+								jobject = null;
+								_headers[AuthHeader.Key.ToString()] = string.Format(AuthHeader.Value, User.AccessToken);
+
+								User.PendingResult = LoggedInUser.RequestResult.Complete;
+								onComplete?.Invoke();
+								break;
 						}
-					});
+
+					}, null);
 				});
 			}
 			public void RefreshUser(PlayerSession session)
@@ -1330,6 +1339,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					if (User != null && !string.IsNullOrEmpty(User.AccessTokenEncoded))
 					{
 						User.AccessToken = Encoding.UTF8.GetString(Convert.FromBase64String(User.AccessTokenEncoded));
+						_headers[AuthHeader.Key.ToString()] = string.Format(AuthHeader.Value, User.AccessToken);
 					}
 
 					if ((DateTime.Now - new DateTime(value.LastTick)).TotalHours >= 24)
@@ -1460,7 +1470,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			public override void Download(string id, Action onTimeout = null)
 			{
 				var plugin = FetchedPlugins.FirstOrDefault(x => x.Id == id);
-				var path = Path.Combine(Defines.GetScriptFolder(), plugin.File);
+				var path = Path.Combine(Defines.GetScriptsFolder(), plugin.File);
 				var url = DownloadEndpoint.Replace("[ID]", plugin.Name);
 
 				plugin.IsBusy = true;
@@ -1491,7 +1501,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			public override void Uninstall(string id)
 			{
 				var plugin = FetchedPlugins.FirstOrDefault(x => x.Id == id);
-				OsEx.File.Move(plugin.ExistentPlugin.FilePath, Path.Combine(Defines.GetScriptFolder(), "backups", $"{plugin.ExistentPlugin.FileName}.cs"), true);
+				OsEx.File.Move(plugin.ExistentPlugin.FilePath, Path.Combine(Defines.GetScriptsFolder(), "backups", $"{plugin.ExistentPlugin.FileName}.cs"), true);
 				plugin.ExistentPlugin = null;
 			}
 			public override void CheckMetadata(string id, Action onMetadataRetrieved)
@@ -1750,7 +1760,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				plugin.IsBusy = true;
 				plugin.DownloadCount++;
 
-				var path = Path.Combine(Defines.GetScriptFolder(), plugin.File);
+				var path = Path.Combine(Defines.GetScriptsFolder(), plugin.File);
 				var url = DownloadEndpoint.Replace("[ID]", id);
 
 				Community.Runtime.CorePlugin.timer.In(2f, () =>
@@ -1780,7 +1790,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			public override void Uninstall(string id)
 			{
 				var plugin = FetchedPlugins.FirstOrDefault(x => x.Id == id);
-				OsEx.File.Move(plugin.ExistentPlugin.FilePath, Path.Combine(Defines.GetScriptFolder(), "backups", $"{plugin.ExistentPlugin.FileName}.cs"), true);
+				OsEx.File.Move(plugin.ExistentPlugin.FilePath, Path.Combine(Defines.GetScriptsFolder(), "backups", $"{plugin.ExistentPlugin.FileName}.cs"), true);
 				plugin.ExistentPlugin = null;
 			}
 			public override void CheckMetadata(string id, Action onMetadataRetrieved)
@@ -1913,7 +1923,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			public override void Uninstall(string id)
 			{
 				var plugin = FetchedPlugins.FirstOrDefault(x => x.Id == id);
-				OsEx.File.Move(plugin.ExistentPlugin.FilePath, Path.Combine(Defines.GetScriptFolder(), "backups", $"{plugin.ExistentPlugin.FileName}.cs"), true);
+				OsEx.File.Move(plugin.ExistentPlugin.FilePath, Path.Combine(Defines.GetScriptsFolder(), "backups", $"{plugin.ExistentPlugin.FileName}.cs"), true);
 				plugin.ExistentPlugin = null;
 			}
 		}
@@ -2107,7 +2117,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					(ap, jobject) =>
 					{
 						OsEx.File.Create(path, jobject.ToString(Formatting.Indented));
-						plugin.ProcessorProcess.SetDirty();
+						plugin.ProcessorProcess.MarkDirty();
 						Community.Runtime.CorePlugin.NextTick(() => Singleton.SetTab(ap.Player, "plugins", false));
 					}));
 				Array.Clear(arg, 0, arg.Length);
@@ -2120,9 +2130,21 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 				if (plugin != null)
 				{
-					plugin.ProcessorProcess.SetDirty();
+					plugin.ProcessorProcess.MarkDirty();
 					Community.Runtime.CorePlugin.NextTick(() => Singleton.SetTab(ap.Player, "plugins", false));
 				}
+				break;
+			}
+
+			case "5":
+			{
+				var plugin = vendor.FetchedPlugins.FirstOrDefault(x => x.Id == args.Args[1]).ExistentPlugin;
+
+				Singleton.SetTab(ap.Player, LangEditor.Make(plugin,
+					(ap) =>
+					{
+						Community.Runtime.CorePlugin.NextTick(() => Singleton.SetTab(ap.Player, "plugins", false));
+					}));
 				break;
 			}
 

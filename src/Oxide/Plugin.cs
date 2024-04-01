@@ -34,7 +34,7 @@ namespace Oxide.Core.Plugins
 		[JsonProperty]
 		public TimeSpan InternalCallHookGenTime { get; set; }
 		[JsonProperty]
-		public ModLoader.FailedMod.Error[] CompileWarnings { get; set; }
+		public ModLoader.Trace[] CompileWarnings { get; set; }
 
 		[JsonProperty]
 		public string FilePath { get; set; }
@@ -62,9 +62,9 @@ namespace Oxide.Core.Plugins
 		public IBaseProcessor Processor;
 		public IBaseProcessor.IProcess ProcessorProcess;
 
-		public static implicit operator bool(Plugin other)
+		public static implicit operator bool(Plugin target)
 		{
-			return other != null && other.IsLoaded;
+			return target != null && target.HasInitialized;
 		}
 
 		public virtual bool IInit()
@@ -158,13 +158,13 @@ namespace Oxide.Core.Plugins
 				using (TimeMeasure.New($"IUnload.Disposal on '{this}'"))
 				{
 					IgnoredHooks?.Clear();
-					HookCache?.Clear();
+					HookPool?.Clear();
 					Hooks?.Clear();
 					HookMethods?.Clear();
 					PluginReferences?.Clear();
 
 					IgnoredHooks = null;
-					HookCache = null;
+					HookPool = null;
 					Hooks = null;
 					HookMethods = null;
 					PluginReferences = null;
@@ -174,6 +174,8 @@ namespace Oxide.Core.Plugins
 			{
 				Logger.Error($"Failed calling Plugin.IUnload.Disposal on {this}", ex);
 			}
+
+			HasInitialized = false;
 		}
 
 		internal bool InternalApplyPluginReferences()
@@ -184,7 +186,7 @@ namespace Oxide.Core.Plugins
 			{
 				var field = attribute.Field;
 				var name = string.IsNullOrEmpty(attribute.Name) ? field.Name : attribute.Name;
-				var path = Path.Combine(Defines.GetScriptFolder(), $"{name}.cs");
+				var path = Path.Combine(Defines.GetScriptsFolder(), $"{name}.cs");
 
 				try
 				{
@@ -229,13 +231,18 @@ namespace Oxide.Core.Plugins
 							}
 						}
 					}
-					else if (attribute.IsRequired)
+					else
 					{
-						ModLoader.PostBatchFailedRequirees.Add(FilePath);
-						ModLoader.AddPendingRequiree(path, FilePath);
-						Logger.Warn(
-							$"Plugin '{Name} by {Author} v{Version}' references a required plugin which is not loaded: {name}");
-						return false;
+						field.SetValue(this, null);
+
+						if (attribute.IsRequired)
+						{
+							ModLoader.PostBatchFailedRequirees.Add(FilePath);
+							ModLoader.AddPendingRequiree(path, FilePath);
+							Logger.Warn(
+								$"Plugin '{Name} by {Author} v{Version}' references a required plugin which is not loaded: {name}");
+							return false;
+						}
 					}
 				}
 				catch (Exception ex)

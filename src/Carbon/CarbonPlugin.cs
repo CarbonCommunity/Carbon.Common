@@ -1,6 +1,6 @@
 ﻿/*
  *
- * Copyright (c) 2022-2024 Carbon Community 
+ * Copyright (c) 2022-2024 Carbon Community
  * All rights reserved.
  *
  */
@@ -127,7 +127,7 @@ public class CarbonPlugin : RustPlugin
 		}
 		catch (Exception ex)
 		{
-			PrintError($"Failed auto-patching Harmony methods", ex);
+			Logger.Error($"Failed auto-patching Harmony methods", ex);
 			return false;
 		}
 	}
@@ -146,7 +146,7 @@ public class CarbonPlugin : RustPlugin
 		}
 		catch (Exception ex)
 		{
-			PrintError($"Failed unpatching Harmony methods", ex);
+			Logger.Error($"Failed unpatching Harmony methods", ex);
 			return false;
 		}
 	}

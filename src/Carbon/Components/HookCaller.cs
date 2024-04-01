@@ -45,9 +45,7 @@ public class HookCallerCommon
 		public object[] Take()
 		{
 			return _pool.Count != 0 ? _pool.Dequeue() : new object[_length];
-
 		}
-
 		public void Return(object[] array)
 		{
 			for (int i = 0; i < array.Length; i++)
@@ -86,40 +84,86 @@ public static class HookCaller
 {
 	public static HookCallerCommon Caller { get; set; }
 
-	public static TimeSpan GetHookTotalTime(uint hook)
+	public static IEnumerable<BaseHookable.CachedHook> GetAllFor(uint hook)
 	{
-		TimeSpan finalTime = default;
-
 		foreach (var package in ModLoader.LoadedPackages)
 		{
 			foreach (var plugin in package.Plugins)
 			{
-				foreach (var cache in plugin.HookCache)
+				foreach (var cache in plugin.HookPool)
 				{
-					LoopCache(cache.Key, cache.Value);
+					if (cache.Key != hook)
+					{
+						continue;
+					}
+
+					foreach (var cacheHook in cache.Value)
+					{
+						yield return cacheHook;
+					}
 				}
 			}
 		}
 
 		foreach (var module in Community.Runtime.ModuleProcessor.Modules)
 		{
-			foreach (var cache in module.HookCache)
+			foreach (var cache in module.HookPool)
 			{
-				LoopCache(cache.Key, cache.Value);
-			}
-		}
+				if (cache.Key != hook)
+				{
+					continue;
+				}
 
-		void LoopCache(uint loopHook, List<BaseHookable.CachedHook> cache)
+				foreach (var cacheHook in cache.Value)
+				{
+					yield return cacheHook;
+				}			}
+		}
+	}
+
+	public static TimeSpan GetTotalTime(uint hook)
+	{
+		TimeSpan finalValue = default;
+
+		foreach (var cacheInstance in GetAllFor(hook))
 		{
-			if (loopHook != hook) return;
-
-			foreach (var cacheInstance in cache)
-			{
-				finalTime += cacheInstance.HookTime;
-			}
+			finalValue += cacheInstance.HookTime;
 		}
 
-		return finalTime;
+		return finalValue;
+	}
+	public static int GetTotalFires(uint hook)
+	{
+		int finalValue = default;
+
+		foreach (var cacheInstance in GetAllFor(hook))
+		{
+			finalValue += cacheInstance.TimesFired;
+		}
+
+		return finalValue;
+	}
+	public static double GetTotalMemory(uint hook)
+	{
+		double finalValue = default;
+
+		foreach (var cacheInstance in GetAllFor(hook))
+		{
+			finalValue += cacheInstance.MemoryUsage;
+		}
+
+		return finalValue;
+	}
+	public static double GetTotalLagSpikes(uint hook)
+	{
+		double finalValue = default;
+
+		foreach (var cacheInstance in GetAllFor(hook))
+		{
+			finalValue += cacheInstance.LagSpikes;
+		}
+
+		return finalValue;
 	}
 
 	private static object CallStaticHook(uint hookId, BindingFlags flag = BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public, object[] args = null)

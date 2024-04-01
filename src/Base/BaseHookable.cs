@@ -18,10 +18,29 @@ public class BaseHookable
 	public List<HookMethodAttribute> HookMethods;
 	public List<PluginReferenceAttribute> PluginReferences;
 
-	public Dictionary<uint, List<CachedHook>> HookCache = new();
+	public HookCachePool HookPool = new();
 	public List<uint> IgnoredHooks = new();
 
-	public struct CachedHook
+	public class HookCachePool : Dictionary<uint, List<CachedHook>>
+	{
+		public void Reset()
+		{
+			foreach (var hook in Values.SelectMany(value => value))
+			{
+				hook.Reset();
+			}
+		}
+
+		public void EnableDebugging(bool wants)
+		{
+			foreach (var hook in Values.SelectMany(value => value))
+			{
+				hook.EnableDebugging(wants);
+			}
+		}
+	}
+
+	public class CachedHook
 	{
 		public string Name;
 		public uint Id;
@@ -33,36 +52,45 @@ public class BaseHookable
 		public bool IsByRef;
 		public bool IsAsync;
 		public bool IsDebugged;
-		public bool IsValid;
 
+		public int LagSpikes;
 		public int TimesFired;
 		public TimeSpan HookTime;
 		public double MemoryUsage;
 
-		public void EnableDebug(bool wants)
+		public void EnableDebugging(bool wants)
 		{
 			IsDebugged = wants;
 		}
-		public void Debug()
-		{
-			if (!IsDebugged)
-			{
-				return;
-			}
 
-			Logger.Log($" {Name}[{Id}] fired on {HookableName} {Hookable.ToPrettyString()} [{TimesFired:n0}|{HookTime.TotalMilliseconds:0}ms|{ByteEx.Format(MemoryUsage, shortName: true, stringFormat: "{0}{1}").ToLower()}]");
-		}
-		public void Tick()
+		public void Reset()
 		{
+			LagSpikes = 0;
+			TimesFired = 0;
+			HookTime = default;
+			MemoryUsage = 0;
+		}
+
+		public void OnFired(TimeSpan hookTime, double memoryUsed)
+		{
+			HookTime += hookTime;
+			MemoryUsage += memoryUsed;
+
 			TimesFired++;
 
-			Debug();
+			if (IsDebugged)
+			{
+				Logger.Log($" {Name}[{Id}] fired on {HookableName} {Hookable.ToPrettyString()} [{TimesFired:n0}|{HookTime.TotalMilliseconds:0}ms|{ByteEx.Format(MemoryUsage, shortName: true, stringFormat: "{0}{1}").ToLower()}]");
+			}
+		}
+		public void OnLagSpike()
+		{
+			LagSpikes++;
 		}
 
 		public static CachedHook Make(string hookName, uint hookId, BaseHookable hookable, MethodInfo method)
 		{
 			var parameters = method.GetParameters();
-			var isByRef = parameters.Any(x => x.ParameterType.IsByRef);
 			var hook = new CachedHook
 			{
 				Name = hookName,
@@ -70,12 +98,14 @@ public class BaseHookable
 				Hookable = hookable,
 				HookableName = hookable is BaseModule ? "module" : "plugin",
 				Method = method,
-				IsByRef = isByRef,
+				IsByRef = parameters.Any(x => x.ParameterType.IsByRef),
 				IsAsync = method.ReturnType?.GetMethod("GetAwaiter") != null ||
 						  method.GetCustomAttribute<AsyncStateMachineAttribute>() != null,
 				Parameters = parameters.Select(x => x.ParameterType).ToArray(),
 				InfoParameters = parameters,
-				IsValid = true
+#if DEBUG
+				IsDebugged = CorePlugin.EnforceHookDebugging,
+#endif
 			};
 
 			return hook;
@@ -117,7 +147,8 @@ public class BaseHookable
 	public TimeSpan CurrentHookTime { get; internal set; }
 	public static long CurrentMemory => GC.GetTotalMemory(false);
 	public static int CurrentGcCount => GC.CollectionCount(0);
-	public int CurrentHookFires => HookCache.Sum(x => x.Value.Sum(y => y.TimesFired));
+	public int CurrentHookFires => HookPool.Sum(x => x.Value.Sum(y => y.TimesFired));
+	public int CurrentLagSpikes => HookPool.Sum(x => x.Value.Sum(y => y.LagSpikes));
 	public bool HasGCCollected => _currentGcCount != CurrentGcCount;
 
 	public virtual void TrackInit()
@@ -201,7 +232,7 @@ public class BaseHookable
 
 		var hooksPresent = Hooks.Count != 0;
 
-		HookCache.Clear();
+		HookPool.Clear();
 
 		var methods = Type.GetMethods(flag);
 
@@ -217,9 +248,9 @@ public class BaseHookable
 				}
 			}
 
-			if (!HookCache.TryGetValue(id, out var hooks))
+			if (!HookPool.TryGetValue(id, out var hooks))
 			{
-				HookCache.Add(id, hooks = new());
+				HookPool.Add(id, hooks = new());
 			}
 
 			hooks.Add(CachedHook.Make(method.Name, id, this, method));
@@ -235,9 +266,9 @@ public class BaseHookable
 
 			var id = HookStringPool.GetOrAdd(string.IsNullOrEmpty(methodAttribute.Name) ? method.Name : methodAttribute.Name);
 
-			if (!HookCache.TryGetValue(id, out var hooks))
+			if (!HookPool.TryGetValue(id, out var hooks))
 			{
-				HookCache.Add(id, hooks = new());
+				HookPool.Add(id, hooks = new());
 			}
 
 			if(hooks.Any(x => x.Method == method))
