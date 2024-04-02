@@ -1,6 +1,6 @@
 ﻿/*
  *
- * Copyright (c) 2022-2024 Carbon Community 
+ * Copyright (c) 2022-2024 Carbon Community
  * All rights reserved.
  *
  */
@@ -190,6 +190,7 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 
 			try
 			{
+				item.Value?.Clear();
 				item.Value?.Dispose();
 			}
 			catch (Exception ex) { Logger.Error($" Processor error: '{item.Key}'", ex); }
@@ -234,6 +235,7 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 
 	public virtual void Clear(string id, IBaseProcessor.IProcess process)
 	{
+		process?.Clear();
 		process?.Dispose();
 		process = null;
 		Remove(id);
@@ -310,7 +312,7 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 		return false;
 	}
 
-	public class Process : IBaseProcessor.IProcess, IDisposable
+	public abstract class Process : IBaseProcessor.IProcess, IDisposable
 	{
 		public IBaseProcessor Processor { get; internal set; }
 		public virtual IBaseProcessor.IParser Parser { get; }
@@ -320,7 +322,8 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 		internal bool _hasChanged;
 		internal bool _hasRemoved;
 
-		public virtual void Dispose() { }
+		public abstract void Clear();
+		public abstract void Dispose();
 		public virtual void Execute(IBaseProcessor processor)
 		{
 			Processor = processor;
