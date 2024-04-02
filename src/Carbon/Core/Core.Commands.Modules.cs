@@ -67,7 +67,7 @@ public partial class CorePlugin : CarbonPlugin
 		arg.ReplyWith($"Saved {Community.Runtime.ModuleProcessor.Modules.Count:n0} module configs and data files.");
 	}
 
-	[ConsoleCommand("savemoduleconfig", "Saves Carbon module config & data file.")]
+	[ConsoleCommand("savemodulecfg", "Saves Carbon module config & data file.")]
 	[AuthLevel(2)]
 	private void SaveModuleConfig(ConsoleSystem.Arg arg)
 	{
@@ -88,7 +88,7 @@ public partial class CorePlugin : CarbonPlugin
 		arg.ReplyWith($"Saved '{module.Name}' module config & data file.");
 	}
 
-	[ConsoleCommand("loadmoduleconfig", "Loads Carbon module config & data file.")]
+	[ConsoleCommand("loadmodulecfg", "Loads Carbon module config & data file.")]
 	[AuthLevel(2)]
 	private void LoadModuleConfig(ConsoleSystem.Arg arg)
 	{
