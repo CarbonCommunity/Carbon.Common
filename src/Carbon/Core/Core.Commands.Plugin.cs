@@ -33,6 +33,12 @@ public partial class CorePlugin : CarbonPlugin
 				if (!string.IsNullOrEmpty(path.Value))
 				{
 					Community.Runtime.ScriptProcessor.ClearIgnore(path.Value);
+
+					if (Community.Runtime.ScriptProcessor.InstanceBuffer.TryGetValue(path.Key, out IScriptProcessor.IProcess instance))
+					{
+						instance.Clear();
+					}
+
 					Community.Runtime.ScriptProcessor.Prepare(path.Key, path.Value);
 					return;
 				}
@@ -59,6 +65,7 @@ public partial class CorePlugin : CarbonPlugin
 							}
 							else
 							{
+								plugin.ProcessorProcess.Clear();
 								plugin.ProcessorProcess.Dispose();
 								plugin.ProcessorProcess.Execute(plugin.Processor);
 								mod.Plugins.Remove(plugin);

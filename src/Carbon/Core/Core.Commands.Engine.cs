@@ -144,8 +144,13 @@ public partial class CorePlugin : CarbonPlugin
 
 				using var failed = new StringTable("*", $"Failed Plugins ({ModLoader.FailedCompilations.Count})", "Line", "Column", "Stacktrace");
 
-				foreach (var compilation in ModLoader.FailedCompilations)
+				foreach (var compilation in ModLoader.FailedCompilations.Values)
 				{
+					if (!compilation.IsValid())
+					{
+						continue;
+					}
+
 					var firstError = compilation.Errors[0];
 
 					SplitMessageUp(true, failed, compilation, firstError, 0);
