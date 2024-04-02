@@ -117,7 +117,7 @@ public partial class CorePlugin : CarbonPlugin
 		}
 	}
 
-	[ConsoleCommand("hooks")]
+	[ConsoleCommand("hooks", "Prints total information for all currently active and patched hooks in the server. (syntax: c.hooks [loaded] [-p|-s|-d])")]
 	[AuthLevel(2)]
 	private void HooksCall(ConsoleSystem.Arg args)
 	{

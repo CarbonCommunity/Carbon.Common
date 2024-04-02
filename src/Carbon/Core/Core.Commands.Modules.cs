@@ -20,7 +20,7 @@ public partial class CorePlugin : CarbonPlugin
 		if (!arg.HasArgs(2)) return;
 
 		var moduleName = arg.GetString(0);
-		var hookable = Community.Runtime.ModuleProcessor.Modules.FirstOrDefault(x => x.Name == moduleName);
+		var hookable = Community.Runtime.ModuleProcessor.Modules.FirstOrDefault(x => x.Name.Equals(moduleName, StringComparison.OrdinalIgnoreCase) || x.Name.Contains(moduleName, CompareOptions.OrdinalIgnoreCase));
 		var module = hookable?.To<BaseModule>();
 
 		if (module == null)
@@ -61,8 +61,7 @@ public partial class CorePlugin : CarbonPlugin
 	{
 		foreach (var hookable in Community.Runtime.ModuleProcessor.Modules)
 		{
-			var module = hookable.To<IModule>();
-			module.Save();
+			hookable.To<IModule>().Save();
 		}
 
 		arg.ReplyWith($"Saved {Community.Runtime.ModuleProcessor.Modules.Count:n0} module configs and data files.");
@@ -74,8 +73,9 @@ public partial class CorePlugin : CarbonPlugin
 	{
 		if (!arg.HasArgs(1)) return;
 
-		var hookable = Community.Runtime.ModuleProcessor.Modules.FirstOrDefault(x => x.Name == arg.Args[0]);
-		var module = hookable.To<IModule>();
+		var moduleName = arg.GetString(0);
+		var hookable = Community.Runtime.ModuleProcessor.Modules.FirstOrDefault(x => x.Name.Equals(moduleName, StringComparison.OrdinalIgnoreCase) || x.Name.Contains(moduleName, CompareOptions.OrdinalIgnoreCase));
+		var module = hookable?.To<IModule>();
 
 		if (module == null)
 		{
@@ -95,8 +95,8 @@ public partial class CorePlugin : CarbonPlugin
 		if (!arg.HasArgs(1)) return;
 
 		var moduleName = arg.GetString(0);
-		var hookable = Community.Runtime.ModuleProcessor.Modules.FirstOrDefault(x => x.Name == moduleName);
-		var module = hookable.To<IModule>();
+		var hookable = Community.Runtime.ModuleProcessor.Modules.FirstOrDefault(x => x.Name.Equals(moduleName, StringComparison.OrdinalIgnoreCase) || x.Name.Contains(moduleName, CompareOptions.OrdinalIgnoreCase));
+		var module = hookable?.To<IModule>();
 
 		if (module == null)
 		{
@@ -201,7 +201,7 @@ public partial class CorePlugin : CarbonPlugin
 		var name = arg.GetString(0);
 		var mode = arg.GetString(1);
 		var flip = arg.GetString(2).Equals("-asc");
-		var module = Community.Runtime.ModuleProcessor.Modules.FirstOrDefault(x => x.Name.Equals(name, StringComparison.OrdinalIgnoreCase)) as BaseModule;
+		var module = Community.Runtime.ModuleProcessor.Modules.FirstOrDefault(x => x.Name.Equals(name, StringComparison.OrdinalIgnoreCase) || x.Name.Contains(name, CompareOptions.OrdinalIgnoreCase)) as BaseModule;
 
 		if (module == null)
 		{
@@ -285,8 +285,8 @@ public partial class CorePlugin : CarbonPlugin
 	{
 		if (!arg.HasArgs(1)) return;
 
-		var hookable = Community.Runtime.ModuleProcessor.Modules.FirstOrDefault(x => x.Name == arg.Args[0]);
-		var module = hookable.To<IModule>();
+		var hookable = Community.Runtime.ModuleProcessor.Modules.FirstOrDefault(x => x.Name.Equals(arg.GetString(0)) || x.Name.Contains(arg.GetString(0), CompareOptions.OrdinalIgnoreCase));
+		var module = hookable?.To<IModule>();
 
 		if (module == null)
 		{
