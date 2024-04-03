@@ -14,9 +14,7 @@ public class RustPlugin : Plugin
 	public bool IsPrecompiled { get; set; }
 	public bool IsExtension { get; set; }
 
-	public Permission permission;
 	public Lang lang;
-	public Command cmd;
 	public Server server;
 	public Oxide.Core.Libraries.Plugins plugins;
 	public Timers timer;

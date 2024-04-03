@@ -63,16 +63,16 @@ public class OxideConfig : ConfigFile
 	public OxideOptions Options { get; set; }
 
 	[JsonProperty(PropertyName = "Commands")]
-	public CommandOptions Commands { get; set; }
+	public CommandOptions Commands { get; set; } = new();
 
 	[JsonProperty(PropertyName = "Plugin Compiler")]
-	public CompilerOptions Compiler { get; set; }
+	public CompilerOptions Compiler { get; set; } = new();
 
 	[JsonProperty(PropertyName = "OxideConsole")]
-	public OxideConsole Console { get; set; }
+	public OxideConsole Console { get; set; } = new();
 
 	[JsonProperty(PropertyName = "OxideRcon")]
-	public OxideRcon Rcon { get; set; }
+	public OxideRcon Rcon { get; set; } = new();
 
 	public OxideConfig(string filename) : base(filename)
 	{
