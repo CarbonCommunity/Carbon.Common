@@ -115,7 +115,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 						ap.SetStorage(tab, "player", player.UserIDString);
 						PermissionsTab.GeneratePlayers(perms, permission, ap);
 						PermissionsTab.GenerateHookables(perms, ap, permission, permission.FindUser(player.UserIDString), null, PermissionsTab.HookableTypes.Plugin);
-					}, (_) => Tab.OptionButton.Types.Important);
+					}, _ => Tab.OptionButton.Types.Important);
 				}
 			}
 
@@ -326,6 +326,15 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			tab.AddRange(1, "Hunger", 0, player.metabolism.calories.max, _ => player.metabolism.calories.value, (_, value) => player.metabolism.calories.SetValue(value), _ => $"{player.metabolism.calories.value:0}");
 			tab.AddRange(1, "Radiation", 0, player.metabolism.radiation_poison.max, _ => player.metabolism.radiation_poison.value, (_, value) => player.metabolism.radiation_poison.SetValue(value), _ => $"{player.metabolism.radiation_poison.value:0}");
 			tab.AddRange(1, "Bleeding", 0, player.metabolism.bleeding.max, _ => player.metabolism.bleeding.value, (_, value) => player.metabolism.bleeding.SetValue(value), _ => $"{player.metabolism.bleeding.value:0}");
+			tab.AddButton(1, "Empower Stats", ap =>
+			{
+				player.health = player.MaxHealth();
+				player.metabolism.hydration.value = player.metabolism.hydration.max;
+				player.metabolism.calories.value = player.metabolism.calories.max;
+				player.metabolism.radiation_poison.value = 0;
+				player.metabolism.bleeding.value = 0;
+
+			});
 
 			if (Singleton.HasAccess(aap.Player, "players.craft_queue"))
 			{
