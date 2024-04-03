@@ -14,16 +14,13 @@ public class RustPlugin : Plugin
 	public bool IsPrecompiled { get; set; }
 	public bool IsExtension { get; set; }
 
-	public Permission permission;
 	public Lang lang;
-	public Command cmd;
 	public Server server;
 	public Oxide.Core.Libraries.Plugins plugins;
 	public Timers timer;
 	public OxideMod mod;
 	public WebRequests webrequest;
 	public Oxide.Game.Rust.Libraries.Rust rust;
-	public Persistence persistence;
 	public Covalence covalence;
 
 	public Player Player { get { return rust.Player; } private set { } }
@@ -452,6 +449,4 @@ public class RustPlugin : Plugin
 	}
 
 	#endregion
-
-	public class Persistence : FacepunchBehaviour { }
 }
