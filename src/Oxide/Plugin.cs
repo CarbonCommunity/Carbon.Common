@@ -15,6 +15,9 @@ namespace Oxide.Core.Plugins
 	public class Plugin : BaseHookable, IDisposable
 	{
 		public PluginManager Manager { get; set; }
+		public Persistence persistence;
+
+		public class Persistence : FacepunchBehaviour { }
 
 		public bool IsCorePlugin { get; set; }
 

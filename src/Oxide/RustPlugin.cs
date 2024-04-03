@@ -23,7 +23,6 @@ public class RustPlugin : Plugin
 	public OxideMod mod;
 	public WebRequests webrequest;
 	public Oxide.Game.Rust.Libraries.Rust rust;
-	public Persistence persistence;
 	public Covalence covalence;
 
 	public Player Player { get { return rust.Player; } private set { } }
@@ -452,6 +451,4 @@ public class RustPlugin : Plugin
 	}
 
 	#endregion
-
-	public class Persistence : FacepunchBehaviour { }
 }

@@ -32,6 +32,10 @@ public class OxideMod
 
 	public bool IsShuttingDown { get; private set; }
 
+	private ExtensionManager extensionManager;
+	public IEnumerable<PluginLoader> GetPluginLoaders() => extensionManager.GetPluginLoaders();
+	public OxideConfig Config { get; private set; } = new(Path.Combine(Defines.GetRootFolder(), "oxide.config.json"));
+
 	internal static readonly Version _assemblyVersion = Assembly.GetExecutingAssembly().GetName().Version;
 	internal List<Extension> _extensions = new();
 
