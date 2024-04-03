@@ -328,12 +328,11 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			tab.AddRange(1, "Bleeding", 0, player.metabolism.bleeding.max, _ => player.metabolism.bleeding.value, (_, value) => player.metabolism.bleeding.SetValue(value), _ => $"{player.metabolism.bleeding.value:0}");
 			tab.AddButton(1, "Empower Stats", ap =>
 			{
-				player.health = player.MaxHealth();
-				player.metabolism.hydration.value = player.metabolism.hydration.max;
-				player.metabolism.calories.value = player.metabolism.calories.max;
-				player.metabolism.radiation_poison.value = 0;
-				player.metabolism.bleeding.value = 0;
-
+				player.SetHealth(player.MaxHealth());
+				player.metabolism.hydration.SetValue(player.metabolism.hydration.max);
+				player.metabolism.calories.SetValue(player.metabolism.calories.max);
+				player.metabolism.radiation_poison.SetValue(0);
+				player.metabolism.bleeding.SetValue(0);
 			});
 
 			if (Singleton.HasAccess(aap.Player, "players.craft_queue"))
