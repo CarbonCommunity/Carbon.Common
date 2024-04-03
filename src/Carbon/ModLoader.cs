@@ -740,7 +740,6 @@ public static class ModLoader
 		{
 			RollbackType = type;
 		}
-
 		public void LoadRollbackType()
 		{
 			if (RollbackType == null)
@@ -748,9 +747,7 @@ public static class ModLoader
 				return;
 			}
 
-			var info = RollbackType.GetCustomAttribute<InfoAttribute>();
-			var title = info?.Title?.Replace(" ", string.Empty);
-			var existentPlugin = FindPlugin(title);
+			var existentPlugin = FindPlugin(GetRollbackTypeName());
 
 			if (existentPlugin != null)
 			{
@@ -763,6 +760,16 @@ public static class ModLoader
 			}, precompiled: true);
 			plugin.InternalCallHookOverriden = true;
 			plugin.IsPrecompiled = false;
+		}
+
+		public string GetRollbackTypeName()
+		{
+			if (RollbackType == null)
+			{
+				return string.Empty;
+			}
+
+			return  RollbackType.GetCustomAttribute<InfoAttribute>()?.Title?.Replace(" ", string.Empty);
 		}
 
 		public bool IsValid()

@@ -229,19 +229,19 @@ public class Community
 			Config = JsonConvert.DeserializeObject<Config>(OsEx.File.ReadText(Defines.GetConfigFile()));
 		}
 
-		if (Config.Debugging.ConditionalCompilationSymbols == null)
+		if (Config.Compiler.ConditionalCompilationSymbols == null)
 		{
-			Config.Debugging.ConditionalCompilationSymbols = new();
+			Config.Compiler.ConditionalCompilationSymbols = new();
 			needsSave = true;
 		}
 
-		if (!Config.Debugging.ConditionalCompilationSymbols.Contains("CARBON"))
-			Config.Debugging.ConditionalCompilationSymbols.Add("CARBON");
+		if (!Config.Compiler.ConditionalCompilationSymbols.Contains("CARBON"))
+			Config.Compiler.ConditionalCompilationSymbols.Add("CARBON");
 
-		if (!Config.Debugging.ConditionalCompilationSymbols.Contains("RUST"))
-			Config.Debugging.ConditionalCompilationSymbols.Add("RUST");
+		if (!Config.Compiler.ConditionalCompilationSymbols.Contains("RUST"))
+			Config.Compiler.ConditionalCompilationSymbols.Add("RUST");
 
-		Config.Debugging.ConditionalCompilationSymbols = Config.Debugging.ConditionalCompilationSymbols.Distinct().ToList();
+		Config.Compiler.ConditionalCompilationSymbols = Config.Compiler.ConditionalCompilationSymbols.Distinct().ToList();
 
 		if (Config.CommandPrefixes == null)
 		{
