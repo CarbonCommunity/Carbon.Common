@@ -133,7 +133,7 @@ public class Timers : Library
 				{
 					rustPlugin.LogError($"Timer {time}s has failed:", ex);
 				}
-				
+
 				timer.Destroy();
 				Pool.Free(ref timer);
 			}

@@ -84,6 +84,10 @@ public partial class CorePlugin : CarbonPlugin
 	[AuthLevel(2)]
 	private string Language { get { return Community.Runtime.Config.Language; } set { Community.Runtime.Config.Language = value; Community.Runtime.SaveConfig(); } }
 
+	[CommandVar("unloadonfailure", "Unload already loaded plugins when recompilation attempt fails. (Disabled by default)")]
+	[AuthLevel(2)]
+	private bool UnloadOnFailure { get { return Community.Runtime.Config.Compiler.UnloadOnFailure; } set { Community.Runtime.Config.Compiler.UnloadOnFailure = value; Community.Runtime.SaveConfig(); } }
+
 	[CommandVar("bypassadmincooldowns", "Bypasses the command cooldowns for admin-authed players.")]
 	[AuthLevel(2)]
 	private bool BypassAdminCooldowns { get { return Community.Runtime.Config.Permissions.BypassAdminCooldowns; } set { Community.Runtime.Config.Permissions.BypassAdminCooldowns = value; Community.Runtime.SaveConfig(); } }
