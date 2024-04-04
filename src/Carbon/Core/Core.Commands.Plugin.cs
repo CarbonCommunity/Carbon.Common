@@ -12,6 +12,139 @@ namespace Carbon.Core;
 
 public partial class CorePlugin : CarbonPlugin
 {
+	[ConsoleCommand("plugins", "Prints the list of mods and their loaded plugins. Eg. c.plugins [-j|--j|-json|-abc|--json|-t|-m|-f|-ls] [-asc]")]
+	[AuthLevel(2)]
+	private void Plugins(ConsoleSystem.Arg arg)
+	{
+		if (!arg.IsPlayerCalledOrAdmin()) return;
+
+		var mode = arg.GetString(0);
+		var flip = arg.GetString(0).Equals("-asc") || arg.GetString(1).Equals("-asc");
+
+		switch (mode)
+		{
+			case "-j":
+			case "--j":
+			case "-json":
+			case "--json":
+				arg.ReplyWith(ModLoader.LoadedPackages);
+				break;
+
+			default:
+				{
+					using var body = new StringTable("#", "Package", "Author", "Version", "Hook Time", "Hook Fires", "Hook Memory", "Hook Lag", "Compile Time", "Uptime");
+					var count = 1;
+
+					foreach (var mod in ModLoader.LoadedPackages)
+					{
+						body.AddRow($"{count:n0}",
+							$"{mod.Name}{(mod.Plugins.Count >= 1 ? $" ({mod.Plugins.Count:n0})" : string.Empty)}",
+							string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty,
+							string.Empty, string.Empty);
+
+						IEnumerable<RustPlugin> array = mode switch
+						{
+							"-abc" => mod.Plugins.OrderBy(x => x.Name),
+							"-t" => (flip
+								? mod.Plugins.OrderBy(x => x.TotalHookTime)
+								: mod.Plugins.OrderByDescending(x => x.TotalHookTime)),
+							"-m" => (flip
+								? mod.Plugins.OrderBy(x => x.TotalMemoryUsed)
+								: mod.Plugins.OrderByDescending(x => x.TotalMemoryUsed)),
+							"-f" => (flip
+								? mod.Plugins.OrderBy(x => x.CurrentHookFires)
+								: mod.Plugins.OrderByDescending(x => x.CurrentHookFires)),
+							"-ls" => (flip
+								? mod.Plugins.OrderBy(x => x.CurrentLagSpikes)
+								: mod.Plugins.OrderByDescending(x => x.CurrentLagSpikes)),
+							_ => (flip ? mod.Plugins.AsEnumerable().Reverse() : mod.Plugins.AsEnumerable())
+						};
+
+						foreach (var plugin in array)
+						{
+							var hookTimeAverageValue =
+#if DEBUG
+								(float)plugin.HookTimeAverage.CalculateAverage();
+#else
+								0;
+#endif
+							var memoryAverageValue =
+#if DEBUG
+								(float)plugin.MemoryAverage.CalculateAverage();
+#else
+								0;
+#endif
+							var hookTimeAverage = Mathf.RoundToInt(hookTimeAverageValue) == 0
+								? string.Empty
+								: $" (avg {hookTimeAverageValue:0}ms)";
+							var memoryAverage = Mathf.RoundToInt(memoryAverageValue) == 0
+								? string.Empty
+								: $" (avg {ByteEx.Format(memoryAverageValue, shortName: true, stringFormat: "{0}{1}").ToLower()})";
+							body.AddRow(string.Empty, plugin.Name, plugin.Author, $"v{plugin.Version}",
+								plugin.TotalHookTime.TotalMilliseconds == 0 ? string.Empty : $"{plugin.TotalHookTime.TotalMilliseconds:0}ms{hookTimeAverage}",
+								plugin.CurrentHookFires == 0 ? string.Empty : $"{plugin.CurrentHookFires}",
+								plugin.TotalMemoryUsed == 0 ? string.Empty : $"{ByteEx.Format(plugin.TotalMemoryUsed, shortName: true, stringFormat: "{0}{1}").ToLower()}{memoryAverage}",
+								plugin.CurrentLagSpikes == 0 ? string.Empty : $"{plugin.CurrentLagSpikes}",
+								plugin.IsPrecompiled
+									? string.Empty
+									: $"{plugin.CompileTime.TotalMilliseconds:0}ms [{plugin.InternalCallHookGenTime.TotalMilliseconds:0}ms]",
+								$"{TimeEx.Format(plugin.Uptime)}");
+						}
+
+						count++;
+					}
+
+					using var unloaded = new StringTable("*", $"Unloaded Plugins ({Community.Runtime.ScriptProcessor.IgnoreList.Count})");
+
+					foreach (var unloadedPlugin in Community.Runtime.ScriptProcessor.IgnoreList)
+					{
+						unloaded.AddRow(string.Empty, Path.GetFileName(unloadedPlugin));
+					}
+
+					using var failed = new StringTable("*", $"Failed Plugins ({ModLoader.FailedCompilations.Count})", "Line", "Column", "Stacktrace");
+
+					foreach (var compilation in ModLoader.FailedCompilations.Values)
+					{
+						if (!compilation.IsValid())
+						{
+							continue;
+						}
+
+						var firstError = compilation.Errors[0];
+
+						SplitMessageUp(true, failed, compilation, firstError, 0);
+
+						foreach (var error in compilation.Errors.Skip(1))
+						{
+							SplitMessageUp(true, failed, compilation, error, 0);
+						}
+
+						static void SplitMessageUp(bool initial, StringTable table, ModLoader.FailedCompilation compilation, ModLoader.Trace trace, int skip)
+						{
+							const int size = 150;
+
+							var isAboveSize = (trace.Message.Length - skip) > size;
+
+							table.AddRow(
+								string.Empty,
+								initial ? Path.GetFileName(compilation.File) : string.Empty,
+								isAboveSize || initial ? $"{trace.Line}" : string.Empty,
+								isAboveSize || initial ? $"{trace.Column}" : string.Empty,
+								$"{trace.Message.Substring(skip, size.Clamp(0, trace.Message.Length - skip))}{(isAboveSize ? "..." : string.Empty)}");
+
+							if (isAboveSize)
+							{
+								SplitMessageUp(false, table, compilation, trace, skip + size);
+							}
+						}
+					}
+
+					arg.ReplyWith($"{body.Write(StringTable.FormatTypes.None)}\n{unloaded.Write(StringTable.FormatTypes.None)}\n{failed.Write(StringTable.FormatTypes.None)}");
+					break;
+				}
+		}
+	}
+
 	[ConsoleCommand("reload", "Reloads all or specific mods / plugins. E.g 'c.reload * <except[]>'' to reload everything.")]
 	[AuthLevel(2)]
 	private void Reload(ConsoleSystem.Arg arg)
