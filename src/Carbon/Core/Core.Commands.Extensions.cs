@@ -15,7 +15,8 @@ public partial class CorePlugin : CarbonPlugin
 	[AuthLevel(2)]
 	private void ReloadExtensions(ConsoleSystem.Arg arg)
 	{
-		Community.Runtime.AssemblyEx.Extensions.Watcher.TriggerAll(WatcherChangeTypes.Changed);
+		arg.ReplyWith("Command temporarily disabled.");
+		// Community.Runtime.AssemblyEx.Extensions.Watcher.TriggerAll(WatcherChangeTypes.Changed);
 	}
 
 	[ConsoleCommand("extensions", "Prints a list of all currently loaded extensions.")]

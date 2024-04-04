@@ -22,14 +22,20 @@ public class Config
 	public PermissionsConfig Permissions { get; set; } = new();
 	public DebuggingConfig Debugging { get; set; } = new();
 	public LoggingConfig Logging { get; set; } = new();
+	public CompilerConfig Compiler { get; set; } = new();
 	public MiscConfig Misc { get; set; } = new();
+
+	public class CompilerConfig
+	{
+		public bool UnloadOnFailure { get; set; } = false;
+		public List<string> ConditionalCompilationSymbols { get; set; }
+	}
 
 	public class WatchersConfig
 	{
 		public bool ScriptWatchers { get; set; } = true;
 		public bool ZipScriptWatchers { get; set; } = true;
 		public SearchOption ScriptWatcherOption { get; set; } = SearchOption.TopDirectoryOnly;
-		public bool FileNameCheck { get; set; } = true;
 	}
 
 	public class PermissionsConfig
@@ -50,7 +56,6 @@ public class Config
 #else
 			true; // Set false when we're out of development
 #endif
-		public List<string> ConditionalCompilationSymbols { get; set; }
 		public int HookLagSpikeThreshold = 1000;
 	}
 

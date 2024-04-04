@@ -15,9 +15,9 @@ public partial class CorePlugin : CarbonPlugin
 	{
 		var value = arg.GetString(0);
 
-		if (!Community.Runtime.Config.Debugging.ConditionalCompilationSymbols.Contains(value))
+		if (!Community.Runtime.Config.Compiler.ConditionalCompilationSymbols.Contains(value))
 		{
-			Community.Runtime.Config.Debugging.ConditionalCompilationSymbols.Add(value);
+			Community.Runtime.Config.Compiler.ConditionalCompilationSymbols.Add(value);
 			Community.Runtime.SaveConfig();
 			arg.ReplyWith($"Added conditional '{value}'.");
 		}
@@ -51,9 +51,9 @@ public partial class CorePlugin : CarbonPlugin
 	{
 		var value = arg.GetString(0);
 
-		if (Community.Runtime.Config.Debugging.ConditionalCompilationSymbols.Contains(value))
+		if (Community.Runtime.Config.Compiler.ConditionalCompilationSymbols.Contains(value))
 		{
-			Community.Runtime.Config.Debugging.ConditionalCompilationSymbols.Remove(value);
+			Community.Runtime.Config.Compiler.ConditionalCompilationSymbols.Remove(value);
 			Community.Runtime.SaveConfig();
 			arg.ReplyWith($"Removed conditional '{value}'.");
 		}
@@ -85,6 +85,6 @@ public partial class CorePlugin : CarbonPlugin
 	[AuthLevel(2)]
 	private void Conditionals(ConsoleSystem.Arg arg)
 	{
-		arg.ReplyWith($"Conditionals ({Community.Runtime.Config.Debugging.ConditionalCompilationSymbols.Count:n0}): {Community.Runtime.Config.Debugging.ConditionalCompilationSymbols.ToString(", ", " and ")}");
+		arg.ReplyWith($"Conditionals ({Community.Runtime.Config.Compiler.ConditionalCompilationSymbols.Count:n0}): {Community.Runtime.Config.Compiler.ConditionalCompilationSymbols.ToString(", ", " and ")}");
 	}
 }

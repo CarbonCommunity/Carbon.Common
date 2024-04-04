@@ -14,10 +14,9 @@ public static class ModLoader
 {
 	public static bool IsBatchComplete { get; set; }
 	public static List<ModPackage> LoadedPackages = new();
-	public static List<FailedCompilation> FailedCompilations = new();
+	public static Dictionary<string, FailedCompilation> FailedCompilations = new();
 
-	internal static List<Assembly> AssemblyCache { get; } = new();
-	internal static Dictionary<string, Assembly> AssemblyDictionaryCache { get; } = new();
+	internal static Dictionary<string, Type> TypeDictionaryCache { get; } = new();
 	internal static Dictionary<string, List<string>> PendingRequirees { get; } = new();
 	internal static List<string> PostBatchFailedRequirees { get; } = new();
 	internal static bool FirstLoadSinceStartup { get; set; } = true;
@@ -26,6 +25,23 @@ public static class ModLoader
 	internal const string RUST_PLUGIN = "RustPlugin";
 	internal const string COVALENCE_PLUGIN = "CovalencePlugin";
 
+	public static FailedCompilation GetOrCreateFailedCompilation(string file, bool clear = false)
+	{
+		if (!FailedCompilations.TryGetValue(file, out var result))
+		{
+			FailedCompilations[file] = result = new()
+			{
+				File = file
+			};
+		}
+
+		if (clear)
+		{
+			result.Clear();
+		}
+
+		return result;
+	}
 	public static void RegisterPackage(ModPackage package)
 	{
 		if (!LoadedPackages.Contains(package))
@@ -109,21 +125,24 @@ public static class ModLoader
 	}
 	public static void ClearAllErrored()
 	{
-		foreach (var mod in FailedCompilations)
+		foreach (var mod in FailedCompilations.Values)
 		{
-			Array.Clear(mod.Errors, 0, mod.Errors.Length);
+			mod.Clear();
+		}
+	}
+
+	public static Type GetRegisteredType(string key)
+	{
+		if (TypeDictionaryCache.TryGetValue(key, out var type))
+		{
+			return type;
 		}
 
-		FailedCompilations.Clear();
+		return null;
 	}
-
-	public static void RegisterAssembly(Assembly assembly)
+	public static void RegisterType(string key, Type assembly)
 	{
-		AssemblyCache.Add(assembly);
-	}
-	public static void RegisterAssembly(string key, Assembly assembly)
-	{
-		AssemblyDictionaryCache[key] = assembly;
+		TypeDictionaryCache[key] = assembly;
 	}
 
 	public static void UnloadCarbonMods(bool includeCore = false)
@@ -206,10 +225,17 @@ public static class ModLoader
 			return false;
 		}
 
-		var title = info.Title?.Replace(" ", string.Empty);
+		var title = info.Title;
 		var author = info.Author;
 		var version = info.Version;
 		var description = desc == null ? string.Empty : desc.Description;
+
+		var existentPlugin = FindPlugin(title) ?? FindPlugin(type.Name);
+
+		if (existentPlugin != null)
+		{
+			UninitializePlugin(existentPlugin);
+		}
 
 		plugin.SetProcessor(Community.Runtime.ScriptProcessor);
 		plugin.SetupMod(package, title, author, version, description);
@@ -694,19 +720,75 @@ public static class ModLoader
 	}
 
 	[JsonObject(MemberSerialization.OptIn)]
-	public struct FailedCompilation
+	public class FailedCompilation
 	{
 		[JsonProperty] public string File;
-		[JsonProperty] public Trace[] Errors;
-		[JsonProperty] public Trace[] Warnings;
+		[JsonProperty] public List<Trace> Errors = new();
+		[JsonProperty] public List<Trace> Warnings = new();
+		public Type RollbackType;
 
-		[JsonObject(MemberSerialization.OptIn)]
-		public struct Trace
+		public void AppendErrors(IEnumerable<Trace> traces)
 		{
-			[JsonProperty] public string Number;
-			[JsonProperty] public string Message;
-			[JsonProperty] public int Column;
-			[JsonProperty] public int Line;
+			Errors.AddRange(traces);
 		}
+		public void AppendWarnings(IEnumerable<Trace> traces)
+		{
+			Warnings.AddRange(traces);
+		}
+
+		public void SetRollbackType(Type type)
+		{
+			RollbackType = type;
+		}
+		public void LoadRollbackType()
+		{
+			if (RollbackType == null)
+			{
+				return;
+			}
+
+			var existentPlugin = FindPlugin(GetRollbackTypeName());
+
+			if (existentPlugin != null)
+			{
+				return;
+			}
+
+			InitializePlugin(RollbackType, out var plugin, Community.Runtime.Plugins, plugin =>
+			{
+				Logger.Warn($"Rollback for plugin '{plugin.ToPrettyString()}' due to compilation failure");
+			}, precompiled: true);
+			plugin.InternalCallHookOverriden = true;
+			plugin.IsPrecompiled = false;
+		}
+
+		public string GetRollbackTypeName()
+		{
+			if (RollbackType == null)
+			{
+				return string.Empty;
+			}
+
+			return  RollbackType.GetCustomAttribute<InfoAttribute>()?.Title?.Replace(" ", string.Empty);
+		}
+
+		public bool IsValid()
+		{
+			return Errors != null && Errors.Count > 0;
+		}
+		public void Clear()
+		{
+			Errors?.Clear();
+			Warnings?.Clear();
+		}
+	}
+
+	[JsonObject(MemberSerialization.OptIn)]
+	public struct Trace
+	{
+		[JsonProperty] public string Number;
+		[JsonProperty] public string Message;
+		[JsonProperty] public int Column;
+		[JsonProperty] public int Line;
 	}
 }

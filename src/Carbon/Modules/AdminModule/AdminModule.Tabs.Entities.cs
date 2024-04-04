@@ -247,7 +247,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					entity.SendNetworkUpdate();
 				});
 				tab.AddButton(column, "Edit Flags", ap => { DrawEntitySettings(tab, 0, ap); DrawEntityFlags(tab, ap, 1); });
-				tab.AddInput(column, "Position", ap => multiSelection ? MultiselectionReplacement : $"{entity.transform.position}", null);
+				tab.AddInput(column, "Position", ap => multiSelection ? MultiselectionReplacement : $"{entity.transform.position} [{PhoneController.PositionToGridCoord(entity.transform.position)}]", null);
 				tab.AddInput(column, "Rotation", ap => multiSelection ? MultiselectionReplacement : $"{entity.ServerRotation.eulerAngles}", null);
 
 				if (sameTypeSelection)
@@ -297,7 +297,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 									ap.Player.inventory.loot.MarkDirty();
 									ap.Player.inventory.loot.SendImmediate();
 
-									ap.Player.ClientRPCPlayer(null, ap.Player, "RPC_OpenLootPanel", storage.panelName);
+									ap.Player.ClientRPC(RpcTarget.Player("RPC_OpenLootPanel", ap.Player), storage.panelName);
 								});
 							});
 							tab.AddText(1, "To loot a backpack, drag the backpack item over any hotbar slots while looting an entity", 10, "1 1 1 0.4");
@@ -384,7 +384,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 									var duration = modal.Get<float>("duration").Clamp(0f, float.MaxValue);
 									player.State.unHostileTimestamp = Network.TimeEx.currentTimestamp + duration;
 									player.DirtyPlayerState();
-									player.ClientRPCPlayer(null, player, "SetHostileLength", duration);
+									player.ClientRPC(RpcTarget.Player("SetHostileLength", player), duration);
 									fields.Clear();
 									fields = null;
 									SelectEntity(tab, ap3, owner);

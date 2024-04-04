@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Text;
+using Facepunch;
 using Logger = Carbon.Logger;
 
 /*
@@ -31,78 +32,64 @@ public class WebRequests : Library
 		ServicePointManager.DefaultConnectionLimit = 200;
 	}
 
-	public WebRequest Enqueue(string url, string body, Action<int, string> callback, Plugin owner, RequestMethod method = RequestMethod.GET, Dictionary<string, string> headers = null, float timeout = 0f, Action<int, object, Exception> onException = null)
+	public WebRequest Enqueue(string url, string body, Action<int, string> callback, Plugin owner, RequestMethod method = RequestMethod.GET, Dictionary<string, string> headers = null, float timeout = 0f)
 	{
 		return new WebRequest(url, callback, owner)
 		{
 			Method = method.ToString(),
 			RequestHeaders = headers,
 			Timeout = timeout,
-			Body = body,
-			ErrorCallback = onException
+			Body = body
 		}.Start();
 	}
-
-	public async Task<WebRequest> EnqueueAsync(string url, string body, Action<int, string> callback, Plugin owner, RequestMethod method = RequestMethod.GET, Dictionary<string, string> headers = null, float timeout = 0f, Action<int, object, Exception> onException = null)
+	public WebRequest EnqueueData(string url, string body, Action<int, byte[]> callback, Plugin owner, RequestMethod method = RequestMethod.GET, Dictionary<string, string> headers = null, float timeout = 0f)
 	{
-		var request = new WebRequest(url, callback, owner)
+		return new WebRequest(url, callback, owner)
 		{
 			Method = method.ToString(),
 			RequestHeaders = headers,
 			Timeout = timeout,
-			Body = body,
-			ErrorCallback = onException
+			Body = body
 		}.Start();
+	}
 
+	public async Task<WebRequest> EnqueueAsync(string url, string body, Action<int, string> callback, Plugin owner, RequestMethod method = RequestMethod.GET, Dictionary<string, string> headers = null, float timeout = 0f)
+	{
 		var tcs = new TaskCompletionSource<bool>();
 
-		Task.Run(() =>
+		var request = new WebRequest(url, (code, data) =>
 		{
-			while (request._client != null) { }
-
 			tcs.SetResult(true);
-		});
+			callback?.Invoke(code, data);
+		}, owner)
+		{
+			Method = method.ToString(),
+			RequestHeaders = headers,
+			Timeout = timeout,
+			Body = body
+		}.Start();
 
 		await tcs.Task;
-		tcs = null;
 
 		return request;
 	}
-
-	public WebRequest EnqueueData(string url, string body, Action<int, byte[]> callback, Plugin owner, RequestMethod method = RequestMethod.GET, Dictionary<string, string> headers = null, float timeout = 0f, Action<int, object, Exception> onException = null)
+	public async Task<WebRequest> EnqueueDataAsync(string url, string body, Action<int, byte[]> callback, Plugin owner, RequestMethod method = RequestMethod.GET, Dictionary<string, string> headers = null, float timeout = 0f)
 	{
-		return new WebRequest(url, callback, owner)
-		{
-			Method = method.ToString(),
-			RequestHeaders = headers,
-			Timeout = timeout,
-			Body = body,
-			ErrorCallback = onException
-		}.Start();
-	}
-
-	public async Task<WebRequest> EnqueueDataAsync(string url, string body, Action<int, byte[]> callback, Plugin owner, RequestMethod method = RequestMethod.GET, Dictionary<string, string> headers = null, float timeout = 0f, Action<int, object, Exception> onException = null)
-	{
-		var request = new WebRequest(url, callback, owner)
-		{
-			Method = method.ToString(),
-			RequestHeaders = headers,
-			Timeout = timeout,
-			Body = body,
-			ErrorCallback = onException
-		}.Start();
-
 		var tcs = new TaskCompletionSource<bool>();
 
-		Task.Run(() =>
+		var request = new WebRequest(url, (code, data) =>
 		{
-			while (request._client != null) { }
-
 			tcs.SetResult(true);
-		});
+			callback?.Invoke(code, data);
+		}, owner)
+		{
+			Method = method.ToString(),
+			RequestHeaders = headers,
+			Timeout = timeout,
+			Body = body
+		}.Start();
 
 		await tcs.Task;
-		tcs = null;
 
 		return request;
 	}
@@ -129,13 +116,13 @@ public class WebRequests : Library
 	{
 		public Action<int, string> SuccessCallback { get; set; }
 		public Action<int, byte[]> SuccessDataCallback { get; set; }
-		public Action<int, object, Exception> ErrorCallback { get; set; }
 
 		public float Timeout { get; set; }
 		public string Method { get; set; }
 		public string Url { get; }
 		public string Body { get; set; }
 
+		public TimeSpan ResponseDuration { get; protected set; }
 		public int ResponseCode { get; protected set; } = 200;
 		public object ResponseObject { get; protected set; } = string.Empty;
 		public Exception ResponseError { get; protected set; }
@@ -143,6 +130,7 @@ public class WebRequests : Library
 		public Plugin Owner { get; protected set; }
 		public Dictionary<string, string> RequestHeaders { get; set; }
 
+		internal DateTime _time;
 		internal bool _data;
 		internal Uri _uri;
 		internal Client _client;
@@ -180,6 +168,8 @@ public class WebRequests : Library
 						{
 							_client.DownloadDataCompleted += (object sender, DownloadDataCompletedEventArgs e) =>
 							{
+								ResponseDuration = DateTime.Now - _time;
+
 								try
 								{
 									if (e == null)
@@ -211,6 +201,8 @@ public class WebRequests : Library
 						{
 							_client.DownloadStringCompleted += (object sender, DownloadStringCompletedEventArgs e) =>
 							{
+								ResponseDuration = DateTime.Now - _time;
+
 								try
 								{
 									if (e == null)
@@ -225,6 +217,7 @@ public class WebRequests : Library
 											ResponseCode = (int)(web.Response as HttpWebResponse).StatusCode;
 										ResponseError = e.Error;
 										ResponseObject = e.Result;
+										ResponseDuration = DateTime.Now - _time;
 										OnComplete(true);
 										return;
 									}
@@ -239,27 +232,6 @@ public class WebRequests : Library
 								}
 							};
 						}
-
-						try
-						{
-							if (RequestHeaders != null && RequestHeaders.Count > 0)
-							{
-								foreach (var header in RequestHeaders)
-								{
-									_client.Headers[header.Key] = header.Value;
-								}
-							}
-
-							if (_data)
-							{
-								_client.DownloadDataAsync(_uri);
-							}
-							else
-							{
-								_client.DownloadStringAsync(_uri);
-							}
-						}
-						catch (Exception ex) { ResponseError = ex; OnComplete(true); }
 						break;
 
 					case "PUT":
@@ -270,6 +242,8 @@ public class WebRequests : Library
 						{
 							_client.UploadDataCompleted += (object sender, UploadDataCompletedEventArgs e) =>
 							{
+								ResponseDuration = DateTime.Now - _time;
+
 								try
 								{
 									if (e == null)
@@ -301,6 +275,8 @@ public class WebRequests : Library
 						{
 							_client.UploadStringCompleted += (object sender, UploadStringCompletedEventArgs e) =>
 							{
+								ResponseDuration = DateTime.Now - _time;
+
 								try
 								{
 									if (e == null)
@@ -329,31 +305,31 @@ public class WebRequests : Library
 								}
 							};
 						}
-
-						try
-						{
-							_client.Headers[HttpRequestHeader.ContentType] = "application/x-www-form-urlencoded";
-
-							if (RequestHeaders != null && RequestHeaders.Count > 0)
-							{
-								foreach (var header in RequestHeaders)
-								{
-									_client.Headers[header.Key] = header.Value;
-								}
-							}
-
-							if (_data)
-							{
-								_client.UploadDataAsync(_uri, Method, Encoding.Default.GetBytes(Body));
-							}
-							else
-							{
-								_client.UploadStringAsync(_uri, Method, Body);
-							}
-						}
-						catch (Exception ex) { ResponseError = ex; OnComplete(true); }
 						break;
 				}
+
+				try
+				{
+					if (RequestHeaders != null && RequestHeaders.Count > 0)
+					{
+						foreach (var header in RequestHeaders)
+						{
+							_client.Headers[header.Key] = header.Value;
+						}
+					}
+
+					_time = DateTime.Now;
+
+					if (_data)
+					{
+						_client.DownloadDataAsync(_uri);
+					}
+					else
+					{
+						_client.DownloadStringAsync(_uri);
+					}
+				}
+				catch (Exception ex) { ResponseError = ex; OnComplete(true); }
 			}
 
 			return this;
@@ -372,11 +348,6 @@ public class WebRequests : Library
 
 			try
 			{
-				if (failure)
-				{
-					ErrorCallback?.Invoke(ResponseCode, ResponseObject, ResponseError);
-				}
-
 				if (_data)
 				{
 					SuccessDataCallback?.Invoke(ResponseCode, ResponseObject as byte[]);

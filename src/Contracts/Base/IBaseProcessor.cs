@@ -29,8 +29,9 @@
 
 			string File { get; set; }
 
+			void Clear();
 			void Execute(IBaseProcessor processor);
-			void SetDirty();
+			void MarkDirty();
 			void MarkDeleted();
 		}
 		public interface IParser

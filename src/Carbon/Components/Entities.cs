@@ -17,7 +17,7 @@ public class Entities : IDisposable
 
 			foreach (var type in _findAssignablesFrom<BaseEntity>())
 			{
-				Mapping.Add(type, new List<BaseEntity>(100000));
+				Mapping.Add(type, new List<object>(100000));
 			}
 
 			if (Community.IsServerInitialized)
@@ -29,13 +29,7 @@ public class Entities : IDisposable
 			{
 				foreach (var type in Mapping)
 				{
-					var p1 = BaseNetworkable.serverEntities.Where(x => x.GetType() == type.Key);
-					var p2 = p1.Select(x => x as BaseEntity);
-
-					type.Value.AddRange(p2);
-
-					p1 = null;
-					p2 = null;
+					type.Value.AddRange(BaseNetworkable.serverEntities.Where(x => x.GetType() == type.Key).Select(x => x as BaseEntity));
 				}
 			}
 
@@ -57,7 +51,7 @@ public class Entities : IDisposable
 		Mapping.Clear();
 	}
 
-	public static Dictionary<Type, List<BaseEntity>> Mapping { get; internal set; } = new();
+	public static Dictionary<Type, List<object>> Mapping { get; internal set; } = new();
 
 	internal static IEnumerable<Type> _findAssignablesFrom<TBaseType>()
 	{
@@ -67,7 +61,7 @@ public class Entities : IDisposable
 		return assembly.GetTypes().Where(t => baseType.IsAssignableFrom(t));
 	}
 
-	public static Map<T> Get<T>(bool inherited = false) where T : BaseEntity
+	public static Map<T> Get<T>(bool inherited = false)
 	{
 		var map = new Map<T>
 		{
@@ -80,9 +74,9 @@ public class Entities : IDisposable
 			{
 				if (typeof(T).IsAssignableFrom(entry.Key))
 				{
-					foreach (var entity in entry.Value)
+					foreach (T entity in entry.Value)
 					{
-						map.Pool.Add(entity as T);
+						map.Pool.Add(entity);
 					}
 				}
 			}
@@ -115,7 +109,7 @@ public class Entities : IDisposable
 				{
 					foreach (var entity in entry.Value)
 					{
-						map.Pool.Add(entity);
+						map.Pool.Add(entity as BaseEntity);
 					}
 				}
 			}
@@ -133,7 +127,7 @@ public class Entities : IDisposable
 
 		return map;
 	}
-	public static T GetOne<T>(bool inherited = false) where T : BaseEntity
+	public static T GetOne<T>(bool inherited = false)
 	{
 		using (var map = Get<T>(inherited))
 		{
@@ -160,7 +154,7 @@ public class Entities : IDisposable
 		map.Remove(entity);
 	}
 
-	public struct Map<T> : IDisposable where T : BaseEntity
+	public struct Map<T> : IDisposable
 	{
 		public List<T> Pool;
 
@@ -173,8 +167,6 @@ public class Entities : IDisposable
 				callback.Invoke(drop);
 			}
 
-			callback = null;
-			condition = null;
 			return this;
 		}
 		public T Pick(int index)
@@ -196,7 +188,9 @@ public class Entities : IDisposable
 
 		public void Dispose()
 		{
-			Carbon.Logger.Debug($"Cleaned {typeof(T).Name}", 2);
+#if DEBUG
+			Logger.Debug($"Cleaned {typeof(T).Name}", 2);
+#endif
 			Facepunch.Pool.FreeList(ref Pool);
 		}
 	}

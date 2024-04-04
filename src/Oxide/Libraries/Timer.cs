@@ -1,5 +1,4 @@
 ﻿using Facepunch;
-using static Oxide.Plugins.RustPlugin;
 using Logger = Carbon.Logger;
 
 /*
@@ -13,11 +12,11 @@ namespace Oxide.Plugins;
 
 public class Timers : Library
 {
-	public RustPlugin Plugin { get; }
+	public Plugin Plugin { get; }
 	internal List<Timer> _timers { get; set; } = new List<Timer>();
 
 	public Timers() { }
-	public Timers(RustPlugin plugin)
+	public Timers(Plugin plugin)
 	{
 		Plugin = plugin;
 	}
@@ -42,7 +41,7 @@ public class Timers : Library
 		_timers = null;
 	}
 
-	public Persistence Persistence => Plugin.persistence;
+	public Plugin.Persistence Persistence => Plugin.persistence;
 
 	public Timer In(float time, Action action)
 	{
@@ -56,7 +55,13 @@ public class Timers : Library
 				action?.Invoke();
 				timer.TimesTriggered++;
 			}
-			catch (Exception ex) { Plugin.LogError($"Timer {time}s has failed:", ex); }
+			catch (Exception ex)
+			{
+				if (Plugin is RustPlugin rustPlugin)
+				{
+					rustPlugin.LogError($"Timer {time}s has failed:", ex);
+				}
+			}
 		});
 
 		timer.Delay = time;
@@ -87,7 +92,10 @@ public class Timers : Library
 			}
 			catch (Exception ex)
 			{
-				Plugin.LogError($"Timer {time}s has failed:", ex);
+				if (Plugin is RustPlugin rustPlugin)
+				{
+					rustPlugin.LogError($"Timer {time}s has failed:", ex);
+				}
 
 				timer.Destroy();
 				Pool.Free(ref timer);
@@ -121,7 +129,10 @@ public class Timers : Library
 			}
 			catch (Exception ex)
 			{
-				Plugin.LogError($"Timer {time}s has failed:", ex);
+				if (Plugin is RustPlugin rustPlugin)
+				{
+					rustPlugin.LogError($"Timer {time}s has failed:", ex);
+				}
 
 				timer.Destroy();
 				Pool.Free(ref timer);
@@ -155,18 +166,18 @@ public class Timers : Library
 
 public class Timer : Library, IDisposable
 {
-	public RustPlugin Plugin { get; set; }
+	public Plugin Plugin { get; set; }
 
 	public Action Activity { get; set; }
 	public Action Callback { get; set; }
-	public Persistence Persistence { get; set; }
+	public Plugin.Persistence Persistence { get; set; }
 	public int Repetitions { get; set; }
 	public float Delay { get; set; }
 	public int TimesTriggered { get; set; }
 	public bool Destroyed { get; set; }
 
 	public Timer() { }
-	public Timer(Persistence persistence, Action activity, RustPlugin plugin = null)
+	public Timer(Plugin.Persistence persistence, Action activity, Plugin plugin = null)
 	{
 		Persistence = persistence;
 		Activity = activity;
@@ -200,7 +211,13 @@ public class Timer : Library, IDisposable
 					Activity?.Invoke();
 					TimesTriggered++;
 				}
-				catch (Exception ex) { Plugin.LogError($"Timer {delay}s has failed:", ex); }
+				catch (Exception ex)
+				{
+					if (Plugin is RustPlugin rustPlugin)
+					{
+						rustPlugin.LogError($"Timer {delay}s has failed:", ex);
+					}
+				}
 
 				Destroy();
 			});
@@ -223,7 +240,10 @@ public class Timer : Library, IDisposable
 				}
 				catch (Exception ex)
 				{
-					Plugin.LogError($"Timer {delay}s has failed:", ex);
+					if (Plugin is RustPlugin rustPlugin)
+					{
+						rustPlugin.LogError($"Timer {delay}s has failed:", ex);
+					}
 
 					Destroy();
 				}

@@ -15,6 +15,12 @@ namespace Oxide.Core.Plugins
 	public class Plugin : BaseHookable, IDisposable
 	{
 		public PluginManager Manager { get; set; }
+		public Persistence persistence;
+
+		public Command cmd;
+		public Permission permission;
+
+		public class Persistence : FacepunchBehaviour { }
 
 		public bool IsCorePlugin { get; set; }
 
@@ -34,7 +40,9 @@ namespace Oxide.Core.Plugins
 		[JsonProperty]
 		public TimeSpan InternalCallHookGenTime { get; set; }
 		[JsonProperty]
-		public ModLoader.FailedCompilation.Trace[] CompileWarnings { get; set; }
+		public ModLoader.Trace[] CompileWarnings { get; set; }
+
+		public string InternalCallHookSource { get; set; }
 
 		[JsonProperty]
 		public string FilePath { get; set; }
@@ -644,6 +652,22 @@ namespace Oxide.Core.Plugins
 
 		public virtual void HandleAddedToManager(PluginManager manager) { }
 		public virtual void HandleRemovedFromManager(PluginManager manager) { }
+
+		protected void AddCovalenceCommand(string[] commands, string callback, string perm)
+		{
+			foreach (var command in commands)
+			{
+				cmd.AddCovalenceCommand(command, this, callback, permissions: new string[] { perm });
+			}
+
+			if (!string.IsNullOrEmpty(perm))
+			{
+				if (!this.permission.PermissionExists(perm))
+				{
+					this.permission.RegisterPermission(perm, this);
+				}
+			}
+		}
 
 		#endregion
 

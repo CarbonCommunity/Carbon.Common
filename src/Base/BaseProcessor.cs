@@ -1,6 +1,6 @@
 ﻿/*
  *
- * Copyright (c) 2022-2024 Carbon Community 
+ * Copyright (c) 2022-2024 Carbon Community
  * All rights reserved.
  *
  */
@@ -190,6 +190,7 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 
 			try
 			{
+				item.Value?.Clear();
 				item.Value?.Dispose();
 			}
 			catch (Exception ex) { Logger.Error($" Processor error: '{item.Key}'", ex); }
@@ -234,16 +235,14 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 
 	public virtual void Clear(string id, IBaseProcessor.IProcess process)
 	{
+		process?.Clear();
 		process?.Dispose();
-		process = null;
+
 		Remove(id);
 	}
 	public virtual void Execute(string id, IBaseProcessor.IProcess process)
 	{
-		var file = process.File;
-
-		Clear(id, process);
-		Prepare(id, file);
+		Prepare(id, process.File);
 	}
 
 	public virtual void OnCreated(object sender, FileSystemEventArgs e)
@@ -252,13 +251,13 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 
 		if (InstanceBuffer.TryGetValue(e.FullPath, out var instance1))
 		{
-			instance1?.SetDirty();
+			instance1?.MarkDirty();
 			return;
 		}
 
 		if (InstanceBuffer.TryGetValue(Path.GetFileNameWithoutExtension(e.FullPath), out var instance2))
 		{
-			instance2?.SetDirty();
+			instance2?.MarkDirty();
 			return;
 		}
 
@@ -271,7 +270,7 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 
 		if (!EnableWatcher || IsBlacklisted(path)) return;
 
-		if (InstanceBuffer.TryGetValue(name, out var mod)) mod.SetDirty();
+		if (InstanceBuffer.TryGetValue(name, out var mod)) mod.MarkDirty();
 	}
 	public virtual void OnRenamed(object sender, RenamedEventArgs e)
 	{
@@ -310,7 +309,7 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 		return false;
 	}
 
-	public class Process : IBaseProcessor.IProcess, IDisposable
+	public abstract class Process : IBaseProcessor.IProcess, IDisposable
 	{
 		public IBaseProcessor Processor { get; internal set; }
 		public virtual IBaseProcessor.IParser Parser { get; }
@@ -320,7 +319,8 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 		internal bool _hasChanged;
 		internal bool _hasRemoved;
 
-		public virtual void Dispose() { }
+		public abstract void Clear();
+		public abstract void Dispose();
 		public virtual void Execute(IBaseProcessor processor)
 		{
 			Processor = processor;
@@ -330,7 +330,7 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 		public bool IsDirty => _hasChanged;
 		public bool IsRemoved => _hasRemoved;
 
-		public void SetDirty()
+		public void MarkDirty()
 		{
 			_hasRemoved = false;
 			_hasChanged = true;
