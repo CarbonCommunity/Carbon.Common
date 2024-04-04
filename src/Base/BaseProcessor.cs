@@ -116,7 +116,7 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 
 				if (element.Value.IsDirty)
 				{
-					Execute(element.Key, element.Value);
+					Execute(element.Key, element.Value, false);
 					yield return null;
 					continue;
 				}
@@ -237,15 +237,12 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 	{
 		process?.Clear();
 		process?.Dispose();
-		process = null;
+
 		Remove(id);
 	}
 	public virtual void Execute(string id, IBaseProcessor.IProcess process)
 	{
-		var file = process.File;
-
-		Clear(id, process);
-		Prepare(id, file);
+		Prepare(id, process.File);
 	}
 
 	public virtual void OnCreated(object sender, FileSystemEventArgs e)

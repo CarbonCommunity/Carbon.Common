@@ -276,7 +276,8 @@ public partial class CorePlugin : CarbonPlugin
 	[AuthLevel(2)]
 	private void ReloadModules(ConsoleSystem.Arg arg)
 	{
-		Community.Runtime.AssemblyEx.Modules.Watcher.TriggerAll(WatcherChangeTypes.Changed);
+		arg.ReplyWith("Command temporarily disabled.");
+		// Community.Runtime.AssemblyEx.Modules.Watcher.TriggerAll(WatcherChangeTypes.Changed);
 	}
 
 	[ConsoleCommand("reloadmodule", "Reloads a currently loaded module assembly entirely.")]

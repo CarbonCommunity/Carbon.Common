@@ -237,8 +237,6 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				["zipscriptwatchers_help"] = "When disabled, you must load/unload plugins manually with 'c.load' or 'c.unload'.",
 				["scriptwatchersoption"] = "Script Watchers Option",
 				["scriptwatchersoption_help"] = "Indicates wether the script watcher (whenever enabled) listens to the 'carbon/plugins' folder only, or its subfolders.",
-				["filenamecheck"] = "File Name Check",
-				["filenamecheck_help"] = "Checks for file names. Otherwise will load the plugins regardless. Recommended to be enabled.",
 				["logging"] = "Logging",
 				["logfilemode"] = "Log File Mode",
 				["logverbosity"] = "Log Verbosity (Debug)",
