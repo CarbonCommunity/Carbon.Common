@@ -225,12 +225,12 @@ public static class ModLoader
 			return false;
 		}
 
-		var title = info.Title?.Replace(" ", string.Empty);
+		var title = info.Title;
 		var author = info.Author;
 		var version = info.Version;
 		var description = desc == null ? string.Empty : desc.Description;
 
-		var existentPlugin = FindPlugin(title);
+		var existentPlugin = FindPlugin(title) ?? FindPlugin(type.Name);
 
 		if (existentPlugin != null)
 		{

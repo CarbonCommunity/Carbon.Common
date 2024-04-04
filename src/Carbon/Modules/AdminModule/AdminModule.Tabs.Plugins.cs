@@ -1305,14 +1305,15 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 								Singleton.Draw(session.Player);
 							}, core, headers: headers);
 							break;
+
+						default:
+							User = null;
+							Refresh();
+							Save();
+							Singleton.Draw(session.Player);
+							break;
 					}
-				}, core, headers: headers, onException: (code, result, ex) =>
-				{
-					User = null;
-					Refresh();
-					Save();
-					Singleton.Draw(session.Player);
-				});
+				}, core, headers: headers);
 			}
 
 			public bool IsLoggedIn => User != null;

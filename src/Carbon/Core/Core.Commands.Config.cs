@@ -76,10 +76,6 @@ public partial class CorePlugin : CarbonPlugin
 		}
 	}
 
-	[CommandVar("filenamecheck", "It checks if the file name and the plugin name matches. (only applies to scripts)")]
-	[AuthLevel(2)]
-	private bool FileNameCheck { get { return Community.Runtime.Config.Watchers.FileNameCheck; } set { Community.Runtime.Config.Watchers.FileNameCheck = value; Community.Runtime.SaveConfig(); } }
-
 	[CommandVar("language", "Server language used by the Language API.")]
 	[AuthLevel(2)]
 	private string Language { get { return Community.Runtime.Config.Language; } set { Community.Runtime.Config.Language = value; Community.Runtime.SaveConfig(); } }

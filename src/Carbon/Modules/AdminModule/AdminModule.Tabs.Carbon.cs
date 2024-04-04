@@ -266,7 +266,6 @@ public partial class AdminModule
 						Community.Runtime.SaveConfig();
 					}, SearchDirectories, tooltip: Singleton.GetPhrase("scriptwatchersoption_help", ap.Player.UserIDString));
 					tab.AddToggle(1, Singleton.GetPhrase("zipscriptwatchers", ap.Player.UserIDString), ap => { Config.Watchers.ZipScriptWatchers = !Config.Watchers.ZipScriptWatchers; Community.Runtime.SaveConfig(); }, ap => Config.Watchers.ZipScriptWatchers, Singleton.GetPhrase("zipscriptwatchers_help", ap.Player.UserIDString));
-					tab.AddToggle(1, Singleton.GetPhrase("filenamecheck", ap.Player.UserIDString), ap => { Config.Watchers.FileNameCheck = !Config.Watchers.FileNameCheck; Community.Runtime.SaveConfig(); }, ap => Config.Watchers.FileNameCheck, Singleton.GetPhrase("filenamecheck_help", ap.Player.UserIDString));
 				}
 
 				tab.AddName(1, Singleton.GetPhrase("logging", ap.Player.UserIDString), TextAnchor.MiddleLeft);

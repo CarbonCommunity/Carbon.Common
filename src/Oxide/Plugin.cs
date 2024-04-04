@@ -42,6 +42,8 @@ namespace Oxide.Core.Plugins
 		[JsonProperty]
 		public ModLoader.Trace[] CompileWarnings { get; set; }
 
+		public string InternalCallHookSource { get; set; }
+
 		[JsonProperty]
 		public string FilePath { get; set; }
 		[JsonProperty]

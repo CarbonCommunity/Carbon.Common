@@ -378,8 +378,6 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 	}
 	public override void Shutdown()
 	{
-		Puts($"Shutting down and module save");
-
 		Save();
 		OnUnload();
 
