@@ -60,7 +60,7 @@ public class WebRequests : Library
 		var request = new WebRequest(url, (code, data) =>
 		{
 			tcs.SetResult(true);
-			callback(code, data);
+			callback?.Invoke(code, data);
 		}, owner)
 		{
 			Method = method.ToString(),
@@ -80,7 +80,7 @@ public class WebRequests : Library
 		var request = new WebRequest(url, (code, data) =>
 		{
 			tcs.SetResult(true);
-			callback(code, data);
+			callback?.Invoke(code, data);
 		}, owner)
 		{
 			Method = method.ToString(),
