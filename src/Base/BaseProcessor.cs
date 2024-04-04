@@ -116,7 +116,7 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 
 				if (element.Value.IsDirty)
 				{
-					Execute(element.Key, element.Value, false);
+					Execute(element.Key, element.Value);
 					yield return null;
 					continue;
 				}
