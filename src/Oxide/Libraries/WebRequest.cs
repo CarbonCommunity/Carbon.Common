@@ -55,11 +55,11 @@ public class WebRequests : Library
 
 	public async Task<WebRequest> EnqueueAsync(string url, string body, Action<int, string> callback, Plugin owner, RequestMethod method = RequestMethod.GET, Dictionary<string, string> headers = null, float timeout = 0f)
 	{
-		var status = false;
+		var tcs = new TaskCompletionSource<bool>();
 
 		var request = new WebRequest(url, (code, data) =>
 		{
-			status = true;
+			tcs.SetResult(true);
 			callback(code, data);
 		}, owner)
 		{
@@ -69,20 +69,17 @@ public class WebRequests : Library
 			Body = body
 		}.Start();
 
-		while (!status)
-		{
-			await AsyncEx.WaitForSeconds(0.025f);
-		}
+		await tcs.Task;
 
 		return request;
 	}
 	public async Task<WebRequest> EnqueueDataAsync(string url, string body, Action<int, byte[]> callback, Plugin owner, RequestMethod method = RequestMethod.GET, Dictionary<string, string> headers = null, float timeout = 0f)
 	{
-		var status = false;
+		var tcs = new TaskCompletionSource<bool>();
 
 		var request = new WebRequest(url, (code, data) =>
 		{
-			status = true;
+			tcs.SetResult(true);
 			callback(code, data);
 		}, owner)
 		{
@@ -92,10 +89,7 @@ public class WebRequests : Library
 			Body = body
 		}.Start();
 
-		while (!status)
-		{
-			await AsyncEx.WaitForSeconds(0.025f);
-		}
+		await tcs.Task;
 
 		return request;
 	}
