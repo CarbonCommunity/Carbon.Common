@@ -629,6 +629,32 @@ public partial class CorePlugin : CarbonPlugin
 		}
 	}
 
+#if DEBUG
+	[Conditional("DEBUG")]
+	[ConsoleCommand("pluginintgen", "Generates the internal hook call override in 'carbon/plugins/debug'.")]
+	[AuthLevel(2)]
+	private void GenerateInternal(ConsoleSystem.Arg arg)
+	{
+		var plugin = ModLoader.FindPlugin(arg.GetString(0));
+
+		if (plugin == null)
+		{
+			arg.ReplyWith($"Couldn't find plugin");
+			return;
+		}
+
+		if (string.IsNullOrEmpty(plugin.InternalCallHookSource))
+		{
+			arg.ReplyWith($"No Internal CallHook override source for '{plugin.ToPrettyString()}'");
+			return;
+		}
+
+		var path = Path.Combine(Defines.GetScriptDebugFolder(), $"{Path.GetFileNameWithoutExtension(plugin.FileName)}.Internal.cs");
+		OsEx.File.Create(path, plugin.InternalCallHookSource);
+		arg.ReplyWith($"Saved at '{path}'");
+	}
+#endif
+
 	[ConsoleCommand("uninstallplugin", "Unloads and uninstalls (moves the file to the backup folder) the plugin with the name.")]
 	[AuthLevel(2)]
 	private void UninstallPlugin(ConsoleSystem.Arg arg)
