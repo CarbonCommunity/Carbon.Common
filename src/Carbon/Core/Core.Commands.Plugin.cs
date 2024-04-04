@@ -94,14 +94,14 @@ public partial class CorePlugin : CarbonPlugin
 						count++;
 					}
 
-					using var unloaded = new StringTable("*", $"Unloaded Plugins ({Community.Runtime.ScriptProcessor.IgnoreList.Count})");
+					using var unloaded = new StringTable("*", $"Unloaded Plugins ({Community.Runtime.ScriptProcessor.IgnoreList.Count:n0})");
 
 					foreach (var unloadedPlugin in Community.Runtime.ScriptProcessor.IgnoreList)
 					{
 						unloaded.AddRow(string.Empty, Path.GetFileName(unloadedPlugin));
 					}
 
-					using var failed = new StringTable("*", $"Failed Plugins ({ModLoader.FailedCompilations.Count})", "Line", "Column", "Stacktrace");
+					using var failed = new StringTable("*", $"Failed Plugins ({ModLoader.FailedCompilations.Count(x => x.Value.IsValid()):n0})", "Line", "Column", "Stacktrace");
 
 					foreach (var compilation in ModLoader.FailedCompilations.Values)
 					{
