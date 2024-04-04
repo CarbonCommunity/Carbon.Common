@@ -80,7 +80,7 @@ public partial class CorePlugin : CarbonPlugin
 							var memoryAverage = Mathf.RoundToInt(memoryAverageValue) == 0
 								? string.Empty
 								: $" (avg {ByteEx.Format(memoryAverageValue, shortName: true, stringFormat: "{0}{1}").ToLower()})";
-							body.AddRow(string.Empty, plugin.Name, plugin.Author, $"v{plugin.Version}",
+							body.AddRow(string.Empty, plugin.Title, plugin.Author, $"v{plugin.Version}",
 								plugin.TotalHookTime.TotalMilliseconds == 0 ? string.Empty : $"{plugin.TotalHookTime.TotalMilliseconds:0}ms{hookTimeAverage}",
 								plugin.CurrentHookFires == 0 ? string.Empty : $"{plugin.CurrentHookFires}",
 								plugin.TotalMemoryUsed == 0 ? string.Empty : $"{ByteEx.Format(plugin.TotalMemoryUsed, shortName: true, stringFormat: "{0}{1}").ToLower()}{memoryAverage}",
