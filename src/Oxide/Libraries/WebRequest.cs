@@ -123,7 +123,7 @@ public class WebRequests : Library
 		public string Body { get; set; }
 
 		public TimeSpan ResponseDuration { get; protected set; }
-		public int ResponseCode { get; protected set; } = 200;
+		public int ResponseCode { get; protected set; }
 		public object ResponseObject { get; protected set; } = string.Empty;
 		public Exception ResponseError { get; protected set; }
 
@@ -154,182 +154,211 @@ public class WebRequests : Library
 
 		public WebRequest Start()
 		{
-			using (_client = new Client())
+			_client = new Client();
+			_client.Headers.Add("User-Agent", Community.Runtime.Analytics.UserAgent);
+			_client.Credentials = CredentialCache.DefaultCredentials;
+			_client.Proxy = null;
+			_client.Encoding = Encoding.UTF8;
+
+			if (RequestHeaders != null && RequestHeaders.Count > 0)
 			{
-				_client.Headers.Add("User-Agent", Community.Runtime.Analytics.UserAgent);
-				_client.Credentials = CredentialCache.DefaultCredentials;
-				_client.Proxy = null;
-				_client.Encoding = Encoding.UTF8;
-
-				switch (Method)
+				foreach (var header in RequestHeaders)
 				{
-					case "GET":
-						if (_data)
-						{
-							_client.DownloadDataCompleted += (object sender, DownloadDataCompletedEventArgs e) =>
-							{
-								ResponseDuration = DateTime.Now - _time;
-
-								try
-								{
-									if (e == null)
-									{
-										OnComplete(true);
-										return;
-									}
-
-									if (e.Error != null)
-									{
-										if (e.Error is WebException web) ResponseCode = (int)(web.Response as HttpWebResponse).StatusCode;
-										ResponseError = e.Error;
-										ResponseObject = e.Result;
-										OnComplete(true);
-										return;
-									}
-
-									ResponseCode = _client.StatusCode;
-									ResponseObject = e.Result;
-									OnComplete(false);
-								}
-								catch
-								{
-									OnComplete(true);
-								}
-							};
-						}
-						else
-						{
-							_client.DownloadStringCompleted += (object sender, DownloadStringCompletedEventArgs e) =>
-							{
-								ResponseDuration = DateTime.Now - _time;
-
-								try
-								{
-									if (e == null)
-									{
-										OnComplete(true);
-										return;
-									}
-
-									if (e.Error != null)
-									{
-										if (e.Error is WebException web)
-											ResponseCode = (int)(web.Response as HttpWebResponse).StatusCode;
-										ResponseError = e.Error;
-										ResponseObject = e.Result;
-										ResponseDuration = DateTime.Now - _time;
-										OnComplete(true);
-										return;
-									}
-
-									ResponseCode = _client.StatusCode;
-									ResponseObject = e.Result;
-									OnComplete(false);
-								}
-								catch
-								{
-									OnComplete(false);
-								}
-							};
-						}
-						break;
-
-					case "PUT":
-					case "PATCH":
-					case "POST":
-					case "DELETE":
-						if (_data)
-						{
-							_client.UploadDataCompleted += (object sender, UploadDataCompletedEventArgs e) =>
-							{
-								ResponseDuration = DateTime.Now - _time;
-
-								try
-								{
-									if (e == null)
-									{
-										OnComplete(true);
-										return;
-									}
-
-									if (e.Error != null)
-									{
-										if (e.Error is WebException web) ResponseCode = (int)(web.Response as HttpWebResponse).StatusCode;
-										ResponseError = e.Error;
-										ResponseObject = e.Result;
-										OnComplete(true);
-										return;
-									}
-
-									ResponseCode = _client.StatusCode;
-									ResponseObject = e.Result;
-									OnComplete(false);
-								}
-								catch
-								{
-									OnComplete(true);
-								}
-							};
-						}
-						else
-						{
-							_client.UploadStringCompleted += (object sender, UploadStringCompletedEventArgs e) =>
-							{
-								ResponseDuration = DateTime.Now - _time;
-
-								try
-								{
-									if (e == null)
-									{
-										OnComplete(true);
-										return;
-									}
-
-									if (e.Error != null)
-									{
-										if (e.Error is WebException web)
-											ResponseCode = (int)(web.Response as HttpWebResponse).StatusCode;
-										ResponseError = e.Error;
-										ResponseObject = e.Result;
-										OnComplete(true);
-										return;
-									}
-
-									ResponseCode = _client.StatusCode;
-									ResponseObject = e.Result;
-									OnComplete(false);
-								}
-								catch
-								{
-									OnComplete(true);
-								}
-							};
-						}
-						break;
+					_client.Headers[header.Key] = header.Value;
 				}
+			}
 
-				try
-				{
-					if (RequestHeaders != null && RequestHeaders.Count > 0)
-					{
-						foreach (var header in RequestHeaders)
-						{
-							_client.Headers[header.Key] = header.Value;
-						}
-					}
-
-					_time = DateTime.Now;
-
+			switch (Method)
+			{
+				case "GET":
 					if (_data)
 					{
-						_client.DownloadDataAsync(_uri);
+						_client.DownloadDataCompleted += (_, e) =>
+						{
+							ResponseDuration = DateTime.Now - _time;
+
+							try
+							{
+								if (e == null)
+								{
+									OnComplete(true);
+									return;
+								}
+
+								if (e.Error != null)
+								{
+									if (e.Error is WebException web)
+										ResponseCode = (int)(web.Response as HttpWebResponse).StatusCode;
+									ResponseError = e.Error;
+									ResponseObject = e.Result;
+									OnComplete(true);
+									return;
+								}
+
+								ResponseCode = _client.StatusCode;
+								ResponseObject = e.Result;
+								OnComplete(false);
+							}
+							catch
+							{
+								OnComplete(true);
+							}
+						};
 					}
 					else
 					{
-						_client.DownloadStringAsync(_uri);
+						_client.DownloadStringCompleted += (_, e) =>
+						{
+							ResponseDuration = DateTime.Now - _time;
+							ResponseCode = _client.StatusCode;
+
+							try
+							{
+								if (e == null)
+								{
+									OnComplete(true);
+									return;
+								}
+
+								if (e.Error != null)
+								{
+									if (e.Error is WebException web)
+										ResponseCode = (int)(web.Response as HttpWebResponse).StatusCode;
+									ResponseError = e.Error;
+									ResponseObject = e.Result;
+									OnComplete(true);
+									return;
+								}
+
+								ResponseObject = e.Result;
+								OnComplete(false);
+							}
+							catch
+							{
+								OnComplete(true);
+							}
+						};
 					}
-				}
-				catch (Exception ex) { ResponseError = ex; OnComplete(true); }
+
+					try
+					{
+						_time = DateTime.Now;
+
+						if (_data)
+						{
+							_client.DownloadDataAsync(_uri);
+						}
+						else
+						{
+							_client.DownloadStringAsync(_uri);
+						}
+					}
+					catch (Exception ex)
+					{
+						Logger.Error($"Failed executing '{Method}' webrequest [internal] ({Url})", ex);
+
+						ResponseError = ex;
+						OnComplete(true);
+					}
+
+					break;
+
+				case "PUT":
+				case "PATCH":
+				case "POST":
+				case "DELETE":
+					if (_data)
+					{
+						_client.UploadDataCompleted += (object sender, UploadDataCompletedEventArgs e) =>
+						{
+							ResponseDuration = DateTime.Now - _time;
+							ResponseCode = _client.StatusCode;
+
+							try
+							{
+								if (e == null)
+								{
+									OnComplete(true);
+									return;
+								}
+
+								if (e.Error != null)
+								{
+									if (e.Error is WebException web)
+										ResponseCode = (int)(web.Response as HttpWebResponse).StatusCode;
+									ResponseError = e.Error;
+									ResponseObject = e.Result;
+									OnComplete(true);
+									return;
+								}
+
+								ResponseObject = e.Result;
+								OnComplete(false);
+							}
+							catch
+							{
+								OnComplete(true);
+							}
+						};
+					}
+					else
+					{
+						_client.UploadStringCompleted += (_, e) =>
+						{
+							ResponseDuration = DateTime.Now - _time;
+							ResponseCode = _client.StatusCode;
+
+							try
+							{
+								if (e == null)
+								{
+									OnComplete(true);
+									return;
+								}
+
+								if (e.Error != null)
+								{
+									if (e.Error is WebException web)
+										ResponseCode = (int)(web.Response as HttpWebResponse).StatusCode;
+									ResponseError = e.Error;
+									ResponseObject = e.Result;
+									OnComplete(true);
+									return;
+								}
+
+								ResponseObject = e.Result;
+								OnComplete(false);
+							}
+							catch
+							{
+								OnComplete(true);
+							}
+						};
+					}
+
+					try
+					{
+						_time = DateTime.Now;
+
+						if (_data)
+						{
+							_client.UploadDataAsync(_uri, Method, Encoding.Default.GetBytes(Body));
+						}
+						else
+						{
+							_client.UploadStringAsync(_uri, Method, Body ?? string.Empty);
+						}
+					}
+					catch (Exception ex)
+					{
+						Logger.Error($"Failed executing '{Method}' webrequest [internal] ({Url})", ex);
+
+						ResponseCode = _client.StatusCode;
+						ResponseError = ex;
+						OnComplete(true);
+					}
+
+					break;
 			}
 
 			return this;
@@ -343,7 +372,7 @@ public class WebRequests : Library
 
 			if (Owner && Owner != null)
 			{
-				text += $" in '{Owner.Name} v{Owner.Version}' plugin";
+				text += $" in '{Owner.ToPrettyString()}' plugin";
 			}
 
 			try
