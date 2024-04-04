@@ -277,7 +277,6 @@ public partial class AdminModule
 		var ap = GetPlayerSession(arg.Player());
 		var tab = GetTab(ap.Player);
 		var value = arg.GetInt(0);
-
 		var currentPage = ap.GetStorage(tab, "page", 0);
 
 		if (value == -2)
@@ -308,10 +307,9 @@ public partial class AdminModule
 	private void ToggleModule(ConsoleSystem.Arg arg)
 	{
 		var ap = GetPlayerSession(arg.Player());
-		var tab = GetTab(ap.Player) as SetupWizard;
-
 		var module = FindModule(arg.GetString(0));
 		var enabled = module.GetEnabled();
+
 		module.SetEnabled(!enabled);
 
 		Draw(ap.Player);
@@ -322,8 +320,8 @@ public partial class AdminModule
 	private void ToggleFeature(ConsoleSystem.Arg arg)
 	{
 		var ap = GetPlayerSession(arg.Player());
-
 		var feature = arg.GetString(0);
+
 		switch (feature)
 		{
 			case "plugins":
@@ -339,10 +337,9 @@ public partial class AdminModule
 	private void EditModuleConfig(ConsoleSystem.Arg arg)
 	{
 		var ap = GetPlayerSession(arg.Player());
-		var tab = GetTab(ap.Player) as SetupWizard;
-
 		var module = FindModule(arg.GetString(0));
 		var moduleConfigFile = Path.Combine(Defines.GetModulesFolder(), module.Name, "config.json");
+
 		ap.SelectedTab = ConfigEditor.Make(OsEx.File.ReadText(moduleConfigFile),
 			(ap, _) =>
 			{
@@ -364,10 +361,9 @@ public partial class AdminModule
 	[ProtectedCommand("wizard.openmodulefolder")]
 	private void OpenModuleFolder(ConsoleSystem.Arg arg)
 	{
-		var ap = GetPlayerSession(arg.Player());
-		var tab = GetTab(ap.Player) as SetupWizard;
-
 		var module = FindModule(arg.GetString(0));
+		var ap = GetPlayerSession(arg.Player());
+
 		Application.OpenURL(Path.Combine(Carbon.Core.Defines.GetModulesFolder(), module.Name));
 
 		Draw(ap.Player);

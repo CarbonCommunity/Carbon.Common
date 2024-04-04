@@ -76,13 +76,13 @@ public partial class CorePlugin : CarbonPlugin
 		}
 	}
 
-	[CommandVar("filenamecheck", "It checks if the file name and the plugin name matches. (only applies to scripts)")]
-	[AuthLevel(2)]
-	private bool FileNameCheck { get { return Community.Runtime.Config.Watchers.FileNameCheck; } set { Community.Runtime.Config.Watchers.FileNameCheck = value; Community.Runtime.SaveConfig(); } }
-
 	[CommandVar("language", "Server language used by the Language API.")]
 	[AuthLevel(2)]
 	private string Language { get { return Community.Runtime.Config.Language; } set { Community.Runtime.Config.Language = value; Community.Runtime.SaveConfig(); } }
+
+	[CommandVar("unloadonfailure", "Unload already loaded plugins when recompilation attempt fails. (Disabled by default)")]
+	[AuthLevel(2)]
+	private bool UnloadOnFailure { get { return Community.Runtime.Config.Compiler.UnloadOnFailure; } set { Community.Runtime.Config.Compiler.UnloadOnFailure = value; Community.Runtime.SaveConfig(); } }
 
 	[CommandVar("bypassadmincooldowns", "Bypasses the command cooldowns for admin-authed players.")]
 	[AuthLevel(2)]
