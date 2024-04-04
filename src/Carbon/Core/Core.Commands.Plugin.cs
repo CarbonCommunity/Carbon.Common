@@ -379,6 +379,7 @@ public partial class CorePlugin : CarbonPlugin
 								}
 								else
 								{
+									plugin.ProcessorProcess?.Clear();
 									plugin.ProcessorProcess?.Dispose();
 									mod.Plugins.Remove(plugin);
 								}
