@@ -113,7 +113,7 @@ public class RustPlugin : Plugin
 	/// </summary>
 	/// <param name="message"></param>
 	public void Puts(object message)
-		=> Carbon.Logger.Log($"[{Name}] {message}");
+		=> Carbon.Logger.Log($"[{Title}] {message}");
 
 	/// <summary>
 	/// Outputs to the game's console a message with severity level 'NOTICE'.
@@ -122,7 +122,7 @@ public class RustPlugin : Plugin
 	/// <param name="message"></param>
 	/// <param name="args"></param>
 	public void Puts(object message, params object[] args)
-		=> Carbon.Logger.Log($"[{Name}] {(args == null || args.Length == 0 ? message : string.Format(message?.ToString() ?? string.Empty, args))}");
+		=> Carbon.Logger.Log($"[{Title}] {(args == null || args.Length == 0 ? message : string.Format(message?.ToString() ?? string.Empty, args))}");
 
 	/// <summary>
 	/// Outputs to the game's console a message with severity level 'NOTICE'.
@@ -130,7 +130,7 @@ public class RustPlugin : Plugin
 	/// </summary>
 	/// <param name="message"></param>
 	public void Log(object message)
-		=> Carbon.Logger.Log($"[{Name}] {message}");
+		=> Carbon.Logger.Log($"[{Title}] {message}");
 
 	/// <summary>
 	/// Outputs to the game's console a message with severity level 'NOTICE'.
@@ -138,7 +138,7 @@ public class RustPlugin : Plugin
 	/// </summary>
 	/// <param name="message"></param>
 	public void Log(object message, params object[] args)
-		=> Carbon.Logger.Log($"[{Name}] {(args == null || args.Length == 0 ? message : string.Format(message?.ToString() ?? string.Empty, args))}");
+		=> Carbon.Logger.Log($"[{Title}] {(args == null || args.Length == 0 ? message : string.Format(message?.ToString() ?? string.Empty, args))}");
 
 	/// <summary>
 	/// Outputs to the game's console a message with severity level 'WARNING'.
@@ -146,7 +146,7 @@ public class RustPlugin : Plugin
 	/// </summary>
 	/// <param name="message"></param>
 	public void LogWarning(object message)
-		=> Carbon.Logger.Warn($"[{Name}] {message}");
+		=> Carbon.Logger.Warn($"[{Title}] {message}");
 
 	/// <summary>
 	/// Outputs to the game's console a message with severity level 'WARNING'.
@@ -154,7 +154,7 @@ public class RustPlugin : Plugin
 	/// </summary>
 	/// <param name="message"></param>
 	public void LogWarning(object message, params object[] args)
-		=> Carbon.Logger.Warn($"[{Name}] {(args == null || args.Length == 0 ? message : string.Format(message?.ToString() ?? string.Empty, args))}");
+		=> Carbon.Logger.Warn($"[{Title}] {(args == null || args.Length == 0 ? message : string.Format(message?.ToString() ?? string.Empty, args))}");
 
 	/// <summary>
 	/// Outputs to the game's console a message with severity level 'ERROR'.
@@ -163,7 +163,7 @@ public class RustPlugin : Plugin
 	/// <param name="message"></param>
 	/// <param name="ex"></param>
 	public void LogError(object message, Exception ex)
-		=> Carbon.Logger.Error($"[{Name}] {message}", ex);
+		=> Carbon.Logger.Error($"[{Title}] {message}", ex);
 
 	/// <summary>
 	/// Outputs to the game's console a message with severity level 'ERROR'.
@@ -172,7 +172,7 @@ public class RustPlugin : Plugin
 	/// <param name="message"></param>
 	/// <param name="ex"></param>
 	public void LogError(object message, Exception ex, params object[] args)
-		=> Carbon.Logger.Error($"[{Name}] {(args == null || args.Length == 0 ? message : string.Format(message?.ToString() ?? string.Empty, args))}", ex);
+		=> Carbon.Logger.Error($"[{Title}] {(args == null || args.Length == 0 ? message : string.Format(message?.ToString() ?? string.Empty, args))}", ex);
 
 	/// <summary>
 	/// Outputs to the game's console a message with severity level 'ERROR'.
@@ -180,7 +180,7 @@ public class RustPlugin : Plugin
 	/// </summary>
 	/// <param name="message"></param>
 	public void LogError(object message)
-		=> Carbon.Logger.Error($"[{Name}] {message}", null);
+		=> Carbon.Logger.Error($"[{Title}] {message}", null);
 
 	/// <summary>
 	/// Outputs to the game's console a message with severity level 'ERROR'.
@@ -188,7 +188,7 @@ public class RustPlugin : Plugin
 	/// </summary>
 	/// <param name="message"></param>
 	public void LogError(object message, params object[] args)
-		=> Carbon.Logger.Error($"[{Name}] {(args == null || args.Length == 0 ? message : string.Format(message?.ToString() ?? string.Empty, args))}", null);
+		=> Carbon.Logger.Error($"[{Title}] {(args == null || args.Length == 0 ? message : string.Format(message?.ToString() ?? string.Empty, args))}", null);
 
 	/// <summary>
 	/// Outputs to the game's console a message with severity level 'WARNING'.
@@ -197,7 +197,7 @@ public class RustPlugin : Plugin
 	/// <param name="message"></param>
 	/// <param name="args"></param>
 	public void PrintWarning(object format, params object[] args)
-		=> Carbon.Logger.Warn($"[{Name}] {(args == null || args.Length == 0 ? format : string.Format(format?.ToString() ?? string.Empty, args))}");
+		=> Carbon.Logger.Warn($"[{Title}] {(args == null || args.Length == 0 ? format : string.Format(format?.ToString() ?? string.Empty, args))}");
 
 	/// <summary>
 	/// Outputs to the game's console a message with severity level 'ERROR'.
@@ -206,7 +206,7 @@ public class RustPlugin : Plugin
 	/// <param name="message"></param>
 	/// <param name="args"></param>
 	public void PrintError(object format, params object[] args)
-		=> Carbon.Logger.Error($"[{Name}] {(args == null || args.Length == 0 ? format : string.Format(format?.ToString () ?? string.Empty, args))}");
+		=> Carbon.Logger.Error($"[{Title}] {(args == null || args.Length == 0 ? format : string.Format(format?.ToString () ?? string.Empty, args))}");
 
 	/// <summary>
 	/// Outputs to the game's console a message with severity level 'ERROR'.
@@ -214,7 +214,7 @@ public class RustPlugin : Plugin
 	/// </summary>
 	/// <param name="message"></param>
 	public void RaiseError(object message)
-		=> Carbon.Logger.Error($"[{Name}] {message}", null);
+		=> Carbon.Logger.Error($"[{Title}] {message}", null);
 
 	protected void LogToFile(string filename, string text, Plugin plugin = null, bool timeStamp = true, bool anotherBool = false)
 	{
@@ -269,7 +269,7 @@ public class RustPlugin : Plugin
 
 	public override string ToPrettyString()
 	{
-		return $"{Name} v{Version} by {Author}";
+		return $"{Title} v{Version} by {Author}";
 	}
 
 	#region Printing
