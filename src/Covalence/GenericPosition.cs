@@ -13,6 +13,7 @@ public class GenericPosition
 	public float Y;
 	public float Z;
 
+	public GenericPosition() { }
 	public GenericPosition(float x, float y, float z)
 	{
 		X = x;
