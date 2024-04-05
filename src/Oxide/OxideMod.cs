@@ -124,6 +124,12 @@ public class OxideMod
 		return true;
 	}
 
+	public void UnloadAllPlugins(IList<string> skip = null)
+	{
+		Community.Runtime.ScriptProcessor.Clear(skip);
+		Community.Runtime.ZipScriptProcessor.Clear(skip);
+	}
+
 	public void OnSave()
 	{
 
