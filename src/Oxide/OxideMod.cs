@@ -113,10 +113,15 @@ public class OxideMod
 
 	public bool UnloadPlugin(string name)
 	{
-		var isValid = Community.Runtime.ScriptProcessor.InstanceBuffer.ContainsKey(name);
-		Community.Runtime.ScriptProcessor.Remove(name);
+		if (Community.Runtime.ScriptProcessor.InstanceBuffer.TryGetValue(name, out var instance))
+		{
+			instance?.Clear();
+			instance?.Dispose();
+			Community.Runtime.ScriptProcessor.Remove(name);
+			return true;
+		}
 
-		return isValid;
+		return true;
 	}
 
 	public void OnSave()
