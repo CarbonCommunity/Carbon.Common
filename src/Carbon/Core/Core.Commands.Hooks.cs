@@ -157,9 +157,9 @@ public partial class CorePlugin : CarbonPlugin
 							iHook.IsStaticHook ? "Static" : iHook.IsPatch ? "Patch" : "Dynamic",
 							iHook.Status.ToString(),
 							time == 0 ? string.Empty : $"{time:0}ms",
-							fires == 0 ? string.Empty : $"{fires}",
+							fires == 0 ? string.Empty : $"{fires:n0}",
 							memory == 0 ? string.Empty : $"{ByteEx.Format(memory, shortName: true).ToLower()}",
-							lagSpikes == 0 ? string.Empty : $"{lagSpikes}",
+							lagSpikes == 0 ? string.Empty : $"{lagSpikes:n0}",
 							(iHook.IsStaticHook) ? "N/A" : $"{Community.Runtime.HookManager.GetHookSubscriberCount(iHook.Identifier),3}"
 						);
 					}
