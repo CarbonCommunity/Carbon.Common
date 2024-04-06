@@ -425,6 +425,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 		#endregion
 	}
+
 	public void TabPanelName(CUI cui, CuiElementContainer container, string parent, string text, float height, float offset, TextAnchor align)
 	{
 		var cuiText = cui.CreateText(container, parent,
@@ -1002,6 +1003,15 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			command: command,
 			font: Handler.FontTypes.RobotoCondensedRegular);
 	}
+	public void TabPanelWidget(CUI cui, CuiElementContainer container, string parent, PlayerSession session, Tab.OptionWidget widget, float height, float offset)
+	{
+		widget.WidgetPanel = cui.CreatePanel(container, parent,
+			color: Cache.CUI.BlankColor,
+			xMin: 0, xMax: 1f, yMin: offset, yMax: offset + height);
+
+		widget.Callback?.Invoke(session, cui, container, widget.WidgetPanel);
+
+	}
 	public void TabTooltip(CUI cui, CuiElementContainer container, string parent, Tab.Option tooltip, string command, PlayerSession admin, float height, float offset)
 	{
 		if (admin.Tooltip == tooltip)
@@ -1223,6 +1233,10 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 											TabPanelColor(cui, container, panel, color.Name, color.Color?.Invoke() ?? "0.1 0.1 0.1 0.5", PanelId + $".callaction {i} {actualI}", rowHeight, rowIndex);
 											HandleReveal(DataInstance.Colors.OptionWidth);
 											break;
+
+										case Tab.OptionWidget widget:
+											TabPanelWidget(cui, container, panel, ap, widget, rowHeight * (widget.Height + 1), rowIndex);
+											break;
 									}
 
 									#region Reveal
@@ -1259,7 +1273,6 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 									#endregion
 
 									rowHeight -= OptionHeightOffset;
-
 									rowIndex += rowHeight + rowSpacing;
 								}
 
@@ -1391,6 +1404,9 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			Unsubscribe("OnPluginUnloaded");
 		}
 	}
+
+	[CommandVar("rowheight")] private float RowHeightCustom;
+	[CommandVar("rowindex")] private float RowIndexCustom;
 
 	public void RegisterTab(Tab tab, int? insert = null)
 	{
