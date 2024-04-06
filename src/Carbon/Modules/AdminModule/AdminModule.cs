@@ -409,7 +409,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 		cui.CreateProtectedButton(container, parent: id,
 			color: "0.3 0.3 0.3 0.1",
-			textColor: page.CurrentPage >= page.TotalPages ? "1 1 1 0.5" : "0.5 0.5 0.5 0.5",
+			textColor: page.CurrentPage < page.TotalPages ? "1 1 1 0.5" : "0.5 0.5 0.5 0.5",
 			text: ">>", 8,
 			xMin: 0.9f, xMax: 1f, yMin: 0f, yMax: 1f,
 			command: page.CurrentPage < page.TotalPages ? PanelId + $".changecolumnpage {column} 3" : "",
