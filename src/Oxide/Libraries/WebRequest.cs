@@ -269,7 +269,7 @@ public class WebRequests : Library
 				case "DELETE":
 					if (_data)
 					{
-						_client.UploadDataCompleted += (object sender, UploadDataCompletedEventArgs e) =>
+						_client.UploadDataCompleted += (_, e) =>
 						{
 							ResponseDuration = DateTime.Now - _time;
 							ResponseCode = _client.StatusCode;
