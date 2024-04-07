@@ -202,6 +202,7 @@ public class WebRequests : Library
 											ResponseCode = (int)(web.Response as HttpWebResponse).StatusCode;
 										ResponseError = e.Error;
 										ResponseObject = e.Result;
+										Logger.Error($"Failed executing '{Method}' webrequest [response] ({Url})", e.Error);
 										OnComplete();
 										return;
 									}
@@ -209,8 +210,9 @@ public class WebRequests : Library
 									ResponseObject = e.Result;
 									OnComplete();
 								}
-								catch
+								catch (Exception ex)
 								{
+									Logger.Error($"Failed executing '{Method}' webrequest [callback] ({Url})", ex);
 									OnComplete();
 								}
 							};
@@ -237,6 +239,7 @@ public class WebRequests : Library
 											ResponseCode = (int)(web.Response as HttpWebResponse).StatusCode;
 										ResponseError = e.Error;
 										ResponseObject = e.Result;
+										Logger.Error($"Failed executing '{Method}' webrequest [response] ({Url})", e.Error);
 										OnComplete();
 										return;
 									}
@@ -244,8 +247,9 @@ public class WebRequests : Library
 									ResponseObject = e.Result;
 									OnComplete();
 								}
-								catch
+								catch (Exception ex)
 								{
+									Logger.Error($"Failed executing '{Method}' webrequest [callback] ({Url})", ex);
 									OnComplete();
 								}
 							};
@@ -255,7 +259,7 @@ public class WebRequests : Library
 					catch (Exception ex)
 					{
 						Logger.Error($"Failed executing '{Method}' webrequest [internal] ({Url})", ex);
-
+						ResponseCode = _client.StatusCode;
 						ResponseError = ex;
 						OnComplete();
 					}
@@ -291,6 +295,7 @@ public class WebRequests : Library
 											ResponseCode = (int)(web.Response as HttpWebResponse).StatusCode;
 										ResponseError = e.Error;
 										ResponseObject = e.Result;
+										Logger.Error($"Failed executing '{Method}' webrequest [response] ({Url})", e.Error);
 										OnComplete();
 										return;
 									}
@@ -298,8 +303,9 @@ public class WebRequests : Library
 									ResponseObject = e.Result;
 									OnComplete();
 								}
-								catch
+								catch (Exception ex)
 								{
+									Logger.Error($"Failed executing '{Method}' webrequest [callback] ({Url})", ex);
 									OnComplete();
 								}
 							};
@@ -322,11 +328,11 @@ public class WebRequests : Library
 
 									if (e.Error != null)
 									{
-										Carbon.Logger.Log($"error happened ({e.Error.Message})\n{e.Error.StackTrace}");
 										if (e.Error is WebException web)
 											ResponseCode = (int)(web.Response as HttpWebResponse).StatusCode;
 										ResponseError = e.Error;
 										ResponseObject = e.Result;
+										Logger.Error($"Failed executing '{Method}' webrequest [response] ({Url})", e.Error);
 										OnComplete();
 										return;
 									}
@@ -334,8 +340,9 @@ public class WebRequests : Library
 									ResponseObject = e.Result;
 									OnComplete();
 								}
-								catch(Exception ex)
+								catch (Exception ex)
 								{
+									Logger.Error($"Failed executing '{Method}' webrequest [callback] ({Url})", ex);
 									OnComplete();
 								}
 							};
@@ -345,7 +352,6 @@ public class WebRequests : Library
 					catch (Exception ex)
 					{
 						Logger.Error($"Failed executing '{Method}' webrequest [internal] ({Url})", ex);
-
 						ResponseCode = _client.StatusCode;
 						ResponseError = ex;
 						OnComplete();
