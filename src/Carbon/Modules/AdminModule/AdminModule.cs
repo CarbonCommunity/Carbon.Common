@@ -1405,9 +1405,6 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		}
 	}
 
-	[CommandVar("rowheight")] private float RowHeightCustom;
-	[CommandVar("rowindex")] private float RowIndexCustom;
-
 	public void RegisterTab(Tab tab, int? insert = null)
 	{
 		var existentTab = Tabs.FirstOrDefault(x => x.Id == tab.Id);
