@@ -148,6 +148,17 @@ public partial class AdminModule
 		{
 			return AddRow(column, new OptionColor(name, color, callback, tooltip), hidden);
 		}
+		public Tab AddWidget(int column, int height, Action<PlayerSession, CUI, CuiElementContainer, string> callback)
+		{
+			var space = new OptionSpace(string.Empty);
+
+			for (int i = 0; i < height; i++)
+			{
+				AddRow(column, space);
+			}
+
+			return AddRow(column, new OptionWidget(string.Empty, height, callback));
+		}
 
 		public void CreateDialog(string title, Action<PlayerSession> onConfirm, Action<PlayerSession> onDecline)
 		{
@@ -386,6 +397,24 @@ public partial class AdminModule
 			{
 				Color = color;
 				Callback = callback;
+			}
+		}
+		public class OptionWidget : Option
+		{
+			public int Height = 1;
+			public string WidgetPanel;
+			public Action<PlayerSession, CUI, CuiElementContainer, string> Callback;
+
+			public OptionWidget(string name, int height, Action<PlayerSession, CUI, CuiElementContainer, string> callback, string tooltip = null, bool hidden = false) : base(name, tooltip, hidden)
+			{
+				Height = height;
+				Callback = callback;
+			}
+		}
+		public class OptionSpace : Option
+		{
+			public OptionSpace(string name, string tooltip = null, bool hidden = false) : base(name, tooltip, hidden)
+			{
 			}
 		}
 	}
