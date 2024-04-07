@@ -365,7 +365,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 	public void TabColumnPagination(CUI cui, CuiElementContainer container, string parent, int column, PlayerSession.Page page, float height, float offset)
 	{
 		var id = cui.CreatePanel(container, parent,
-			color: "0.3 0.3 0.3 0.3",
+			color: Cache.CUI.BlankColor,
 			xMin: 0.02f, xMax: 0.98f, yMin: offset, yMax: offset + height);
 
 		cui.CreateText(container, parent: id,
@@ -388,15 +388,15 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		#region Left
 
 		cui.CreateProtectedButton(container, parent: id,
-			color: page.CurrentPage > 0 ? "0.8 0.7 0.2 0.7" : "0.3 0.3 0.3 0.1",
-			textColor: "1 1 1 0.5",
+			color: "0.3 0.3 0.3 0.1",
+			textColor: page.CurrentPage > 0 ? "1 1 1 0.5" : "0.5 0.5 0.5 0.5",
 			text: "<<", 8,
 			xMin: 0, xMax: 0.1f, yMin: 0f, yMax: 1f,
 			command: page.CurrentPage > 0 ? PanelId + $".changecolumnpage {column} 2" : "",
 			font: Handler.FontTypes.RobotoCondensedRegular);
 
 		cui.CreateProtectedButton(container, parent: id,
-			color: "0.4 0.7 0.2 0.7",
+			color: "0.3 0.3 0.3 0.1",
 			textColor: "1 1 1 0.5",
 			text: "<", 8,
 			xMin: 0.1f, xMax: 0.2f, yMin: 0f, yMax: 1f,
@@ -408,15 +408,15 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		#region Right
 
 		cui.CreateProtectedButton(container, parent: id,
-			color: page.CurrentPage < page.TotalPages ? "0.8 0.7 0.2 0.7" : "0.3 0.3 0.3 0.1",
-			textColor: "1 1 1 0.5",
+			color: "0.3 0.3 0.3 0.1",
+			textColor: page.CurrentPage < page.TotalPages ? "1 1 1 0.5" : "0.5 0.5 0.5 0.5",
 			text: ">>", 8,
 			xMin: 0.9f, xMax: 1f, yMin: 0f, yMax: 1f,
 			command: page.CurrentPage < page.TotalPages ? PanelId + $".changecolumnpage {column} 3" : "",
 			font: Handler.FontTypes.RobotoCondensedRegular);
 
 		cui.CreateProtectedButton(container, parent: id,
-			color: "0.4 0.7 0.2 0.7",
+			color: "0.3 0.3 0.3 0.1",
 			textColor: "1 1 1 0.5",
 			text: ">", 8,
 			xMin: 0.8f, xMax: 0.9f, yMin: 0f, yMax: 1f,
@@ -425,6 +425,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 		#endregion
 	}
+
 	public void TabPanelName(CUI cui, CuiElementContainer container, string parent, string text, float height, float offset, TextAnchor align)
 	{
 		var cuiText = cui.CreateText(container, parent,
@@ -1002,6 +1003,15 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			command: command,
 			font: Handler.FontTypes.RobotoCondensedRegular);
 	}
+	public void TabPanelWidget(CUI cui, CuiElementContainer container, string parent, PlayerSession session, Tab.OptionWidget widget, float height, float offset)
+	{
+		widget.WidgetPanel = cui.CreatePanel(container, parent,
+			color: Cache.CUI.BlankColor,
+			xMin: 0, xMax: 1f, yMin: offset, yMax: offset + height);
+
+		widget.Callback?.Invoke(session, cui, container, widget.WidgetPanel);
+
+	}
 	public void TabTooltip(CUI cui, CuiElementContainer container, string parent, Tab.Option tooltip, string command, PlayerSession admin, float height, float offset)
 	{
 		if (admin.Tooltip == tooltip)
@@ -1128,8 +1138,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 								#region Rows
 
 								var columnPage = ap.GetOrCreatePage(i);
-								var contentsPerPage = 19;
-								var rowSpacing = 0.01f;
+								const int contentsPerPage = 19;
+								const float rowSpacing = 0.01f;
 								var rowHeight = 0.04f;
 								var rowPage = rows.Skip(contentsPerPage * columnPage.CurrentPage).Take(contentsPerPage);
 								var rowPageCount = rowPage.Count();
@@ -1147,7 +1157,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 								{
 									rowHeight += OptionHeightOffset;
 
-									TabColumnPagination(cui, container, panel, i, columnPage, rowHeight, rowIndex);
+									TabColumnPagination(cui, container, panel, i, columnPage, rowHeight, 0);
 
 									rowHeight -= OptionHeightOffset;
 
@@ -1223,6 +1233,10 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 											TabPanelColor(cui, container, panel, color.Name, color.Color?.Invoke() ?? "0.1 0.1 0.1 0.5", PanelId + $".callaction {i} {actualI}", rowHeight, rowIndex);
 											HandleReveal(DataInstance.Colors.OptionWidth);
 											break;
+
+										case Tab.OptionWidget widget:
+											TabPanelWidget(cui, container, panel, ap, widget, rowHeight * (widget.Height + 1), rowIndex);
+											break;
 									}
 
 									#region Reveal
@@ -1233,14 +1247,14 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 										var blur = cui.CreatePanel(container, parent: panel,
 											color: "0 0 0 0.4",
-											xMin: xMin, xMax: 0.98f, yMin: rowIndex, yMax: rowIndex + rowHeight,
+											xMin: xMin, xMax: 0.985f, yMin: rowIndex, yMax: rowIndex + rowHeight,
 											blur: true);
 
 										cui.CreateProtectedButton(container, blur,
 											color: Cache.CUI.BlankColor, textColor: "1 1 1 0.5", text: "REVEAL".SpacedString(1), 8, command: PanelId + $".callaction {i} {actualI}");
 									}
 
-									void HandleInputHighlight(float xMin, float xMax = 0.98f, string command = null)
+									void HandleInputHighlight(float xMin, float xMax = 0.985f, string command = null)
 									{
 										if (row == ap.Input) return;
 
@@ -1259,7 +1273,6 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 									#endregion
 
 									rowHeight -= OptionHeightOffset;
-
 									rowIndex += rowHeight + rowSpacing;
 								}
 
@@ -1391,6 +1404,9 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			Unsubscribe("OnPluginUnloaded");
 		}
 	}
+
+	[CommandVar("rowheight")] private float RowHeightCustom;
+	[CommandVar("rowindex")] private float RowIndexCustom;
 
 	public void RegisterTab(Tab tab, int? insert = null)
 	{

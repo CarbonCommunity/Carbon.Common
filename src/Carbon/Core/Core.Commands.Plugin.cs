@@ -82,9 +82,9 @@ public partial class CorePlugin : CarbonPlugin
 								: $" (avg {ByteEx.Format(memoryAverageValue, shortName: true, stringFormat: "{0}{1}").ToLower()})";
 							body.AddRow(string.Empty, plugin.Title, plugin.Author, $"v{plugin.Version}",
 								plugin.TotalHookTime.TotalMilliseconds == 0 ? string.Empty : $"{plugin.TotalHookTime.TotalMilliseconds:0}ms{hookTimeAverage}",
-								plugin.CurrentHookFires == 0 ? string.Empty : $"{plugin.CurrentHookFires}",
+								plugin.CurrentHookFires == 0 ? string.Empty : $"{plugin.CurrentHookFires:n0}",
 								plugin.TotalMemoryUsed == 0 ? string.Empty : $"{ByteEx.Format(plugin.TotalMemoryUsed, shortName: true, stringFormat: "{0}{1}").ToLower()}{memoryAverage}",
-								plugin.CurrentLagSpikes == 0 ? string.Empty : $"{plugin.CurrentLagSpikes}",
+								plugin.CurrentLagSpikes == 0 ? string.Empty : $"{plugin.CurrentLagSpikes:n0}",
 								plugin.IsPrecompiled
 									? string.Empty
 									: $"{plugin.CompileTime.TotalMilliseconds:0}ms [{plugin.InternalCallHookGenTime.TotalMilliseconds:0}ms]",
@@ -379,6 +379,7 @@ public partial class CorePlugin : CarbonPlugin
 								}
 								else
 								{
+									plugin.ProcessorProcess?.Clear();
 									plugin.ProcessorProcess?.Dispose();
 									mod.Plugins.Remove(plugin);
 								}
@@ -463,9 +464,9 @@ public partial class CorePlugin : CarbonPlugin
 					hookId,
 					$"{hookName}",
 					hookTime == 0 ? string.Empty : $"{hookTime:0}ms",
-					hookTimesFired == 0 ? string.Empty : $"{hookTimesFired}",
+					hookTimesFired == 0 ? string.Empty : $"{hookTimesFired:n0}",
 					hookMemoryUsage == 0 ? string.Empty : $"{ByteEx.Format(hookMemoryUsage, shortName: true).ToLower()}",
-					hookLagSpikes == 0 ? string.Empty : $"{hookLagSpikes}",
+					hookLagSpikes == 0 ? string.Empty : $"{hookLagSpikes:n0}",
 					!plugin.IgnoredHooks.Contains(hookId) ? "*" : string.Empty,
 					$"{hookAsyncCount:n0} / {hookCount:n0}");
 

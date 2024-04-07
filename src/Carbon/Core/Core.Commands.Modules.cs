@@ -163,9 +163,9 @@ public partial class CorePlugin : CarbonPlugin
 			var memoryAverage = Mathf.RoundToInt(memoryAverageValue) == 0 ? string.Empty : $" (avg {ByteEx.Format(memoryAverageValue, shortName: true, stringFormat: "{0}{1}").ToLower()})";
 			print.AddRow(string.Empty, hookable.Name, module.GetEnabled(), module.Version,
 				module.TotalHookTime.TotalMilliseconds == 0 ? string.Empty : $"{module.TotalHookTime.TotalMilliseconds:0}ms{hookTimeAverage}",
-				module.CurrentHookFires == 0 ? string.Empty :$"{module.CurrentHookFires}",
+				module.CurrentHookFires == 0 ? string.Empty :$"{module.CurrentHookFires:n0}",
 				module.TotalMemoryUsed == 0 ? string.Empty : $"{ByteEx.Format(module.TotalMemoryUsed, shortName: true, stringFormat: "{0}{1}").ToLower()}{memoryAverage}",
-				module.CurrentLagSpikes == 0 ? string.Empty : $"{module.CurrentLagSpikes}",
+				module.CurrentLagSpikes == 0 ? string.Empty : $"{module.CurrentLagSpikes:n0}",
 				$"{TimeEx.Format(module.Uptime)}");
 		}
 
@@ -248,9 +248,9 @@ public partial class CorePlugin : CarbonPlugin
 					hookId,
 					$"{hookName}",
 					hookTime == 0 ? string.Empty : $"{hookTime:0}ms",
-					hookTimesFired == 0 ? string.Empty : $"{hookTimesFired}",
+					hookTimesFired == 0 ? string.Empty : $"{hookTimesFired:n0}",
 					hookMemoryUsage == 0 ? string.Empty : $"{ByteEx.Format(hookMemoryUsage, shortName: true).ToLower()}",
-					hookLagSpikes == 0 ? string.Empty : $"{hookLagSpikes}",
+					hookLagSpikes == 0 ? string.Empty : $"{hookLagSpikes:n0}",
 					!module.IgnoredHooks.Contains(hookId) ? "*" : string.Empty,
 					$"{hookAsyncCount:n0} / {hookCount:n0}");
 			}
