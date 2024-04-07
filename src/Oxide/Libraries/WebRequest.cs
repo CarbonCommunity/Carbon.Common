@@ -176,6 +176,7 @@ public class WebRequests : Library
 						_client.DownloadDataCompleted += (_, e) =>
 						{
 							ResponseDuration = DateTime.Now - _time;
+							ResponseCode = _client.StatusCode;
 
 							try
 							{
@@ -195,7 +196,6 @@ public class WebRequests : Library
 									return;
 								}
 
-								ResponseCode = _client.StatusCode;
 								ResponseObject = e.Result;
 								OnComplete(false);
 							}
