@@ -228,6 +228,10 @@ public partial class AdminModule
 						ap => Singleton.ConfigInstance.SpectatingInfoOverlay =
 							!Singleton.ConfigInstance.SpectatingInfoOverlay,
 						ap => !Singleton.ConfigInstance.SpectatingInfoOverlay);
+					tab.AddToggle(0, "Spectating End Teleport Back",
+						ap => Singleton.ConfigInstance.SpectatingEndTeleportBack =
+							!Singleton.ConfigInstance.SpectatingEndTeleportBack,
+						ap => Singleton.ConfigInstance.SpectatingEndTeleportBack);
 					tab.AddToggle(0, "Hide Plugin Icons (Plugins tab)",
 						ap => Singleton.DataInstance.HidePluginIcons = !Singleton.DataInstance.HidePluginIcons,
 						ap => Singleton.DataInstance.HidePluginIcons);

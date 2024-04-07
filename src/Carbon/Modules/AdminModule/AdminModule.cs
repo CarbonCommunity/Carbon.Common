@@ -96,6 +96,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		[LogType.Warning] = "#dbbe2a",
 		[LogType.Error] = "#db2a2a"
 	};
+	internal static Dictionary<ulong, Vector3> _spectateStartPosition = new();
+
 	public bool HandleEnableNeedsKeyboard(PlayerSession ap)
 	{
 		return ap.SelectedTab == null || ap.SelectedTab.Dialog == null;
@@ -1742,6 +1744,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			StopSpectating(player);
 		}
 
+		_spectateStartPosition[player.userID] = player.transform.position;
+
 		var targetPlayer = target as BasePlayer;
 		player.Teleport(target.transform.position);
 		player.SetPlayerFlag(BasePlayer.PlayerFlags.Spectating, b: true);
@@ -1795,7 +1799,15 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		if (spectated != null) player.Teleport(spectated.transform.position);
 		player.spectateFilter = string.Empty;
 		if (!player.IsFlying) player.SendConsoleCommand("noclip");
-		player.Teleport(player.transform.position + (Vector3.up * -3f));
+
+		if (Singleton.ConfigInstance.SpectatingEndTeleportBack && _spectateStartPosition.TryGetValue(player.userID, out var position))
+		{
+			player.Teleport(position);
+		}
+		else
+		{
+			player.Teleport(player.transform.position + (Vector3.up * -3f));
+		}
 
 		var tab = Singleton.GetTab(player);
 		var ap = Singleton.GetPlayerSession(player);
@@ -1866,6 +1878,7 @@ public class AdminConfig
 	public bool DisableEntitiesTab = true;
 	public bool DisablePluginsTab = false;
 	public bool SpectatingInfoOverlay = true;
+	public bool SpectatingEndTeleportBack = false;
 	public List<ActionButton> QuickActions = new();
 
 	public class ActionButton
