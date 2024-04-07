@@ -71,8 +71,12 @@ public class BaseHookable
 			MemoryUsage = 0;
 		}
 
-		public void OnFired(TimeSpan hookTime, double memoryUsed)
+		public void OnFired(BaseHookable hookable, TimeSpan hookTime, double memoryUsed)
 		{
+			hookable.TotalHookTime += hookTime;
+			hookable.TotalMemoryUsed += memoryUsed;
+			hookable.TotalHookFires++;
+
 			HookTime += hookTime;
 			MemoryUsage += memoryUsed;
 
@@ -83,8 +87,9 @@ public class BaseHookable
 				Logger.Log($" {Name}[{Id}] fired on {HookableName} {Hookable.ToPrettyString()} [{TimesFired:n0}|{HookTime.TotalMilliseconds:0}ms|{ByteEx.Format(MemoryUsage, shortName: true, stringFormat: "{0}{1}").ToLower()}]");
 			}
 		}
-		public void OnLagSpike()
+		public void OnLagSpike(BaseHookable hookable)
 		{
+			hookable.TotalHookLagSpikes++;
 			LagSpikes++;
 		}
 
@@ -122,7 +127,13 @@ public class BaseHookable
 	public TimeSpan TotalHookTime { get; internal set; }
 
 	[JsonProperty]
+	public int TotalHookFires { get; internal set; }
+
+	[JsonProperty]
 	public double TotalMemoryUsed { get; internal set; }
+
+	[JsonProperty]
+	public int TotalHookLagSpikes { get; internal set; }
 
 	[JsonProperty]
 	public double Uptime => _initializationTime.GetValueOrDefault();
@@ -147,8 +158,6 @@ public class BaseHookable
 	public TimeSpan CurrentHookTime { get; internal set; }
 	public static long CurrentMemory => GC.GetTotalMemory(false);
 	public static int CurrentGcCount => GC.CollectionCount(0);
-	public int CurrentHookFires => HookPool.Sum(x => x.Value.Sum(y => y.TimesFired));
-	public int CurrentLagSpikes => HookPool.Sum(x => x.Value.Sum(y => y.LagSpikes));
 	public bool HasGCCollected => _currentGcCount != CurrentGcCount;
 
 	public virtual void TrackInit()
@@ -172,36 +181,23 @@ public class BaseHookable
 	}
 	public virtual void TrackStart()
 	{
-		if (!Community.IsServerInitialized)
+		if (!Community.IsServerInitialized || _trackStopwatch.IsRunning)
 		{
 			return;
 		}
 
-		var stopwatch = _trackStopwatch;
-		if (stopwatch.IsRunning)
-		{
-			return;
-		}
-		stopwatch.Start();
+		_trackStopwatch.Start();
 		_currentMemory = CurrentMemory;
 		_currentGcCount = CurrentGcCount;
 	}
 	public virtual void TrackEnd()
 	{
-		if (!Community.IsServerInitialized)
+		if (!Community.IsServerInitialized || !_trackStopwatch.IsRunning)
 		{
 			return;
 		}
 
-		var stopwatch = _trackStopwatch;
-
-		if (!stopwatch.IsRunning)
-		{
-			return;
-		}
-
-		CurrentHookTime = stopwatch.Elapsed;
-		var memoryUsed = (CurrentMemory - _currentMemory).Clamp(0, long.MaxValue);
+		CurrentHookTime = _trackStopwatch.Elapsed;
 
 #if DEBUG
 		// if (Community.Runtime.Config.PluginTrackingTime != 0)
@@ -211,9 +207,7 @@ public class BaseHookable
 		// }
 #endif
 
-		TotalHookTime += CurrentHookTime;
-		TotalMemoryUsed += memoryUsed;
-		stopwatch.Reset();
+		_trackStopwatch.Reset();
 	}
 
 #endregion
