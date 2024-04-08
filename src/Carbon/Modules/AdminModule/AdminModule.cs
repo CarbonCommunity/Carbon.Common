@@ -486,7 +486,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 	}
 	public void TabPanelToggle(CUI cui, CuiElementContainer container, string parent, string text, string command, float height, float offset, bool isOn, Tab tab)
 	{
-		var toggleButtonScale = tab.Fullscreen ? 0.93f : 0.94f;
+		var toggleButtonScale = tab.IsFullscreen ? 0.93f : 0.94f;
 
 		var panel = cui.CreatePanel(container, parent,
 			color: Cache.CUI.BlankColor,
@@ -1069,7 +1069,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 			using (TimeMeasure.New($"{Name}.Main"))
 			{
-				if (tab == null || !tab.Fullscreen)
+				if (tab == null || !tab.IsFullscreen)
 				{
 					#region Title
 
@@ -1116,7 +1116,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				{
 					var panels = cui.CreatePanel(container, main,
 						color: Cache.CUI.BlankColor,
-						xMin: 0.01f, xMax: 0.99f, yMin: 0.02f, yMax: tab != null && tab.Fullscreen ? 0.98f : 0.86f);
+						xMin: 0.01f, xMax: 0.99f, yMin: 0.02f, yMax: tab != null && tab.IsFullscreen ? 0.98f : 0.86f);
 
 					if (tab != null)
 					{
@@ -1323,7 +1323,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 			using (TimeMeasure.New($"{Name}.Exit"))
 			{
-				var shift = tab == null || tab.Fullscreen ? 15 : 0;
+				var shift = tab == null || tab.IsFullscreen ? 15 : 0;
 
 				if (HasAccess(ap.Player, "config.use"))
 				{
@@ -1699,6 +1699,47 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		StopSpectating(arg.Player());
 	}
 
+	[Conditional("!MINIMAL")]
+	[ProtectedCommand("carbongg.skipspectate")]
+	private void SkipSpectate(Arg arg)
+	{
+		var player = arg.Player();
+
+		if (!player.IsSpectating())
+		{
+			return;
+		}
+
+		var parent = player.GetParentEntity();
+
+		if (parent is not BasePlayer spectatedPlayer)
+		{
+			return;
+		}
+
+		var skip = arg.GetInt(0);
+		using var map = Entities.Get<BasePlayer>(true);
+
+		var index = map.Pool.IndexOf(spectatedPlayer) + skip;
+
+		if (map.Pick(index) == player)
+		{
+			index++;
+		}
+
+		if (index > map.Pool.Count - 1)
+		{
+			index = 0;
+		}
+		else if (index < 0)
+		{
+			index = map.Pool.Count - 1;
+		}
+
+		StopSpectating(player);
+		StartSpectating(player, map.Pick(index));
+	}
+
 	#endregion
 
 	[Conditional("!MINIMAL")]
@@ -1773,10 +1814,24 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				15);
 		}
 
+		if (targetPlayer != null)
+		{
+			cui.CreateProtectedButton(container, panel,
+				color: "#1c6aa0", textColor: "1 1 1 0.7",
+				text: "<", 10,
+				xMin: 0.41f, xMax: 0.44f, yMin: 0.15f, yMax: 0.19f, command: "carbongg.skipspectate -1");
+
+			cui.CreateProtectedButton(container, panel,
+				color: "#1c6aa0", textColor: "1 1 1 0.7",
+				text: ">", 10,
+				xMin: 0.56f, xMax: 0.59f, yMin: 0.15f, yMax: 0.19f, command: "carbongg.skipspectate 1");
+		}
+
 		cui.CreateProtectedButton(container, panel,
 			color: "#1c6aa0", textColor: "1 1 1 0.7",
 			text: "END SPECTATE".SpacedString(1), 10,
 			xMin: 0.45f, xMax: 0.55f, yMin: 0.15f, yMax: 0.19f, command: "carbongg.endspectate");
+
 		cui.Send(container, player);
 
 		Community.Runtime.CorePlugin.NextTick(() => Singleton.Close(player));
