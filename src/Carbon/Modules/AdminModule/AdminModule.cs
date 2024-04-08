@@ -486,7 +486,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 	}
 	public void TabPanelToggle(CUI cui, CuiElementContainer container, string parent, string text, string command, float height, float offset, bool isOn, Tab tab)
 	{
-		var toggleButtonScale = tab.Fullscreen ? 0.93f : 0.94f;
+		var toggleButtonScale = tab.IsFullscreen ? 0.93f : 0.94f;
 
 		var panel = cui.CreatePanel(container, parent,
 			color: Cache.CUI.BlankColor,
@@ -1069,7 +1069,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 			using (TimeMeasure.New($"{Name}.Main"))
 			{
-				if (tab == null || !tab.Fullscreen)
+				if (tab == null || !tab.IsFullscreen)
 				{
 					#region Title
 
@@ -1116,7 +1116,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				{
 					var panels = cui.CreatePanel(container, main,
 						color: Cache.CUI.BlankColor,
-						xMin: 0.01f, xMax: 0.99f, yMin: 0.02f, yMax: tab != null && tab.Fullscreen ? 0.98f : 0.86f);
+						xMin: 0.01f, xMax: 0.99f, yMin: 0.02f, yMax: tab != null && tab.IsFullscreen ? 0.98f : 0.86f);
 
 					if (tab != null)
 					{
@@ -1323,7 +1323,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 			using (TimeMeasure.New($"{Name}.Exit"))
 			{
-				var shift = tab == null || tab.Fullscreen ? 15 : 0;
+				var shift = tab == null || tab.IsFullscreen ? 15 : 0;
 
 				if (HasAccess(ap.Player, "config.use"))
 				{

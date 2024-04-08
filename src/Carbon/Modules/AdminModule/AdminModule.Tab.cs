@@ -31,7 +31,7 @@ public partial class AdminModule
 		{
 			if (Columns.TryGetValue(column, out var rows))
 			{
-				rows.Clear();
+				rows.ClearToPool();
 
 				if (erase)
 				{
@@ -53,12 +53,12 @@ public partial class AdminModule
 		{
 			if (!Columns.TryGetValue(column, out var options))
 			{
-				Columns[column] = options = new List<Option>();
+				Columns[column] = options = new();
 			}
 
 			if (clear)
 			{
-				options.Clear();
+				options.ClearToPool();
 			}
 
 			return this;
@@ -74,7 +74,7 @@ public partial class AdminModule
 			else
 			{
 
-				Columns[column] = options = new List<Option>();
+				Columns[column] = options = new();
 				options.Add(row);
 			}
 
@@ -83,24 +83,66 @@ public partial class AdminModule
 		public Tab AddName(int column, string name, TextAnchor align = TextAnchor.MiddleLeft, bool hidden = false)
 		{
 			var option = Pool.Get<OptionName>();
+			option.Name = name;
+			option.Align = align;
 
-			return AddRow(column, new OptionName(name, align, null), hidden);
+			return AddRow(column, new OptionName(name, align), hidden);
 		}
 		public Tab AddButton(int column, string name, Action<PlayerSession> callback, Func<PlayerSession, OptionButton.Types> type = null, TextAnchor align = TextAnchor.MiddleCenter, bool hidden = false)
 		{
-			return AddRow(column, new OptionButton(name, align, callback, type, null), hidden);
+			var option = Pool.Get<OptionButton>();
+			option.Name = name;
+			option.Align = align;
+			option.Callback = callback;
+			option.Type = type;
+
+			return AddRow(column, option, hidden);
 		}
 		public Tab AddToggle(int column, string name, Action<PlayerSession> callback, Func<PlayerSession, bool> isOn = null, string tooltip = null, bool hidden = false)
 		{
-			return AddRow(column, new OptionToggle(name, callback, ap => { try { return (isOn?.Invoke(ap)).GetValueOrDefault(false); } catch (Exception ex) { Logger.Error($"AddToggle[{column}][{name}] failed", ex); } return false; }, tooltip), hidden);
+			var option = Pool.Get<OptionToggle>();
+			option.Name = name;
+			option.Callback = callback;
+			option.IsOn = ap =>
+			{
+				try
+				{
+					return (isOn?.Invoke(ap)).GetValueOrDefault(false);
+				}
+				catch (Exception ex)
+				{
+					Logger.Error($"AddToggle[{column}][{name}] failed", ex);
+				}
+
+				return false;
+			};
+			option.Tooltip = tooltip;
+
+			return AddRow(column, option, hidden);
 		}
 		public Tab AddText(int column, string name, int size, string color, TextAnchor align = TextAnchor.MiddleCenter, CUI.Handler.FontTypes font = CUI.Handler.FontTypes.RobotoCondensedRegular, bool isInput = false, bool hidden = false)
 		{
-			return AddRow(column, new OptionText(name, size, color, align, font, isInput, null), hidden);
+			var option = Pool.Get<OptionText>();
+			option.Name = name;
+			option.Size = size;
+			option.Color = color;
+			option.Align = align;
+			option.Font = font;
+			option.IsInput = isInput;
+
+			return AddRow(column, option, hidden);
 		}
 		public Tab AddInput(int column, string name, Func<PlayerSession, string> placeholder, int characterLimit, bool readOnly, Action<PlayerSession, IEnumerable<string>> callback = null, string tooltip = null, bool hidden = false)
 		{
-			return AddRow(column, new OptionInput(name, placeholder, characterLimit, readOnly, callback, tooltip), hidden);
+			var option = Pool.Get<OptionInput>();
+			option.Name = name;
+			option.Placeholder = placeholder;
+			option.CharacterLimit = characterLimit;
+			option.ReadOnly = readOnly;
+			option.Callback = callback;
+			option.Tooltip = tooltip;
+
+			return AddRow(column, option, hidden);
 		}
 		public Tab AddInput(int column, string name, Func<PlayerSession, string> placeholder, Action<PlayerSession, IEnumerable<string>> callback = null, string tooltip = null, bool hidden = false)
 		{
@@ -108,8 +150,13 @@ public partial class AdminModule
 		}
 		public Tab AddEnum(int column, string name, Action<PlayerSession, bool> callback, Func<PlayerSession, string> text, string tooltip = null, bool hidden = false)
 		{
-			AddRow(column, new OptionEnum(name, callback, text, tooltip), hidden);
-			return this;
+			var option = Pool.Get<OptionEnum>();
+			option.Name = name;
+			option.Callback = callback;
+			option.Text = text;
+			option.Tooltip = tooltip;
+
+			return AddRow(column, option, hidden);
 		}
 		public Tab AddRadio(int column, string name, string id, bool wantsOn, Action<bool, PlayerSession> callback = null, string tooltip = null, bool hidden = false)
 		{
@@ -122,45 +169,99 @@ public partial class AdminModule
 			if (wantsOn) radio.Selected = radio.TemporaryIndex;
 
 			var index = radio.TemporaryIndex;
-			var option = new OptionRadio(name, id, index, wantsOn, callback, radio, tooltip);
+
+			var option = Pool.Get<OptionRadio>();
+			option.Name = name;
+			option.Id = id;
+			option.Index = index;
+			option.Callback = callback;
+			option.Radio = radio;
+			option.Tooltip = tooltip;
+
 			radio.Options.Add(option);
 
 			return AddRow(column, option, hidden);
 		}
 		public Tab AddDropdown(int column, string name, Func<PlayerSession, int> index, Action<PlayerSession, int> callback, string[] options, string[] optionsIcons = null, float optionsIconScale = 0f, string tooltip = null, bool hidden = false)
 		{
-			return AddRow(column, new OptionDropdown(name, index, callback, options, optionsIcons, optionsIconScale, tooltip), hidden);
+			var option = Pool.Get<OptionDropdown>();
+			option.Name = name;
+			option.Index = index;
+			option.Callback = callback;
+			option.Options = options;
+			option.OptionsIcons = optionsIcons;
+			option.OptionsIconScale = optionsIconScale;
+			option.Tooltip = tooltip;
+
+			return AddRow(column, option, hidden);
 		}
 		public Tab AddRange(int column, string name, float min, float max, Func<PlayerSession, float> value, Action<PlayerSession, float> callback, Func<PlayerSession, string> text = null, string tooltip = null, bool hidden = false)
 		{
-			return AddRow(column, new OptionRange(name, min, max, value, callback, text, tooltip), hidden);
+			var option = Pool.Get<OptionRange>();
+			option.Name = name;
+			option.Min = min;
+			option.Max = max;
+			option.Value = value;
+			option.Callback = callback;
+			option.Text = text;
+			option.Tooltip = tooltip;
+
+			return AddRow(column, option, hidden);
 		}
 		public Tab AddButtonArray(int column, float spacing, params OptionButton[] buttons)
 		{
-			return AddRow(column, new OptionButtonArray(string.Empty, spacing, null, false, buttons));
+			var option = Pool.Get<OptionButtonArray>();
+			option.Name = string.Empty;
+			option.Spacing = spacing;
+			option.Buttons = buttons;
+
+			return AddRow(column, option);
 		}
 		public Tab AddButtonArray(int column, params OptionButton[] buttons)
 		{
-			return AddRow(column, new OptionButtonArray(string.Empty, 0.01f, null, false, buttons));
+			var option = Pool.Get<OptionButtonArray>();
+			option.Name = string.Empty;
+			option.Spacing = 0.01f;
+			option.Buttons = buttons;
+
+			return AddRow(column, option);
 		}
 		public Tab AddInputButton(int column, string name, float buttonPriority, OptionInput input, OptionButton button, string tooltip = null, bool hidden = false)
 		{
-			return AddRow(column, new OptionInputButton(name, buttonPriority, input, button, tooltip), hidden);
+			var option = Pool.Get<OptionInputButton>();
+			option.Name = name;
+			option.ButtonPriority = buttonPriority;
+			option.Input = input;
+			option.Button = button;
+			option.Tooltip = tooltip;
+
+			return AddRow(column, option, hidden);
 		}
 		public Tab AddColor(int column, string name, Func<string> color, Action<PlayerSession, string, string, float> callback, string tooltip = null, bool hidden = false)
 		{
-			return AddRow(column, new OptionColor(name, color, callback, tooltip), hidden);
+			var option = Pool.Get<OptionColor>();
+			option.Name = name;
+			option.Color = color;
+			option.Callback = callback;
+			option.Tooltip = tooltip;
+
+			return AddRow(column, option, hidden);
 		}
 		public Tab AddWidget(int column, int height, Action<PlayerSession, CUI, CuiElementContainer, string> callback)
 		{
-			var space = new OptionSpace(string.Empty);
+			var space = Pool.Get<OptionSpace>();
 
 			for (int i = 0; i < height; i++)
 			{
 				AddRow(column, space);
 			}
 
-			return AddRow(column, new OptionWidget(string.Empty, height, callback));
+			var option = Pool.Get<OptionWidget>();
+			option.Name = string.Empty;
+			option.Height = height;
+			option.Callback = callback;
+
+			return AddRow(column, option);
 		}
 
 		public void CreateDialog(string title, Action<PlayerSession> onConfirm, Action<PlayerSession> onDecline)
@@ -169,12 +270,9 @@ public partial class AdminModule
 		}
 		public void ResetHiddens()
 		{
-			foreach (var column in Columns)
+			foreach (var row in Columns.SelectMany(column => column.Value))
 			{
-				foreach (var row in column.Value)
-				{
-					row.CurrentlyHidden = row.Hidden;
-				}
+				row.CurrentlyHidden = row.Hidden;
 			}
 		}
 		public void Dispose()
@@ -224,6 +322,11 @@ public partial class AdminModule
 
 		public class OptionPool : List<Option>
 		{
+			public void ClearToPool()
+			{
+				ReturnToPool();
+				Clear();
+			}
 			public void ReturnToPool()
 			{
 				for (int i = 0; i < Count; i++)
@@ -253,6 +356,7 @@ public partial class AdminModule
 		{
 			public TextAnchor Align;
 
+			public OptionName() { }
 			public OptionName(string name, TextAnchor align, string tooltip = null, bool hidden = false) : base(name, tooltip, hidden) { Align = align; }
 		}
 		public class OptionText : Option
@@ -263,6 +367,7 @@ public partial class AdminModule
 			public CUI.Handler.FontTypes Font;
 			public bool IsInput;
 
+			public OptionText() { }
 			public OptionText(string name, int size, string color, TextAnchor align, CUI.Handler.FontTypes font, bool isInput, string tooltip = null, bool hidden = false) : base(name, tooltip, hidden) { Align = align; Size = size; Color = color; Font = font; IsInput = isInput; }
 		}
 		public class OptionInput : Option
@@ -272,6 +377,7 @@ public partial class AdminModule
 			public bool ReadOnly;
 			public Action<PlayerSession, IEnumerable<string>> Callback;
 
+			public OptionInput() { }
 			public OptionInput(string name, Func<PlayerSession, string> placeholder, int characterLimit, bool readOnly, Action<PlayerSession, IEnumerable<string>> args, string tooltip = null, bool hidden = false) : base(name, tooltip, hidden)
 			{
 				Placeholder = ap => { try { return placeholder?.Invoke(ap); } catch (Exception ex) { Logger.Error($"Failed OptionInput.Placeholder callback ({name}): {ex.Message}"); return string.Empty; } };
@@ -294,6 +400,7 @@ public partial class AdminModule
 				Important
 			}
 
+			public OptionButton() { }
 			public OptionButton(string name, TextAnchor align, Action<PlayerSession> callback, Func<PlayerSession, Types> type = null, string tooltip = null, bool hidden = false) : base(name, tooltip, hidden)
 			{
 				Align = align;
@@ -311,6 +418,7 @@ public partial class AdminModule
 			public Func<PlayerSession, bool> IsOn;
 			public Action<PlayerSession> Callback;
 
+			public OptionToggle() { }
 			public OptionToggle(string name, Action<PlayerSession> callback, Func<PlayerSession, bool> isOn = null, string tooltip = null, bool hidden = false) : base(name, tooltip, hidden)
 			{
 				Callback = (ap) => { try { callback?.Invoke(ap); } catch (Exception ex) { Logger.Error($"Failed OptionToggle.Callback callback ({name}): {ex.Message}"); } };
@@ -322,6 +430,7 @@ public partial class AdminModule
 			public Func<PlayerSession, string> Text;
 			public Action<PlayerSession, bool> Callback;
 
+			public OptionEnum() { }
 			public OptionEnum(string name, Action<PlayerSession, bool> callback, Func<PlayerSession, string> text, string tooltip = null, bool hidden = false) : base(name, tooltip, hidden)
 			{
 				Callback = (ap, value) => { try { callback?.Invoke(ap, value); } catch (Exception ex) { Logger.Error($"Failed OptionEnum.Callback callback ({name}): {ex.Message}"); } };
@@ -336,6 +445,7 @@ public partial class AdminModule
 			public Action<PlayerSession, float> Callback;
 			public Func<PlayerSession, string> Text;
 
+			public OptionRange() { }
 			public OptionRange(string name, float min, float max, Func<PlayerSession, float> value, Action<PlayerSession, float> callback, Func<PlayerSession, string> text, string tooltip = null, bool hidden = false) : base(name, tooltip, hidden)
 			{
 				Min = min;
@@ -349,16 +459,14 @@ public partial class AdminModule
 		{
 			public string Id;
 			public int Index;
-			public bool WantsOn;
 			public Action<bool, PlayerSession> Callback;
-
 			public Radio Radio;
 
-			public OptionRadio(string name, string id, int index, bool on, Action<bool, PlayerSession> callback, Radio radio, string tooltip = null, bool hidden = false) : base(name, tooltip, hidden)
+			public OptionRadio() { }
+			public OptionRadio(string name, string id, int index, Action<bool, PlayerSession> callback, Radio radio, string tooltip = null, bool hidden = false) : base(name, tooltip, hidden)
 			{
 				Id = id;
 				Callback = (value, ap) => { try { callback?.Invoke(value, ap); } catch (Exception ex) { Logger.Error($"Failed OptionRadio.Callback callback ({name}): {ex.Message}"); } };
-				WantsOn = on;
 				Index = index;
 				Radio = radio;
 			}
@@ -371,6 +479,7 @@ public partial class AdminModule
 			public string[] OptionsIcons;
 			public float OptionsIconScale;
 
+			public OptionDropdown() { }
 			public OptionDropdown(string name, Func<PlayerSession, int> index, Action<PlayerSession, int> callback, string[] options, string[] optionsIcons, float optionsIconScale, string tooltip = null, bool hidden = false) : base(name, tooltip, hidden)
 			{
 				Index = (ap) => { try { return (index?.Invoke(ap)).GetValueOrDefault(0); } catch (Exception ex) { Logger.Error($"Failed OptionRange.Callback callback ({name}): {ex.Message}"); return 0; } };
@@ -386,6 +495,7 @@ public partial class AdminModule
 			public OptionButton Button;
 			public float ButtonPriority = 0.25f;
 
+			public OptionInputButton() { }
 			public OptionInputButton(string name, float buttonPriority, OptionInput input, OptionButton button, string tooltip = null, bool hidden = false) : base(name, tooltip, hidden)
 			{
 				ButtonPriority = buttonPriority;
@@ -398,6 +508,7 @@ public partial class AdminModule
 			public OptionButton[] Buttons;
 			public float Spacing = 0.01f;
 
+			public OptionButtonArray() { }
 			public OptionButtonArray(string name, float spacing, string tooltip = null, bool hidden = false, params OptionButton[] buttons) : base(name, tooltip, hidden)
 			{
 				Buttons = buttons;
@@ -409,6 +520,7 @@ public partial class AdminModule
 			public Func<string> Color;
 			public Action<PlayerSession, string, string, float> Callback;
 
+			public OptionColor() { }
 			public OptionColor(string name, Func<string> color, Action<PlayerSession, string, string, float> callback, string tooltip = null, bool hidden = false) : base(name, tooltip, hidden)
 			{
 				Color = color;
@@ -421,6 +533,7 @@ public partial class AdminModule
 			public string WidgetPanel;
 			public Action<PlayerSession, CUI, CuiElementContainer, string> Callback;
 
+			public OptionWidget() { }
 			public OptionWidget(string name, int height, Action<PlayerSession, CUI, CuiElementContainer, string> callback, string tooltip = null, bool hidden = false) : base(name, tooltip, hidden)
 			{
 				Height = height;
@@ -429,6 +542,7 @@ public partial class AdminModule
 		}
 		public class OptionSpace : Option
 		{
+			public OptionSpace() { }
 			public OptionSpace(string name, string tooltip = null, bool hidden = false) : base(name, tooltip, hidden)
 			{
 			}
