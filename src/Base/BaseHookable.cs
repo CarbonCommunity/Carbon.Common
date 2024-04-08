@@ -146,7 +146,6 @@ public class BaseHookable
 	#region Tracking
 
 	internal Stopwatch _trackStopwatch = new();
-	internal long _currentMemory;
 	internal int _currentGcCount;
 	internal TimeSince? _initializationTime;
 
@@ -187,7 +186,6 @@ public class BaseHookable
 		}
 
 		_trackStopwatch.Start();
-		_currentMemory = CurrentMemory;
 		_currentGcCount = CurrentGcCount;
 	}
 	public virtual void TrackEnd()
