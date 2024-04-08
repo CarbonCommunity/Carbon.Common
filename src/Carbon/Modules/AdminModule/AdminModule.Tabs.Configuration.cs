@@ -45,7 +45,7 @@ public partial class AdminModule
 				{
 					session.ClearStorage(null, "itemtabitem");
 					Refresh(tab, session);
-				}) { Fullscreen = true, Access = "config.use" };
+				}) { IsFullscreen = true, Access = "config.use" };
 			tab.Over = (t, cui, container, panel, ap) =>
 			{
 				var currentItem = ap.GetStorage<ItemDefinition>(null, "itemtabitem");

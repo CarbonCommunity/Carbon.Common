@@ -1,4 +1,5 @@
-﻿using Oxide.Game.Rust.Cui;
+﻿using Facepunch;
+using Oxide.Game.Rust.Cui;
 
 namespace Carbon.Modules;
 
@@ -8,14 +9,14 @@ public partial class AdminModule
 	{
 		public string Id;
 		public string Name;
-		public string Access = null;
+		public string Access;
 		public RustPlugin Plugin;
 		public Action<Tab, CUI, CuiElementContainer, string, PlayerSession> Over, Under, Override;
-		public Dictionary<int, List<Option>> Columns = new();
+		public Dictionary<int, OptionPool> Columns = new();
 		public Action<PlayerSession, Tab> OnChange;
 		public Dictionary<string, Radio> Radios = new();
 		public TabDialog Dialog;
-		public bool Fullscreen;
+		public bool IsFullscreen;
 
 		public Tab(string id, string name, RustPlugin plugin, Action<PlayerSession, Tab> onChange = null, string access = null)
 		{
@@ -81,6 +82,8 @@ public partial class AdminModule
 		}
 		public Tab AddName(int column, string name, TextAnchor align = TextAnchor.MiddleLeft, bool hidden = false)
 		{
+			var option = Pool.Get<OptionName>();
+
 			return AddRow(column, new OptionName(name, align, null), hidden);
 		}
 		public Tab AddButton(int column, string name, Action<PlayerSession> callback, Func<PlayerSession, OptionButton.Types> type = null, TextAnchor align = TextAnchor.MiddleCenter, bool hidden = false)
@@ -219,6 +222,18 @@ public partial class AdminModule
 			}
 		}
 
+		public class OptionPool : List<Option>
+		{
+			public void ReturnToPool()
+			{
+				for (int i = 0; i < Count; i++)
+				{
+					var option = this[i];
+					Pool.Free(ref option);
+				}
+			}
+		}
+
 		public class Option
 		{
 			public string Name;
@@ -226,6 +241,7 @@ public partial class AdminModule
 			public bool Hidden;
 			public bool CurrentlyHidden;
 
+			public Option() { }
 			public Option(string name, string tooltip = null, bool hidden = false)
 			{
 				Name = name;
