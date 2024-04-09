@@ -1718,26 +1718,22 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		}
 
 		var skip = arg.GetInt(0);
-		using var map = Entities.Get<BasePlayer>(true);
+		var players = BasePlayer.allPlayerList.Concat(BasePlayer.bots).Where(x => x != player);
+		var index = players.IndexOf(spectatedPlayer) + skip;
 
-		var index = map.Pool.IndexOf(spectatedPlayer) + skip;
+		var lastIndex = players.Count() - 1;
 
-		if (map.Pick(index) == player)
-		{
-			index++;
-		}
-
-		if (index > map.Pool.Count - 1)
+		if (index > lastIndex)
 		{
 			index = 0;
 		}
 		else if (index < 0)
 		{
-			index = map.Pool.Count - 1;
+			index = lastIndex;
 		}
 
-		StopSpectating(player);
-		StartSpectating(player, map.Pick(index));
+		StopSpectating(player, false);
+		StartSpectating(player, players.FindAt(index));
 	}
 
 	#endregion
@@ -1785,6 +1781,11 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			StopSpectating(player);
 		}
 
+		if (target == null)
+		{
+			return;
+		}
+
 		_spectateStartPosition[player.userID] = player.transform.position;
 
 		var targetPlayer = target as BasePlayer;
@@ -1801,7 +1802,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		player.spectateFilter = targetPlayer != null ? targetPlayer.UserIDString : target.net.ID.ToString();
 
 		using var cui = new CUI(Singleton.Handler);
-		var container = cui.CreateContainer(SpectatePanelId, color: Cache.CUI.BlankColor, needsCursor: false, parent: ClientPanels.Overlay);
+		var container = cui.CreateContainer(SpectatePanelId, color: Cache.CUI.BlankColor, needsCursor: true, parent: ClientPanels.Overlay, destroyUi: SpectatePanelId);
 		var panel = cui.CreatePanel(container, SpectatePanelId, Cache.CUI.BlankColor);
 
 		if (Singleton.ConfigInstance.SpectatingInfoOverlay)
@@ -1817,18 +1818,18 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		if (targetPlayer != null)
 		{
 			cui.CreateProtectedButton(container, panel,
-				color: "#1c6aa0", textColor: "1 1 1 0.7",
+				color: "0.3 0.3 0.3 0.9", textColor: "0.7 0.7 0.7 1",
 				text: "<", 10,
-				xMin: 0.41f, xMax: 0.44f, yMin: 0.15f, yMax: 0.19f, command: "carbongg.skipspectate -1");
+				xMin: 0.425f, xMax: 0.445f, yMin: 0.15f, yMax: 0.19f, command: "carbongg.skipspectate -1");
 
 			cui.CreateProtectedButton(container, panel,
-				color: "#1c6aa0", textColor: "1 1 1 0.7",
+				color: "0.3 0.3 0.3 0.9", textColor: "0.7 0.7 0.7 1",
 				text: ">", 10,
-				xMin: 0.56f, xMax: 0.59f, yMin: 0.15f, yMax: 0.19f, command: "carbongg.skipspectate 1");
+				xMin: 0.555f, xMax: 0.575f, yMin: 0.15f, yMax: 0.19f, command: "carbongg.skipspectate 1");
 		}
 
 		cui.CreateProtectedButton(container, panel,
-			color: "#1c6aa0", textColor: "1 1 1 0.7",
+			color: "0.3 0.3 0.3 0.9", textColor: "0.7 0.7 0.7 1",
 			text: "END SPECTATE".SpacedString(1), 10,
 			xMin: 0.45f, xMax: 0.55f, yMin: 0.15f, yMax: 0.19f, command: "carbongg.endspectate");
 
@@ -1836,10 +1837,13 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 		Community.Runtime.CorePlugin.NextTick(() => Singleton.Close(player));
 	}
-	internal static void StopSpectating(BasePlayer player)
+	internal static void StopSpectating(BasePlayer player, bool clearUi = true)
 	{
-		using var cui = new CUI(Singleton.Handler);
-		cui.Destroy(SpectatePanelId, player);
+		if (clearUi)
+		{
+			using var cui = new CUI(Singleton.Handler);
+			cui.Destroy(SpectatePanelId, player);
+		}
 
 		if (string.IsNullOrEmpty(player.spectateFilter))
 		{
@@ -1864,11 +1868,14 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			player.Teleport(player.transform.position + (Vector3.up * -3f));
 		}
 
-		var tab = Singleton.GetTab(player);
-		var ap = Singleton.GetPlayerSession(player);
-		EntitiesTab.SelectEntity(tab, ap, spectated);
-		EntitiesTab.DrawEntitySettings(tab, 1, ap);
-		Singleton.Draw(player);
+		if (clearUi)
+		{
+			var tab = Singleton.GetTab(player);
+			var ap = Singleton.GetPlayerSession(player);
+			EntitiesTab.SelectEntity(tab, ap, spectated);
+			EntitiesTab.DrawEntitySettings(tab, 1, ap);
+			Singleton.Draw(player);
+		}
 	}
 
 	internal static void OpenPlayerContainer(PlayerSession ap, BasePlayer player, Tab tab)
