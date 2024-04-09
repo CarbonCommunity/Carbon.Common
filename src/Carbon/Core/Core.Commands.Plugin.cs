@@ -27,7 +27,12 @@ public partial class CorePlugin : CarbonPlugin
 			case "--j":
 			case "-json":
 			case "--json":
-				arg.ReplyWith(ModLoader.LoadedPackages);
+				arg.ReplyWith(new
+				{
+					Plugins = ModLoader.LoadedPackages,
+					Unloaded = Community.Runtime.ScriptProcessor.IgnoreList,
+					Failed = ModLoader.FailedCompilations.Values.Where(x => x.IsValid())
+				});
 				break;
 
 			default:
