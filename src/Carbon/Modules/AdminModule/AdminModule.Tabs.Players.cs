@@ -210,6 +210,10 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					{
 						OpenPlayerContainer(ap, player, tab);
 					}),
+					new Tab.OptionButton("Strip", ap =>
+					{
+						player.inventory.Strip();
+					}),
 					new Tab.OptionButton("Respawn", _ =>
 					{
 						tab.CreateDialog($"Are you sure about that?", _ =>

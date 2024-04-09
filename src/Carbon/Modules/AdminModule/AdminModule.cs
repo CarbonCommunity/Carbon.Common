@@ -96,6 +96,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		[LogType.Warning] = "#dbbe2a",
 		[LogType.Error] = "#db2a2a"
 	};
+	internal static Dictionary<ulong, Vector3> _spectateStartPosition = new();
+
 	public bool HandleEnableNeedsKeyboard(PlayerSession ap)
 	{
 		return ap.SelectedTab == null || ap.SelectedTab.Dialog == null;
@@ -484,7 +486,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 	}
 	public void TabPanelToggle(CUI cui, CuiElementContainer container, string parent, string text, string command, float height, float offset, bool isOn, Tab tab)
 	{
-		var toggleButtonScale = tab.Fullscreen ? 0.93f : 0.94f;
+		var toggleButtonScale = tab.IsFullscreen ? 0.93f : 0.94f;
 
 		var panel = cui.CreatePanel(container, parent,
 			color: Cache.CUI.BlankColor,
@@ -1067,7 +1069,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 			using (TimeMeasure.New($"{Name}.Main"))
 			{
-				if (tab == null || !tab.Fullscreen)
+				if (tab == null || !tab.IsFullscreen)
 				{
 					#region Title
 
@@ -1114,7 +1116,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				{
 					var panels = cui.CreatePanel(container, main,
 						color: Cache.CUI.BlankColor,
-						xMin: 0.01f, xMax: 0.99f, yMin: 0.02f, yMax: tab != null && tab.Fullscreen ? 0.98f : 0.86f);
+						xMin: 0.01f, xMax: 0.99f, yMin: 0.02f, yMax: tab != null && tab.IsFullscreen ? 0.98f : 0.86f);
 
 					if (tab != null)
 					{
@@ -1321,7 +1323,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 			using (TimeMeasure.New($"{Name}.Exit"))
 			{
-				var shift = tab == null || tab.Fullscreen ? 15 : 0;
+				var shift = tab == null || tab.IsFullscreen ? 15 : 0;
 
 				if (HasAccess(ap.Player, "config.use"))
 				{
@@ -1697,6 +1699,43 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		StopSpectating(arg.Player());
 	}
 
+	[Conditional("!MINIMAL")]
+	[ProtectedCommand("carbongg.skipspectate")]
+	private void SkipSpectate(Arg arg)
+	{
+		var player = arg.Player();
+
+		if (!player.IsSpectating())
+		{
+			return;
+		}
+
+		var parent = player.GetParentEntity();
+
+		if (parent is not BasePlayer spectatedPlayer)
+		{
+			return;
+		}
+
+		var skip = arg.GetInt(0);
+		var players = BasePlayer.allPlayerList.Concat(BasePlayer.bots).Where(x => x != player);
+		var index = players.IndexOf(spectatedPlayer) + skip;
+
+		var lastIndex = players.Count() - 1;
+
+		if (index > lastIndex)
+		{
+			index = 0;
+		}
+		else if (index < 0)
+		{
+			index = lastIndex;
+		}
+
+		StopSpectating(player, false);
+		StartSpectating(player, players.FindAt(index));
+	}
+
 	#endregion
 
 	[Conditional("!MINIMAL")]
@@ -1742,6 +1781,13 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			StopSpectating(player);
 		}
 
+		if (target == null)
+		{
+			return;
+		}
+
+		_spectateStartPosition[player.userID] = player.transform.position;
+
 		var targetPlayer = target as BasePlayer;
 		player.Teleport(target.transform.position);
 		player.SetPlayerFlag(BasePlayer.PlayerFlags.Spectating, b: true);
@@ -1756,7 +1802,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		player.spectateFilter = targetPlayer != null ? targetPlayer.UserIDString : target.net.ID.ToString();
 
 		using var cui = new CUI(Singleton.Handler);
-		var container = cui.CreateContainer(SpectatePanelId, color: Cache.CUI.BlankColor, needsCursor: false, parent: ClientPanels.Overlay);
+		var container = cui.CreateContainer(SpectatePanelId, color: Cache.CUI.BlankColor, needsCursor: true, parent: ClientPanels.Overlay, destroyUi: SpectatePanelId);
 		var panel = cui.CreatePanel(container, SpectatePanelId, Cache.CUI.BlankColor);
 
 		if (Singleton.ConfigInstance.SpectatingInfoOverlay)
@@ -1769,18 +1815,35 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				15);
 		}
 
+		if (targetPlayer != null)
+		{
+			cui.CreateProtectedButton(container, panel,
+				color: "0.3 0.3 0.3 0.9", textColor: "0.7 0.7 0.7 1",
+				text: "<", 10,
+				xMin: 0.425f, xMax: 0.445f, yMin: 0.15f, yMax: 0.19f, command: "carbongg.skipspectate -1");
+
+			cui.CreateProtectedButton(container, panel,
+				color: "0.3 0.3 0.3 0.9", textColor: "0.7 0.7 0.7 1",
+				text: ">", 10,
+				xMin: 0.555f, xMax: 0.575f, yMin: 0.15f, yMax: 0.19f, command: "carbongg.skipspectate 1");
+		}
+
 		cui.CreateProtectedButton(container, panel,
-			color: "#1c6aa0", textColor: "1 1 1 0.7",
+			color: "0.3 0.3 0.3 0.9", textColor: "0.7 0.7 0.7 1",
 			text: "END SPECTATE".SpacedString(1), 10,
 			xMin: 0.45f, xMax: 0.55f, yMin: 0.15f, yMax: 0.19f, command: "carbongg.endspectate");
+
 		cui.Send(container, player);
 
 		Community.Runtime.CorePlugin.NextTick(() => Singleton.Close(player));
 	}
-	internal static void StopSpectating(BasePlayer player)
+	internal static void StopSpectating(BasePlayer player, bool clearUi = true)
 	{
-		using var cui = new CUI(Singleton.Handler);
-		cui.Destroy(SpectatePanelId, player);
+		if (clearUi)
+		{
+			using var cui = new CUI(Singleton.Handler);
+			cui.Destroy(SpectatePanelId, player);
+		}
 
 		if (string.IsNullOrEmpty(player.spectateFilter))
 		{
@@ -1795,13 +1858,24 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		if (spectated != null) player.Teleport(spectated.transform.position);
 		player.spectateFilter = string.Empty;
 		if (!player.IsFlying) player.SendConsoleCommand("noclip");
-		player.Teleport(player.transform.position + (Vector3.up * -3f));
 
-		var tab = Singleton.GetTab(player);
-		var ap = Singleton.GetPlayerSession(player);
-		EntitiesTab.SelectEntity(tab, ap, spectated);
-		EntitiesTab.DrawEntitySettings(tab, 1, ap);
-		Singleton.Draw(player);
+		if (Singleton.ConfigInstance.SpectatingEndTeleportBack && _spectateStartPosition.TryGetValue(player.userID, out var position))
+		{
+			player.Teleport(position);
+		}
+		else
+		{
+			player.Teleport(player.transform.position + (Vector3.up * -3f));
+		}
+
+		if (clearUi)
+		{
+			var tab = Singleton.GetTab(player);
+			var ap = Singleton.GetPlayerSession(player);
+			EntitiesTab.SelectEntity(tab, ap, spectated);
+			EntitiesTab.DrawEntitySettings(tab, 1, ap);
+			Singleton.Draw(player);
+		}
 	}
 
 	internal static void OpenPlayerContainer(PlayerSession ap, BasePlayer player, Tab tab)
@@ -1866,6 +1940,7 @@ public class AdminConfig
 	public bool DisableEntitiesTab = true;
 	public bool DisablePluginsTab = false;
 	public bool SpectatingInfoOverlay = true;
+	public bool SpectatingEndTeleportBack = false;
 	public List<ActionButton> QuickActions = new();
 
 	public class ActionButton

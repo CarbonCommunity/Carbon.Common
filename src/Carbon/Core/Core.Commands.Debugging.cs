@@ -27,16 +27,12 @@ public partial class CorePlugin : CarbonPlugin
 		{
 			foreach (var plugin in package.Plugins)
 			{
-				plugin.TotalHookTime = default;
-				plugin.TotalMemoryUsed = default;
 				plugin.HookPool.Reset();
 			}
 		}
 
 		foreach (var module in Community.Runtime.ModuleProcessor.Modules)
 		{
-			module.TotalHookTime = default;
-			module.TotalMemoryUsed = default;
 			module.HookPool.Reset();
 		}
 

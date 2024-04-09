@@ -57,10 +57,20 @@ public class WebRequests : Library
 	{
 		var tcs = new TaskCompletionSource<bool>();
 
-		var request = new WebRequest(url, (code, data) =>
+		WebRequest request = default;
+
+		request = new WebRequest(url, (code, data) =>
 		{
+			try
+			{
+				callback?.Invoke(code, data);
+			}
+			catch (Exception ex)
+			{
+				Logger.Error($"Failed executing '{request.Method}' async webrequest [callback] ({request.Url})", ex);
+			}
+
 			tcs.SetResult(true);
-			callback?.Invoke(code, data);
 		}, owner)
 		{
 			Method = method.ToString(),
@@ -77,10 +87,20 @@ public class WebRequests : Library
 	{
 		var tcs = new TaskCompletionSource<bool>();
 
-		var request = new WebRequest(url, (code, data) =>
+		WebRequest request = default;
+
+		request = new WebRequest(url, (code, data) =>
 		{
+			try
+			{
+				callback?.Invoke(code, data);
+			}
+			catch (Exception ex)
+			{
+				Logger.Error($"Failed executing '{request.Method}' async webrequest [callback] ({request.Url})", ex);
+			}
+
 			tcs.SetResult(true);
-			callback?.Invoke(code, data);
 		}, owner)
 		{
 			Method = method.ToString(),
