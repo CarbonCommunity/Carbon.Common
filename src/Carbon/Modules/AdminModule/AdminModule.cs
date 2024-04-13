@@ -680,6 +680,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			command: command,
 			font: Handler.FontTypes.RobotoCondensedRegular);
 
+		cui.CreateImage(container, button, "fade", Cache.CUI.WhiteColor);
+
 		if (isOn)
 		{
 			cui.CreatePanel(container, button,
@@ -774,6 +776,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					command: $"{command} true call {actualI}",
 					align: TextAnchor.MiddleLeft,
 					font: Handler.FontTypes.RobotoCondensedRegular);
+
+				cui.CreateImage(container, subButton, "fade", Cache.CUI.WhiteColor);
 
 				cui.CreateText(container, subButton, isSelected ? "1 1 1 0.7" : "1 1 1 0.4", current, 10,
 					xMin: string.IsNullOrEmpty(subIcon) ? 0.035f : 0.085f, xMax: 1f, yMin: 0f, yMax: 1f, align: TextAnchor.MiddleLeft);
@@ -875,18 +879,39 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		}
 
 		var inPanel = cui.CreatePanel(container, panel,
-			color: color,
+			color: Cache.CUI.BlankColor,
 			xMin: DataInstance.Colors.OptionWidth, xMax: 0.985f, yMin: 0, yMax: 1);
 
-		cui.CreateImage(container, inPanel, "fade", Cache.CUI.WhiteColor);
-
 		var bar = cui.CreatePanel(container, inPanel,
-			color: HexToRustColor("#f54242", 0.8f),
-			xMin: 0, xMax: value.Scale(min, max, 0f, 1f), yMin: 0, yMax: 1);
+			color: color, yMin: 0.4f, yMax: 0.6f);
 
 		cui.CreateImage(container, bar, "fade", Cache.CUI.WhiteColor);
 
-		cui.CreateText(container, inPanel, "1 1 1 1", valueText, 8);
+		var percentage = value.Scale(min, max, 0f, 1f);
+
+		var barContent = cui.CreatePanel(container, bar,
+			color: HexToRustColor("#f54242", 0.8f),
+			xMin: 0, xMax: percentage);
+
+		cui.CreateImage(container, barContent, "fade", Cache.CUI.WhiteColor);
+
+		// Indicator
+		var indicator = cui.CreatePanel(container, bar,
+			color: HexToRustColor("#fc5d5d", 0.8f), xMin: percentage, xMax: percentage, OxMin: -2.5f, OxMax: 2.5f, OyMin: -6f, OyMax: 6f);
+
+		cui.CreateImage(container, indicator, "fade", Cache.CUI.WhiteColor);
+
+		// Text - Align to left ->
+		if (percentage <= 0.15f)
+		{
+			cui.CreateText(container, inPanel, "1 1 1 1", valueText, 8, xMin: percentage + 0.03f, OyMin: -2.5f, align: TextAnchor.LowerLeft);
+		}
+
+		// Text - Align to right <-
+		else
+		{
+			cui.CreateText(container, inPanel, "1 1 1 1", valueText, 8, xMax: percentage - 0.03f, OyMin: -2.5f,align: TextAnchor.LowerRight);
+		}
 
 		var cuts = max.Clamp(min, RangeCuts);
 		var offsetScale = 1f / cuts;
@@ -1283,6 +1308,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 											color: "0 0 0 0.4",
 											xMin: xMin, xMax: 0.985f, yMin: rowIndex, yMax: rowIndex + rowHeight,
 											blur: true);
+
+										cui.CreateImage(container, blur, "fade", Cache.CUI.WhiteColor);
 
 										cui.CreateProtectedButton(container, blur,
 											color: Cache.CUI.BlankColor, textColor: "1 1 1 0.5", text: "REVEAL".SpacedString(1), 8, command: PanelId + $".callaction {i} {actualI}");
@@ -1838,7 +1865,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		player.spectateFilter = targetPlayer != null ? targetPlayer.UserIDString : target.net.ID.ToString();
 
 		using var cui = new CUI(Singleton.Handler);
-		var container = cui.CreateContainer(SpectatePanelId, color: Cache.CUI.BlankColor, needsCursor: true, parent: ClientPanels.Overlay, destroyUi: SpectatePanelId);
+		var container = cui.CreateContainer(SpectatePanelId, color: Cache.CUI.BlankColor, needsCursor: targetPlayer != null && targetPlayer.IsSleeping(), parent: ClientPanels.Overlay, destroyUi: SpectatePanelId);
 		var panel = cui.CreatePanel(container, SpectatePanelId, Cache.CUI.BlankColor);
 
 		if (Singleton.ConfigInstance.SpectatingInfoOverlay)
@@ -1975,6 +2002,7 @@ public class AdminConfig
 	public int MinimumAuthLevel = 2;
 	public bool DisableEntitiesTab = true;
 	public bool DisablePluginsTab = false;
+	public bool DisableConsole = false;
 	public bool SpectatingInfoOverlay = true;
 	public bool SpectatingEndTeleportBack = false;
 	public List<ActionButton> QuickActions = new();

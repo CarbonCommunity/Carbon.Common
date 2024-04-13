@@ -324,7 +324,7 @@ public static class ModLoader
 
 			Plugin.InternalApplyAllPluginReferences();
 		}
-		
+
 		return true;
 	}
 

@@ -211,6 +211,9 @@ public partial class AdminModule
 					tab.AddToggle(0, "Display Plugins",
 						ap => Singleton.ConfigInstance.DisablePluginsTab = !Singleton.ConfigInstance.DisablePluginsTab,
 						ap => !Singleton.ConfigInstance.DisablePluginsTab);
+					tab.AddToggle(0, "Display Console",
+						ap => Singleton.ConfigInstance.DisableConsole = !Singleton.ConfigInstance.DisableConsole,
+						ap => !Singleton.ConfigInstance.DisableConsole);
 					tab.AddButton(0, "Apply Changes", ap =>
 						{
 							if (_applyChangesTimeSince > _applyChangesCooldown)
