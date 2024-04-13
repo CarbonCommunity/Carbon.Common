@@ -355,6 +355,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			command: disabled ? string.Empty : command,
 			font: Handler.FontTypes.RobotoCondensedRegular);
 
+		cui.CreateImage(container, button, "fade", Cache.CUI.WhiteColor);
+
 		if (highlight)
 		{
 			cui.CreatePanel(container, button,
@@ -475,7 +477,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			_ => DataInstance.Colors.OptionColor
 		};
 
-		cui.CreateProtectedButton(container, parent: parent,
+		var button = cui.CreateProtectedButton(container, parent: parent,
 			color: color,
 			textColor: "1 1 1 0.5",
 			text: text, 11,
@@ -483,6 +485,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			command: command,
 			align: align,
 			font: Handler.FontTypes.RobotoCondensedRegular);
+
+		cui.CreateImage(container, button, "fade", Cache.CUI.WhiteColor);
 	}
 	public void TabPanelToggle(CUI cui, CuiElementContainer container, string parent, string text, string command, float height, float offset, bool isOn, Tab tab)
 	{
@@ -513,6 +517,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			xMin: toggleButtonScale, xMax: 0.985f, yMin: offset, yMax: offset + height,
 			command: command,
 			font: Handler.FontTypes.RobotoCondensedRegular);
+
+		cui.CreateImage(container, button, "fade", Cache.CUI.WhiteColor);
 
 		if (isOn)
 		{
@@ -553,6 +559,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		var inPanel = cui.CreatePanel(container, panel,
 			color: color,
 			xMin: DataInstance.Colors.OptionWidth, xMax: 0.985f, yMin: 0, yMax: 1);
+
+		cui.CreateImage(container, inPanel, "fade", Cache.CUI.WhiteColor);
 
 		cui.CreateProtectedInputField(container, parent: inPanel,
 			color: $"1 1 1 {(readOnly ? 0.2f : 1f)}",
@@ -611,6 +619,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			color: DataInstance.Colors.OptionColor,
 			xMin: DataInstance.Colors.OptionWidth, xMax: 0.985f, yMin: 0, yMax: 1);
 
+		cui.CreateImage(container, inPanel, "fade", Cache.CUI.WhiteColor);
+
 		cui.CreateText(container, inPanel,
 			color: "1 1 1 0.7",
 			text: value, 11,
@@ -618,7 +628,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			align: TextAnchor.MiddleCenter,
 			font: Handler.FontTypes.RobotoCondensedRegular);
 
-		cui.CreateProtectedButton(container, inPanel,
+		var left = cui.CreateProtectedButton(container, inPanel,
 			color: color,
 			textColor: "1 1 1 0.7",
 			text: "<", 10,
@@ -627,7 +637,9 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			align: TextAnchor.MiddleCenter,
 			font: Handler.FontTypes.RobotoCondensedRegular);
 
-		cui.CreateProtectedButton(container, inPanel,
+		cui.CreateImage(container, left, "fade", Cache.CUI.WhiteColor);
+
+		var right = cui.CreateProtectedButton(container, inPanel,
 			color: color,
 			textColor: "1 1 1 0.7",
 			text: ">", 10,
@@ -635,6 +647,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			command: $"{command} false",
 			align: TextAnchor.MiddleCenter,
 			font: Handler.FontTypes.RobotoCondensedRegular);
+
+		cui.CreateImage(container, right, "fade", Cache.CUI.WhiteColor);
 	}
 	public void TabPanelRadio(CUI cui, CuiElementContainer container, string parent, string text, bool isOn, string command, float height, float offset)
 	{
@@ -719,6 +733,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			command: $"{command} false",
 			align: TextAnchor.MiddleLeft,
 			font: Handler.FontTypes.RobotoCondensedRegular);
+
+		cui.CreateImage(container, button, "fade", Cache.CUI.WhiteColor);
 
 		cui.CreateText(container, button, "1 1 1 0.7", options[index], 10,
 			xMin: string.IsNullOrEmpty(icon) ? 0.02f : 0.085f, xMax: 1f, yMin: 0f, yMax: 1f, align: TextAnchor.MiddleLeft);
@@ -862,9 +878,13 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			color: color,
 			xMin: DataInstance.Colors.OptionWidth, xMax: 0.985f, yMin: 0, yMax: 1);
 
-		cui.CreatePanel(container, inPanel,
+		cui.CreateImage(container, inPanel, "fade", Cache.CUI.WhiteColor);
+
+		var bar = cui.CreatePanel(container, inPanel,
 			color: HexToRustColor("#f54242", 0.8f),
 			xMin: 0, xMax: value.Scale(min, max, 0f, 1f), yMin: 0, yMax: 1);
+
+		cui.CreateImage(container, bar, "fade", Cache.CUI.WhiteColor);
 
 		cui.CreateText(container, inPanel, "1 1 1 1", valueText, 8);
 
@@ -900,9 +920,11 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				Tab.OptionButton.Types.Important => DataInstance.Colors.ButtonImportantColor,
 				_ => DataInstance.Colors.OptionColor
 			};
-			cui.CreateProtectedButton(container, panel, color, "1 1 1 0.5", button.Name, 11,
+			var buttonCui = cui.CreateProtectedButton(container, panel, color, "1 1 1 0.5", button.Name, 11,
 				xMin: currentOffset, xMax: currentOffset + cuts, yMin: 0, yMax: 1,
 				command: $"{command} {i}");
+
+			cui.CreateImage(container, buttonCui, "fade", Cache.CUI.WhiteColor);
 
 			currentOffset += cuts + spacing;
 		}
@@ -940,6 +962,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			color: color,
 			xMin: 0, xMax: DataInstance.Colors.OptionWidth, yMin: 0, yMax: 0.015f);
 
+		cui.CreateImage(container, inPanel, "fade", Cache.CUI.WhiteColor, xMin: 0, xMax: 1f - buttonPriority);
+
 		cui.CreateProtectedInputField(container, parent: inPanel,
 			color: $"1 1 1 {(input.ReadOnly ? 0.2f : 1f)}",
 			text: input.Placeholder?.Invoke(session), 11,
@@ -957,7 +981,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			session.PreviousInput = session.Input;
 		}
 
-		cui.CreateProtectedButton(container, parent: inPanel,
+		var buttonCui = cui.CreateProtectedButton(container, parent: inPanel,
 			color: buttonColor,
 			textColor: "1 1 1 0.5",
 			text: button.Name, 11,
@@ -965,6 +989,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			command: $"{command} button",
 			align: button.Align,
 			font: Handler.FontTypes.RobotoCondensedRegular);
+
+		cui.CreateImage(container, buttonCui, "fade", Cache.CUI.WhiteColor);
 
 		if (!input.ReadOnly)
 		{
@@ -1059,6 +1085,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				xMin: 0, xMax: 1, yMin: 0, yMax: 1,
 				needsCursor: true, destroyUi: PanelId, parent: ClientPanels.HudMenu);
 
+			cui.CreateImage(container, PanelId, "fade", Cache.CUI.WhiteColor);
+
 			var shade = cui.CreatePanel(container, parent: PanelId, id: $"{PanelId}color",
 				color: "0 0 0 0.6",
 				xMin: 0.5f, xMax: 0.5f, yMin: 0.5f, yMax: 0.5f,
@@ -1118,6 +1146,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 						color: Cache.CUI.BlankColor,
 						xMin: 0.01f, xMax: 0.99f, yMin: 0.02f, yMax: tab != null && tab.IsFullscreen ? 0.98f : 0.86f);
 
+					cui.CreateImage(container, panels, "fade", Cache.CUI.WhiteColor);
+
 					if (tab != null)
 					{
 						tab.Under?.Invoke(tab, cui, container, panels, ap);
@@ -1136,6 +1166,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 								var panel = cui.CreatePanel(container, panels,
 									color: "0 0 0 0.5",
 									xMin: panelIndex, xMax: panelIndex + panelWidth - spacing, yMin: 0, yMax: 1, id: $"sub{i}");
+
+								cui.CreateImage(container, panel, "fade", Cache.CUI.WhiteColor);
 
 								#region Rows
 
@@ -1336,6 +1368,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 						OyMin: shift, OyMax: shift,
 						command: PanelId + ".config");
 
+					cui.CreateImage(container, configButton, "fade", Cache.CUI.WhiteColor);
+
 					cui.CreateImage(container, configButton, "gear", "0.5 1 0.5 1",
 						xMin: 0.15f, xMax: 0.85f,
 						yMin: 0.15f, yMax: 0.85f);
@@ -1348,6 +1382,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					xMin: 0.9675f, xMax: 0.99f, yMin: 0.955f, yMax: 0.99f,
 					OyMin: shift, OyMax: shift,
 					command: PanelId + ".close");
+
+				cui.CreateImage(container, closeButton, "fade", Cache.CUI.WhiteColor);
 
 				cui.CreateImage(container, closeButton, "close", "1 0.5 0.5 1",
 					xMin: 0.2f, xMax: 0.8f,

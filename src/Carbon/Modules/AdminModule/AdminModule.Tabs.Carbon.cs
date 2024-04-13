@@ -111,7 +111,14 @@ public partial class AdminModule
 						tab.AddInputButton(0, Singleton.GetPhrase("execservercmd", ap.Player.UserIDString), 0.2f,
 							new Tab.OptionInput(null, null, 0, false, (ap, args) =>
 							{
-								ConsoleSystem.Run(ConsoleSystem.Option.Server, args.ToString(" "), null);
+								var command = args.ToString(" ");
+
+								if (string.IsNullOrEmpty(command))
+								{
+									return;
+								}
+
+								ConsoleSystem.Run(ConsoleSystem.Option.Server, command, null);
 								Refresh(tab, ap);
 							}), new Tab.OptionButton("Refresh", ap =>
 							{
