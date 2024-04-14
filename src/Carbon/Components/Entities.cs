@@ -173,13 +173,11 @@ public class Entities : IDisposable
 		{
 			if (Pool.Count == 0)
 			{
-				Logger.Warn($"[Entities.Map.Pick] Pool is empty. Index {index} is unreachable.");
 				return default;
 			}
 
 			if (Pool.Count - 1 > index)
 			{
-				Logger.Warn($"[Entities.Map.Pick] Index {index} is higher than the pool count {Pool.Count - 1}");
 				return default;
 			}
 

@@ -28,14 +28,6 @@ namespace Oxide.Plugins
 			public static void RefreshDatabase(Dictionary<string, UserData> data)
 			{
 				_all = data.Select(x => x.AsIPlayer());
-
-				foreach (var user in _all)
-				{
-					if (user.Object == null)
-					{
-						user.Object = BasePlayer.Find(user.Id);
-					}
-				}
 			}
 
 			internal static IEnumerable<IPlayer> _all;

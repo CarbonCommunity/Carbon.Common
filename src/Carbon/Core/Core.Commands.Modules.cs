@@ -134,8 +134,8 @@ public partial class CorePlugin : CarbonPlugin
 			"-abc" => Community.Runtime.ModuleProcessor.Modules.OrderBy(x => x.Name),
 			"-t" => (flip ? Community.Runtime.ModuleProcessor.Modules.OrderBy(x => x.TotalHookTime) : Community.Runtime.ModuleProcessor.Modules.OrderByDescending(x => x.TotalHookTime)),
 			"-m" => (flip ? Community.Runtime.ModuleProcessor.Modules.OrderBy(x => x.TotalMemoryUsed) : Community.Runtime.ModuleProcessor.Modules.OrderByDescending(x => x.TotalMemoryUsed)),
-			"-f" => (flip ? Community.Runtime.ModuleProcessor.Modules.OrderBy(x => x.CurrentHookFires) : Community.Runtime.ModuleProcessor.Modules.OrderByDescending(x => x.CurrentHookFires)),
-			"-ls" => (flip ? Community.Runtime.ModuleProcessor.Modules.OrderBy(x => x.CurrentLagSpikes) : Community.Runtime.ModuleProcessor.Modules.OrderByDescending(x => x.CurrentLagSpikes)),
+			"-f" => (flip ? Community.Runtime.ModuleProcessor.Modules.OrderBy(x => x.TotalHookFires) : Community.Runtime.ModuleProcessor.Modules.OrderByDescending(x => x.TotalHookFires)),
+			"-ls" => (flip ? Community.Runtime.ModuleProcessor.Modules.OrderBy(x => x.TotalHookLagSpikes) : Community.Runtime.ModuleProcessor.Modules.OrderByDescending(x => x.TotalHookLagSpikes)),
 			_ => (flip ? Community.Runtime.ModuleProcessor.Modules.AsEnumerable().Reverse() : Community.Runtime.ModuleProcessor.Modules.AsEnumerable())
 		};
 
@@ -163,9 +163,9 @@ public partial class CorePlugin : CarbonPlugin
 			var memoryAverage = Mathf.RoundToInt(memoryAverageValue) == 0 ? string.Empty : $" (avg {ByteEx.Format(memoryAverageValue, shortName: true, stringFormat: "{0}{1}").ToLower()})";
 			print.AddRow(string.Empty, hookable.Name, module.GetEnabled(), module.Version,
 				module.TotalHookTime.TotalMilliseconds == 0 ? string.Empty : $"{module.TotalHookTime.TotalMilliseconds:0}ms{hookTimeAverage}",
-				module.CurrentHookFires == 0 ? string.Empty :$"{module.CurrentHookFires}",
+				module.TotalHookFires == 0 ? string.Empty :$"{module.TotalHookFires:n0}",
 				module.TotalMemoryUsed == 0 ? string.Empty : $"{ByteEx.Format(module.TotalMemoryUsed, shortName: true, stringFormat: "{0}{1}").ToLower()}{memoryAverage}",
-				module.CurrentLagSpikes == 0 ? string.Empty : $"{module.CurrentLagSpikes}",
+				module.TotalHookLagSpikes == 0 ? string.Empty : $"{module.TotalHookLagSpikes:n0}",
 				$"{TimeEx.Format(module.Uptime)}");
 		}
 
@@ -248,9 +248,9 @@ public partial class CorePlugin : CarbonPlugin
 					hookId,
 					$"{hookName}",
 					hookTime == 0 ? string.Empty : $"{hookTime:0}ms",
-					hookTimesFired == 0 ? string.Empty : $"{hookTimesFired}",
+					hookTimesFired == 0 ? string.Empty : $"{hookTimesFired:n0}",
 					hookMemoryUsage == 0 ? string.Empty : $"{ByteEx.Format(hookMemoryUsage, shortName: true).ToLower()}",
-					hookLagSpikes == 0 ? string.Empty : $"{hookLagSpikes}",
+					hookLagSpikes == 0 ? string.Empty : $"{hookLagSpikes:n0}",
 					!module.IgnoredHooks.Contains(hookId) ? "*" : string.Empty,
 					$"{hookAsyncCount:n0} / {hookCount:n0}");
 			}

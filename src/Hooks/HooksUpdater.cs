@@ -14,11 +14,10 @@ public sealed class Updater
 
 	private static string GithubReleaseUrl(string file, string protocol = null)
 	{
-		string branch = "main";
-		string suffix = (Community.Runtime.Analytics.Platform == "linux") ? "Unix" : default;
-		string target = (Community.Runtime.Analytics.Branch == "Release") ? "Release" : "Debug";
+		var suffix = (Community.Runtime.Analytics.Platform == "linux") ? "Unix" : default;
+		var target = (Community.Runtime.Analytics.Branch == "Release") ? "Release" : "Debug";
 
-		return $"https://raw.githubusercontent.com/{Repository}/{branch}/Modules/"
+		return $"https://raw.githubusercontent.com/{Repository}/main/Modules/"
 			+ $"{target}{suffix}/{(protocol is null ? $"{file}" : $"{protocol}/{file}")}";
 	}
 
@@ -35,14 +34,12 @@ public sealed class Updater
 		int failed = 0;
 		foreach (string file in files)
 		{
-			Logger.Warn($"Updating component '{Path.GetFileName(file)}@{Community.Runtime.Analytics.Protocol}' using the "
-				+ $"'{Community.Runtime.Analytics.Branch} [{Community.Runtime.Analytics.Platform}]' branch");
+			Logger.Warn($"Updating component '{Path.GetFileName(file)}@{Community.Runtime.Analytics.Protocol}' on {Community.Runtime.Analytics.Platform} [{Community.Runtime.Analytics.Branch}]");
 			byte[] buffer = await Community.Runtime.Downloader.Download(GithubReleaseUrl(file, Community.Runtime.Analytics.Protocol));
 
 			if (buffer is { Length: < 1 })
 			{
-				Logger.Warn($"[Retry updating component '{Path.GetFileName(file)}' using the "
-					+ $"'{Community.Runtime.Analytics.Branch} [{Community.Runtime.Analytics.Platform}]' branch");
+				Logger.Warn($"Retrying component update '{Path.GetFileName(file)}' on {Community.Runtime.Analytics.Platform} [{Community.Runtime.Analytics.Branch}]...");
 				buffer = await Community.Runtime.Downloader.Download(GithubReleaseUrl(file));
 			}
 

@@ -728,7 +728,6 @@ namespace Oxide.Core.Plugins
 		}
 		protected virtual void LoadDefaultConfig()
 		{
-			//CallHook ( "LoadDefaultConfig" );
 		}
 		protected virtual void SaveConfig()
 		{
