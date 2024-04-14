@@ -246,7 +246,7 @@ public partial class CorePlugin : CarbonPlugin
 			foreach (var module in modules)
 			{
 				var hook = module.Value.FirstOrDefault();
-				pluginsTable.AddRow(string.Empty,
+				modulesTable.AddRow(string.Empty,
 					$"{module.Key.Name}",
 					hook.HookTime.TotalMilliseconds == 0 ? string.Empty : $"{hook.HookTime.TotalMilliseconds:0}ms",
 					hook.TimesFired == 0 ? string.Empty : $"{hook.TimesFired:n0}",
