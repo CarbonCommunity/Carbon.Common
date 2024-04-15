@@ -1,10 +1,9 @@
-﻿using ExtensionMethods = Oxide.Core.ExtensionMethods;
-
-namespace Carbon.Modules;
+﻿namespace Carbon.Modules;
 
 public partial class AdminModule
 {
 #if !MINIMAL
+
 	[Conditional("!MINIMAL")]
 	private void OnEntityDismounted(BaseMountable entity, BasePlayer player)
 	{
@@ -27,7 +26,6 @@ public partial class AdminModule
 			EntitiesTab.LastContainerLooter = null;
 			Unsubscribe("OnEntityVisibilityCheck");
 			Unsubscribe("OnEntityDistanceCheck");
-			Unsubscribe("CanAcceptItem");
 		}
 	}
 
@@ -64,34 +62,17 @@ public partial class AdminModule
 	}
 
 	[Conditional("!MINIMAL")]
-	private object CanAcceptItem(ItemContainer container, Item item, int targetPos)
+	private object IValidDismountPosition(BaseMountable mountable, BasePlayer player)
 	{
-		var owner = container.playerOwner;
-
-		if (owner == null || container != owner.inventory.containerBelt || !ExtensionMethods.Contains(_backpacks, item.info.itemid))
+		switch (mountable.skinID)
 		{
-			return null;
+			case 69696:
+				return true;
+			default:
+				break;
 		}
 
-		OpenContainer(GetPlayerSession(owner), item.contents, null);
-
-		return ItemContainer.CanAcceptResult.CannotAccept;
-	}
-
-	[Conditional("!MINIMAL")]
-	private object IValidDismountPosition(BaseMountable mountable, BasePlayer player) => null;
-
-	[Conditional("!MINIMAL")]
-	private object IModBackpack(BaseMountable mountable, BasePlayer player) => null;
-
-	public static bool AcceptOnBackpack(Item backpack)
-	{
-		if (EntitiesTab.LastContainerLooter == null || EntitiesTab.LastContainerLooter.Player?.inventory?.loot?.containers[0] != backpack.contents)
-		{
-			return false;
-		}
-
-		return true;
+		return null;
 	}
 #endif
 }

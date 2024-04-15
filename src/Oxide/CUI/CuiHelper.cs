@@ -66,7 +66,7 @@ public static class CuiHelper
 		// CanUseUI
 		if (HookCaller.CallStaticHook(1318053248, player, json) != null) return false;
 
-		CommunityEntity.ServerInstance.ClientRPC(RpcTarget.Player("AddUI", player), json);
+		CommunityEntity.ServerInstance.ClientRPCEx(new Network.SendInfo { connection = player.net.connection }, null,  "AddUI", json);
 		return true;
 	}
 
@@ -89,7 +89,7 @@ public static class CuiHelper
 			if (!panelList.Contains(element)) panelList.Add(element);
 		}
 
-		CommunityEntity.ServerInstance.ClientRPC(RpcTarget.Player("AddUI", player), json);
+		CommunityEntity.ServerInstance.ClientRPCEx(new Network.SendInfo { connection = player.net.connection }, null, "AddUI", json);
 		return true;
 	}
 
@@ -102,7 +102,7 @@ public static class CuiHelper
 
 			// OnDestroyUI
 			HookCaller.CallStaticHook(2982238573, player, name);
-			CommunityEntity.ServerInstance.ClientRPC(RpcTarget.Player("DestroyUI", player), name);
+			CommunityEntity.ServerInstance.ClientRPCEx(new Network.SendInfo { connection = player.net.connection }, null, "DestroyUI", name);
 			return true;
 		}
 
