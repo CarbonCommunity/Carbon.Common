@@ -20,6 +20,15 @@ public sealed class Logger : ILogger
 	public static Action<string, int> OnNoticeCallback { get; set; }
 	public static Action<string, int> OnDebugCallback { get; set; }
 
+	public static void InitTaskExceptions()
+	{
+		TaskScheduler.UnobservedTaskException += (_, args) =>
+		{
+			args.SetObserved();
+			Error($"Unobserved task exception [GC]", args.Exception.InnerException);
+		};
+	}
+
 	public static string GetDate()
 	{
 		return DateTime.Now.ToString("yyyy.MM.dd HH:mm:ss");

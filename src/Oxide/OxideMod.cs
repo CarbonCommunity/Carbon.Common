@@ -32,6 +32,10 @@ public class OxideMod
 
 	public bool IsShuttingDown { get; private set; }
 
+	private ExtensionManager extensionManager = new();
+	public IEnumerable<PluginLoader> GetPluginLoaders() => extensionManager.GetPluginLoaders();
+	public OxideConfig Config { get; private set; } = new(Path.Combine(Defines.GetRootFolder(), "oxide.config.json"));
+
 	internal static readonly Version _assemblyVersion = Assembly.GetExecutingAssembly().GetName().Version;
 	internal List<Extension> _extensions = new();
 
@@ -109,10 +113,21 @@ public class OxideMod
 
 	public bool UnloadPlugin(string name)
 	{
-		var isValid = Community.Runtime.ScriptProcessor.InstanceBuffer.ContainsKey(name);
-		Community.Runtime.ScriptProcessor.Remove(name);
+		if (Community.Runtime.ScriptProcessor.InstanceBuffer.TryGetValue(name, out var instance))
+		{
+			instance?.Clear();
+			instance?.Dispose();
+			Community.Runtime.ScriptProcessor.Remove(name);
+			return true;
+		}
 
-		return isValid;
+		return true;
+	}
+
+	public void UnloadAllPlugins(IList<string> skip = null)
+	{
+		Community.Runtime.ScriptProcessor.Clear(skip);
+		Community.Runtime.ZipScriptProcessor.Clear(skip);
 	}
 
 	public void OnSave()

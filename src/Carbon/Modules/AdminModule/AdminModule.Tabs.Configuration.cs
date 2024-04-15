@@ -45,7 +45,7 @@ public partial class AdminModule
 				{
 					session.ClearStorage(null, "itemtabitem");
 					Refresh(tab, session);
-				}) { Fullscreen = true, Access = "config.use" };
+				}) { IsFullscreen = true, Access = "config.use" };
 			tab.Over = (t, cui, container, panel, ap) =>
 			{
 				var currentItem = ap.GetStorage<ItemDefinition>(null, "itemtabitem");
@@ -211,6 +211,9 @@ public partial class AdminModule
 					tab.AddToggle(0, "Display Plugins",
 						ap => Singleton.ConfigInstance.DisablePluginsTab = !Singleton.ConfigInstance.DisablePluginsTab,
 						ap => !Singleton.ConfigInstance.DisablePluginsTab);
+					tab.AddToggle(0, "Display Console",
+						ap => Singleton.ConfigInstance.DisableConsole = !Singleton.ConfigInstance.DisableConsole,
+						ap => !Singleton.ConfigInstance.DisableConsole);
 					tab.AddButton(0, "Apply Changes", ap =>
 						{
 							if (_applyChangesTimeSince > _applyChangesCooldown)
@@ -228,6 +231,10 @@ public partial class AdminModule
 						ap => Singleton.ConfigInstance.SpectatingInfoOverlay =
 							!Singleton.ConfigInstance.SpectatingInfoOverlay,
 						ap => !Singleton.ConfigInstance.SpectatingInfoOverlay);
+					tab.AddToggle(0, "Spectating End Teleport Back",
+						ap => Singleton.ConfigInstance.SpectatingEndTeleportBack =
+							!Singleton.ConfigInstance.SpectatingEndTeleportBack,
+						ap => Singleton.ConfigInstance.SpectatingEndTeleportBack);
 					tab.AddToggle(0, "Hide Plugin Icons (Plugins tab)",
 						ap => Singleton.DataInstance.HidePluginIcons = !Singleton.DataInstance.HidePluginIcons,
 						ap => Singleton.DataInstance.HidePluginIcons);

@@ -47,7 +47,6 @@ public class Permission : Library
 	public Dictionary<string, GroupData> groupdata = new();
 	public readonly Dictionary<BaseHookable, HashSet<string>> permset;
 
-	private Dictionary<string, UserData> userdatacache = new();
 	private Func<string, bool> validate;
 
 	internal static readonly UserData _blankUser = new();
@@ -356,20 +355,6 @@ public class Permission : Library
 			if (!addIfNotExisting) return _blankUser;
 
 			userdata.Add(id, result = new UserData());
-			CovalencePlugin.PlayerManager.RefreshDatabase(userdata);
-		}
-
-		return result;
-	}
-	public virtual UserData GetUserDataCache(string id)
-	{
-		if (!userdatacache.TryGetValue(id, out var result))
-		{
-			var userData = GetUserData(id);
-
-			if (userData == null) return _blankUser;
-
-			userdatacache.Add(id, result = userData);
 		}
 
 		return result;
@@ -403,7 +388,7 @@ public class Permission : Library
 		if (player == null) return;
 
 		var user = GetUserData(player.UserIDString, addIfNotExisting: true);
-		user.Player.Object = player;
+		user.Player = player.AsIPlayer();
 		user.LastSeenNickname = player.displayName;
 
 		if (player.net != null && player.net.connection != null && player.net.connection.info != null)
@@ -438,12 +423,10 @@ public class Permission : Library
 		{
 			var userData = GetUserData(id);
 			var lastSeenNickname = userData.LastSeenNickname;
-			var obj = nickname.Sanitize();
 			userData.LastSeenNickname = nickname.Sanitize();
 
 			// OnUserNameUpdated
-			HookCaller.CallStaticHook(945289215, id, lastSeenNickname, obj);
-			CovalencePlugin.PlayerManager.RefreshDatabase(userdata);
+			HookCaller.CallStaticHook(945289215, id, lastSeenNickname, userData.LastSeenNickname);
 		}
 	}
 
