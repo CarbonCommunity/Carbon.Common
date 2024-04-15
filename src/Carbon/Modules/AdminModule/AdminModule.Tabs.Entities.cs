@@ -409,6 +409,13 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 								OpenPlayerContainer(ap, player, tab);
 							}));
+
+							temp.Add(new Tab.OptionButton("Strip", ap =>
+							{
+								if (multiSelection) return;
+
+								player.inventory.Strip();
+							}));
 						}
 
 						if (Singleton.HasAccess(ap3.Player, "entities.respawn_players"))

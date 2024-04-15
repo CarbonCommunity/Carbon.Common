@@ -96,6 +96,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		[LogType.Warning] = "#dbbe2a",
 		[LogType.Error] = "#db2a2a"
 	};
+	internal static Dictionary<ulong, Vector3> _spectateStartPosition = new();
+
 	public bool HandleEnableNeedsKeyboard(PlayerSession ap)
 	{
 		return ap.SelectedTab == null || ap.SelectedTab.Dialog == null;
@@ -353,6 +355,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			command: disabled ? string.Empty : command,
 			font: Handler.FontTypes.RobotoCondensedRegular);
 
+		cui.CreateImage(container, button, "fade", Cache.CUI.WhiteColor);
+
 		if (highlight)
 		{
 			cui.CreatePanel(container, button,
@@ -473,7 +477,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			_ => DataInstance.Colors.OptionColor
 		};
 
-		cui.CreateProtectedButton(container, parent: parent,
+		var button = cui.CreateProtectedButton(container, parent: parent,
 			color: color,
 			textColor: "1 1 1 0.5",
 			text: text, 11,
@@ -481,10 +485,12 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			command: command,
 			align: align,
 			font: Handler.FontTypes.RobotoCondensedRegular);
+
+		cui.CreateImage(container, button, "fade", Cache.CUI.WhiteColor);
 	}
 	public void TabPanelToggle(CUI cui, CuiElementContainer container, string parent, string text, string command, float height, float offset, bool isOn, Tab tab)
 	{
-		var toggleButtonScale = tab.Fullscreen ? 0.93f : 0.94f;
+		var toggleButtonScale = tab.IsFullscreen ? 0.93f : 0.94f;
 
 		var panel = cui.CreatePanel(container, parent,
 			color: Cache.CUI.BlankColor,
@@ -511,6 +517,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			xMin: toggleButtonScale, xMax: 0.985f, yMin: offset, yMax: offset + height,
 			command: command,
 			font: Handler.FontTypes.RobotoCondensedRegular);
+
+		cui.CreateImage(container, button, "fade", Cache.CUI.WhiteColor);
 
 		if (isOn)
 		{
@@ -551,6 +559,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		var inPanel = cui.CreatePanel(container, panel,
 			color: color,
 			xMin: DataInstance.Colors.OptionWidth, xMax: 0.985f, yMin: 0, yMax: 1);
+
+		cui.CreateImage(container, inPanel, "fade", Cache.CUI.WhiteColor);
 
 		cui.CreateProtectedInputField(container, parent: inPanel,
 			color: $"1 1 1 {(readOnly ? 0.2f : 1f)}",
@@ -609,6 +619,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			color: DataInstance.Colors.OptionColor,
 			xMin: DataInstance.Colors.OptionWidth, xMax: 0.985f, yMin: 0, yMax: 1);
 
+		cui.CreateImage(container, inPanel, "fade", Cache.CUI.WhiteColor);
+
 		cui.CreateText(container, inPanel,
 			color: "1 1 1 0.7",
 			text: value, 11,
@@ -616,7 +628,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			align: TextAnchor.MiddleCenter,
 			font: Handler.FontTypes.RobotoCondensedRegular);
 
-		cui.CreateProtectedButton(container, inPanel,
+		var left = cui.CreateProtectedButton(container, inPanel,
 			color: color,
 			textColor: "1 1 1 0.7",
 			text: "<", 10,
@@ -625,7 +637,9 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			align: TextAnchor.MiddleCenter,
 			font: Handler.FontTypes.RobotoCondensedRegular);
 
-		cui.CreateProtectedButton(container, inPanel,
+		cui.CreateImage(container, left, "fade", Cache.CUI.WhiteColor);
+
+		var right = cui.CreateProtectedButton(container, inPanel,
 			color: color,
 			textColor: "1 1 1 0.7",
 			text: ">", 10,
@@ -633,6 +647,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			command: $"{command} false",
 			align: TextAnchor.MiddleCenter,
 			font: Handler.FontTypes.RobotoCondensedRegular);
+
+		cui.CreateImage(container, right, "fade", Cache.CUI.WhiteColor);
 	}
 	public void TabPanelRadio(CUI cui, CuiElementContainer container, string parent, string text, bool isOn, string command, float height, float offset)
 	{
@@ -663,6 +679,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			xMin: toggleButtonScale, xMax: 0.985f, yMin: offset, yMax: offset + height,
 			command: command,
 			font: Handler.FontTypes.RobotoCondensedRegular);
+
+		cui.CreateImage(container, button, "fade", Cache.CUI.WhiteColor);
 
 		if (isOn)
 		{
@@ -718,6 +736,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			align: TextAnchor.MiddleLeft,
 			font: Handler.FontTypes.RobotoCondensedRegular);
 
+		cui.CreateImage(container, button, "fade", Cache.CUI.WhiteColor);
+
 		cui.CreateText(container, button, "1 1 1 0.7", options[index], 10,
 			xMin: string.IsNullOrEmpty(icon) ? 0.02f : 0.085f, xMax: 1f, yMin: 0f, yMax: 1f, align: TextAnchor.MiddleLeft);
 
@@ -756,6 +776,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					command: $"{command} true call {actualI}",
 					align: TextAnchor.MiddleLeft,
 					font: Handler.FontTypes.RobotoCondensedRegular);
+
+				cui.CreateImage(container, subButton, "fade", Cache.CUI.WhiteColor);
 
 				cui.CreateText(container, subButton, isSelected ? "1 1 1 0.7" : "1 1 1 0.4", current, 10,
 					xMin: string.IsNullOrEmpty(subIcon) ? 0.035f : 0.085f, xMax: 1f, yMin: 0f, yMax: 1f, align: TextAnchor.MiddleLeft);
@@ -857,14 +879,39 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		}
 
 		var inPanel = cui.CreatePanel(container, panel,
-			color: color,
+			color: Cache.CUI.BlankColor,
 			xMin: DataInstance.Colors.OptionWidth, xMax: 0.985f, yMin: 0, yMax: 1);
 
-		cui.CreatePanel(container, inPanel,
-			color: HexToRustColor("#f54242", 0.8f),
-			xMin: 0, xMax: value.Scale(min, max, 0f, 1f), yMin: 0, yMax: 1);
+		var bar = cui.CreatePanel(container, inPanel,
+			color: color, yMin: 0.4f, yMax: 0.6f);
 
-		cui.CreateText(container, inPanel, "1 1 1 1", valueText, 8);
+		cui.CreateImage(container, bar, "fade", Cache.CUI.WhiteColor);
+
+		var percentage = value.Scale(min, max, 0f, 1f);
+
+		var barContent = cui.CreatePanel(container, bar,
+			color: HexToRustColor("#f54242", 0.8f),
+			xMin: 0, xMax: percentage);
+
+		cui.CreateImage(container, barContent, "fade", Cache.CUI.WhiteColor);
+
+		// Indicator
+		var indicator = cui.CreatePanel(container, bar,
+			color: HexToRustColor("#fc5d5d", 0.8f), xMin: percentage, xMax: percentage, OxMin: -2.5f, OxMax: 2.5f, OyMin: -6f, OyMax: 6f);
+
+		cui.CreateImage(container, indicator, "fade", Cache.CUI.WhiteColor);
+
+		// Text - Align to left ->
+		if (percentage <= 0.15f)
+		{
+			cui.CreateText(container, inPanel, "1 1 1 1", valueText, 8, xMin: percentage + 0.03f, OyMin: -2.5f, align: TextAnchor.LowerLeft);
+		}
+
+		// Text - Align to right <-
+		else
+		{
+			cui.CreateText(container, inPanel, "1 1 1 1", valueText, 8, xMax: percentage - 0.03f, OyMin: -2.5f,align: TextAnchor.LowerRight);
+		}
 
 		var cuts = max.Clamp(min, RangeCuts);
 		var offsetScale = 1f / cuts;
@@ -898,9 +945,11 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				Tab.OptionButton.Types.Important => DataInstance.Colors.ButtonImportantColor,
 				_ => DataInstance.Colors.OptionColor
 			};
-			cui.CreateProtectedButton(container, panel, color, "1 1 1 0.5", button.Name, 11,
+			var buttonCui = cui.CreateProtectedButton(container, panel, color, "1 1 1 0.5", button.Name, 11,
 				xMin: currentOffset, xMax: currentOffset + cuts, yMin: 0, yMax: 1,
 				command: $"{command} {i}");
+
+			cui.CreateImage(container, buttonCui, "fade", Cache.CUI.WhiteColor);
 
 			currentOffset += cuts + spacing;
 		}
@@ -938,6 +987,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			color: color,
 			xMin: 0, xMax: DataInstance.Colors.OptionWidth, yMin: 0, yMax: 0.015f);
 
+		cui.CreateImage(container, inPanel, "fade", Cache.CUI.WhiteColor, xMin: 0, xMax: 1f - buttonPriority);
+
 		cui.CreateProtectedInputField(container, parent: inPanel,
 			color: $"1 1 1 {(input.ReadOnly ? 0.2f : 1f)}",
 			text: input.Placeholder?.Invoke(session), 11,
@@ -955,7 +1006,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			session.PreviousInput = session.Input;
 		}
 
-		cui.CreateProtectedButton(container, parent: inPanel,
+		var buttonCui = cui.CreateProtectedButton(container, parent: inPanel,
 			color: buttonColor,
 			textColor: "1 1 1 0.5",
 			text: button.Name, 11,
@@ -963,6 +1014,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			command: $"{command} button",
 			align: button.Align,
 			font: Handler.FontTypes.RobotoCondensedRegular);
+
+		cui.CreateImage(container, buttonCui, "fade", Cache.CUI.WhiteColor);
 
 		if (!input.ReadOnly)
 		{
@@ -1057,6 +1110,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				xMin: 0, xMax: 1, yMin: 0, yMax: 1,
 				needsCursor: true, destroyUi: PanelId, parent: ClientPanels.HudMenu);
 
+			cui.CreateImage(container, PanelId, "fade", Cache.CUI.WhiteColor);
+
 			var shade = cui.CreatePanel(container, parent: PanelId, id: $"{PanelId}color",
 				color: "0 0 0 0.6",
 				xMin: 0.5f, xMax: 0.5f, yMin: 0.5f, yMax: 0.5f,
@@ -1067,7 +1122,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 			using (TimeMeasure.New($"{Name}.Main"))
 			{
-				if (tab == null || !tab.Fullscreen)
+				if (tab == null || !tab.IsFullscreen)
 				{
 					#region Title
 
@@ -1114,7 +1169,9 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				{
 					var panels = cui.CreatePanel(container, main,
 						color: Cache.CUI.BlankColor,
-						xMin: 0.01f, xMax: 0.99f, yMin: 0.02f, yMax: tab != null && tab.Fullscreen ? 0.98f : 0.86f);
+						xMin: 0.01f, xMax: 0.99f, yMin: 0.02f, yMax: tab != null && tab.IsFullscreen ? 0.98f : 0.86f);
+
+					cui.CreateImage(container, panels, "fade", Cache.CUI.WhiteColor);
 
 					if (tab != null)
 					{
@@ -1134,6 +1191,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 								var panel = cui.CreatePanel(container, panels,
 									color: "0 0 0 0.5",
 									xMin: panelIndex, xMax: panelIndex + panelWidth - spacing, yMin: 0, yMax: 1, id: $"sub{i}");
+
+								cui.CreateImage(container, panel, "fade", Cache.CUI.WhiteColor);
 
 								#region Rows
 
@@ -1250,6 +1309,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 											xMin: xMin, xMax: 0.985f, yMin: rowIndex, yMax: rowIndex + rowHeight,
 											blur: true);
 
+										cui.CreateImage(container, blur, "fade", Cache.CUI.WhiteColor);
+
 										cui.CreateProtectedButton(container, blur,
 											color: Cache.CUI.BlankColor, textColor: "1 1 1 0.5", text: "REVEAL".SpacedString(1), 8, command: PanelId + $".callaction {i} {actualI}");
 									}
@@ -1321,7 +1382,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 			using (TimeMeasure.New($"{Name}.Exit"))
 			{
-				var shift = tab == null || tab.Fullscreen ? 15 : 0;
+				var shift = tab == null || tab.IsFullscreen ? 15 : 0;
 
 				if (HasAccess(ap.Player, "config.use"))
 				{
@@ -1333,6 +1394,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 						OxMin: -25, OxMax: -25,
 						OyMin: shift, OyMax: shift,
 						command: PanelId + ".config");
+
+					cui.CreateImage(container, configButton, "fade", Cache.CUI.WhiteColor);
 
 					cui.CreateImage(container, configButton, "gear", "0.5 1 0.5 1",
 						xMin: 0.15f, xMax: 0.85f,
@@ -1346,6 +1409,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					xMin: 0.9675f, xMax: 0.99f, yMin: 0.955f, yMax: 0.99f,
 					OyMin: shift, OyMax: shift,
 					command: PanelId + ".close");
+
+				cui.CreateImage(container, closeButton, "fade", Cache.CUI.WhiteColor);
 
 				cui.CreateImage(container, closeButton, "close", "1 0.5 0.5 1",
 					xMin: 0.2f, xMax: 0.8f,
@@ -1404,9 +1469,6 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			Unsubscribe("OnPluginUnloaded");
 		}
 	}
-
-	[CommandVar("rowheight")] private float RowHeightCustom;
-	[CommandVar("rowindex")] private float RowIndexCustom;
 
 	public void RegisterTab(Tab tab, int? insert = null)
 	{
@@ -1700,6 +1762,43 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		StopSpectating(arg.Player());
 	}
 
+	[Conditional("!MINIMAL")]
+	[ProtectedCommand("carbongg.skipspectate")]
+	private void SkipSpectate(Arg arg)
+	{
+		var player = arg.Player();
+
+		if (!player.IsSpectating())
+		{
+			return;
+		}
+
+		var parent = player.GetParentEntity();
+
+		if (parent is not BasePlayer spectatedPlayer)
+		{
+			return;
+		}
+
+		var skip = arg.GetInt(0);
+		var players = BasePlayer.allPlayerList.Concat(BasePlayer.bots).Where(x => x != player);
+		var index = players.IndexOf(spectatedPlayer) + skip;
+
+		var lastIndex = players.Count() - 1;
+
+		if (index > lastIndex)
+		{
+			index = 0;
+		}
+		else if (index < 0)
+		{
+			index = lastIndex;
+		}
+
+		StopSpectating(player, false);
+		StartSpectating(player, players.FindAt(index));
+	}
+
 	#endregion
 
 	[Conditional("!MINIMAL")]
@@ -1745,6 +1844,13 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			StopSpectating(player);
 		}
 
+		if (target == null)
+		{
+			return;
+		}
+
+		_spectateStartPosition[player.userID] = player.transform.position;
+
 		var targetPlayer = target as BasePlayer;
 		player.Teleport(target.transform.position);
 		player.SetPlayerFlag(BasePlayer.PlayerFlags.Spectating, b: true);
@@ -1759,7 +1865,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		player.spectateFilter = targetPlayer != null ? targetPlayer.UserIDString : target.net.ID.ToString();
 
 		using var cui = new CUI(Singleton.Handler);
-		var container = cui.CreateContainer(SpectatePanelId, color: Cache.CUI.BlankColor, needsCursor: false, parent: ClientPanels.Overlay);
+		var container = cui.CreateContainer(SpectatePanelId, color: Cache.CUI.BlankColor, needsCursor: targetPlayer != null && targetPlayer.IsSleeping(), parent: ClientPanels.Overlay, destroyUi: SpectatePanelId);
 		var panel = cui.CreatePanel(container, SpectatePanelId, Cache.CUI.BlankColor);
 
 		if (Singleton.ConfigInstance.SpectatingInfoOverlay)
@@ -1772,18 +1878,35 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				15);
 		}
 
+		if (targetPlayer != null)
+		{
+			cui.CreateProtectedButton(container, panel,
+				color: "0.3 0.3 0.3 0.9", textColor: "0.7 0.7 0.7 1",
+				text: "<", 10,
+				xMin: 0.425f, xMax: 0.445f, yMin: 0.15f, yMax: 0.19f, command: "carbongg.skipspectate -1");
+
+			cui.CreateProtectedButton(container, panel,
+				color: "0.3 0.3 0.3 0.9", textColor: "0.7 0.7 0.7 1",
+				text: ">", 10,
+				xMin: 0.555f, xMax: 0.575f, yMin: 0.15f, yMax: 0.19f, command: "carbongg.skipspectate 1");
+		}
+
 		cui.CreateProtectedButton(container, panel,
-			color: "#1c6aa0", textColor: "1 1 1 0.7",
+			color: "0.3 0.3 0.3 0.9", textColor: "0.7 0.7 0.7 1",
 			text: "END SPECTATE".SpacedString(1), 10,
 			xMin: 0.45f, xMax: 0.55f, yMin: 0.15f, yMax: 0.19f, command: "carbongg.endspectate");
+
 		cui.Send(container, player);
 
 		Community.Runtime.CorePlugin.NextTick(() => Singleton.Close(player));
 	}
-	internal static void StopSpectating(BasePlayer player)
+	internal static void StopSpectating(BasePlayer player, bool clearUi = true)
 	{
-		using var cui = new CUI(Singleton.Handler);
-		cui.Destroy(SpectatePanelId, player);
+		if (clearUi)
+		{
+			using var cui = new CUI(Singleton.Handler);
+			cui.Destroy(SpectatePanelId, player);
+		}
 
 		if (string.IsNullOrEmpty(player.spectateFilter))
 		{
@@ -1798,13 +1921,24 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		if (spectated != null) player.Teleport(spectated.transform.position);
 		player.spectateFilter = string.Empty;
 		if (!player.IsFlying) player.SendConsoleCommand("noclip");
-		player.Teleport(player.transform.position + (Vector3.up * -3f));
 
-		var tab = Singleton.GetTab(player);
-		var ap = Singleton.GetPlayerSession(player);
-		EntitiesTab.SelectEntity(tab, ap, spectated);
-		EntitiesTab.DrawEntitySettings(tab, 1, ap);
-		Singleton.Draw(player);
+		if (Singleton.ConfigInstance.SpectatingEndTeleportBack && _spectateStartPosition.TryGetValue(player.userID, out var position))
+		{
+			player.Teleport(position);
+		}
+		else
+		{
+			player.Teleport(player.transform.position + (Vector3.up * -3f));
+		}
+
+		if (clearUi)
+		{
+			var tab = Singleton.GetTab(player);
+			var ap = Singleton.GetPlayerSession(player);
+			EntitiesTab.SelectEntity(tab, ap, spectated);
+			EntitiesTab.DrawEntitySettings(tab, 1, ap);
+			Singleton.Draw(player);
+		}
 	}
 
 	internal static void OpenPlayerContainer(PlayerSession ap, BasePlayer player, Tab tab)
@@ -1868,7 +2002,9 @@ public class AdminConfig
 	public int MinimumAuthLevel = 2;
 	public bool DisableEntitiesTab = true;
 	public bool DisablePluginsTab = false;
+	public bool DisableConsole = false;
 	public bool SpectatingInfoOverlay = true;
+	public bool SpectatingEndTeleportBack = false;
 	public List<ActionButton> QuickActions = new();
 
 	public class ActionButton

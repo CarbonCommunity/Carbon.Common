@@ -210,12 +210,12 @@ public partial class CorePlugin : CarbonPlugin
 				}
 			}
 
-			using var pluginsTable = new StringTable(string.Empty, $"Plugins ({plugins.Count:n0})", "Time", "Fires", "Memory", "Lag", "Async & Overrides");
+			using var table = new StringTable(string.Empty, $"Plugins ({plugins.Count:n0})", "Time", "Fires", "Memory", "Lag", "Async & Overrides");
 
 			foreach (var plugin in plugins)
 			{
 				var hook = plugin.Value.FirstOrDefault();
-				pluginsTable.AddRow(string.Empty,
+				table.AddRow(string.Empty,
 					$"{plugin.Key.Name}",
 					hook.HookTime.TotalMilliseconds == 0 ? string.Empty : $"{hook.HookTime.TotalMilliseconds:0}ms",
 					hook.TimesFired == 0 ? string.Empty : $"{hook.TimesFired:n0}",
@@ -223,8 +223,6 @@ public partial class CorePlugin : CarbonPlugin
 					hook.LagSpikes == 0 ? string.Empty : $"{hook.LagSpikes:n0}",
 					$"{plugin.Value.Count(x => x.IsAsync):n0} / {plugin.Value.Count:n0}");
 			}
-
-			output.AppendLine(pluginsTable.ToStringMinimal().TrimEnd());
 
 			var modules = PoolEx.GetDictionary<BaseHookable, List<CachedHook>>();
 			{
@@ -241,12 +239,12 @@ public partial class CorePlugin : CarbonPlugin
 				}
 			}
 
-			using var modulesTable = new StringTable(string.Empty, $"Modules ({modules.Count:n0})", string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
+			table.AddRow(string.Empty, $"Modules ({modules.Count:n0})", string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
 
 			foreach (var module in modules)
 			{
 				var hook = module.Value.FirstOrDefault();
-				pluginsTable.AddRow(string.Empty,
+				table.AddRow(string.Empty,
 					$"{module.Key.Name}",
 					hook.HookTime.TotalMilliseconds == 0 ? string.Empty : $"{hook.HookTime.TotalMilliseconds:0}ms",
 					hook.TimesFired == 0 ? string.Empty : $"{hook.TimesFired:n0}",
@@ -255,16 +253,24 @@ public partial class CorePlugin : CarbonPlugin
 					$"{module.Value.Count(x => x.IsAsync):n0} / {module.Value.Count:n0}");
 			}
 
-			output.AppendLine(modulesTable.ToStringMinimal());
+			var totalTime = plugins.Sum(x => x.Value.Sum(y => y.HookTime.TotalMilliseconds)) +
+			                modules.Sum(x => x.Value.Sum(y => y.HookTime.TotalMilliseconds));
+			var totalFires = plugins.Sum(x => x.Value.Sum(y => y.TimesFired)) +
+			                 modules.Sum(x => x.Value.Sum(y => y.TimesFired));
+			var totalMemory = plugins.Sum(x => x.Value.Sum(y => y.MemoryUsage)) +
+			                  modules.Sum(x => x.Value.Sum(y => y.MemoryUsage));
+			var totalLag = plugins.Sum(x => x.Value.Sum(y => y.LagSpikes)) +
+			               modules.Sum(x => x.Value.Sum(y => y.LagSpikes));
 
-			using var totalsTable = new StringTable(string.Empty, "Total", "Fires", "Time", "Memory", "Lag");
-			totalsTable.AddRow(string.Empty, string.Empty,
-				$"{plugins.Sum(x => x.Value.Sum(y => y.TimesFired)) + modules.Sum(x => x.Value.Sum(y => y.TimesFired)):n0}",
-				$"{plugins.Sum(x => x.Value.Sum(y => y.HookTime.TotalMilliseconds)) + modules.Sum(x => x.Value.Sum(y => y.HookTime.TotalMilliseconds)):0}ms",
-				$"{ByteEx.Format(plugins.Sum(x => x.Value.Sum(y => y.MemoryUsage)) + modules.Sum(x => x.Value.Sum(y => y.MemoryUsage))).ToLower()}",
-				$"{plugins.Sum(x => x.Value.Sum(y => y.LagSpikes)) + modules.Sum(x => x.Value.Sum(y => y.LagSpikes)):n0}");
+			table.AddRow(string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
+			table.AddRow(string.Empty, "Total",
+				totalTime == 0 ? string.Empty : $"{totalTime:0}ms",
+				totalFires == 0 ? string.Empty : $"{totalFires:n0}",
+				totalMemory == 0 ? string.Empty : $"{ByteEx.Format(totalMemory).ToLower()}",
+				totalLag == 0 ? string.Empty : $"{totalLag:n0}",
+				string.Empty);
 
-			output.AppendLine(totalsTable.ToStringMinimal());
+			output.AppendLine(table.ToStringMinimal().TrimEnd());
 
 			arg.ReplyWith(output.ToString());
 

@@ -25,7 +25,7 @@ public partial class AdminModule
 
 		public static SetupWizard Make()
 		{
-			var tab = new SetupWizard("setupwizard", "Setup Wizard", Community.Runtime.CorePlugin) { Fullscreen = true };
+			var tab = new SetupWizard("setupwizard", "Setup Wizard", Community.Runtime.CorePlugin) { IsFullscreen = true };
 			tab.Override = tab.Draw;
 
 			tab.Pages.Add(new Page("Main", (cui, t, container, panel, ap) =>

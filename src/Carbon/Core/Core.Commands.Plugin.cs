@@ -27,7 +27,12 @@ public partial class CorePlugin : CarbonPlugin
 			case "--j":
 			case "-json":
 			case "--json":
-				arg.ReplyWith(ModLoader.LoadedPackages);
+				arg.ReplyWith(new
+				{
+					Plugins = ModLoader.LoadedPackages,
+					Unloaded = Community.Runtime.ScriptProcessor.IgnoreList,
+					Failed = ModLoader.FailedCompilations.Values.Where(x => x.IsValid())
+				});
 				break;
 
 			default:
@@ -52,11 +57,11 @@ public partial class CorePlugin : CarbonPlugin
 								? mod.Plugins.OrderBy(x => x.TotalMemoryUsed)
 								: mod.Plugins.OrderByDescending(x => x.TotalMemoryUsed)),
 							"-f" => (flip
-								? mod.Plugins.OrderBy(x => x.CurrentHookFires)
-								: mod.Plugins.OrderByDescending(x => x.CurrentHookFires)),
+								? mod.Plugins.OrderBy(x => x.TotalHookFires)
+								: mod.Plugins.OrderByDescending(x => x.TotalHookFires)),
 							"-ls" => (flip
-								? mod.Plugins.OrderBy(x => x.CurrentLagSpikes)
-								: mod.Plugins.OrderByDescending(x => x.CurrentLagSpikes)),
+								? mod.Plugins.OrderBy(x => x.TotalHookLagSpikes)
+								: mod.Plugins.OrderByDescending(x => x.TotalHookLagSpikes)),
 							_ => (flip ? mod.Plugins.AsEnumerable().Reverse() : mod.Plugins.AsEnumerable())
 						};
 
@@ -82,9 +87,9 @@ public partial class CorePlugin : CarbonPlugin
 								: $" (avg {ByteEx.Format(memoryAverageValue, shortName: true, stringFormat: "{0}{1}").ToLower()})";
 							body.AddRow(string.Empty, plugin.Title, plugin.Author, $"v{plugin.Version}",
 								plugin.TotalHookTime.TotalMilliseconds == 0 ? string.Empty : $"{plugin.TotalHookTime.TotalMilliseconds:0}ms{hookTimeAverage}",
-								plugin.CurrentHookFires == 0 ? string.Empty : $"{plugin.CurrentHookFires:n0}",
+								plugin.TotalHookFires == 0 ? string.Empty : $"{plugin.TotalHookFires:n0}",
 								plugin.TotalMemoryUsed == 0 ? string.Empty : $"{ByteEx.Format(plugin.TotalMemoryUsed, shortName: true, stringFormat: "{0}{1}").ToLower()}{memoryAverage}",
-								plugin.CurrentLagSpikes == 0 ? string.Empty : $"{plugin.CurrentLagSpikes:n0}",
+								plugin.TotalHookLagSpikes == 0 ? string.Empty : $"{plugin.TotalHookLagSpikes:n0}",
 								plugin.IsPrecompiled
 									? string.Empty
 									: $"{plugin.CompileTime.TotalMilliseconds:0}ms [{plugin.InternalCallHookGenTime.TotalMilliseconds:0}ms]",

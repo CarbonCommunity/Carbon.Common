@@ -99,7 +99,7 @@ public partial class AdminModule
 					tab.AddInput(0, Singleton.GetPhrase("mods", ap.Player.UserIDString),
 						ap => $"{Community.Runtime.Plugins.Plugins.Count:n0}", null);
 
-					if (Singleton.HasAccess(ap.Player, "carbon.server_console"))
+					if (!Singleton.ConfigInstance.DisableConsole && Singleton.HasAccess(ap.Player, "carbon.server_console"))
 					{
 						tab.AddName(0, Singleton.GetPhrase("console", ap.Player.UserIDString), TextAnchor.MiddleLeft);
 						foreach (var log in _logQueue)
@@ -111,7 +111,14 @@ public partial class AdminModule
 						tab.AddInputButton(0, Singleton.GetPhrase("execservercmd", ap.Player.UserIDString), 0.2f,
 							new Tab.OptionInput(null, null, 0, false, (ap, args) =>
 							{
-								ConsoleSystem.Run(ConsoleSystem.Option.Server, args.ToString(" "), null);
+								var command = args.ToString(" ");
+
+								if (string.IsNullOrEmpty(command))
+								{
+									return;
+								}
+
+								ConsoleSystem.Run(ConsoleSystem.Option.Server, command, null);
 								Refresh(tab, ap);
 							}), new Tab.OptionButton("Refresh", ap =>
 							{

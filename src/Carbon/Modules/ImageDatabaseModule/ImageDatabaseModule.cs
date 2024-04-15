@@ -45,8 +45,10 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 		["star"] = "https://carbonmod.gg/assets/media/cui/star.png",
 		["glow"] = "https://carbonmod.gg/assets/media/cui/glow.png",
 		["gear"] = "https://carbonmod.gg/assets/media/cui/gear.png",
-		["close"] = "https://carbonmod.gg/assets/media/cui/close.png"
+		["close"] = "https://carbonmod.gg/assets/media/cui/close.png",
+		["fade"] = "https://carbonmod.gg/assets/media/cui/fade.png"
 	};
+
 	internal IEnumerator _executeQueue(QueuedThread thread, Action<List<QueuedThreadResult>> onFinished)
 	{
 		thread.Start();
