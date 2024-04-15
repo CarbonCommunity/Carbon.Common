@@ -29,6 +29,7 @@
 
 			string File { get; set; }
 
+			void Clear();
 			void Execute(IBaseProcessor processor);
 			void MarkDirty();
 			void MarkDeleted();

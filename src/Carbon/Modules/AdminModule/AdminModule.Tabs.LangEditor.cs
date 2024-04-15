@@ -18,7 +18,7 @@ public partial class AdminModule
 {
 	public class LangEditor : Tab
 	{
-		internal BaseHookable Plugin;
+		internal BaseHookable TargetPlugin;
 		internal Action<PlayerSession> OnCancel;
 		internal const string Spacing = " ";
 
@@ -30,7 +30,7 @@ public partial class AdminModule
 		{
 			var tab = new LangEditor("langeditor", "Lang Editor", Community.Runtime.CorePlugin)
 			{
-				Plugin = plugin,
+				TargetPlugin = plugin,
 				OnCancel = onCancel,
 			};
 
@@ -54,11 +54,11 @@ public partial class AdminModule
 					continue;
 				}
 
-				var pluginFiles = files.Where(x => x.Contains(Plugin.Name, CompareOptions.OrdinalIgnoreCase));
+				var pluginFiles = files.Where(x => x.Contains(TargetPlugin.Name, CompareOptions.OrdinalIgnoreCase));
 
 				if (!pluginFiles.Any())
 				{
-					AddText(0, $"No localisation files found for '{Plugin.ToPrettyString()}'", 10, "1 1 1 0.5");
+					AddText(0, $"No localisation files found for '{TargetPlugin.ToPrettyString()}'", 10, "1 1 1 0.5");
 					continue;
 				}
 
@@ -80,7 +80,7 @@ public partial class AdminModule
 						{
 							OsEx.File.Create(file, jobject.ToString(Formatting.Indented));
 
-							if (Plugin is RustPlugin rustPlugin)
+							if (TargetPlugin is RustPlugin rustPlugin)
 							{
 								rustPlugin.ProcessorProcess.MarkDirty();
 							}

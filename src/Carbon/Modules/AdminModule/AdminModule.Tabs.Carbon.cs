@@ -99,7 +99,7 @@ public partial class AdminModule
 					tab.AddInput(0, Singleton.GetPhrase("mods", ap.Player.UserIDString),
 						ap => $"{Community.Runtime.Plugins.Plugins.Count:n0}", null);
 
-					if (Singleton.HasAccess(ap.Player, "carbon.server_console"))
+					if (!Singleton.ConfigInstance.DisableConsole && Singleton.HasAccess(ap.Player, "carbon.server_console"))
 					{
 						tab.AddName(0, Singleton.GetPhrase("console", ap.Player.UserIDString), TextAnchor.MiddleLeft);
 						foreach (var log in _logQueue)
@@ -111,7 +111,14 @@ public partial class AdminModule
 						tab.AddInputButton(0, Singleton.GetPhrase("execservercmd", ap.Player.UserIDString), 0.2f,
 							new Tab.OptionInput(null, null, 0, false, (ap, args) =>
 							{
-								ConsoleSystem.Run(ConsoleSystem.Option.Server, args.ToString(" "), null);
+								var command = args.ToString(" ");
+
+								if (string.IsNullOrEmpty(command))
+								{
+									return;
+								}
+
+								ConsoleSystem.Run(ConsoleSystem.Option.Server, command, null);
 								Refresh(tab, ap);
 							}), new Tab.OptionButton("Refresh", ap =>
 							{
@@ -266,7 +273,6 @@ public partial class AdminModule
 						Community.Runtime.SaveConfig();
 					}, SearchDirectories, tooltip: Singleton.GetPhrase("scriptwatchersoption_help", ap.Player.UserIDString));
 					tab.AddToggle(1, Singleton.GetPhrase("zipscriptwatchers", ap.Player.UserIDString), ap => { Config.Watchers.ZipScriptWatchers = !Config.Watchers.ZipScriptWatchers; Community.Runtime.SaveConfig(); }, ap => Config.Watchers.ZipScriptWatchers, Singleton.GetPhrase("zipscriptwatchers_help", ap.Player.UserIDString));
-					tab.AddToggle(1, Singleton.GetPhrase("filenamecheck", ap.Player.UserIDString), ap => { Config.Watchers.FileNameCheck = !Config.Watchers.FileNameCheck; Community.Runtime.SaveConfig(); }, ap => Config.Watchers.FileNameCheck, Singleton.GetPhrase("filenamecheck_help", ap.Player.UserIDString));
 				}
 
 				tab.AddName(1, Singleton.GetPhrase("logging", ap.Player.UserIDString), TextAnchor.MiddleLeft);
@@ -328,22 +334,22 @@ public partial class AdminModule
 
 					tab.AddName(1, Singleton.GetPhrase("conditionals", ap.Player.UserIDString), TextAnchor.MiddleLeft);
 
-					for(int i = 0; i < Config.Debugging.ConditionalCompilationSymbols.Count; i++)
+					for(int i = 0; i < Config.Compiler.ConditionalCompilationSymbols.Count; i++)
 					{
 						var index = i;
-						var symbol = Config.Debugging.ConditionalCompilationSymbols[i];
+						var symbol = Config.Compiler.ConditionalCompilationSymbols[i];
 
 						tab.AddInputButton(1, string.Empty, 0.075f,
 							new Tab.OptionInput(null, ap => symbol, 0, false,
 								(ap, args) =>
 								{
-									Config.Debugging.ConditionalCompilationSymbols[index] = args.ToString(string.Empty).ToUpper().Trim();
+									Config.Compiler.ConditionalCompilationSymbols[index] = args.ToString(string.Empty).ToUpper().Trim();
 									Refresh(tab, ap);
 									Community.Runtime.SaveConfig();
 								}),
 							new Tab.OptionButton("X", ap =>
 							{
-								Config.Debugging.ConditionalCompilationSymbols.RemoveAt(index);
+								Config.Compiler.ConditionalCompilationSymbols.RemoveAt(index);
 								Refresh(tab, ap);
 								Community.Runtime.SaveConfig();
 							}, ap => Tab.OptionButton.Types.Important));
@@ -360,7 +366,7 @@ public partial class AdminModule
 							var value = ap.GetStorage<string>(tab, "conditional");
 							if (!string.IsNullOrEmpty(value))
 							{
-								Config.Debugging.ConditionalCompilationSymbols.Add(value);
+								Config.Compiler.ConditionalCompilationSymbols.Add(value);
 								ap.SetStorage(tab, "conditional", string.Empty);
 								Refresh(tab, ap);
 								Community.Runtime.SaveConfig();

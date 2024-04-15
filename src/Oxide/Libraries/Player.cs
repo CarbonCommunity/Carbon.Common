@@ -4,7 +4,7 @@ using Formatter = Oxide.Core.Libraries.Covalence.Formatter;
 
 /*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -171,7 +171,7 @@ public class Player : Library
 				player.SetParent(null, true, true);
 				player.SetServerFall(true);
 				player.MovePosition(destination);
-				player.ClientRPCPlayer<Vector3>(null, player, "ForcePositionTo", destination);
+				player.ClientRPC(RpcTarget.Player("ForcePositionTo", player), destination);
 			}
 			finally
 			{

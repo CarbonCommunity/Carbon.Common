@@ -299,7 +299,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 									ap.Player.inventory.loot.MarkDirty();
 									ap.Player.inventory.loot.SendImmediate();
 
-									ap.Player.ClientRPCPlayer(null, ap.Player, "RPC_OpenLootPanel", storage.panelName);
+									ap.Player.ClientRPC(RpcTarget.Player("RPC_OpenLootPanel", ap.Player), storage.panelName);
 								});
 							});
 						}
@@ -385,7 +385,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 									var duration = modal.Get<float>("duration").Clamp(0f, float.MaxValue);
 									player.State.unHostileTimestamp = Network.TimeEx.currentTimestamp + duration;
 									player.DirtyPlayerState();
-									player.ClientRPCPlayer(null, player, "SetHostileLength", duration);
+									player.ClientRPC(RpcTarget.Player("SetHostileLength", player), duration);
 									fields.Clear();
 									fields = null;
 									SelectEntity(tab, ap3, owner);
@@ -429,6 +429,13 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 									ap.Player.ClientRPCPlayer(null, ap.Player, "RPC_OpenLootPanel", "player_corpse");
 								});
+							}));
+
+							temp.Add(new Tab.OptionButton("Strip", ap =>
+							{
+								if (multiSelection) return;
+
+								player.inventory.Strip();
 							}));
 						}
 

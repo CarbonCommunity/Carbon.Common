@@ -28,7 +28,6 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			Local,
 			Codefling,
 			uMod,
-			// Lone_Design
 		}
 		public enum FilterTypes
 		{
@@ -72,7 +71,6 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 		public static Vendor CodeflingInstance { get; set; }
 		public static Vendor uModInstance { get; set; }
-		public static Vendor Lone_DesignInstance { get; set; }
 		public static Vendor LocalInstance { get; set; }
 
 		public static Vendor GetVendor(VendorTypes vendor)
@@ -84,9 +82,6 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 				case VendorTypes.uMod:
 					return uModInstance;
-
-				// case VendorTypes.Lone_Design:
-				// 	return Lone_DesignInstance;
 
 				case VendorTypes.Local:
 					return LocalInstance;
@@ -127,12 +122,6 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					uModInstance.VersionCheck();
 				});
 			}
-
-			// Lone_DesignInstance = new Lone_Design();
-			// if (Lone_DesignInstance is IVendorStored loneStored && !loneStored.Load())
-			// {
-			// 	Lone_DesignInstance.FetchList(vendor => Lone_DesignInstance.Refresh());
-			// }
 
 			LocalInstance = new Local();
 			LocalInstance.Refresh();
@@ -743,7 +732,6 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		[ProtoContract]
 		[ProtoInclude(100, typeof(Codefling))]
 		[ProtoInclude(101, typeof(uMod))]
-		[ProtoInclude(102, typeof(Lone_Design))]
 		public abstract class Vendor
 		{
 			public virtual string Type { get; }
@@ -1305,14 +1293,15 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 								Singleton.Draw(session.Player);
 							}, core, headers: headers);
 							break;
+
+						default:
+							User = null;
+							Refresh();
+							Save();
+							Singleton.Draw(session.Player);
+							break;
 					}
-				}, core, headers: headers, onException: (code, result, ex) =>
-				{
-					User = null;
-					Refresh();
-					Save();
-					Singleton.Draw(session.Player);
-				});
+				}, core, headers: headers);
 			}
 
 			public bool IsLoggedIn => User != null;
@@ -1641,201 +1630,6 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				{
 					Singleton.PutsError($" Couldn't store uMod plugins list.", ex);
 				}
-			}
-		}
-
-		[ProtoContract]
-		public class Lone_Design : Vendor, IVendorStored
-		{
-			public override string Type => "Lone.Design";
-			public override string Url => "https://lone.design";
-			public override string Logo => "lonelogo";
-			public override float LogoRatio => 0f;
-
-			public override float IconScale => 0.4f;
-			public override float SafeIconScale => 0.2f;
-
-			public override string BarInfo => $"{FetchedPlugins.Count(x => !x.IsPaid()):n0} free, {FetchedPlugins.Count(x => x.IsPaid()):n0} paid";
-
-			public override string ListEndpoint => "https://api.lone.design/carbon.json";
-			public override string DownloadEndpoint => "https://codefling.com/files/file/[ID]-a?do=download";
-
-			public override void Refresh()
-			{
-				if (FetchedPlugins == null) return;
-
-				if (LogoEnumerable == null)
-				{
-					LogoEnumerable = new[] { Logo };
-				}
-
-				foreach (var plugin in FetchedPlugins)
-				{
-					foreach (var existentPlugin in Community.Runtime.CorePlugin.plugins.GetAll())
-					{
-						if (existentPlugin.FileName == plugin.File)
-						{
-							plugin.ExistentPlugin = (RustPlugin)existentPlugin;
-							break;
-						}
-					}
-				}
-
-				PriceData = FetchedPlugins.OrderBy(x => x.OriginalPrice);
-				AuthorData = FetchedPlugins.OrderBy(x => x.Author);
-				InstalledData = FetchedPlugins.Where(x => x.IsInstalled());
-				OutOfDateData = FetchedPlugins.Where(x => x.IsInstalled() && !x.IsUpToDate());
-				OwnedData = FetchedPlugins.Where(x => x.Owned);
-
-				var tags = Facepunch.Pool.GetList<string>();
-				foreach (var plugin in FetchedPlugins)
-				{
-					if (plugin.Tags == null) continue;
-
-					foreach (var tag in plugin.Tags)
-					{
-						var processedTag = tag?.ToLower().Trim();
-
-						if (!tags.Contains(processedTag))
-						{
-							tags.Add(processedTag);
-						}
-					}
-				}
-				PopularTags = tags;
-				Facepunch.Pool.FreeList(ref tags);
-			}
-			public override void FetchList(Action<Vendor> callback = null)
-			{
-				var plugins = Community.Runtime.CorePlugin.plugins.GetAll();
-
-				Community.Runtime.CorePlugin.webrequest.Enqueue(ListEndpoint, null, (error, data) =>
-				{
-					var list = JArray.Parse(data);
-
-					FetchedPlugins.Clear();
-
-					foreach (var token in list)
-					{
-						var image = token["images"][0]["src"]?.ToString();
-						var plugin = new Plugin
-						{
-							Id = token["url"]?.ToString(),
-							Name = token["name"]?.ToString(),
-							Author = token["author"]?.ToString(),
-							Description = token["description"]?.ToString(),
-							Version = token["version"]?.ToString(),
-							OriginalPrice = $"${token["price"]}",
-							SalePrice = $"${token["salePrice"]}",
-							File = token["filename"]?.ToString(),
-							Image = image,
-							Thumbnail = image,
-							Tags = token["tags"]?.Select(x => x["name"]?.ToString()),
-							Rating = (token["rating"]?.ToString().ToFloat()).GetValueOrDefault(),
-							HasLookup = true
-						};
-
-						if (plugin.OriginalPrice == "$" || plugin.OriginalPrice == "$0") plugin.OriginalPrice = "FREE";
-						if (plugin.SalePrice == "$" || plugin.SalePrice == "$0") plugin.SalePrice = "FREE";
-
-						var date = DateTimeOffset.FromUnixTimeSeconds(plugin.UpdateDate.ToLong());
-						plugin.UpdateDate = date.UtcDateTime.ToString();
-
-						try { plugin.Description = plugin.Description.TrimStart('\t').Replace("\t", "\n").Split('\n')[0]; } catch { }
-
-						try { plugin.ExistentPlugin = plugins.FirstOrDefault(x => Path.GetFileNameWithoutExtension(x.FilePath) == Path.GetFileNameWithoutExtension(plugin.File)) as RustPlugin; } catch { }
-
-						FetchedPlugins.Add(plugin);
-					}
-
-					callback?.Invoke(this);
-					Logger.Log($"[{Type}] Downloaded JSON");
-
-					Save();
-				}, Community.Runtime.CorePlugin);
-			}
-			public override void Download(string id, Action onTimeout = null)
-			{
-				var plugin = FetchedPlugins.FirstOrDefault(x => x.Id == id);
-				plugin.IsBusy = true;
-				plugin.DownloadCount++;
-
-				var path = Path.Combine(Defines.GetScriptsFolder(), plugin.File);
-				var url = DownloadEndpoint.Replace("[ID]", id);
-
-				Community.Runtime.CorePlugin.timer.In(2f, () =>
-				{
-					if (plugin.IsBusy)
-					{
-						plugin.IsBusy = false;
-						onTimeout?.Invoke();
-					}
-				});
-
-				Community.Runtime.CorePlugin.webrequest.Enqueue(url, null, (error, source) =>
-				{
-					plugin.IsBusy = false;
-
-					if (!source.StartsWith("<!DOCTYPE html>"))
-					{
-						Singleton.Puts($"Downloaded {plugin.Name}");
-						OsEx.File.Create(path, source);
-					}
-				}, Community.Runtime.CorePlugin, headers: new Dictionary<string, string>
-				{
-					["user-agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36 Edg/110.0.1587.63",
-					["accept"] = "ext/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"
-				});
-			}
-			public override void Uninstall(string id)
-			{
-				var plugin = FetchedPlugins.FirstOrDefault(x => x.Id == id);
-				OsEx.File.Move(plugin.ExistentPlugin.FilePath, Path.Combine(Defines.GetScriptsFolder(), "backups", $"{plugin.ExistentPlugin.FileName}.cs"), true);
-				plugin.ExistentPlugin = null;
-			}
-			public override void CheckMetadata(string id, Action onMetadataRetrieved)
-			{
-
-			}
-
-			public bool Load()
-			{
-				try
-				{
-					var path = Path.Combine(Defines.GetDataFolder(), "vendordata_lone.db");
-					if (!OsEx.File.Exists(path)) return false;
-
-					using var file = new MemoryStream(OsEx.File.ReadBytes(path));
-					var value = Serializer.Deserialize<Codefling>(file);
-
-					LastTick = value.LastTick;
-					FetchedPlugins.Clear();
-					FetchedPlugins.AddRange(value.FetchedPlugins);
-
-					if ((DateTime.Now - new DateTime(value.LastTick)).TotalHours >= 24)
-					{
-						Singleton.Puts($"Invalidated {Type} database. Fetching...");
-						return false;
-					}
-
-					Singleton.Puts($"Loaded {Type} from file: {path}");
-					Refresh();
-				}
-				catch { Save(); }
-				return true;
-			}
-			public void Save()
-			{
-				try
-				{
-					var path = Path.Combine(Defines.GetDataFolder(), "vendordata_lone.db");
-					using var file = new MemoryStream();
-					LastTick = DateTime.Now.Ticks;
-					Serializer.Serialize(file, this);
-					OsEx.File.Create(path, file.ToArray());
-					Singleton.Puts($"Stored {Type} to file: {path}");
-				}
-				catch { }
 			}
 		}
 
