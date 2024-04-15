@@ -171,7 +171,7 @@ public class Player : Library
 				player.SetParent(null, true, true);
 				player.SetServerFall(true);
 				player.MovePosition(destination);
-				player.ClientRPC(RpcTarget.Player("ForcePositionTo", player), destination);
+				player.ClientRPCPlayer<Vector3>(null, player, "ForcePositionTo", destination);
 			}
 			finally
 			{

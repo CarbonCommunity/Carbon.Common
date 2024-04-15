@@ -168,7 +168,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 						var duration = modal.Get<float>("duration").Clamp(0f, float.MaxValue);
 						player.State.unHostileTimestamp = Network.TimeEx.currentTimestamp + duration;
 						player.DirtyPlayerState();
-						player.ClientRPC(RpcTarget.Player("SetHostileLength", player), duration);
+						player.ClientRPCPlayer(null, player, "SetHostileLength", duration);
 						fields.Clear();
 						fields = null;
 						ShowInfo(tab, aap, player);

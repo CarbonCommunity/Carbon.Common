@@ -1966,7 +1966,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			ap.Player.inventory.loot.MarkDirty();
 			ap.Player.inventory.loot.SendImmediate();
 
-			ap.Player.ClientRPC(RpcTarget.Player("RPC_OpenLootPanel", ap.Player), "player_corpse");
+			ap.Player.ClientRPCPlayer(null, ap.Player, "RPC_OpenLootPanel", "player_corpse");
 		});
 	}
 	internal static void OpenContainer(PlayerSession ap, ItemContainer container, Tab tab)
@@ -1988,7 +1988,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			ap.Player.inventory.loot.MarkDirty();
 			ap.Player.inventory.loot.SendImmediate();
 
-			ap.Player.ClientRPC(RpcTarget.Player("RPC_OpenLootPanel", ap.Player), "generic");
+			ap.Player.ClientRPCPlayer(null, ap.Player, "RPC_OpenLootPanel", "generic");
 		});
 	}
 
