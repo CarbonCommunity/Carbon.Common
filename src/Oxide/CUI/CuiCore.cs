@@ -356,19 +356,15 @@ public class CuiRectTransformComponent : ICuiComponent
 {
 	public string Type => "RectTransform";
 
-	[DefaultValue("0 0")]
-	[JsonProperty("anchormin", NullValueHandling = NullValueHandling.Ignore, DefaultValueHandling = DefaultValueHandling.Ignore)]
+	[JsonProperty("anchormin")]
 	public string AnchorMin { get; set; } = "0 0";
 
-	[DefaultValue("1 1")]
-	[JsonProperty("anchormax", NullValueHandling = NullValueHandling.Ignore, DefaultValueHandling = DefaultValueHandling.Ignore)]
+	[JsonProperty("anchormax")]
 	public string AnchorMax { get; set; } = "1 1";
 
-	// [DefaultValue("0 0")]
 	[JsonProperty("offsetmin")]
 	public string OffsetMin { get; set; }
 
-	// [DefaultValue("1 1")]
 	[JsonProperty("offsetmax")]
 	public string OffsetMax { get; set; }
 }

@@ -707,13 +707,13 @@ public readonly struct CUI : IDisposable
 				element.DecelerationRate = _defaultScrollView.DecelerationRate;
 				element.ScrollSensitivity = _defaultScrollView.ScrollSensitivity;
 				element.MaskSoftness = _defaultScrollView.MaskSoftness;
-				element.ContentTransform = TakeFromPoolRect();
+				element.ContentTransform = new();
 				element.ContentTransform.AnchorMin = "0 0";
 				element.ContentTransform.AnchorMax = "1 1";
-				element.ContentTransform.OffsetMin = "0 0";
+				element.ContentTransform.OffsetMin = "0 -200";
 				element.ContentTransform.OffsetMax = "0 0";
-				element.HorizontalScrollBar = TakeFromPoolScrollbar();
-				element.VerticalScrollBar = TakeFromPoolScrollbar();
+				element.HorizontalScrollBar = new();
+				element.VerticalScrollBar = new();
 
 				_scrollViews.RemoveAt(0);
 			}
