@@ -422,14 +422,90 @@ public class CuiTextComponent : ICuiComponent, ICuiColor
 	[JsonProperty("verticalOverflow")]
 	public VerticalWrapMode VerticalOverflow { get; set; }
 }
+public class CuiScrollViewComponent : ICuiComponent
+{
+	public string Type => "UnityEngine.UI.ScrollView";
+
+	[JsonProperty("vertical")]
+	public bool Vertical { get; set; } = true;
+
+	[JsonProperty("horizontal")]
+	public bool Horizontal { get; set; } = true;
+
+	[JsonConverter(typeof(StringEnumConverter))]
+	[JsonProperty("movementType")]
+	public ScrollRect.MovementType MovementType { get; set; } = ScrollRect.MovementType.Elastic;
+
+	[JsonProperty("elasticity")]
+	public float Elasticity { get; set; } = 0.25f;
+
+	[JsonProperty("inertia")]
+	public bool Inertia { get; set; } = true;
+
+	[JsonProperty("decelerationRate")]
+	public float DecelerationRate { get; set; } = 0.3f;
+
+	[JsonProperty("scrollSensitivity")]
+	public float ScrollSensitivity { get; set; } = 3.0f;
+
+	[JsonProperty("maskSoftness")]
+	public string MaskSoftness { get; set; } = "0 0";
+
+	[JsonProperty("contentTransform")]
+	public CuiRectTransformComponent ContentTransform { get; set; } = new()
+	{
+		AnchorMin = "0 0",
+		AnchorMax = "1 1",
+		OffsetMin = "0 -200",
+		OffsetMax = "0 0"
+	};
+
+	[JsonProperty("horizontalScrollbar")]
+	public CuiScrollBarComponent HorizontalScrollBar { get; set; } = new();
+
+	[JsonProperty("verticalScrollbar")]
+	public CuiScrollBarComponent VerticalScrollBar { get; set; } = new();
+}
+public class CuiScrollBarComponent : ICuiComponent
+{
+	public string Type => "UnityEngine.UI.Scrollbar";
+
+	[JsonProperty("invert")]
+	public bool Invert { get; set; }
+
+	[JsonProperty("autoHide")]
+	public bool AutoHide { get; set; }
+
+	[JsonProperty("handleSprite")]
+	public string HandleSprite { get; set; } = "assets/content/ui/ui.rounded.tga";
+
+	[DefaultValue(20)]
+	[JsonProperty("size")]
+	public float Size { get; set; } = 20;
+
+	[JsonProperty("handleColor")]
+	public string HandleColor { get; set; } = "0.15 0.15 0.15 1";
+
+	[JsonProperty("highlightColor")]
+	public string HighlightColor { get; set; } = "0.17 0.17 0.17 1";
+
+	[JsonProperty("pressedColor")]
+	public string PressedColor { get; set; } = "0.2 0.2 0.2 1";
+
+	[JsonProperty("trackSprite")]
+	public string TrackSprite { get; set; } = "assets/content/ui/ui.background.tile.psd";
+
+	[JsonProperty("trackColor")]
+	public string TrackColor { get; set; } = "0.09 0.09 0.09 1";
+}
 
 #endregion
 
 public class CuiButton
 {
-	public CuiButtonComponent Button { get; } = new CuiButtonComponent();
-	public CuiRectTransformComponent RectTransform { get; } = new CuiRectTransformComponent();
-	public CuiTextComponent Text { get; } = new CuiTextComponent();
+	public CuiButtonComponent Button { get; } = new();
+	public CuiRectTransformComponent RectTransform { get; } = new();
+	public CuiTextComponent Text { get; } = new();
 	public float FadeOut { get; set; }
 }
 public class CuiElement
@@ -441,7 +517,7 @@ public class CuiElement
 	public string Parent { get; set; }
 
 	[JsonProperty("components")]
-	public List<ICuiComponent> Components { get; } = new List<ICuiComponent>();
+	public List<ICuiComponent> Components { get; } = new();
 
 	[JsonProperty("destroyUi", NullValueHandling = NullValueHandling.Ignore, DefaultValueHandling = DefaultValueHandling.Ignore)]
 	public string DestroyUi { get; set; }
@@ -454,8 +530,8 @@ public class CuiElement
 }
 public class CuiLabel
 {
-	public CuiTextComponent Text { get; } = new CuiTextComponent();
-	public CuiRectTransformComponent RectTransform { get; } = new CuiRectTransformComponent();
+	public CuiTextComponent Text { get; } = new();
+	public CuiRectTransformComponent RectTransform { get; } = new();
 	public float FadeOut { get; set; }
 }
 public class CuiPanel
