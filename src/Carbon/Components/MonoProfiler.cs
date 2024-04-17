@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices;
+﻿using System.Collections.Concurrent;
+using System.Runtime.InteropServices;
 using System.Security;
 using System.Text;
 using API.Logger;
@@ -53,6 +54,7 @@ public static unsafe partial class MonoProfiler
 	public class AdvancedOutput : List<AdvancedRecord>
 	{
 		public bool AnyValidRecords => Count > 0;
+		public bool Disabled;
 
 		public string ToTable()
 		{
@@ -73,7 +75,7 @@ public static unsafe partial class MonoProfiler
 			return table.ToStringMinimal().Trim();
 		}
 	}
-	public class RuntimeAssemblyBank : Dictionary<string, int>
+	public class RuntimeAssemblyBank : ConcurrentDictionary<string, int>
 	{
 		public string Increment(string value)
 		{
@@ -82,16 +84,11 @@ public static unsafe partial class MonoProfiler
 				return string.Empty;
 			}
 
-			if(TryGetValue(value, out var index))
-			{
-				index = this[value]++;
-			}
-			else
-			{
-				Add(value, 1);
-			}
+			var output = 0;
 
-			return $"{value}_#{index}";
+			AddOrUpdate(value, output = 1, (val, arg) => output = arg++);
+
+			return $"{value}_#{output}";
 		}
 	}
 
@@ -144,7 +141,7 @@ public static unsafe partial class MonoProfiler
 		*target = Encoding.UTF8.GetString(ptr, len);
 	}
 
-	public static bool? ToggleProfiler()
+	public static bool? ToggleProfiler(bool profileAdvanced = false)
 	{
 		if (!Enabled)
 		{
@@ -156,7 +153,7 @@ public static unsafe partial class MonoProfiler
 		string basic = null;
 		string advanced = null;
 
-		var result = profiler_toggle(true, &state, &basic, &advanced, &native_string_cb);
+		var result = profiler_toggle(profileAdvanced, &state, &basic, &advanced, &native_string_cb);
 
 		if (result != ProfilerResultCode.OK)
 		{
@@ -169,10 +166,12 @@ public static unsafe partial class MonoProfiler
 			ParseBasicRecords(basic);
 		}
 
-		if (advanced != null)
+		if (advanced != null && profileAdvanced)
 		{
 			ParseAdvancedRecords(advanced);
 		}
+
+		AdvancedRecords.Disabled = !profileAdvanced;
 
 		_recording = state;
 
@@ -180,6 +179,11 @@ public static unsafe partial class MonoProfiler
 	}
 	public static void MarkAssemblyForProfiling(Assembly assembly, string assemblyName)
 	{
+		if (!Enabled)
+		{
+			return;
+		}
+
 		assemblyName = AssemblyBank.Increment(assemblyName);
 
 		if (!string.IsNullOrWhiteSpace(assemblyName))
