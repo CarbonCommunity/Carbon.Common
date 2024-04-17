@@ -1,6 +1,7 @@
 ﻿using API.Assembly;
 using API.Commands;
 using Carbon.Base.Interfaces;
+using Carbon.Profiler;
 using HarmonyLib;
 using Newtonsoft.Json;
 using Oxide.Game.Rust.Cui;
@@ -76,72 +77,98 @@ public partial class CorePlugin : CarbonPlugin
 		}
 	}
 
-	[ConsoleCommand("profiler.assemblies", "The entire list of assembly names that are used by the Mono profiler for tracking.")]
+	[ConsoleCommand("profiler.tracks", "All tracking lists present in the config which are used by the Mono profiler for tracking.")]
 	[AuthLevel(2)]
-	private void ProfilerAssemblies(ConsoleSystem.Arg arg)
+	private void ProfilerTracked(ConsoleSystem.Arg arg)
 	{
-		arg.ReplyWith($"Tracked Assemblies ({Community.Runtime.MonoProfilerConfig.ProfiledAssemblies.Count:n0}):\n" +
-		              $"{Community.Runtime.MonoProfilerConfig.ProfiledAssemblies.Select(x => $"- {x}").ToString("\n")}\nUse wildcard (*) to include all assemblies loaded.");
+		arg.ReplyWith($"Tracked Assemblies ({Community.Runtime.MonoProfilerConfig.Assemblies.Count:n0}):\n" +
+		              $"{Community.Runtime.MonoProfilerConfig.Assemblies.Select(x => $"- {x}").ToString("\n")}\n" +
+		              $"Tracked Plugins ({Community.Runtime.MonoProfilerConfig.Plugins.Count:n0}):\n" +
+		              $"{Community.Runtime.MonoProfilerConfig.Plugins.Select(x => $"- {x}").ToString("\n")}\n" +
+		              $"Tracked Modules ({Community.Runtime.MonoProfilerConfig.Modules.Count:n0}):\n" +
+		              $"{Community.Runtime.MonoProfilerConfig.Modules.Select(x => $"- {x}").ToString("\n")}\n" +
+		              $"Tracked Extensions ({Community.Runtime.MonoProfilerConfig.Extensions.Count:n0}):\n" +
+		              $"{Community.Runtime.MonoProfilerConfig.Extensions.Select(x => $"- {x}").ToString("\n")}\n" +
+		              $"Use wildcard (*) to include all.");
 	}
 
-	[ConsoleCommand("profiler.plugins", "The entire list of plugins names that are used by the Mono profiler for tracking.")]
-	[AuthLevel(2)]
-	private void ProfilerPlugins(ConsoleSystem.Arg arg)
-	{
-		arg.ReplyWith($"Tracked Plugins ({Community.Runtime.MonoProfilerConfig.ProfiledPlugins.Count:n0}):\n" +
-		              $"{Community.Runtime.MonoProfilerConfig.ProfiledPlugins.Select(x => $"- {x}").ToString("\n")}\nUse wildcard (*) to include all plugins loaded or will be loaded.");
-	}
-
-	[ConsoleCommand("profiler.trackplugin", "Adds a plugin to be tracked. Reloading the plugin will start tracking.")]
+	[ConsoleCommand("profiler.track", "Adds an object to be tracked. Reloading the plugin will start tracking. Restarting required for assemblies, modules and extensions.")]
 	[AuthLevel(2)]
 	private void ProfilerTrackPlugin(ConsoleSystem.Arg arg)
 	{
-		var plugin = arg.GetString(0);
-
-		if (string.IsNullOrEmpty(plugin))
+		if (!arg.HasArgs(2))
 		{
-			arg.ReplyWith("Input is empty");
+			InvalidReturn(arg);
 			return;
 		}
 
-		if (Community.Runtime.MonoProfilerConfig.AddPlugin(plugin))
-		{
-			arg.ReplyWith($"Added '{plugin}' to the tracking list.");
+		var type = arg.GetString(0);
+		var value = arg.GetString(1);
+		MonoProfilerConfig.ProfileTypes returnType = default;
 
-			if (MonoProfiler.Enabled)
-			{
-				Logger.Warn(" The plugin must reload to start tracking..");
-			}
+		var returnVal = type switch
+		{
+			"assembly" => Community.Runtime.MonoProfilerConfig.AppendProfile(
+				returnType = MonoProfilerConfig.ProfileTypes.Assembly, value),
+			"plugin" => Community.Runtime.MonoProfilerConfig.AppendProfile(
+				returnType = MonoProfilerConfig.ProfileTypes.Plugin, value),
+			"module" => Community.Runtime.MonoProfilerConfig.AppendProfile(
+				returnType = MonoProfilerConfig.ProfileTypes.Module, value),
+			"ext" => Community.Runtime.MonoProfilerConfig.AppendProfile(
+				returnType = MonoProfilerConfig.ProfileTypes.Extension, value),
+			_ => InvalidReturn(arg)
+		};
+
+		arg.ReplyWith(returnVal
+			? $" Added {returnType} object '{value}' to tracking"
+			: $" Couldn't add {returnType} object '{value}' for tracking");
+
+		if (returnVal) Community.Runtime.SaveMonoProfilerConfig();
+
+		static bool InvalidReturn(ConsoleSystem.Arg arg)
+		{
+			arg.ReplyWith("Syntax: c.profiler.track (assembly|plugin|module|ext) value");
+			return false;
 		}
-		else
-		{
-			arg.ReplyWith($"Couldn't add '{plugin}' - probably because it's already in the list.");
-		}	}
+	}
 
-	[ConsoleCommand("profiler.untrackplugin", "Removes a plugin from being tracked. Reloading the plugin will remove it from being tracked.")]
+	[ConsoleCommand("profiler.untrack", "Removes a plugin from being tracked. Reloading the plugin will remove it from being tracked. Restarting required for assemblies, modules and extensions.")]
 	[AuthLevel(2)]
 	private void ProfilerRemovePlugin(ConsoleSystem.Arg arg)
 	{
-		var plugin = arg.GetString(0);
-
-		if (string.IsNullOrEmpty(plugin))
+		if (!arg.HasArgs(2))
 		{
-			arg.ReplyWith("Input is empty");
+			InvalidReturn(arg);
 			return;
 		}
 
-		if (Community.Runtime.MonoProfilerConfig.RemovePlugin(plugin))
-		{
-			arg.ReplyWith($"Removed '{plugin}' from the tracking list.");
+		var type = arg.GetString(0);
+		var value = arg.GetString(1);
+		MonoProfilerConfig.ProfileTypes returnType = default;
 
-			if (MonoProfiler.Enabled)
-			{
-				Logger.Warn(" The plugin must reload to stop tracking..");
-			}
-		}
-		else
+		var returnVal = type switch
 		{
-			arg.ReplyWith($"Couldn't remove '{plugin}' - probably because it's not in the list.");
+			"assembly" => Community.Runtime.MonoProfilerConfig.RemoveProfile(
+				returnType = MonoProfilerConfig.ProfileTypes.Assembly, value),
+			"plugin" => Community.Runtime.MonoProfilerConfig.RemoveProfile(
+				returnType = MonoProfilerConfig.ProfileTypes.Plugin, value),
+			"module" => Community.Runtime.MonoProfilerConfig.RemoveProfile(
+				returnType = MonoProfilerConfig.ProfileTypes.Module, value),
+			"ext" => Community.Runtime.MonoProfilerConfig.RemoveProfile(
+				returnType = MonoProfilerConfig.ProfileTypes.Extension, value),
+			_ => InvalidReturn(arg)
+		};
+
+		arg.ReplyWith(returnVal
+			? $" Removed {returnType} object '{value}' from tracking"
+			: $" Couldn't remove {returnType} object '{value}' for tracking");
+
+		if (returnVal) Community.Runtime.SaveMonoProfilerConfig();
+
+		static bool InvalidReturn(ConsoleSystem.Arg arg)
+		{
+			arg.ReplyWith("Syntax: c.profiler.untrack (assembly|plugin|module|ext) value");
+			return false;
 		}
 	}
 }
