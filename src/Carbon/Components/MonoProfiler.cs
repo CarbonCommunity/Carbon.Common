@@ -16,14 +16,99 @@ using API.Logger;
 namespace Carbon.Components;
 
 [SuppressUnmanagedCodeSecurity]
-public static unsafe class MonoProfiler
+public static unsafe partial class MonoProfiler
 {
+	public static BasicOutput BasicRecords = new();
+	public static AdvancedOutput AdvancedRecords = new();
+	public static RuntimeAssemblyBank AssemblyBank = new();
+
 	public enum ProfilerResultCode : byte
 	{
 		OK = 0,
 		MainThreadOnly = 1,
 		NotInitialized = 2,
 		UnknownError = 3,
+	}
+
+	public class BasicOutput : List<BasicRecord>
+	{
+		public bool AnyValidRecords => Count > 0;
+
+		public string ToTable()
+		{
+			using var table = new StringTable("Assembly", "Total Time", "(%)", "Calls", "Memory Usage");
+
+			foreach(var record in this)
+			{
+				table.AddRow($" {record.Assembly}",
+					record.TotalTime == 0 ? string.Empty : $"{record.TotalTime:n0}ms",
+					record.TotalTimePercentage == 0 ? string.Empty : $"{record.TotalTimePercentage:0}%",
+					record.Calls == 0 ? string.Empty : $"{record.Calls:n0}",
+					$"{ByteEx.Format(record.MemoryUsage).ToLower()}");
+			}
+
+			return table.ToStringMinimal().Trim();
+		}
+	}
+	public class AdvancedOutput : List<AdvancedRecord>
+	{
+		public bool AnyValidRecords => Count > 0;
+
+		public string ToTable()
+		{
+			using var table = new StringTable("Assembly", "Method", "Total Time", "(%)", "Own Time", "(%)", "Calls", "Total Memory", "Own Memory");
+
+			foreach (var record in this)
+			{
+				table.AddRow($" {record.Assembly}", $"{record.Method}",
+					record.TotalTime == 0 ? string.Empty : $"{record.TotalTime:n0}ms",
+					record.TotalTimePercentage == 0 ? string.Empty : $"{record.TotalTimePercentage:0}%",
+					record.OwnTime == 0 ? string.Empty : $"{record.OwnTime:n0}ms",
+					record.OwnTimePercentage == 0 ? string.Empty : $"{record.OwnTimePercentage:0}%",
+					record.Calls == 0 ? string.Empty : $"{record.Calls:n0}",
+					record.TotalMemoryUsage == 0 ? string.Empty : $"{ByteEx.Format(record.TotalMemoryUsage).ToLower()}",
+					record.OwnMemoryUsage == 0 ? string.Empty : $"{ByteEx.Format(record.OwnMemoryUsage).ToLower()}");
+			}
+
+			return table.ToStringMinimal().Trim();
+		}
+	}
+	public class RuntimeAssemblyBank : Dictionary<string, int>
+	{
+		public string Increment(string value)
+		{
+			if(TryGetValue(value, out var index))
+			{
+				index = this[value]++;
+			}
+			else
+			{
+				Add(value, 1);
+			}
+
+			return $"{value} #{index}";
+		}
+	}
+
+	public struct BasicRecord
+	{
+		public string Assembly;
+		public long TotalTime;
+		public float TotalTimePercentage;
+		public long Calls;
+		public long MemoryUsage;
+	}
+	public struct AdvancedRecord
+	{
+		public string Assembly;
+		public string Method;
+		public long TotalTime;
+		public float TotalTimePercentage;
+		public long OwnTime;
+		public float OwnTimePercentage;
+		public long Calls;
+		public long TotalMemoryUsage;
+		public long OwnMemoryUsage;
 	}
 
 	private static bool _enabled = false;
@@ -76,12 +161,12 @@ public static unsafe class MonoProfiler
 
 		if (basic != null)
 		{
-			Logger.Log($"Basic Results:\n\n{basic}\n");
+			ParseBasicRecords(basic);
 		}
 
 		if (advanced != null)
 		{
-			Logger.Log($"Advanced Results:\n\n{advanced}\n");
+			ParseAdvancedRecords(advanced);
 		}
 
 		_recording = state;
@@ -90,6 +175,8 @@ public static unsafe class MonoProfiler
 	}
 	public static void MarkAssemblyForProfiling(Assembly assembly, string assemblyName)
 	{
+		assemblyName = AssemblyBank.Increment(assemblyName);
+
 		if (!string.IsNullOrWhiteSpace(assemblyName))
 		{
 			fixed (char* csptr = assemblyName)
@@ -122,6 +209,57 @@ public static unsafe class MonoProfiler
 
 	[DllImport("CarbonNative")]
 	private static extern ProfilerResultCode profiler_toggle(bool gen_advanced, bool* state, string* basic_out, string* advanced_out, delegate*<string*, byte*, int, void> cb);
+
+	#endregion
+
+	#region Parsing
+
+	private static string[] _space = new string[] { " " };
+
+	private static void ParseBasicRecords(string data)
+	{
+		BasicRecords.Clear();
+
+		using var lines = TemporaryArray<string>.New(data.Split('\n'));
+
+		for(int i = 1; i < lines.Length; i++)
+		{
+			using var line = TemporaryArray<string>.New(lines.Get(i).Split(_space, StringSplitOptions.RemoveEmptyEntries));
+
+			BasicRecords.Add(new BasicRecord
+			{
+				Assembly = line.Get(0),
+				TotalTime = line.Get(1).ToLong(),
+				TotalTimePercentage = line.Get(2).ToFloat(),
+				Calls = line.Get(3).ToLong(),
+				MemoryUsage = line.Get(4).ToLong()
+			});
+		}
+	}
+	private static void ParseAdvancedRecords(string data)
+	{
+		AdvancedRecords.Clear();
+
+		using var lines = TemporaryArray<string>.New(data.Split('\n'));
+
+		for (int i = 1; i < lines.Length; i++)
+		{
+			using var line = TemporaryArray<string>.New(lines.Get(i).Split(_space, StringSplitOptions.RemoveEmptyEntries));
+
+			AdvancedRecords.Add(new AdvancedRecord
+			{
+				Assembly = line.Get(0),
+				Method = line.Get(1),
+				TotalTime = line.Get(2).ToLong(),
+				TotalTimePercentage = line.Get(3).ToFloat(),
+				OwnTime = line.Get(4).ToLong(),
+				OwnTimePercentage = line.Get(5).ToFloat(),
+				Calls = line.Get(6).ToLong(),
+				TotalMemoryUsage = line.Get(7).ToLong(),
+				OwnMemoryUsage = line.Get(8).ToLong()
+			});
+		}
+	}
 
 	#endregion
 }
