@@ -17,7 +17,7 @@ using API.Logger;
 namespace Carbon.Components;
 
 [SuppressUnmanagedCodeSecurity]
-public static unsafe partial class MonoProfiler
+public static unsafe class MonoProfiler
 {
 	public static BasicOutput BasicRecords = new();
 	public static AdvancedOutput AdvancedRecords = new();
@@ -141,7 +141,7 @@ public static unsafe partial class MonoProfiler
 		*target = Encoding.UTF8.GetString(ptr, len);
 	}
 
-	public static bool? ToggleProfiling(bool advancedProfiling = false)
+	public static bool? ToggleProfiling(bool advanced = false)
 	{
 		if (!Enabled)
 		{
@@ -150,10 +150,10 @@ public static unsafe partial class MonoProfiler
 		}
 
 		bool state;
-		string basic = null;
-		string advanced = null;
+		string basicOutput = null;
+		string advancedOutput = null;
 
-		var result = profiler_toggle(advancedProfiling, &state, &basic, &advanced, &native_string_cb);
+		var result = profiler_toggle(advanced, &state, &basicOutput, &advancedOutput, &native_string_cb);
 
 		if (result != ProfilerResultCode.OK)
 		{
@@ -161,17 +161,17 @@ public static unsafe partial class MonoProfiler
 			return null;
 		}
 
-		if (basic != null)
+		if (basicOutput != null)
 		{
-			ParseBasicRecords(basic);
+			ParseBasicRecords(basicOutput);
 		}
 
-		if (advanced != null)
+		if (advancedOutput != null)
 		{
-			ParseAdvancedRecords(advanced);
+			ParseAdvancedRecords(advancedOutput);
 		}
 
-		AdvancedRecords.Disabled = !advancedProfiling;
+		AdvancedRecords.Disabled = !advanced;
 
 		_recording = state;
 
