@@ -1,30 +1,59 @@
-﻿namespace Carbon.Profiler;
+﻿using UnityEngine.Serialization;
+
+namespace Carbon.Profiler;
 
 [Serializable]
 public class MonoProfilerConfig
 {
 	public bool Enabled = false;
 	public bool Allocations = false;
-	public List<string> AssembliesToProfile = new();
+	public List<string> ProfiledAssemblies = new();
+	public List<string> ProfiledPlugins = new();
 
 	public bool AddAssembly(string assembly)
 	{
-		if (AssembliesToProfile.Contains(assembly))
+		if (ProfiledAssemblies.Contains(assembly))
 		{
 			return false;
 		}
 
-		AssembliesToProfile.Add(assembly);
+		ProfiledAssemblies.Add(assembly);
 		return true;
 	}
 	public bool RemoveAssembly(string assembly)
 	{
-		if (!AssembliesToProfile.Contains(assembly))
+		if (!ProfiledAssemblies.Contains(assembly))
 		{
 			return false;
 		}
 
-		AssembliesToProfile.Remove(assembly);
+		ProfiledAssemblies.Remove(assembly);
 		return true;
+	}
+
+    public bool AddPlugin(string plugin)
+    {
+        if (ProfiledPlugins.Contains(plugin))
+        {
+            return false;
+        }
+
+        ProfiledPlugins.Add(plugin);
+        return true;
+    }
+    public bool RemovePlugin(string plugin)
+    {
+        if (!ProfiledPlugins.Contains(plugin))
+        {
+            return false;
+        }
+
+        ProfiledPlugins.Remove(plugin);
+        return true;
+    }
+
+	public bool IsPluginWhitelisted(string assembly)
+	{
+		return ProfiledPlugins.Contains("*") || ProfiledPlugins.Contains(assembly);
 	}
 }

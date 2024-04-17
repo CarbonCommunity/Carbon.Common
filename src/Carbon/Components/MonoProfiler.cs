@@ -141,7 +141,7 @@ public static unsafe partial class MonoProfiler
 		*target = Encoding.UTF8.GetString(ptr, len);
 	}
 
-	public static bool? ToggleProfiler(bool advancedProfiling = false)
+	public static bool? ToggleProfiling(bool advancedProfiling = false)
 	{
 		if (!Enabled)
 		{
@@ -176,6 +176,16 @@ public static unsafe partial class MonoProfiler
 		_recording = state;
 
 		return state;
+	}
+
+	public static void MarkPluginForProfiling(Assembly pluginAssembly, string pluginName)
+	{
+		if (!Community.Runtime.MonoProfilerConfig.IsPluginWhitelisted(pluginName))
+		{
+			return;
+		}
+
+		MarkAssemblyForProfiling(pluginAssembly, pluginName);
 	}
 	public static void MarkAssemblyForProfiling(Assembly assembly, string assemblyName)
 	{
