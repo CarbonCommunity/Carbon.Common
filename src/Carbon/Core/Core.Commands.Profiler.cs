@@ -80,16 +80,16 @@ public partial class CorePlugin : CarbonPlugin
 	[AuthLevel(2)]
 	private void ProfilerAssemblies(ConsoleSystem.Arg arg)
 	{
-		arg.ReplyWith($"Tracked Assemblies ({Community.Runtime.MonoProfilerConfig.AssembliesToProfile.Count:n0}):\n" +
-		              $"{Community.Runtime.MonoProfilerConfig.AssembliesToProfile.Select(x => $"- {x}").ToString("\n")}\nUse wildcard (*) to include all assemblies loaded.");
+		arg.ReplyWith($"Tracked Assemblies ({Community.Runtime.MonoProfilerConfig.ProfiledAssemblies.Count:n0}):\n" +
+		              $"{Community.Runtime.MonoProfilerConfig.ProfiledAssemblies.Select(x => $"- {x}").ToString("\n")}\nUse wildcard (*) to include all assemblies loaded.");
 	}
 
 	[ConsoleCommand("profiler.assemblies", "The entire list of assembly names that are used by the Mono profiler for tracking.")]
 	[AuthLevel(2)]
 	private void ProfilerPlugins(ConsoleSystem.Arg arg)
 	{
-		arg.ReplyWith($"Tracked Plugins ({Community.Runtime.MonoProfilerConfig.AssembliesToProfile.Count:n0}):\n" +
-		              $"{Community.Runtime.MonoProfilerConfig.AssembliesToProfile.Select(x => $"- {x}").ToString("\n")}\nUse wildcard (*) to include all assemblies loaded.");
+		arg.ReplyWith($"Tracked Plugins ({Community.Runtime.MonoProfilerConfig.ProfiledPlugins.Count:n0}):\n" +
+		              $"{Community.Runtime.MonoProfilerConfig.ProfiledPlugins.Select(x => $"- {x}").ToString("\n")}\nUse wildcard (*) to include all assemblies loaded.");
 	}
 
 }
