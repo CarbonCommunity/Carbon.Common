@@ -29,7 +29,7 @@ public partial class CorePlugin : CarbonPlugin
 		}
 	}
 
-	[ConsoleCommand("profile", "Toggles recording status of the Carbon native Mono-profiling. Syntax: `c.profiler.toggle [-a]`, [-a] is advanced profiling.")]
+	[ConsoleCommand("profile", "Toggles recording status of the Carbon native Mono-profiling. Syntax: `c.profile [-a]`, [-a] to include advanced profiling when profiling stops.")]
 	[AuthLevel(2)]
 	private void ProfilerToggle(ConsoleSystem.Arg arg)
 	{
@@ -61,7 +61,7 @@ public partial class CorePlugin : CarbonPlugin
 
 		arg.ReplyWith(
 			$"Basic:\n{(MonoProfiler.BasicRecords.AnyValidRecords ? MonoProfiler.BasicRecords.ToTable() : "No valid records")}\n\n" +
-			$"Advanced:\n{(MonoProfiler.AdvancedRecords.Disabled ? "Advanced profiling is disabled." : MonoProfiler.AdvancedRecords.AnyValidRecords ? MonoProfiler.AdvancedRecords.ToTable() : "No valid records")}");
+			$"Advanced:\n{(MonoProfiler.AdvancedRecords.Disabled ? "Advanced profiling is disabled. Use [-a] to enable advanced profiling." : MonoProfiler.AdvancedRecords.AnyValidRecords ? MonoProfiler.AdvancedRecords.ToTable() : "No valid records")}");
 	}
 
 	[CommandVar("profiler.allocs", "Once the Mono profiler gets initialized, enhanced allocation data will be tracked. Must restart the server for changes to apply.")]

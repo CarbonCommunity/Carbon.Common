@@ -166,7 +166,7 @@ public static unsafe partial class MonoProfiler
 			ParseBasicRecords(basic);
 		}
 
-		if (advanced != null && advancedProfiling)
+		if (advanced != null)
 		{
 			ParseAdvancedRecords(advanced);
 		}
