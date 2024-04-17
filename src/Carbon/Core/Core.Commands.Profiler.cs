@@ -89,7 +89,7 @@ public partial class CorePlugin : CarbonPlugin
 	private void ProfilerPlugins(ConsoleSystem.Arg arg)
 	{
 		arg.ReplyWith($"Tracked Plugins ({Community.Runtime.MonoProfilerConfig.ProfiledPlugins.Count:n0}):\n" +
-		              $"{Community.Runtime.MonoProfilerConfig.ProfiledPlugins.Select(x => $"- {x}").ToString("\n")}\nUse wildcard (*) to include all assemblies loaded.");
+		              $"{Community.Runtime.MonoProfilerConfig.ProfiledPlugins.Select(x => $"- {x}").ToString("\n")}\nUse wildcard (*) to include all plugins loaded or will be loaded.");
 	}
 
 	[ConsoleCommand("profiler.trackplugin", "Adds a plugin to be tracked. Reloading the plugin will start tracking.")]
