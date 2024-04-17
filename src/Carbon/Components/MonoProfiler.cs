@@ -141,7 +141,7 @@ public static unsafe partial class MonoProfiler
 		*target = Encoding.UTF8.GetString(ptr, len);
 	}
 
-	public static bool? ToggleProfiler(bool profileAdvanced = false)
+	public static bool? ToggleProfiler(bool advancedProfiling = false)
 	{
 		if (!Enabled)
 		{
@@ -153,7 +153,7 @@ public static unsafe partial class MonoProfiler
 		string basic = null;
 		string advanced = null;
 
-		var result = profiler_toggle(profileAdvanced, &state, &basic, &advanced, &native_string_cb);
+		var result = profiler_toggle(advancedProfiling, &state, &basic, &advanced, &native_string_cb);
 
 		if (result != ProfilerResultCode.OK)
 		{
@@ -166,12 +166,12 @@ public static unsafe partial class MonoProfiler
 			ParseBasicRecords(basic);
 		}
 
-		if (advanced != null && profileAdvanced)
+		if (advanced != null && advancedProfiling)
 		{
 			ParseAdvancedRecords(advanced);
 		}
 
-		AdvancedRecords.Disabled = !profileAdvanced;
+		AdvancedRecords.Disabled = !advancedProfiling;
 
 		_recording = state;
 
