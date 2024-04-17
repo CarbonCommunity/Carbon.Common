@@ -84,7 +84,7 @@ public partial class CorePlugin : CarbonPlugin
 		              $"{Community.Runtime.MonoProfilerConfig.ProfiledAssemblies.Select(x => $"- {x}").ToString("\n")}\nUse wildcard (*) to include all assemblies loaded.");
 	}
 
-	[ConsoleCommand("profiler.assemblies", "The entire list of assembly names that are used by the Mono profiler for tracking.")]
+	[ConsoleCommand("profiler.plugins", "The entire list of plugins names that are used by the Mono profiler for tracking.")]
 	[AuthLevel(2)]
 	private void ProfilerPlugins(ConsoleSystem.Arg arg)
 	{
@@ -92,4 +92,56 @@ public partial class CorePlugin : CarbonPlugin
 		              $"{Community.Runtime.MonoProfilerConfig.ProfiledPlugins.Select(x => $"- {x}").ToString("\n")}\nUse wildcard (*) to include all assemblies loaded.");
 	}
 
+	[ConsoleCommand("profiler.trackplugin", "Adds a plugin to be tracked. Reloading the plugin will start tracking.")]
+	[AuthLevel(2)]
+	private void ProfilerTrackPlugin(ConsoleSystem.Arg arg)
+	{
+		var plugin = arg.GetString(0);
+
+		if (string.IsNullOrEmpty(plugin))
+		{
+			arg.ReplyWith("Input is empty");
+			return;
+		}
+
+		if (Community.Runtime.MonoProfilerConfig.AddPlugin(plugin))
+		{
+			arg.ReplyWith($"Added '{plugin}' to the tracking list.");
+
+			if (MonoProfiler.Enabled)
+			{
+				Logger.Warn(" The plugin must reload to start tracking..");
+			}
+		}
+		else
+		{
+			arg.ReplyWith($"Couldn't add '{plugin}' - probably because it's already in the list.");
+		}	}
+
+	[ConsoleCommand("profiler.untrackplugin", "Removes a plugin from being tracked. Reloading the plugin will remove it from being tracked.")]
+	[AuthLevel(2)]
+	private void ProfilerRemovePlugin(ConsoleSystem.Arg arg)
+	{
+		var plugin = arg.GetString(0);
+
+		if (string.IsNullOrEmpty(plugin))
+		{
+			arg.ReplyWith("Input is empty");
+			return;
+		}
+
+		if (Community.Runtime.MonoProfilerConfig.RemovePlugin(plugin))
+		{
+			arg.ReplyWith($"Removed '{plugin}' from the tracking list.");
+
+			if (MonoProfiler.Enabled)
+			{
+				Logger.Warn(" The plugin must reload to stop tracking..");
+			}
+		}
+		else
+		{
+			arg.ReplyWith($"Couldn't remove '{plugin}' - probably because it's not in the list.");
+		}
+	}
 }
