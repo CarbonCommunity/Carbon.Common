@@ -73,12 +73,12 @@ public class Defines
 	public static string GetProfilerConfigFile()
 	{
 		_initializeCommandLine();
-		return Path.Combine(GetRootFolder(), "config.profiler.cfg");
+		return Path.Combine(GetRootFolder(), "config.profiler.json");
 	}
 	public static string GetCarbonAutoFile()
 	{
 		_initializeCommandLine();
-		return Path.Combine(GetRootFolder(), "config.auto.cfg");
+		return Path.Combine(GetRootFolder(), "config.auto.json");
 	}
 
 	public static string GetRootFolder()

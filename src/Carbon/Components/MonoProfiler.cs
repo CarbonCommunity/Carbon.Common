@@ -77,6 +77,11 @@ public static unsafe partial class MonoProfiler
 	{
 		public string Increment(string value)
 		{
+			if (string.IsNullOrEmpty(value))
+			{
+				return string.Empty;
+			}
+
 			if(TryGetValue(value, out var index))
 			{
 				index = this[value]++;
@@ -86,7 +91,7 @@ public static unsafe partial class MonoProfiler
 				Add(value, 1);
 			}
 
-			return $"{value} #{index}";
+			return $"{value}_#{index}";
 		}
 	}
 
