@@ -11,6 +11,7 @@ using Carbon.Extensions;
 using Application = UnityEngine.Application;
 using MathEx = Carbon.Extensions.MathEx;
 using Carbon.Client.SDK;
+using Carbon.Profiler;
 
 /*
  *
@@ -120,6 +121,9 @@ public class Community
 	{ get; set; }
 
 	public Carbon.Client.ClientConfig ClientConfig
+	{ get; set; }
+
+	public Carbon.Profiler.MonoProfilerConfig MonoProfilerConfig
 	{ get; set; }
 
 	public RustPlugin CorePlugin
@@ -290,6 +294,23 @@ public class Community
 		if(needsSave) SaveClientConfig();
 	}
 
+	public void LoadMonoProfilerConfig()
+	{
+		var needsSave = false;
+
+		if (!OsEx.File.Exists(Defines.GetMonoProfilerConfigFile()))
+		{
+			MonoProfilerConfig ??= new();
+			needsSave = true;
+		}
+		else
+		{
+			MonoProfilerConfig = JsonConvert.DeserializeObject<MonoProfilerConfig>(OsEx.File.ReadText(Defines.GetMonoProfilerConfigFile()));
+		}
+
+		if(needsSave) SaveMonoProfilerConfig();
+	}
+
 	public void SaveConfig()
 	{
 		if (Config == null) Config = new Config();
@@ -299,9 +320,16 @@ public class Community
 
 	public void SaveClientConfig()
 	{
-		if (ClientConfig == null) ClientConfig = new ClientConfig();
+		ClientConfig ??= new();
 
 		OsEx.File.Create(Defines.GetClientConfigFile(), JsonConvert.SerializeObject(ClientConfig, Formatting.Indented));
+	}
+
+	public void SaveMonoProfilerConfig()
+	{
+		MonoProfilerConfig ??= new();
+
+		OsEx.File.Create(Defines.GetMonoProfilerConfigFile(), JsonConvert.SerializeObject(MonoProfilerConfig, Formatting.Indented));
 	}
 
 	#endregion
