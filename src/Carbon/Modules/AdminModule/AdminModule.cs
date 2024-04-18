@@ -196,6 +196,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 	{
 		base.Load();
 
+		ConfigInstance.MinimumAuthLevel = ConfigInstance.MinimumAuthLevel.Clamp(0, 3);
+
 		if (Community.IsServerInitialized) GenerateTabs();
 
 		if (ModuleConfiguration.HasConfigStructureChanged())
@@ -1395,11 +1397,11 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 						OyMin: shift, OyMax: shift,
 						command: PanelId + ".config");
 
-					cui.CreateImage(container, configButton, "fade", Cache.CUI.WhiteColor);
-
 					cui.CreateImage(container, configButton, "gear", "0.5 1 0.5 1",
 						xMin: 0.15f, xMax: 0.85f,
 						yMin: 0.15f, yMax: 0.85f);
+
+					cui.CreateImage(container, configButton, "fade", Cache.CUI.WhiteColor);
 				}
 
 				var closeButton = cui.CreateProtectedButton(container, main,
@@ -1410,11 +1412,11 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					OyMin: shift, OyMax: shift,
 					command: PanelId + ".close");
 
-				cui.CreateImage(container, closeButton, "fade", Cache.CUI.WhiteColor);
-
 				cui.CreateImage(container, closeButton, "close", "1 0.5 0.5 1",
 					xMin: 0.2f, xMax: 0.8f,
 					yMin: 0.2f, yMax: 0.8f);
+
+				cui.CreateImage(container, closeButton, "fade", Cache.CUI.WhiteColor);
 			}
 
 			#endregion
