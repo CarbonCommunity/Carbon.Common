@@ -1055,7 +1055,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			color: color,
 			textColor: "1 1 1 1",
 			text: split.Length > 1 ? $"#{ColorUtility.ToHtmlStringRGB(new Color(split.Get(0).ToFloat(), split.Get(1).ToFloat(), split.Get(2).ToFloat(), 1))}" : string.Empty, 10,
-			xMin: toggleButtonScale, xMax: 0.985f, yMin: offset, yMax: offset + height,
+			xMin: toggleButtonScale, xMax: 0.985f, yMin: 1f, yMax: 1f, OyMin: offset, OyMax: offset + height,
 			command: command,
 			font: Handler.FontTypes.RobotoCondensedRegular);
 	}
@@ -1203,7 +1203,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 									xMin: panelIndex, xMax: panelIndex + panelWidth - spacing, yMin: 0, yMax: 1,
 									id: $"sub{i}");
 								var primaryPanel = panel;
-								var contentsPerPage = ConfigInstance.InfiniteScrolling ? 19 * 2 : 19;
+								const int contentsPerPage = 50;
 
 								cui.CreateImage(container, panel, "fade", Cache.CUI.WhiteColor);
 
@@ -1211,29 +1211,25 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 								var columnPage = ap.GetOrCreatePage(i);
 								var rowHeight = OptionHeightOffset;
-								var rowPage = rows.Skip(contentsPerPage * columnPage.CurrentPage).Take(contentsPerPage).Reverse();
+								var rowPage = rows.Skip(contentsPerPage * columnPage.CurrentPage).Take(contentsPerPage);
 								var rowPageCount = rowPage.Count();
 								columnPage.TotalPages = (int)Math.Ceiling(((double)rows.Count) / contentsPerPage - 1);
 								columnPage.Check();
-								var rowIndex = (rowHeight + rowSpacing) * (contentsPerPage - (rowPageCount - (columnPage.TotalPages > 0 ? 0 : 1)));
+								var rowIndex = -((rowHeight + rowSpacing) * rowPageCount);
 
-								if (ConfigInstance.InfiniteScrolling)
-								{
-									panel = cui.CreateScrollView(container, panel,
-										true, false, ScrollRect.MovementType.Elastic, 0.1f, true, 0.1f, 50, "0 0",
-										out var contentTransform, out var horizontalScrollbar, out var verticalScrollbar,
-										OyMin: columnPage.TotalPages > 0 ? ContentScaleOffset : 0);
+								panel = cui.CreateScrollView(container, panel,
+									true, false, ScrollRect.MovementType.Clamped, 0.1f, true, 0.1f, 50, "0 0",
+									out var contentTransform, out var horizontalScrollbar, out var verticalScrollbar);
 
-									verticalScrollbar.Size = 2;
-									verticalScrollbar.TrackColor = Cache.CUI.BlankColor;
-									contentTransform.AnchorMin = "0 0";
-									contentTransform.AnchorMax = "1 0";
-									contentTransform.OffsetMin = $"0 -{ContentScaleOffset * rowPageCount.Clamp(19, int.MaxValue)}";
-									contentTransform.OffsetMax = "0 0";
+								verticalScrollbar.Size = 2;
+								verticalScrollbar.TrackColor = Cache.CUI.BlankColor;
+								contentTransform.AnchorMin = "0 0";
+								contentTransform.AnchorMax = "1 0";
+								contentTransform.OffsetMin = $"0 -{ContentScaleOffset * rowPageCount.Clamp(19, int.MaxValue)}";
+								contentTransform.OffsetMax = "0 0";
 
-									// Making it easier to scroll the content
-									panel = cui.CreatePanel(container, panel, Cache.CUI.BlankColor);
-								}
+								// Making it easier to scroll the content
+								panel = cui.CreatePanel(container, panel, Cache.CUI.BlankColor);
 
 								if (rowPageCount == 0)
 								{
@@ -1241,8 +1237,6 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 										color: "1 1 1 0.35", text: GetPhrase("nocontent", player.UserIDString), 8,
 										align: TextAnchor.MiddleCenter);
 								}
-
-								rowIndex -= rowHeight + rowSpacing;
 
 								for (int r = rowPageCount; r-- > 0;)
 								{
@@ -1385,7 +1379,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 									#endregion
 
-									rowIndex -= rowHeight + rowSpacing;
+									rowIndex += rowHeight + rowSpacing;
 								}
 
 								if (columnPage.TotalPages > 0)
@@ -2065,7 +2059,6 @@ public class AdminConfig
 	[JsonProperty("OpenCommands")]
 	public string[] OpenCommands = new string[] { "cp", "cpanel" };
 	public int MinimumAuthLevel = 2;
-	public bool InfiniteScrolling = false;
 	public bool DisableEntitiesTab = true;
 	public bool DisablePluginsTab = false;
 	public bool DisableConsole = false;
