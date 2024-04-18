@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using System.Security;
 using System.Text;
 using API.Logger;
+using Carbon.Profiler;
 
 /*
  *
@@ -178,23 +179,26 @@ public static unsafe class MonoProfiler
 		return state;
 	}
 
-	public static void MarkPluginForProfiling(Assembly pluginAssembly, string pluginName)
+	public static void TryStartProfileFor(MonoProfilerConfig.ProfileTypes profileType, Assembly assembly, string value, bool incremental = false)
 	{
-		if (!Community.Runtime.MonoProfilerConfig.IsPluginWhitelisted(pluginName))
+		if (!Community.Runtime.MonoProfilerConfig.IsWhitelisted(profileType, value))
 		{
 			return;
 		}
 
-		MarkAssemblyForProfiling(pluginAssembly, pluginName);
+		ProfileAssembly(assembly, value, incremental);
 	}
-	public static void MarkAssemblyForProfiling(Assembly assembly, string assemblyName)
+	public static void ProfileAssembly(Assembly assembly, string assemblyName, bool incremental)
 	{
 		if (!Enabled)
 		{
 			return;
 		}
 
-		assemblyName = AssemblyBank.Increment(assemblyName);
+		if (incremental)
+		{
+			assemblyName = AssemblyBank.Increment(assemblyName);
+		}
 
 		if (!string.IsNullOrWhiteSpace(assemblyName))
 		{
