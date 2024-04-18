@@ -70,10 +70,15 @@ public class Defines
 		_initializeCommandLine();
 		return Path.Combine(GetRootFolder(), "config.client.json");
 	}
+	public static string GetMonoProfilerConfigFile()
+	{
+		_initializeCommandLine();
+		return Path.Combine(GetRootFolder(), "config.profiler.json");
+	}
 	public static string GetCarbonAutoFile()
 	{
 		_initializeCommandLine();
-		return Path.Combine(GetRootFolder(), "config.auto.cfg");
+		return Path.Combine(GetRootFolder(), "config.auto.json");
 	}
 
 	public static string GetRootFolder()
