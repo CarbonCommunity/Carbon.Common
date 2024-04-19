@@ -51,6 +51,30 @@ public static unsafe class MonoProfiler
 
 			return table.ToStringMinimal().Trim();
 		}
+		public string ToCSV()
+		{
+			var builder = PoolEx.GetStringBuilder();
+
+			builder.AppendLine("Assembly," +
+			                   "Total Time," +
+			                   "(%)," +
+			                   "Calls," +
+			                   "Memory Usage");
+
+			foreach (var record in this)
+			{
+				builder.AppendLine($"{record.Assembly}," +
+				                   $"{record.TotalTime:n0}ms," +
+				                   $"{record.TotalTimePercentage:0}%," +
+				                   $"{record.Calls:n0}," +
+				                   $"{ByteEx.Format(record.MemoryUsage).ToLower()}");
+			}
+
+			var result = builder.ToString();
+
+			PoolEx.FreeStringBuilder(ref builder);
+			return result;
+		}
 	}
 	public class AdvancedOutput : List<AdvancedRecord>
 	{
@@ -74,6 +98,38 @@ public static unsafe class MonoProfiler
 			}
 
 			return table.ToStringMinimal().Trim();
+		}
+		public string ToCSV()
+		{
+			var builder = PoolEx.GetStringBuilder();
+
+			builder.AppendLine("Assembly," +
+			                   "Method," +
+			                   "Total Time," +
+			                   "(%)," +
+			                   "Own Time," +
+			                   "(%)," +
+			                   "Calls," +
+			                   "Memory Usage (Total)," +
+			                   "Memory Usage (Own)");
+
+			foreach (var record in this)
+			{
+				builder.AppendLine($"{record.Assembly}," +
+				                   $"{record.Method}," +
+				                   $"{record.TotalTime:n0}ms," +
+				                   $"{record.TotalTimePercentage:0}%," +
+				                   $"{record.OwnTime:n0}ms," +
+				                   $"{record.OwnTimePercentage:0}%," +
+				                   $"{record.Calls:n0}," +
+				                   $"{ByteEx.Format(record.TotalMemoryUsage).ToLower()}," +
+				                   $"{ByteEx.Format(record.OwnMemoryUsage).ToLower()}");
+			}
+
+			var result = builder.ToString();
+
+			PoolEx.FreeStringBuilder(ref builder);
+			return result;
 		}
 	}
 	public class RuntimeAssemblyBank : ConcurrentDictionary<string, int>

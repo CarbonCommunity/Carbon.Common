@@ -60,9 +60,35 @@ public partial class CorePlugin : CarbonPlugin
 			return;
 		}
 
-		arg.ReplyWith(
-			$"Basic:\n{(MonoProfiler.BasicRecords.AnyValidRecords ? MonoProfiler.BasicRecords.ToTable() : "No valid records")}\n\n" +
-			$"Advanced:\n{(MonoProfiler.AdvancedRecords.Disabled ? "Advanced profiling is disabled. Use [-a] to enable advanced profiling." : MonoProfiler.AdvancedRecords.AnyValidRecords ? MonoProfiler.AdvancedRecords.ToTable() : "No valid records")}");
+		var mode = arg.GetString(0);
+		var toFile = arg.HasArg("-f");
+
+		var basicOutput = MonoProfiler.BasicRecords.ToTable();
+		var advancedOutput = MonoProfiler.AdvancedRecords.ToTable();
+
+		switch (mode)
+		{
+			case "-csv":
+				basicOutput = MonoProfiler.BasicRecords.ToCSV();
+				advancedOutput = MonoProfiler.AdvancedRecords.ToCSV();
+				break;
+		}
+
+		if (toFile)
+		{
+			var date = DateTime.Now;
+			var file = Path.Combine(Defines.GetRustRootFolder(),
+				$"profile-{date.Year}_{date.Month}_{date.Day}_{date.Hour}{date.Minute}{date.Second}.txt");
+			OsEx.File.Create(file, $"{basicOutput}\n\n{advancedOutput}");
+
+			arg.ReplyWith($"Saved at {file}");
+		}
+		else
+		{
+			arg.ReplyWith(
+				$"Basic:\n{(MonoProfiler.BasicRecords.AnyValidRecords ? basicOutput : "No valid records")}\n\n" +
+				$"Advanced:\n{(MonoProfiler.AdvancedRecords.Disabled ? "Advanced profiling is disabled. Use [-a] to enable advanced profiling." : MonoProfiler.AdvancedRecords.AnyValidRecords ? advancedOutput : "No valid records")}");
+		}
 	}
 
 	[CommandVar("profiler.allocs", "Once the Mono profiler gets initialized, enhanced allocation data will be tracked. Must restart the server for changes to apply.")]
