@@ -43,7 +43,7 @@ public static unsafe class MonoProfiler
 			foreach(var record in this)
 			{
 				table.AddRow($" {record.Assembly}",
-					record.TotalTime == 0 ? string.Empty : $"{record.TotalTime:n0}ms",
+					record.TotalTime == 0 ? string.Empty : $"{record.TotalTime}ms",
 					record.TotalTimePercentage == 0 ? string.Empty : $"{record.TotalTimePercentage:0}%",
 					record.Calls == 0 ? string.Empty : $"{record.Calls:n0}",
 					$"{ByteEx.Format(record.MemoryUsage).ToLower()}");
@@ -64,7 +64,7 @@ public static unsafe class MonoProfiler
 			foreach (var record in this)
 			{
 				builder.AppendLine($"{record.Assembly}," +
-				                   $"{record.TotalTime:n0}ms," +
+				                   $"{record.TotalTime}ms," +
 				                   $"{record.TotalTimePercentage:0}%," +
 				                   $"{record.Calls:n0}," +
 				                   $"{ByteEx.Format(record.MemoryUsage).ToLower()}");
@@ -88,9 +88,9 @@ public static unsafe class MonoProfiler
 			foreach (var record in this)
 			{
 				table.AddRow($" {record.Assembly}", $"{record.Method}",
-					record.TotalTime == 0 ? string.Empty : $"{record.TotalTime:n0}ms",
+					record.TotalTime == 0 ? string.Empty : $"{record.TotalTime}ms",
 					record.TotalTimePercentage == 0 ? string.Empty : $"{record.TotalTimePercentage:0}%",
-					record.OwnTime == 0 ? string.Empty : $"{record.OwnTime:n0}ms",
+					record.OwnTime == 0 ? string.Empty : $"{record.OwnTime}ms",
 					record.OwnTimePercentage == 0 ? string.Empty : $"{record.OwnTimePercentage:0}%",
 					record.Calls == 0 ? string.Empty : $"{record.Calls:n0}",
 					record.TotalMemoryUsage == 0 ? string.Empty : $"{ByteEx.Format(record.TotalMemoryUsage).ToLower()}",
@@ -117,9 +117,9 @@ public static unsafe class MonoProfiler
 			{
 				builder.AppendLine($"{record.Assembly}," +
 				                   $"{record.Method}," +
-				                   $"{record.TotalTime:n0}ms," +
+				                   $"{record.TotalTime}ms," +
 				                   $"{record.TotalTimePercentage:0}%," +
-				                   $"{record.OwnTime:n0}ms," +
+				                   $"{record.OwnTime}ms," +
 				                   $"{record.OwnTimePercentage:0}%," +
 				                   $"{record.Calls:n0}," +
 				                   $"{ByteEx.Format(record.TotalMemoryUsage).ToLower()}," +
