@@ -65,7 +65,7 @@ public static class TypeEx
 
 		if (conversionType == _long)
 			return convertible.ToInt64(_provider);
-		
+
 		if (conversionType == _dateTime)
 			return convertible.ToDateTime(_provider);
 

@@ -13,13 +13,15 @@ using Carbon.Profiler;
  *
  */
 
-#pragma warning disable CS8500 // This takes the address of, gets the size of, or declares a pointer to a managed type
+#pragma warning disable CS8500
 
 namespace Carbon.Components;
 
 [SuppressUnmanagedCodeSecurity]
 public static unsafe class MonoProfiler
 {
+	public static BasicOutput BasicRecords = new();
+	public static AdvancedOutput AdvancedRecords = new();
 	public static RuntimeAssemblyBank AssemblyBank = new();
 
 	public static Dictionary<ModuleHandle, String> asmMap = new();
@@ -32,6 +34,126 @@ public static unsafe class MonoProfiler
 		UnknownError = 3,
 	}
 
+		public class BasicOutput : List<BasicRecord>
+	{
+		public bool AnyValidRecords => Count > 0;
+
+		public string ToTable()
+		{
+			using var table = new StringTable("Assembly", "Total Time", "(%)", "Calls", "Memory Usage");
+
+			foreach(var record in this)
+			{
+				if (!asmMap.TryGetValue(record.assembly_handle, out var assemblyName))
+				{
+					continue;
+				}
+
+				table.AddRow($" {assemblyName}",
+					record.total_time == 0 ? string.Empty : $"{record.total_time}ms",
+					record.total_time_percentage == 0 ? string.Empty : $"{record.total_time_percentage:0}%",
+					record.calls == 0 ? string.Empty : $"{record.calls:n0}",
+					$"{ByteEx.Format(record.alloc).ToLower()}");
+			}
+
+			return table.ToStringMinimal().Trim();
+		}
+		public string ToCSV()
+		{
+			var builder = PoolEx.GetStringBuilder();
+
+			builder.AppendLine("Assembly," +
+			                   "Total Time," +
+			                   "(%)," +
+			                   "Calls," +
+			                   "Memory Usage");
+
+			foreach (var record in this)
+			{
+				if (!asmMap.TryGetValue(record.assembly_handle, out var assemblyName))
+				{
+					continue;
+				}
+
+				builder.AppendLine($"{assemblyName}," +
+				                   $"{record.total_time}ms," +
+				                   $"{record.total_time_percentage:0}%," +
+				                   $"{record.calls:n0}," +
+				                   $"{ByteEx.Format(record.alloc).ToLower()}");
+			}
+
+			var result = builder.ToString();
+
+			PoolEx.FreeStringBuilder(ref builder);
+			return result;
+		}
+	}
+	public class AdvancedOutput : List<AdvancedRecord>
+	{
+		public bool AnyValidRecords => Count > 0;
+		public bool Disabled;
+
+		public string ToTable()
+		{
+			using var table = new StringTable("Assembly", "Method", "Total Time", "(%)", "Own Time", "(%)", "Calls", "Total Memory", "Own Memory");
+
+			foreach (var record in this)
+			{
+				if (!asmMap.TryGetValue(record.assembly_handle, out var assemblyName))
+				{
+					continue;
+				}
+
+				table.AddRow($" {assemblyName}", $"{record.method_name}",
+					record.total_time == 0 ? string.Empty : $"{record.total_time}ms",
+					record.total_time_percentage == 0 ? string.Empty : $"{record.total_time_percentage:0}%",
+					record.own_time == 0 ? string.Empty : $"{record.own_time}ms",
+					record.own_time_percentage == 0 ? string.Empty : $"{record.own_time_percentage:0}%",
+					record.calls == 0 ? string.Empty : $"{record.calls:n0}",
+					record.total_alloc == 0 ? string.Empty : $"{ByteEx.Format(record.total_alloc).ToLower()}",
+					record.own_alloc == 0 ? string.Empty : $"{ByteEx.Format(record.own_alloc).ToLower()}");
+			}
+
+			return table.ToStringMinimal().Trim();
+		}
+		public string ToCSV()
+		{
+			var builder = PoolEx.GetStringBuilder();
+
+			builder.AppendLine("Assembly," +
+			                   "Method," +
+			                   "Total Time," +
+			                   "(%)," +
+			                   "Own Time," +
+			                   "(%)," +
+			                   "Calls," +
+			                   "Memory Usage (Total)," +
+			                   "Memory Usage (Own)");
+
+			foreach (var record in this)
+			{
+				if (!asmMap.TryGetValue(record.assembly_handle, out var assemblyName))
+				{
+					continue;
+				}
+
+				builder.AppendLine($"{assemblyName}," +
+				                   $"{record.method_name}," +
+				                   $"{record.total_time}ms," +
+				                   $"{record.total_time_percentage:0}%," +
+				                   $"{record.own_time}ms," +
+				                   $"{record.own_time_percentage:0}%," +
+				                   $"{record.calls:n0}," +
+				                   $"{ByteEx.Format(record.total_alloc).ToLower()}," +
+				                   $"{ByteEx.Format(record.own_alloc).ToLower()}");
+			}
+
+			var result = builder.ToString();
+
+			PoolEx.FreeStringBuilder(ref builder);
+			return result;
+		}
+	}
 	public class RuntimeAssemblyBank : ConcurrentDictionary<string, int>
 	{
 		public string Increment(string value)
