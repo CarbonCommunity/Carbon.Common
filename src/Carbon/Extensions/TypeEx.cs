@@ -48,32 +48,11 @@ public static class TypeEx
 		if (conversionType == _bool)
 			return convertible.ToBoolean(_provider);
 
-		if (conversionType == _char)
-			return convertible.ToChar(_provider);
-
-		if (conversionType == _sbyte)
-			return convertible.ToSByte(_provider);
-
-		if (conversionType == _byte)
-			return convertible.ToByte(_provider);
-
-		if (conversionType == _short)
-			return convertible.ToInt16(_provider);
-
-		if (conversionType == _ushort)
-			return convertible.ToUInt16(_provider);
+		if (conversionType == _string)
+			return convertible.ToString(_provider);
 
 		if (conversionType == _int)
 			return convertible.ToInt32(_provider);
-
-		if (conversionType == _uint)
-			return convertible.ToUInt32(_provider);
-
-		if (conversionType == _long)
-			return convertible.ToInt64(_provider);
-
-		if (conversionType == _ulong)
-			return convertible.ToUInt64(_provider);
 
 		if (conversionType == _float)
 			return convertible.ToSingle(_provider);
@@ -84,11 +63,32 @@ public static class TypeEx
 		if (conversionType == _decimal)
 			return convertible.ToDecimal(_provider);
 
+		if (conversionType == _long)
+			return convertible.ToInt64(_provider);
+		
 		if (conversionType == _dateTime)
 			return convertible.ToDateTime(_provider);
 
-		if (conversionType == _string)
-			return convertible.ToString(_provider);
+		if (conversionType == _char)
+			return convertible.ToChar(_provider);
+
+		if (conversionType == _byte)
+			return convertible.ToByte(_provider);
+
+		if (conversionType == _uint)
+			return convertible.ToUInt32(_provider);
+
+		if (conversionType == _ulong)
+			return convertible.ToUInt64(_provider);
+
+		if (conversionType == _short)
+			return convertible.ToInt16(_provider);
+
+		if (conversionType == _ushort)
+			return convertible.ToUInt16(_provider);
+
+		if (conversionType == _sbyte)
+			return convertible.ToSByte(_provider);
 
 		return conversionType == _object ? value : convertible.ToType(conversionType, _provider);
 	}
