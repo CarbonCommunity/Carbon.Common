@@ -27,9 +27,11 @@ public static unsafe class MonoProfiler
 	public static AdvancedOutput AdvancedRecords = new();
 	public static RuntimeAssemblyBank AssemblyBank = new();
 	public static RuntimeAssemblyMap AssemblyMap = new();
-	public static TimeSpan ProcessTime;
+	public static TimeSpan DataProcessingTime;
+	public static TimeSpan DurationTime;
 
 	internal static Stopwatch _dataProcessTimer;
+	internal static Stopwatch _durationTimer;
 
 	public enum ProfilerResultCode : byte
 	{
@@ -187,6 +189,7 @@ public static unsafe class MonoProfiler
 	{
 
 	}
+
 	[StructLayout(LayoutKind.Sequential)]
 	public struct BasicRecord
 	{
@@ -261,7 +264,19 @@ public static unsafe class MonoProfiler
 		BasicRecord[] basicOutput = null;
 		AdvancedRecord[] advancedOutput = null;
 
+		if (Recording)
+		{
+			_dataProcessTimer = PoolEx.GetStopwatch();
+			_dataProcessTimer.Start();
+		}
+
 		var result = profiler_toggle(advanced, &state, &basicOutput, &advancedOutput, &native_string_cb, &native_iter, &native_iter);
+
+		if (!state)
+		{
+			DataProcessingTime = _dataProcessTimer.Elapsed;
+			PoolEx.FreeStopwatch(ref _dataProcessTimer);
+		}
 
 		if (result != ProfilerResultCode.OK)
 		{
@@ -280,7 +295,6 @@ public static unsafe class MonoProfiler
 		{
 			AdvancedRecords.Clear();
 			AdvancedRecords.AddRange(advancedOutput);
-			MapAdvancedRecords(advancedOutput);
 		}
 
 		AdvancedRecords.Disabled = !advanced;
@@ -289,35 +303,19 @@ public static unsafe class MonoProfiler
 
 		if (state)
 		{
-			_dataProcessTimer = PoolEx.GetStopwatch();
-			_dataProcessTimer.Start();
+			_durationTimer = PoolEx.GetStopwatch();
+			_durationTimer.Start();
 		}
 		else
 		{
-			ProcessTime = _dataProcessTimer.Elapsed;
-			PoolEx.FreeStopwatch(ref _dataProcessTimer);
+			DurationTime = _durationTimer.Elapsed;
+			PoolEx.FreeStopwatch(ref _durationTimer);
 		}
 
 		return state;
 	}
 
 	private static void MapBasicRecords(BasicRecord[] records)
-	{
-		for (int i = 0; i < records.Length; i++)
-		{
-			ref var entry = ref records[i];
-
-			if (!AssemblyMap.ContainsKey(entry.assembly_handle))
-			{
-				var name = (string)null;
-
-				get_image_name(&name, entry.assembly_handle, &native_string_cb);
-
-				AssemblyMap[entry.assembly_handle] = name ?? "UNKNOWN";
-			}
-		}
-	}
-	private static void MapAdvancedRecords(AdvancedRecord[] records)
 	{
 		for (int i = 0; i < records.Length; i++)
 		{

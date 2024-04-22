@@ -6,6 +6,7 @@ using HarmonyLib;
 using Newtonsoft.Json;
 using Oxide.Game.Rust.Cui;
 using ProtoBuf;
+using Timer = Oxide.Plugins.Timer;
 
 /*
  *
@@ -19,6 +20,8 @@ namespace Carbon.Core;
 
 public partial class CorePlugin : CarbonPlugin
 {
+	internal Timer _profileTimer;
+
 	[CommandVar("profiler", "Mono profiling status. Must restart the server for changes to apply.")]
 	[AuthLevel(2)]
 	private bool ProfilerEnabled
@@ -31,7 +34,7 @@ public partial class CorePlugin : CarbonPlugin
 		}
 	}
 
-	[ConsoleCommand("profile", "Toggles recording status of the Carbon native Mono-profiling. Syntax: `c.profile [-a]`, [-a] to include advanced profiling when profiling stops.")]
+	[ConsoleCommand("profile", "Toggles recording status of the Carbon native Mono-profiling. Syntax: c.profile [duration]")]
 	[AuthLevel(2)]
 	private void ProfilerToggle(ConsoleSystem.Arg arg)
 	{
@@ -41,12 +44,38 @@ public partial class CorePlugin : CarbonPlugin
 			return;
 		}
 
-		if (MonoProfiler.ToggleProfiling(arg.GetString(0).Equals("-a")).GetValueOrDefault())
+		var duration = arg.GetFloat(0);
+
+		_profileTimer?.Destroy();
+		_profileTimer = null;
+
+		if (!MonoProfiler.ToggleProfiling(true).GetValueOrDefault())
 		{
-			return;
+			PrintWarn();
 		}
 
-		Logger.Warn($" Processing profiling data took {TimeEx.Format(MonoProfiler.ProcessTime.TotalMilliseconds).ToLower()}\n More info: https://docs.carbonmod.gg/docs/development/features/profiler-mono");
+		if (duration >= 1f)
+		{
+			Logger.Warn($"[Profiler] Profiling duration {TimeEx.Format(duration).ToLower()}..");
+
+			_profileTimer = Community.Runtime.CorePlugin.timer.In(duration, () =>
+			{
+				if (!MonoProfiler.Recording)
+				{
+					return;
+				}
+
+				MonoProfiler.ToggleProfiling(true).GetValueOrDefault();
+				PrintWarn();
+			});
+		}
+
+		static void PrintWarn()
+		{
+			Logger.Warn($" Profiling duration: {TimeEx.Format(MonoProfiler.DurationTime.TotalSeconds).ToLower()}" +
+			            $"\n Processing data took: {TimeEx.Format(MonoProfiler.DataProcessingTime.TotalMilliseconds).ToLower()}" +
+			            $"\n More info: https://docs.carbonmod.gg/docs/development/features/profiler-mono");
+		}
 	}
 
 	[ConsoleCommand("profiler.print", "If any parsed data available, it'll print basic and advanced information.")]
