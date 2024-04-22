@@ -1,11 +1,4 @@
-﻿using API.Assembly;
-using API.Commands;
-using Carbon.Base.Interfaces;
-using Carbon.Profiler;
-using HarmonyLib;
-using Newtonsoft.Json;
-using Oxide.Game.Rust.Cui;
-using ProtoBuf;
+﻿using Carbon.Profiler;
 using Timer = Oxide.Plugins.Timer;
 
 /*
