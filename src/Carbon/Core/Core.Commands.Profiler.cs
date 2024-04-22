@@ -22,15 +22,13 @@ public partial class CorePlugin : CarbonPlugin
 {
 	internal Timer _profileTimer;
 
-	[CommandVar("profiler", "Mono profiling status. Must restart the server for changes to apply.")]
+	[CommandVar("profilestatus", "Mono profiling status.")]
 	[AuthLevel(2)]
-	private bool ProfilerEnabled
+	private bool IsProfiling
 	{
-		get { return Community.Runtime.MonoProfilerConfig.Enabled; }
+		get { return MonoProfiler.Recording; }
 		set
 		{
-			Community.Runtime.MonoProfilerConfig.Enabled = value;
-			Community.Runtime.SaveMonoProfilerConfig();
 		}
 	}
 
@@ -38,7 +36,7 @@ public partial class CorePlugin : CarbonPlugin
 	[AuthLevel(2)]
 	private void ProfilerToggle(ConsoleSystem.Arg arg)
 	{
-		if (!ProfilerEnabled)
+		if (!MonoProfiler.Enabled)
 		{
 			arg.ReplyWith("Mono profiler is disabled. Run `c.profiler true` to enable it. Must restart the server for changes to apply.");
 			return;
@@ -54,7 +52,7 @@ public partial class CorePlugin : CarbonPlugin
 			PrintWarn();
 		}
 
-		if (duration >= 1f)
+		if (duration >= 1f && MonoProfiler.Recording)
 		{
 			Logger.Warn($"[Profiler] Profiling duration {TimeEx.Format(duration).ToLower()}..");
 
@@ -72,9 +70,15 @@ public partial class CorePlugin : CarbonPlugin
 
 		static void PrintWarn()
 		{
-			Logger.Warn($" Profiling duration: {TimeEx.Format(MonoProfiler.DurationTime.TotalSeconds).ToLower()}" +
-			            $"\n Processing data took: {TimeEx.Format(MonoProfiler.DataProcessingTime.TotalMilliseconds).ToLower()}" +
-			            $"\n More info: https://docs.carbonmod.gg/docs/development/features/profiler-mono");
+			using var table = new StringTable("Duration", "Processing", "Basic", "Advanced");
+
+			table.AddRow(
+				TimeEx.Format(MonoProfiler.DurationTime.TotalSeconds).ToLower(),
+				$"{MonoProfiler.DataProcessingTime.TotalMilliseconds:0}ms",
+				MonoProfiler.BasicRecords.Count.ToString("n0"),
+				MonoProfiler.AdvancedRecords.Count.ToString("n0"));
+
+			Logger.Warn(table.ToStringMinimal());
 		}
 	}
 
@@ -95,8 +99,8 @@ public partial class CorePlugin : CarbonPlugin
 		switch (mode)
 		{
 			case "-c":
-				output = $"{MonoProfiler.BasicRecords.ToCSV()}\n{MonoProfiler.AdvancedRecords.ToCSV()}";
-				if (toFile) WriteFileString(arg, "csv", output); else arg.ReplyWith(output);
+				output = $"{MonoProfiler.BasicRecords.ToCSV()}{(toFile ? $"\n{MonoProfiler.AdvancedRecords.ToCSV()}" : string.Empty)}";
+				if (toFile) WriteFileString("csv", output); else arg.ReplyWith(output);
 				break;
 
 			case "-j":
@@ -109,20 +113,19 @@ public partial class CorePlugin : CarbonPlugin
 
 			default:
 			case "-t":
-				output = $"{MonoProfiler.BasicRecords.ToTable()}\n\n{MonoProfiler.AdvancedRecords.ToTable()}";
-				if (toFile) WriteFileString(arg, "txt", output); else arg.ReplyWith(output);
+				output = $"{MonoProfiler.BasicRecords.ToTable()}{(toFile ? $"\n\n{MonoProfiler.AdvancedRecords.ToTable()}" : string.Empty)}";
+				if (toFile) WriteFileString("txt", output); else arg.ReplyWith(output);
 				break;
 
 		}
 
-		static void WriteFileString(ConsoleSystem.Arg arg, string extension, string data)
+		static void WriteFileString(string extension, string data)
 		{
 			var date = DateTime.Now;
-			var file = Path.Combine(Defines.GetRustRootFolder(),
-				$"profile-{date.Year}_{date.Month}_{date.Day}_{date.Hour}{date.Minute}{date.Second}.{extension}");
+			var file = Path.Combine(Defines.GetRustRootFolder(), $"profile-{date.Year}_{date.Month}_{date.Day}_{date.Hour}{date.Minute}{date.Second}.{extension}");
 			OsEx.File.Create(file, data);
 
-			Logger.Log($"Saved at {file}");
+			Logger.Warn($" Stored output at {file}");
 		}
 		// static void WriteFileByte(ConsoleSystem.Arg arg, string extension, byte[] data)
 		// {
@@ -130,21 +133,9 @@ public partial class CorePlugin : CarbonPlugin
 		// 	var file = Path.Combine(Defines.GetRustRootFolder(),
 		// 		$"profile-{date.Year}_{date.Month}_{date.Day}_{date.Hour}{date.Minute}{date.Second}.{extension}");
 		// 	OsEx.File.Create(file, data);
-//
+
 		// 	Logger.Log($"Saved at {file}");
 		// }
-	}
-
-	[CommandVar("profiler.allocs", "Once the Mono profiler gets initialized, enhanced allocation data will be tracked. Must restart the server for changes to apply.")]
-	[AuthLevel(2)]
-	private bool ProfilerAllocations
-	{
-		get { return Community.Runtime.MonoProfilerConfig.Allocations; }
-		set
-		{
-			Community.Runtime.MonoProfilerConfig.Allocations = value;
-			Community.Runtime.SaveMonoProfilerConfig();
-		}
 	}
 
 	[ConsoleCommand("profiler.tracks", "All tracking lists present in the config which are used by the Mono profiler for tracking.")]

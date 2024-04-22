@@ -292,9 +292,9 @@ public static class ModLoader
 
 		var isProfiled = MonoProfiler.Recording && Community.Runtime.MonoProfilerConfig.IsWhitelisted(MonoProfilerConfig.ProfileTypes.Plugin, Path.GetFileNameWithoutExtension(plugin.FileName));
 
-		Logger.Log($"{(isProfiled ? $"[PROFILING] " : string.Empty)}" +
-			$"{(precompiled ? "Preloaded" : "Loaded")} plugin {plugin.ToPrettyString()}" +
-			$"{(precompiled ? string.Empty : $" [{plugin.CompileTime.TotalMilliseconds:0}ms]")}");
+		Logger.Log($"{(precompiled ? "Preloaded" : "Loaded")} plugin {plugin.ToPrettyString()}" +
+		           $"{(precompiled ? string.Empty : $" [{plugin.CompileTime.TotalMilliseconds:0}ms]")}" +
+		           $"{(isProfiled ? " [PROFILING]" : string.Empty)}");
 
 		return true;
 	}
