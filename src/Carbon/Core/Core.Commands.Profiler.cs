@@ -5,6 +5,7 @@ using Carbon.Profiler;
 using HarmonyLib;
 using Newtonsoft.Json;
 using Oxide.Game.Rust.Cui;
+using ProtoBuf;
 
 /*
  *
@@ -60,32 +61,55 @@ public partial class CorePlugin : CarbonPlugin
 
 		var mode = arg.GetString(0);
 		var toFile = arg.HasArg("-f");
-
-		var basicOutput = MonoProfiler.BasicRecords.ToTable();
-		var advancedOutput = MonoProfiler.AdvancedRecords.ToTable();
+		var output = string.Empty;
 
 		switch (mode)
 		{
-			case "-csv":
-				basicOutput = MonoProfiler.BasicRecords.ToCSV();
-				advancedOutput = MonoProfiler.AdvancedRecords.ToCSV();
+			case "-c":
+				output = $"{MonoProfiler.BasicRecords.ToCSV()}\n\n{MonoProfiler.AdvancedRecords.ToCSV()}";
+				if (toFile) WriteFileString(arg, "csv", output); else arg.ReplyWith(output);
 				break;
+		
+			case "-j":
+				output = JsonConvert.SerializeObject(new
+				{
+					basic = MonoProfiler.BasicRecords,
+					advanced = MonoProfiler.AdvancedRecords
+				}, Formatting.Indented);
+				if (toFile) WriteFileString(arg, "json", output); else arg.ReplyWith(output);
+				break;
+
+			case "-p":
+				{
+					// patret magic
+					break;
+				}
+
+			default:
+			case "-t":
+				output = $"{MonoProfiler.BasicRecords.ToTable()}\n{MonoProfiler.AdvancedRecords.ToTable()}";
+				if (toFile) WriteFileString(arg, "txt", output); else arg.ReplyWith(output);
+				break;
+
 		}
 
-		if (toFile)
+		static void WriteFileString(ConsoleSystem.Arg arg, string extension, string data)
 		{
 			var date = DateTime.Now;
 			var file = Path.Combine(Defines.GetRustRootFolder(),
-				$"profile-{date.Year}_{date.Month}_{date.Day}_{date.Hour}{date.Minute}{date.Second}.txt");
-			OsEx.File.Create(file, $"{basicOutput}\n\n{advancedOutput}");
+				$"profile-{date.Year}_{date.Month}_{date.Day}_{date.Hour}{date.Minute}{date.Second}.{extension}");
+			OsEx.File.Create(file, data);
 
-			arg.ReplyWith($"Saved at {file}");
+			Logger.Log($"Saved at {file}");
 		}
-		else
+		static void WriteFileByte(ConsoleSystem.Arg arg, string extension, byte[] data)
 		{
-			arg.ReplyWith(
-				$"Basic:\n{(MonoProfiler.BasicRecords.AnyValidRecords ? basicOutput : "No valid records")}\n\n" +
-				$"Advanced:\n{(MonoProfiler.AdvancedRecords.Disabled ? "Advanced profiling is disabled. Use [-a] to enable advanced profiling." : MonoProfiler.AdvancedRecords.AnyValidRecords ? advancedOutput : "No valid records")}");
+			var date = DateTime.Now;
+			var file = Path.Combine(Defines.GetRustRootFolder(),
+				$"profile-{date.Year}_{date.Month}_{date.Day}_{date.Hour}{date.Minute}{date.Second}.{extension}");
+			OsEx.File.Create(file, data);
+
+			Logger.Log($"Saved at {file}");
 		}
 	}
 

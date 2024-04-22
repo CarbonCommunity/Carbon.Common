@@ -4,6 +4,7 @@ using System.Security;
 using System.Text;
 using API.Logger;
 using Carbon.Profiler;
+using Newtonsoft.Json;
 
 /*
  *
@@ -86,6 +87,10 @@ public static unsafe class MonoProfiler
 			PoolEx.FreeStringBuilder(ref builder);
 			return result;
 		}
+		public string ToJson(bool indented)
+		{
+			return JsonConvert.SerializeObject(this, indented ? Formatting.Indented : Formatting.None);
+		}
 	}
 	public class AdvancedOutput : List<AdvancedRecord>
 	{
@@ -151,6 +156,10 @@ public static unsafe class MonoProfiler
 
 			PoolEx.FreeStringBuilder(ref builder);
 			return result;
+		}
+		public string ToJson(bool indented)
+		{
+			return JsonConvert.SerializeObject(this, indented ? Formatting.Indented : Formatting.None);
 		}
 	}
 	public class RuntimeAssemblyBank : ConcurrentDictionary<string, int>
