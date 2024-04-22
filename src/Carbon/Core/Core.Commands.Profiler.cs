@@ -40,7 +40,11 @@ public partial class CorePlugin : CarbonPlugin
 			return;
 		}
 
-		MonoProfiler.ToggleProfiling(arg.GetString(0).Equals("-a")).GetValueOrDefault();
+		if (MonoProfiler.ToggleProfiling(arg.GetString(0).Equals("-a")).GetValueOrDefault())
+		{
+			return;
+		}
+
 		arg.ReplyWith("Use `c.profiler.print [-table|-csv] [-f]` to see the output.");
 	}
 
