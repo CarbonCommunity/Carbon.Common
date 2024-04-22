@@ -1,9 +1,12 @@
 ﻿using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Text;
 using API.Logger;
 using Carbon.Profiler;
+using Facepunch;
+using Newtonsoft.Json;
 
 /*
  *
@@ -13,7 +16,7 @@ using Carbon.Profiler;
  *
  */
 
-#pragma warning disable CS8500 // This takes the address of, gets the size of, or declares a pointer to a managed type
+#pragma warning disable CS8500
 
 namespace Carbon.Components;
 
@@ -23,6 +26,12 @@ public static unsafe class MonoProfiler
 	public static BasicOutput BasicRecords = new();
 	public static AdvancedOutput AdvancedRecords = new();
 	public static RuntimeAssemblyBank AssemblyBank = new();
+	public static RuntimeAssemblyMap AssemblyMap = new();
+	public static TimeSpan DataProcessingTime;
+	public static TimeSpan DurationTime;
+
+	internal static Stopwatch _dataProcessTimer;
+	internal static Stopwatch _durationTimer;
 
 	public enum ProfilerResultCode : byte
 	{
@@ -42,14 +51,52 @@ public static unsafe class MonoProfiler
 
 			foreach(var record in this)
 			{
-				table.AddRow($" {record.Assembly}",
-					record.TotalTime == 0 ? string.Empty : $"{record.TotalTime:n0}ms",
-					record.TotalTimePercentage == 0 ? string.Empty : $"{record.TotalTimePercentage:0}%",
-					record.Calls == 0 ? string.Empty : $"{record.Calls:n0}",
-					$"{ByteEx.Format(record.MemoryUsage).ToLower()}");
+				if (!AssemblyMap.TryGetValue(record.assembly_handle, out var assemblyName))
+				{
+					continue;
+				}
+
+				table.AddRow($" {assemblyName}",
+					record.total_time == 0 ? string.Empty : $"{record.total_time}ms",
+					record.total_time_percentage == 0 ? string.Empty : $"{record.total_time_percentage:0}%",
+					record.calls == 0 ? string.Empty : $"{record.calls:n0}",
+					$"{ByteEx.Format(record.alloc).ToLower()}");
 			}
 
 			return table.ToStringMinimal().Trim();
+		}
+		public string ToCSV()
+		{
+			var builder = PoolEx.GetStringBuilder();
+
+			builder.AppendLine("Assembly," +
+			                   "Total Time," +
+			                   "(%)," +
+			                   "Calls," +
+			                   "Memory Usage");
+
+			foreach (var record in this)
+			{
+				if (!AssemblyMap.TryGetValue(record.assembly_handle, out var assemblyName))
+				{
+					continue;
+				}
+
+				builder.AppendLine($"{assemblyName}," +
+				                   $"{record.total_time}ms," +
+				                   $"{record.total_time_percentage:0}%," +
+				                   $"{record.calls:n0}," +
+				                   $"{ByteEx.Format(record.alloc).ToLower()}");
+			}
+
+			var result = builder.ToString();
+
+			PoolEx.FreeStringBuilder(ref builder);
+			return result;
+		}
+		public string ToJson(bool indented)
+		{
+			return JsonConvert.SerializeObject(this, indented ? Formatting.Indented : Formatting.None);
 		}
 	}
 	public class AdvancedOutput : List<AdvancedRecord>
@@ -63,17 +110,63 @@ public static unsafe class MonoProfiler
 
 			foreach (var record in this)
 			{
-				table.AddRow($" {record.Assembly}", $"{record.Method}",
-					record.TotalTime == 0 ? string.Empty : $"{record.TotalTime:n0}ms",
-					record.TotalTimePercentage == 0 ? string.Empty : $"{record.TotalTimePercentage:0}%",
-					record.OwnTime == 0 ? string.Empty : $"{record.OwnTime:n0}ms",
-					record.OwnTimePercentage == 0 ? string.Empty : $"{record.OwnTimePercentage:0}%",
-					record.Calls == 0 ? string.Empty : $"{record.Calls:n0}",
-					record.TotalMemoryUsage == 0 ? string.Empty : $"{ByteEx.Format(record.TotalMemoryUsage).ToLower()}",
-					record.OwnMemoryUsage == 0 ? string.Empty : $"{ByteEx.Format(record.OwnMemoryUsage).ToLower()}");
+				if (!AssemblyMap.TryGetValue(record.assembly_handle, out var assemblyName))
+				{
+					continue;
+				}
+
+				table.AddRow($" {assemblyName}", $"{record.method_name}",
+					record.total_time == 0 ? string.Empty : $"{record.total_time}ms",
+					record.total_time_percentage == 0 ? string.Empty : $"{record.total_time_percentage:0}%",
+					record.own_time == 0 ? string.Empty : $"{record.own_time}ms",
+					record.own_time_percentage == 0 ? string.Empty : $"{record.own_time_percentage:0}%",
+					record.calls == 0 ? string.Empty : $"{record.calls:n0}",
+					record.total_alloc == 0 ? string.Empty : $"{ByteEx.Format(record.total_alloc).ToLower()}",
+					record.own_alloc == 0 ? string.Empty : $"{ByteEx.Format(record.own_alloc).ToLower()}");
 			}
 
 			return table.ToStringMinimal().Trim();
+		}
+		public string ToCSV()
+		{
+			var builder = PoolEx.GetStringBuilder();
+
+			builder.AppendLine("Assembly," +
+			                   "Method," +
+			                   "Total Time," +
+			                   "(%)," +
+			                   "Own Time," +
+			                   "(%)," +
+			                   "Calls," +
+			                   "Memory Usage (Total)," +
+			                   "Memory Usage (Own)");
+
+			foreach (var record in this)
+			{
+				if (!AssemblyMap.TryGetValue(record.assembly_handle, out var assemblyName))
+				{
+					continue;
+				}
+
+				builder.AppendLine($"{assemblyName}," +
+				                   $"{record.method_name}," +
+				                   $"{record.total_time}ms," +
+				                   $"{record.total_time_percentage:0}%," +
+				                   $"{record.own_time}ms," +
+				                   $"{record.own_time_percentage:0}%," +
+				                   $"{record.calls:n0}," +
+				                   $"{ByteEx.Format(record.total_alloc).ToLower()}," +
+				                   $"{ByteEx.Format(record.own_alloc).ToLower()}");
+			}
+
+			var result = builder.ToString();
+
+			PoolEx.FreeStringBuilder(ref builder);
+			return result;
+		}
+		public string ToJson(bool indented)
+		{
+			return JsonConvert.SerializeObject(this, indented ? Formatting.Indented : Formatting.None);
 		}
 	}
 	public class RuntimeAssemblyBank : ConcurrentDictionary<string, int>
@@ -85,33 +178,41 @@ public static unsafe class MonoProfiler
 				return string.Empty;
 			}
 
-			var output = 0;
+			var index = 0;
 
-			AddOrUpdate(value, output = 1, (val, arg) => output = arg++);
+			AddOrUpdate(value, index = 1, (val, arg) => index = arg++);
 
-			return $"{value}_#{output}";
+			return $"{value} ({index})";
 		}
 	}
+	public class RuntimeAssemblyMap : Dictionary<ModuleHandle, string>
+	{
 
+	}
+
+	[StructLayout(LayoutKind.Sequential)]
 	public struct BasicRecord
 	{
-		public string Assembly;
-		public long TotalTime;
-		public float TotalTimePercentage;
-		public long Calls;
-		public long MemoryUsage;
+		public ModuleHandle assembly_handle;
+		public ulong total_time;
+		public double total_time_percentage;
+		public ulong calls;
+		public ulong alloc;
 	}
+
+	[StructLayout(LayoutKind.Sequential)]
 	public struct AdvancedRecord
 	{
-		public string Assembly;
-		public string Method;
-		public long TotalTime;
-		public float TotalTimePercentage;
-		public long OwnTime;
-		public float OwnTimePercentage;
-		public long Calls;
-		public long TotalMemoryUsage;
-		public long OwnMemoryUsage;
+		public ModuleHandle assembly_handle;
+		public RuntimeMethodHandle method_handle;
+		public string method_name;
+		public ulong total_time;
+		public double total_time_percentage;
+		public ulong own_time;
+		public double own_time_percentage;
+		public ulong calls;
+		public ulong total_alloc;
+		public ulong own_alloc;
 	}
 
 	private static bool _enabled = false;
@@ -120,10 +221,19 @@ public static unsafe class MonoProfiler
 	public static bool Enabled => _enabled;
 	public static bool Recording => _recording;
 
+	public const ulong NATIVE_PROTOCOL = 0;
+
 	static MonoProfiler()
 	{
 		try
 		{
+			ulong np = carbon_get_protocol();
+			if (np != NATIVE_PROTOCOL)
+			{
+				Logger.Error($"Native protocol mismatch (native) {np} != (managed) {NATIVE_PROTOCOL}");
+				_enabled = false;
+				return;
+			}
 			_enabled = profiler_is_enabled();
 			carbon_init_logger(&native_logger);
 		}
@@ -151,10 +261,22 @@ public static unsafe class MonoProfiler
 		}
 
 		bool state;
-		string basicOutput = null;
-		string advancedOutput = null;
+		BasicRecord[] basicOutput = null;
+		AdvancedRecord[] advancedOutput = null;
 
-		var result = profiler_toggle(advanced, &state, &basicOutput, &advancedOutput, &native_string_cb);
+		if (Recording)
+		{
+			_dataProcessTimer = PoolEx.GetStopwatch();
+			_dataProcessTimer.Start();
+		}
+
+		var result = profiler_toggle(advanced, &state, &basicOutput, &advancedOutput, &native_string_cb, &native_iter, &native_iter);
+
+		if (!state)
+		{
+			DataProcessingTime = _dataProcessTimer.Elapsed;
+			PoolEx.FreeStopwatch(ref _dataProcessTimer);
+		}
 
 		if (result != ProfilerResultCode.OK)
 		{
@@ -164,19 +286,50 @@ public static unsafe class MonoProfiler
 
 		if (basicOutput != null)
 		{
-			ParseBasicRecords(basicOutput);
+			BasicRecords.Clear();
+			BasicRecords.AddRange(basicOutput);
+			MapBasicRecords(basicOutput);
 		}
 
 		if (advancedOutput != null)
 		{
-			ParseAdvancedRecords(advancedOutput);
+			AdvancedRecords.Clear();
+			AdvancedRecords.AddRange(advancedOutput);
 		}
 
 		AdvancedRecords.Disabled = !advanced;
 
 		_recording = state;
 
+		if (state)
+		{
+			_durationTimer = PoolEx.GetStopwatch();
+			_durationTimer.Start();
+		}
+		else
+		{
+			DurationTime = _durationTimer.Elapsed;
+			PoolEx.FreeStopwatch(ref _durationTimer);
+		}
+
 		return state;
+	}
+
+	private static void MapBasicRecords(BasicRecord[] records)
+	{
+		for (int i = 0; i < records.Length; i++)
+		{
+			ref var entry = ref records[i];
+
+			if (!AssemblyMap.ContainsKey(entry.assembly_handle))
+			{
+				var name = (string)null;
+
+				get_image_name(&name, entry.assembly_handle, &native_string_cb);
+
+				AssemblyMap[entry.assembly_handle] = name ?? "UNKNOWN";
+			}
+		}
 	}
 
 	public static void TryStartProfileFor(MonoProfilerConfig.ProfileTypes profileType, Assembly assembly, string value, bool incremental = false)
@@ -200,16 +353,21 @@ public static unsafe class MonoProfiler
 			assemblyName = AssemblyBank.Increment(assemblyName);
 		}
 
-		if (!string.IsNullOrWhiteSpace(assemblyName))
+		var handle = assembly.ManifestModule.ModuleHandle;
+
+		AssemblyMap[handle] = assemblyName;
+
+		register_profiler_assembly(handle);
+	}
+	private static void native_iter<T>(T[]* data, ulong length, IntPtr iter, delegate*<IntPtr, T*, bool> cb) where T: struct
+	{
+		*data = new T[(int)length];
+		ulong index = 0;
+		T inst = default;
+		while (length > index && cb(iter, &inst))
 		{
-			fixed (char* csptr = assemblyName)
-			{
-				register_profiler_assembly(assembly.ManifestModule.ModuleHandle, csptr, assemblyName.Length);
-			}
-		}
-		else
-		{
-			register_profiler_assembly(assembly.ManifestModule.ModuleHandle, null, 0);
+			(*data)[index] = inst;
+			index++;
 		}
 	}
 
@@ -222,7 +380,7 @@ public static unsafe class MonoProfiler
 	}
 
 	[DllImport("CarbonNative")]
-	private static extern void register_profiler_assembly(ModuleHandle handle, char* csptr, int len);
+	private static extern ulong register_profiler_assembly(ModuleHandle handle);
 
 	[DllImport("CarbonNative")]
 	private static extern bool profiler_is_enabled();
@@ -231,58 +389,21 @@ public static unsafe class MonoProfiler
 	private static extern void carbon_init_logger(delegate*<Severity, int, byte*, int, LogSource, void> logger);
 
 	[DllImport("CarbonNative")]
-	private static extern ProfilerResultCode profiler_toggle(bool gen_advanced, bool* state, string* basic_out, string* advanced_out, delegate*<string*, byte*, int, void> cb);
+	private static extern ulong carbon_get_protocol();
 
-	#endregion
+	[DllImport("CarbonNative")]
+	private static extern void get_image_name(string* str, ModuleHandle handle, delegate*<string*, byte*, int, void> string_marshal);
 
-	#region Parsing
-
-	private static string[] _space = new string[] { " " };
-
-	private static void ParseBasicRecords(string data)
-	{
-		BasicRecords.Clear();
-
-		using var lines = TemporaryArray<string>.New(data.Split('\n'));
-
-		for(int i = 1; i < lines.Length; i++)
-		{
-			using var line = TemporaryArray<string>.New(lines.Get(i).Split(_space, StringSplitOptions.RemoveEmptyEntries));
-
-			BasicRecords.Add(new BasicRecord
-			{
-				Assembly = line.Get(0),
-				TotalTime = line.Get(1).ToLong(),
-				TotalTimePercentage = line.Get(2).ToFloat(),
-				Calls = line.Get(3).ToLong(),
-				MemoryUsage = line.Get(4).ToLong()
-			});
-		}
-	}
-	private static void ParseAdvancedRecords(string data)
-	{
-		AdvancedRecords.Clear();
-
-		using var lines = TemporaryArray<string>.New(data.Split('\n'));
-
-		for (int i = 1; i < lines.Length; i++)
-		{
-			using var line = TemporaryArray<string>.New(lines.Get(i).Split(_space, StringSplitOptions.RemoveEmptyEntries));
-
-			AdvancedRecords.Add(new AdvancedRecord
-			{
-				Assembly = line.Get(0),
-				Method = line.Get(1),
-				TotalTime = line.Get(2).ToLong(),
-				TotalTimePercentage = line.Get(3).ToFloat(),
-				OwnTime = line.Get(4).ToLong(),
-				OwnTimePercentage = line.Get(5).ToFloat(),
-				Calls = line.Get(6).ToLong(),
-				TotalMemoryUsage = line.Get(7).ToLong(),
-				OwnMemoryUsage = line.Get(8).ToLong()
-			});
-		}
-	}
+	[DllImport("CarbonNative")]
+	private static extern ProfilerResultCode profiler_toggle(
+		bool gen_advanced,
+		bool* state,
+		BasicRecord[]* basic_out,
+		AdvancedRecord[]* advanced_out,
+		delegate*<string*, byte*, int, void> string_marshal,
+		delegate*<BasicRecord[]*, ulong, IntPtr, delegate*<IntPtr, BasicRecord*, bool>, void> basic_iter,
+		delegate*<AdvancedRecord[]*, ulong, IntPtr, delegate*<IntPtr, AdvancedRecord*, bool>, void> advanced_iter
+		);
 
 	#endregion
 }
