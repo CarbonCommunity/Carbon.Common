@@ -162,11 +162,11 @@ public static unsafe class MonoProfiler
 				return string.Empty;
 			}
 
-			var output = 0;
+			var index = 0;
 
-			AddOrUpdate(value, output = 1, (val, arg) => output = arg++);
+			AddOrUpdate(value, index = 1, (val, arg) => index = arg++);
 
-			return $"{value}_#{output}";
+			return $"{value} ({index})";
 		}
 	}
 	public class RuntimeAssemblyMap : Dictionary<ModuleHandle, string>

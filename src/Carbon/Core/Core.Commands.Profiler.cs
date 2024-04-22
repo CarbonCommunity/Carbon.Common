@@ -45,7 +45,7 @@ public partial class CorePlugin : CarbonPlugin
 			return;
 		}
 
-		arg.ReplyWith("Use `c.profiler.print [-table|-csv] [-f]` to see the output.");
+		arg.ReplyWith(" Use: c.profiler.print [-table|-csv] [-f] to see the output.");
 	}
 
 	[ConsoleCommand("profiler.print", "If any parsed data available, it'll print basic and advanced information.")]
