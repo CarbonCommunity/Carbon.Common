@@ -23,8 +23,7 @@ public static unsafe class MonoProfiler
 	public static BasicOutput BasicRecords = new();
 	public static AdvancedOutput AdvancedRecords = new();
 	public static RuntimeAssemblyBank AssemblyBank = new();
-
-	public static Dictionary<ModuleHandle, String> asmMap = new();
+	public static RuntimeAssemblyMap AssemblyMap = new();
 
 	public enum ProfilerResultCode : byte
 	{
@@ -34,7 +33,7 @@ public static unsafe class MonoProfiler
 		UnknownError = 3,
 	}
 
-		public class BasicOutput : List<BasicRecord>
+	public class BasicOutput : List<BasicRecord>
 	{
 		public bool AnyValidRecords => Count > 0;
 
@@ -44,7 +43,7 @@ public static unsafe class MonoProfiler
 
 			foreach(var record in this)
 			{
-				if (!asmMap.TryGetValue(record.assembly_handle, out var assemblyName))
+				if (!AssemblyMap.TryGetValue(record.assembly_handle, out var assemblyName))
 				{
 					continue;
 				}
@@ -70,7 +69,7 @@ public static unsafe class MonoProfiler
 
 			foreach (var record in this)
 			{
-				if (!asmMap.TryGetValue(record.assembly_handle, out var assemblyName))
+				if (!AssemblyMap.TryGetValue(record.assembly_handle, out var assemblyName))
 				{
 					continue;
 				}
@@ -99,7 +98,7 @@ public static unsafe class MonoProfiler
 
 			foreach (var record in this)
 			{
-				if (!asmMap.TryGetValue(record.assembly_handle, out var assemblyName))
+				if (!AssemblyMap.TryGetValue(record.assembly_handle, out var assemblyName))
 				{
 					continue;
 				}
@@ -132,7 +131,7 @@ public static unsafe class MonoProfiler
 
 			foreach (var record in this)
 			{
-				if (!asmMap.TryGetValue(record.assembly_handle, out var assemblyName))
+				if (!AssemblyMap.TryGetValue(record.assembly_handle, out var assemblyName))
 				{
 					continue;
 				}
@@ -169,6 +168,10 @@ public static unsafe class MonoProfiler
 
 			return $"{value}_#{output}";
 		}
+	}
+	public class RuntimeAssemblyMap : Dictionary<ModuleHandle, string>
+	{
+
 	}
 	[StructLayout(LayoutKind.Sequential)]
 	public struct BasicRecord
@@ -243,7 +246,7 @@ public static unsafe class MonoProfiler
 		BasicRecord[] basicOutput = null;
 		AdvancedRecord[] advancedOutput = null;
 
-		var result = profiler_toggle(advanced, &state, &basicOutput, &advancedOutput, &native_string_cb, &native_iter<BasicRecord>, &native_iter<AdvancedRecord>);
+		var result = profiler_toggle(advanced, &state, &basicOutput, &advancedOutput, &native_string_cb, &native_iter, &native_iter);
 
 		if (result != ProfilerResultCode.OK)
 		{
@@ -252,24 +255,55 @@ public static unsafe class MonoProfiler
 		}
 
 		if (basicOutput != null)
-			MapOutput(basicOutput);
+		{
+			BasicRecords.Clear();
+			BasicRecords.AddRange(basicOutput);
+			MapBasicRecords(basicOutput);
+		}
+
+		if (advancedOutput != null)
+		{
+			AdvancedRecords.Clear();
+			AdvancedRecords.AddRange(advancedOutput);
+			MapAdvancedRecords(advancedOutput);
+		}
+
+		AdvancedRecords.Disabled = !advanced;
 
 		_recording = state;
 
 		return state;
 	}
 
-	private static void MapOutput(BasicRecord[] records)
+	private static void MapBasicRecords(BasicRecord[] records)
 	{
-		for (int index = 0; index < records.Length; index++)
+		for (int i = 0; i < records.Length; i++)
 		{
-			ref BasicRecord entry = ref records[index];
-			if (!asmMap.ContainsKey(entry.assembly_handle))
+			ref var entry = ref records[i];
+
+			if (!AssemblyMap.ContainsKey(entry.assembly_handle))
 			{
-				string name = null;
+				var name = (string)null;
+
 				get_image_name(&name, entry.assembly_handle, &native_string_cb);
-				name ??= "UNKNOWN";
-				asmMap[entry.assembly_handle] = name;
+
+				AssemblyMap[entry.assembly_handle] = name ?? "UNKNOWN";
+			}
+		}
+	}
+	private static void MapAdvancedRecords(AdvancedRecord[] records)
+	{
+		for (int i = 0; i < records.Length; i++)
+		{
+			ref var entry = ref records[i];
+
+			if (!AssemblyMap.ContainsKey(entry.assembly_handle))
+			{
+				var name = (string)null;
+
+				get_image_name(&name, entry.assembly_handle, &native_string_cb);
+
+				AssemblyMap[entry.assembly_handle] = name ?? "UNKNOWN";
 			}
 		}
 	}
@@ -295,9 +329,9 @@ public static unsafe class MonoProfiler
 			assemblyName = AssemblyBank.Increment(assemblyName);
 		}
 
-		ModuleHandle handle = assembly.ManifestModule.ModuleHandle;
+		var handle = assembly.ManifestModule.ModuleHandle;
 
-		asmMap[handle] = assemblyName;
+		AssemblyMap[handle] = assemblyName;
 
 		register_profiler_assembly(handle);
 	}
@@ -323,14 +357,19 @@ public static unsafe class MonoProfiler
 
 	[DllImport("CarbonNative")]
 	private static extern ulong register_profiler_assembly(ModuleHandle handle);
+
 	[DllImport("CarbonNative")]
 	private static extern bool profiler_is_enabled();
+
 	[DllImport("CarbonNative")]
 	private static extern void carbon_init_logger(delegate*<Severity, int, byte*, int, LogSource, void> logger);
+
 	[DllImport("CarbonNative")]
 	private static extern ulong carbon_get_protocol();
+
 	[DllImport("CarbonNative")]
 	private static extern void get_image_name(string* str, ModuleHandle handle, delegate*<string*, byte*, int, void> string_marshal);
+
 	[DllImport("CarbonNative")]
 	private static extern ProfilerResultCode profiler_toggle(
 		bool gen_advanced,

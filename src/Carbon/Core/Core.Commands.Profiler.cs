@@ -40,14 +40,8 @@ public partial class CorePlugin : CarbonPlugin
 			return;
 		}
 
-		if (MonoProfiler.ToggleProfiling(arg.GetString(0).Equals("-a")).GetValueOrDefault())
-		{
-			return;
-		}
-
-		arg.ReplyWith(
-			$"Basic:\n{(MonoProfiler.BasicRecords.AnyValidRecords ? MonoProfiler.BasicRecords.ToTable() : "No valid records")}\n\n" +
-			$"Advanced:\n{(MonoProfiler.AdvancedRecords.Disabled ? "Advanced profiling is disabled. Use [-a] to enable advanced profiling." : MonoProfiler.AdvancedRecords.AnyValidRecords ? MonoProfiler.AdvancedRecords.ToTable() : "No valid records")}");
+		MonoProfiler.ToggleProfiling(arg.GetString(0).Equals("-a")).GetValueOrDefault();
+		arg.ReplyWith("Use `c.profiler.print [-table|-csv] [-f]` to see the output.");
 	}
 
 	[ConsoleCommand("profiler.print", "If any parsed data available, it'll print basic and advanced information.")]
