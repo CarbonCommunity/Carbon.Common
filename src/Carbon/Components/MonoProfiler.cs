@@ -29,6 +29,7 @@ public static unsafe class MonoProfiler
 	public static RuntimeAssemblyMap AssemblyMap = new();
 	public static TimeSpan DataProcessingTime;
 	public static TimeSpan DurationTime;
+	public static TimeSpan CurrentDurationTime => (_durationTimer?.Elapsed).GetValueOrDefault();
 
 	internal static Stopwatch _dataProcessTimer;
 	internal static Stopwatch _durationTimer;

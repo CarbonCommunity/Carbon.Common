@@ -1,11 +1,4 @@
-﻿using API.Assembly;
-using API.Commands;
-using Carbon.Base.Interfaces;
-using Carbon.Profiler;
-using HarmonyLib;
-using Newtonsoft.Json;
-using Oxide.Game.Rust.Cui;
-using ProtoBuf;
+﻿using Carbon.Profiler;
 using Timer = Oxide.Plugins.Timer;
 
 /*
@@ -21,6 +14,7 @@ namespace Carbon.Core;
 public partial class CorePlugin : CarbonPlugin
 {
 	internal Timer _profileTimer;
+	internal Timer _profileWarningTimer;
 
 	[CommandVar("profilestatus", "Mono profiling status.")]
 	[AuthLevel(2)]
@@ -34,7 +28,7 @@ public partial class CorePlugin : CarbonPlugin
 
 	[ConsoleCommand("profile", "Toggles recording status of the Carbon native Mono-profiling. Syntax: c.profile [duration]")]
 	[AuthLevel(2)]
-	private void ProfilerToggle(ConsoleSystem.Arg arg)
+	private void Profile(ConsoleSystem.Arg arg)
 	{
 		if (!MonoProfiler.Enabled)
 		{
@@ -46,6 +40,8 @@ public partial class CorePlugin : CarbonPlugin
 
 		_profileTimer?.Destroy();
 		_profileTimer = null;
+		_profileWarningTimer?.Destroy();
+		_profileWarningTimer = null;
 
 		if (!MonoProfiler.ToggleProfiling(true).GetValueOrDefault())
 		{
@@ -65,6 +61,13 @@ public partial class CorePlugin : CarbonPlugin
 
 				MonoProfiler.ToggleProfiling(true).GetValueOrDefault();
 				PrintWarn();
+			});
+		}
+		else if(MonoProfiler.Recording)
+		{
+			_profileWarningTimer = Community.Runtime.CorePlugin.timer.Every(60, () =>
+			{
+				Logger.Warn($" Reminder: You've been profile recording for {TimeEx.Format(MonoProfiler.CurrentDurationTime.TotalSeconds).ToLower()}..");
 			});
 		}
 
