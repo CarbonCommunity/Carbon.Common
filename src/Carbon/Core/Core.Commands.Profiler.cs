@@ -46,7 +46,7 @@ public partial class CorePlugin : CarbonPlugin
 			return;
 		}
 
-		arg.ReplyWith(" Use: c.profiler.print [-table|-csv] [-f] to see the output.");
+		Logger.Warn($" Processing profiling data took {TimeEx.Format(MonoProfiler.ProcessTime.TotalMilliseconds).ToLower()}\n More info: https://docs.carbonmod.gg/docs/development/features/profiler-mono");
 	}
 
 	[ConsoleCommand("profiler.print", "If any parsed data available, it'll print basic and advanced information.")]
@@ -66,28 +66,21 @@ public partial class CorePlugin : CarbonPlugin
 		switch (mode)
 		{
 			case "-c":
-				output = $"{MonoProfiler.BasicRecords.ToCSV()}\n\n{MonoProfiler.AdvancedRecords.ToCSV()}";
+				output = $"{MonoProfiler.BasicRecords.ToCSV()}\n{MonoProfiler.AdvancedRecords.ToCSV()}";
 				if (toFile) WriteFileString(arg, "csv", output); else arg.ReplyWith(output);
 				break;
-		
+
 			case "-j":
-				output = JsonConvert.SerializeObject(new
-				{
-					basic = MonoProfiler.BasicRecords,
-					advanced = MonoProfiler.AdvancedRecords
-				}, Formatting.Indented);
-				if (toFile) WriteFileString(arg, "json", output); else arg.ReplyWith(output);
+				// patret magic
 				break;
 
 			case "-p":
-				{
-					// patret magic
-					break;
-				}
+				// patret magic
+				break;
 
 			default:
 			case "-t":
-				output = $"{MonoProfiler.BasicRecords.ToTable()}\n{MonoProfiler.AdvancedRecords.ToTable()}";
+				output = $"{MonoProfiler.BasicRecords.ToTable()}\n\n{MonoProfiler.AdvancedRecords.ToTable()}";
 				if (toFile) WriteFileString(arg, "txt", output); else arg.ReplyWith(output);
 				break;
 
@@ -102,15 +95,15 @@ public partial class CorePlugin : CarbonPlugin
 
 			Logger.Log($"Saved at {file}");
 		}
-		static void WriteFileByte(ConsoleSystem.Arg arg, string extension, byte[] data)
-		{
-			var date = DateTime.Now;
-			var file = Path.Combine(Defines.GetRustRootFolder(),
-				$"profile-{date.Year}_{date.Month}_{date.Day}_{date.Hour}{date.Minute}{date.Second}.{extension}");
-			OsEx.File.Create(file, data);
-
-			Logger.Log($"Saved at {file}");
-		}
+		// static void WriteFileByte(ConsoleSystem.Arg arg, string extension, byte[] data)
+		// {
+		// 	var date = DateTime.Now;
+		// 	var file = Path.Combine(Defines.GetRustRootFolder(),
+		// 		$"profile-{date.Year}_{date.Month}_{date.Day}_{date.Hour}{date.Minute}{date.Second}.{extension}");
+		// 	OsEx.File.Create(file, data);
+//
+		// 	Logger.Log($"Saved at {file}");
+		// }
 	}
 
 	[CommandVar("profiler.allocs", "Once the Mono profiler gets initialized, enhanced allocation data will be tracked. Must restart the server for changes to apply.")]

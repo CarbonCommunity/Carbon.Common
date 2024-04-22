@@ -1,9 +1,11 @@
 ﻿using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Text;
 using API.Logger;
 using Carbon.Profiler;
+using Facepunch;
 using Newtonsoft.Json;
 
 /*
@@ -25,6 +27,9 @@ public static unsafe class MonoProfiler
 	public static AdvancedOutput AdvancedRecords = new();
 	public static RuntimeAssemblyBank AssemblyBank = new();
 	public static RuntimeAssemblyMap AssemblyMap = new();
+	public static TimeSpan ProcessTime;
+
+	internal static Stopwatch _dataProcessTimer;
 
 	public enum ProfilerResultCode : byte
 	{
@@ -191,6 +196,7 @@ public static unsafe class MonoProfiler
 		public ulong calls;
 		public ulong alloc;
 	}
+
 	[StructLayout(LayoutKind.Sequential)]
 	public struct AdvancedRecord
 	{
@@ -280,6 +286,17 @@ public static unsafe class MonoProfiler
 		AdvancedRecords.Disabled = !advanced;
 
 		_recording = state;
+
+		if (state)
+		{
+			_dataProcessTimer = PoolEx.GetStopwatch();
+			_dataProcessTimer.Start();
+		}
+		else
+		{
+			ProcessTime = _dataProcessTimer.Elapsed;
+			PoolEx.FreeStopwatch(ref _dataProcessTimer);
+		}
 
 		return state;
 	}
