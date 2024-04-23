@@ -1359,11 +1359,11 @@ public static class HookCaller
 
 	public static object CallStaticHook(uint hookId, object[] args)
 	{
-		return CallStaticHook(hookId, BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public, args);
+		return CallStaticHook(hookId, BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public, args: args);
 	}
 	public static object CallStaticDeprecatedHook(uint oldHookId, uint newHookId, DateTime expireDate, object[] args)
 	{
-		return CallStaticDeprecatedHook(oldHookId, newHookId, expireDate, args);
+		return CallStaticDeprecatedHook(oldHookId, newHookId, expireDate, args: args);
 	}
 
 	#endregion
