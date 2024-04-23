@@ -199,6 +199,11 @@ namespace Oxide.Game.Rust.Libraries.Covalence
 
 		public GenericPosition Position()
 		{
+			if (BasePlayer == null)
+			{
+				return GenericPosition.Blank;
+			}
+
 			var position = BasePlayer.transform.position;
 			return new GenericPosition(position.x, position.y, position.z);
 		}

@@ -79,7 +79,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		"players.craft_queue",
 		"players.see_ips",
 		"plugins.use",
-		"plugins.setup"
+		"plugins.setup",
+		"profiler.use"
 	};
 
 	internal bool _logRegistration;
@@ -1386,6 +1387,29 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			{
 				var shift = tab == null || tab.IsFullscreen ? 15 : 0;
 
+				if (HasAccess(ap.Player, "profiler.use"))
+				{
+					var profilerButton = cui.CreateProtectedButton(container, main,
+						color: "#6651c2",
+						textColor: Cache.CUI.BlankColor,
+						text: string.Empty, 0,
+						xMin: 0.9675f, xMax: 0.99f, yMin: 0.955f, yMax: 0.99f,
+						OxMin: -25 * 2, OxMax: -25 * 2,
+						OyMin: shift, OyMax: shift,
+						command: PanelId + ".profiler");
+
+					cui.CreateImage(container, profilerButton, "graph", "#af9ff5",
+						xMin: 0.15f, xMax: 0.85f,
+						yMin: 0.15f, yMax: 0.85f);
+
+					cui.CreateImage(container, profilerButton, "fade", Cache.CUI.WhiteColor);
+
+					if (ap.SelectedTab != null && ap.SelectedTab.Id == "profiler")
+					{
+						cui.CreatePanel(container, profilerButton, "1 0 0 1", yMax: 0.1f);
+					}
+				}
+
 				if (HasAccess(ap.Player, "config.use"))
 				{
 					var configButton = cui.CreateProtectedButton(container, main,
@@ -1402,6 +1426,11 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 						yMin: 0.15f, yMax: 0.85f);
 
 					cui.CreateImage(container, configButton, "fade", Cache.CUI.WhiteColor);
+
+					if (ap.SelectedTab != null && ap.SelectedTab.Id == "configuration")
+					{
+						cui.CreatePanel(container, configButton, "1 0 0 1", yMax: 0.1f);
+					}
 				}
 
 				var closeButton = cui.CreateProtectedButton(container, main,

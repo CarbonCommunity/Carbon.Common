@@ -36,7 +36,7 @@ public partial class AdminModule
 			Items
 		}
 
-		public static ConfigurationTab GetOrCache() => _instance ?? (_instance = Make());
+		public static ConfigurationTab GetOrCache() => _instance ??= Make();
 
 		public static ConfigurationTab Make()
 		{
