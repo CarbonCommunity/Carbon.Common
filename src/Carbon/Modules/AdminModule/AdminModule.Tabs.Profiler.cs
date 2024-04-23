@@ -368,6 +368,7 @@ public partial class AdminModule
 		}
 	}
 
+	[Conditional("!MINIMAL")]
 	[ProtectedCommand("adminmodule.profilerselect")]
 	private void ProfilerSelect(ConsoleSystem.Arg arg)
 	{
@@ -381,6 +382,7 @@ public partial class AdminModule
 		Draw(ap.Player);
 	}
 
+	[Conditional("!MINIMAL")]
 	[ProtectedCommand("adminmodule.profilertoggle")]
 	private void ProfilerToggle(ConsoleSystem.Arg arg)
 	{
@@ -399,6 +401,7 @@ public partial class AdminModule
 		Draw(ap.Player);
 	}
 
+	[Conditional("!MINIMAL")]
 	[ProtectedCommand("adminmodule.profilerexport")]
 	private void ProfilerExport(ConsoleSystem.Arg arg)
 	{
@@ -409,6 +412,7 @@ public partial class AdminModule
 		Draw(ap.Player);
 	}
 
+	[Conditional("!MINIMAL")]
 	[ProtectedCommand("adminmodule.profilerclear")]
 	private void ProfilerClear(ConsoleSystem.Arg arg)
 	{

@@ -13,15 +13,12 @@ namespace Carbon.Core;
 
 public partial class CorePlugin : CarbonPlugin
 {
-
 	[CommandVar("profilestatus", "Mono profiling status.")]
 	[AuthLevel(2)]
 	private bool IsProfiling
 	{
 		get { return MonoProfiler.Recording; }
-		set
-		{
-		}
+		set { }
 	}
 
 	[ConsoleCommand("profile", "Toggles recording status of the Carbon native Mono-profiling. Syntax: c.profile [duration]")]
