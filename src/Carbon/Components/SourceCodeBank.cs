@@ -5,8 +5,11 @@
  *
  */
 
+using System.Reflection.Metadata;
+using System.Reflection.PortableExecutable;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp;
+using ICSharpCode.Decompiler.Metadata;
 
 namespace Carbon.Components;
 
@@ -43,8 +46,28 @@ public class SourceCodeBank
 
 			sourceCode.Types = new();
 			sourceCode.Methods = new();
-			sourceCode.Settings = new();
+			sourceCode.Settings = new()
+			{
+				ThrowOnAssemblyResolveErrors = false
+			};
 			sourceCode.Decompiler = new CSharpDecompiler(assemblyPath, sourceCode.Settings);
+
+			return sourceCode;
+		}
+		public static SourceCode Get(PEFile file)
+		{
+			SourceCode sourceCode = default;
+
+			sourceCode.Types = new();
+			sourceCode.Methods = new();
+			sourceCode.Settings = new()
+			{
+				ThrowOnAssemblyResolveErrors = false
+			};
+			sourceCode.Decompiler = new CSharpDecompiler(file, new UniversalAssemblyResolver(null, false,
+				file.DetectTargetFrameworkId(), file.DetectRuntimePack(),
+				sourceCode.Settings.LoadInMemory ? PEStreamOptions.PrefetchMetadata : PEStreamOptions.Default,
+				sourceCode.Settings.ApplyWindowsRuntimeProjections ? MetadataReaderOptions.ApplyWindowsRuntimeProjections : MetadataReaderOptions.None), sourceCode.Settings);
 
 			return sourceCode;
 		}
