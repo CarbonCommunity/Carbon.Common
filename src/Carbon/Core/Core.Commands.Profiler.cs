@@ -13,8 +13,6 @@ namespace Carbon.Core;
 
 public partial class CorePlugin : CarbonPlugin
 {
-	internal Timer _profileTimer;
-	internal Timer _profileWarningTimer;
 
 	[CommandVar("profilestatus", "Mono profiling status.")]
 	[AuthLevel(2)]
@@ -36,53 +34,7 @@ public partial class CorePlugin : CarbonPlugin
 			return;
 		}
 
-		var duration = arg.GetFloat(0);
-
-		_profileTimer?.Destroy();
-		_profileTimer = null;
-		_profileWarningTimer?.Destroy();
-		_profileWarningTimer = null;
-
-		if (!MonoProfiler.ToggleProfiling(true).GetValueOrDefault())
-		{
-			PrintWarn();
-		}
-
-		if (duration >= 1f && MonoProfiler.Recording)
-		{
-			Logger.Warn($"[Profiler] Profiling duration {TimeEx.Format(duration).ToLower()}..");
-
-			_profileTimer = Community.Runtime.CorePlugin.timer.In(duration, () =>
-			{
-				if (!MonoProfiler.Recording)
-				{
-					return;
-				}
-
-				MonoProfiler.ToggleProfiling(true).GetValueOrDefault();
-				PrintWarn();
-			});
-		}
-		else if(MonoProfiler.Recording)
-		{
-			_profileWarningTimer = Community.Runtime.CorePlugin.timer.Every(60, () =>
-			{
-				Logger.Warn($" Reminder: You've been profile recording for {TimeEx.Format(MonoProfiler.CurrentDurationTime.TotalSeconds).ToLower()}..");
-			});
-		}
-
-		static void PrintWarn()
-		{
-			using var table = new StringTable("Duration", "Processing", "Basic", "Advanced");
-
-			table.AddRow(
-				TimeEx.Format(MonoProfiler.DurationTime.TotalSeconds).ToLower(),
-				$"{MonoProfiler.DataProcessingTime.TotalMilliseconds:0}ms",
-				MonoProfiler.BasicRecords.Count.ToString("n0"),
-				MonoProfiler.AdvancedRecords.Count.ToString("n0"));
-
-			Logger.Warn(table.ToStringMinimal());
-		}
+		MonoProfiler.ToggleProfilingTimed(arg.GetFloat(0));
 	}
 
 	[ConsoleCommand("profiler.print", "If any parsed data available, it'll print basic and advanced information.")]
@@ -102,7 +54,7 @@ public partial class CorePlugin : CarbonPlugin
 		switch (mode)
 		{
 			case "-c":
-				output = $"{MonoProfiler.BasicRecords.ToCSV()}{(toFile ? $"\n{MonoProfiler.AdvancedRecords.ToCSV()}" : string.Empty)}";
+				output = $"{MonoProfiler.AssemblyRecords.ToCSV()}{(toFile ? $"\n{MonoProfiler.CallRecords.ToCSV()}" : string.Empty)}";
 				if (toFile) WriteFileString("csv", output); else arg.ReplyWith(output);
 				break;
 
@@ -116,7 +68,7 @@ public partial class CorePlugin : CarbonPlugin
 
 			default:
 			case "-t":
-				output = $"{MonoProfiler.BasicRecords.ToTable()}{(toFile ? $"\n\n{MonoProfiler.AdvancedRecords.ToTable()}" : string.Empty)}";
+				output = $"{MonoProfiler.AssemblyRecords.ToTable()}{(toFile ? $"\n\n{MonoProfiler.CallRecords.ToTable()}" : string.Empty)}";
 				if (toFile) WriteFileString("txt", output); else arg.ReplyWith(output);
 				break;
 

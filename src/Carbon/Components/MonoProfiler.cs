@@ -7,6 +7,7 @@ using API.Logger;
 using Carbon.Profiler;
 using Facepunch;
 using Newtonsoft.Json;
+using Timer = Oxide.Plugins.Timer;
 
 /*
  *
@@ -23,16 +24,19 @@ namespace Carbon.Components;
 [SuppressUnmanagedCodeSecurity]
 public static unsafe class MonoProfiler
 {
-	public static BasicOutput BasicRecords = new();
-	public static AdvancedOutput AdvancedRecords = new();
+	public static AssemblyOutput AssemblyRecords = new();
+	public static CallOutput CallRecords = new();
 	public static RuntimeAssemblyBank AssemblyBank = new();
 	public static RuntimeAssemblyMap AssemblyMap = new();
+	public static RuntimeAssemblyType AssemblyType = new();
 	public static TimeSpan DataProcessingTime;
 	public static TimeSpan DurationTime;
 	public static TimeSpan CurrentDurationTime => (_durationTimer?.Elapsed).GetValueOrDefault();
 
-	internal static Stopwatch _dataProcessTimer;
-	internal static Stopwatch _durationTimer;
+	private static Stopwatch _dataProcessTimer;
+	private static Stopwatch _durationTimer;
+	private static Timer _profileTimer;
+	private static Timer _profileWarningTimer;
 
 	public enum ProfilerResultCode : byte
 	{
@@ -42,7 +46,7 @@ public static unsafe class MonoProfiler
 		UnknownError = 3,
 	}
 
-	public class BasicOutput : List<BasicRecord>
+	public class AssemblyOutput : List<AssemblyRecord>
 	{
 		public bool AnyValidRecords => Count > 0;
 
@@ -100,7 +104,7 @@ public static unsafe class MonoProfiler
 			return JsonConvert.SerializeObject(this, indented ? Formatting.Indented : Formatting.None);
 		}
 	}
-	public class AdvancedOutput : List<AdvancedRecord>
+	public class CallOutput : List<CallRecord>
 	{
 		public bool AnyValidRecords => Count > 0;
 		public bool Disabled;
@@ -186,13 +190,11 @@ public static unsafe class MonoProfiler
 			return $"{value} ({index})";
 		}
 	}
-	public class RuntimeAssemblyMap : Dictionary<ModuleHandle, string>
-	{
-
-	}
+	public class RuntimeAssemblyMap : Dictionary<ModuleHandle, string>;
+	public class RuntimeAssemblyType : Dictionary<ModuleHandle, MonoProfilerConfig.ProfileTypes>;
 
 	[StructLayout(LayoutKind.Sequential)]
-	public struct BasicRecord
+	public struct AssemblyRecord
 	{
 		public ModuleHandle assembly_handle;
 		public ulong total_time;
@@ -202,7 +204,7 @@ public static unsafe class MonoProfiler
 	}
 
 	[StructLayout(LayoutKind.Sequential)]
-	public struct AdvancedRecord
+	public struct CallRecord
 	{
 		public ModuleHandle assembly_handle;
 		public RuntimeMethodHandle method_handle;
@@ -221,6 +223,8 @@ public static unsafe class MonoProfiler
 
 	public static bool Enabled => _enabled;
 	public static bool Recording => _recording;
+
+	public static bool IsCleared => !AssemblyRecords.Any() && !CallRecords.Any();
 
 	public const ulong NATIVE_PROTOCOL = 0;
 
@@ -253,7 +257,63 @@ public static unsafe class MonoProfiler
 		*target = Encoding.UTF8.GetString(ptr, len);
 	}
 
-	public static bool? ToggleProfiling(bool advanced = false)
+	public static void Clear()
+	{
+		AssemblyRecords.Clear();
+		CallRecords.Clear();
+		DurationTime = default;
+	}
+	public static void ToggleProfilingTimed(float duration = 0, bool advanced = true)
+	{
+		_profileTimer?.Destroy();
+		_profileTimer = null;
+		_profileWarningTimer?.Destroy();
+		_profileWarningTimer = null;
+
+		if (!ToggleProfiling(true).GetValueOrDefault())
+		{
+			PrintWarn();
+		}
+
+		if (duration >= 1f && Recording)
+		{
+			Logger.Warn($"[Profiler] Profiling duration {TimeEx.Format(duration).ToLower()}..");
+
+			_profileTimer = Community.Runtime.CorePlugin.timer.In(duration, () =>
+			{
+				if (!Recording)
+				{
+					return;
+				}
+
+				ToggleProfiling(advanced).GetValueOrDefault();
+				PrintWarn();
+			});
+		}
+		else if(Recording)
+		{
+			_profileWarningTimer = Community.Runtime.CorePlugin.timer.Every(60, () =>
+			{
+				Logger.Warn($" Reminder: You've been profile recording for {TimeEx.Format(MonoProfiler.CurrentDurationTime.TotalSeconds).ToLower()}..");
+			});
+		}
+
+		return;
+
+		static void PrintWarn()
+		{
+			using var table = new StringTable("Duration", "Processing", "Basic", "Advanced");
+
+			table.AddRow(
+				TimeEx.Format(DurationTime.TotalSeconds).ToLower(),
+				$"{DataProcessingTime.TotalMilliseconds:0}ms",
+				AssemblyRecords.Count.ToString("n0"),
+				CallRecords.Count.ToString("n0"));
+
+			Logger.Warn(table.ToStringMinimal());
+		}
+	}
+	public static bool? ToggleProfiling(bool advanced = true)
 	{
 		if (!Enabled)
 		{
@@ -262,8 +322,8 @@ public static unsafe class MonoProfiler
 		}
 
 		bool state;
-		BasicRecord[] basicOutput = null;
-		AdvancedRecord[] advancedOutput = null;
+		AssemblyRecord[] basicOutput = null;
+		CallRecord[] advancedOutput = null;
 
 		if (Recording)
 		{
@@ -287,18 +347,18 @@ public static unsafe class MonoProfiler
 
 		if (basicOutput != null)
 		{
-			BasicRecords.Clear();
-			BasicRecords.AddRange(basicOutput);
+			AssemblyRecords.Clear();
+			AssemblyRecords.AddRange(basicOutput);
 			MapBasicRecords(basicOutput);
 		}
 
 		if (advancedOutput != null)
 		{
-			AdvancedRecords.Clear();
-			AdvancedRecords.AddRange(advancedOutput);
+			CallRecords.Clear();
+			CallRecords.AddRange(advancedOutput);
 		}
 
-		AdvancedRecords.Disabled = !advanced;
+		CallRecords.Disabled = !advanced;
 
 		_recording = state;
 
@@ -316,7 +376,7 @@ public static unsafe class MonoProfiler
 		return state;
 	}
 
-	private static void MapBasicRecords(BasicRecord[] records)
+	private static void MapBasicRecords(AssemblyRecord[] records)
 	{
 		for (int i = 0; i < records.Length; i++)
 		{
@@ -340,6 +400,7 @@ public static unsafe class MonoProfiler
 			return;
 		}
 
+		AssemblyType[assembly.ManifestModule.ModuleHandle] = profileType;
 		ProfileAssembly(assembly, value, incremental);
 	}
 	public static void ProfileAssembly(Assembly assembly, string assemblyName, bool incremental)
@@ -399,11 +460,11 @@ public static unsafe class MonoProfiler
 	private static extern ProfilerResultCode profiler_toggle(
 		bool gen_advanced,
 		bool* state,
-		BasicRecord[]* basic_out,
-		AdvancedRecord[]* advanced_out,
+		AssemblyRecord[]* basic_out,
+		CallRecord[]* advanced_out,
 		delegate*<string*, byte*, int, void> string_marshal,
-		delegate*<BasicRecord[]*, ulong, IntPtr, delegate*<IntPtr, BasicRecord*, bool>, void> basic_iter,
-		delegate*<AdvancedRecord[]*, ulong, IntPtr, delegate*<IntPtr, AdvancedRecord*, bool>, void> advanced_iter
+		delegate*<AssemblyRecord[]*, ulong, IntPtr, delegate*<IntPtr, AssemblyRecord*, bool>, void> basic_iter,
+		delegate*<CallRecord[]*, ulong, IntPtr, delegate*<IntPtr, CallRecord*, bool>, void> advanced_iter
 		);
 
 	#endregion
