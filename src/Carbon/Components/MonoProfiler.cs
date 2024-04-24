@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Text;
@@ -41,9 +42,10 @@ public static unsafe class MonoProfiler
 	public enum ProfilerResultCode : byte
 	{
 		OK = 0,
-		MainThreadOnly = 1,
-		NotInitialized = 2,
-		UnknownError = 3,
+		Aborted = 1,
+		MainThreadOnly = 2,
+		NotInitialized = 3,
+		UnknownError = 4,
 	}
 
 	public class AssemblyOutput : List<AssemblyRecord>
@@ -52,11 +54,11 @@ public static unsafe class MonoProfiler
 
 		public string ToTable()
 		{
-			using var table = new StringTable("Assembly", "Total Time", "(%)", "Calls", "Memory Usage");
+			using StringTable table = new StringTable("Assembly", "Total Time", "(%)", "Calls", "Memory Usage");
 
-			foreach(var record in this)
+			foreach(AssemblyRecord record in this)
 			{
-				if (!AssemblyMap.TryGetValue(record.assembly_handle, out var assemblyName))
+				if (!AssemblyMap.TryGetValue(record.assembly_handle, out string assemblyName))
 				{
 					continue;
 				}
@@ -72,7 +74,7 @@ public static unsafe class MonoProfiler
 		}
 		public string ToCSV()
 		{
-			var builder = PoolEx.GetStringBuilder();
+			StringBuilder builder = PoolEx.GetStringBuilder();
 
 			builder.AppendLine("Assembly," +
 			                   "Total Time," +
@@ -80,9 +82,9 @@ public static unsafe class MonoProfiler
 			                   "Calls," +
 			                   "Memory Usage");
 
-			foreach (var record in this)
+			foreach (AssemblyRecord record in this)
 			{
-				if (!AssemblyMap.TryGetValue(record.assembly_handle, out var assemblyName))
+				if (!AssemblyMap.TryGetValue(record.assembly_handle, out string assemblyName))
 				{
 					continue;
 				}
@@ -94,7 +96,7 @@ public static unsafe class MonoProfiler
 				                   $"{ByteEx.Format(record.alloc).ToLower()}");
 			}
 
-			var result = builder.ToString();
+			string result = builder.ToString();
 
 			PoolEx.FreeStringBuilder(ref builder);
 			return result;
@@ -111,11 +113,11 @@ public static unsafe class MonoProfiler
 
 		public string ToTable()
 		{
-			using var table = new StringTable("Assembly", "Method", "Total Time", "(%)", "Own Time", "(%)", "Calls", "Total Memory", "Own Memory");
+			using StringTable table = new StringTable("Assembly", "Method", "Total Time", "(%)", "Own Time", "(%)", "Calls", "Total Memory", "Own Memory");
 
-			foreach (var record in this)
+			foreach (CallRecord record in this)
 			{
-				if (!AssemblyMap.TryGetValue(record.assembly_handle, out var assemblyName))
+				if (!AssemblyMap.TryGetValue(record.assembly_handle, out string assemblyName))
 				{
 					continue;
 				}
@@ -134,7 +136,7 @@ public static unsafe class MonoProfiler
 		}
 		public string ToCSV()
 		{
-			var builder = PoolEx.GetStringBuilder();
+			StringBuilder builder = PoolEx.GetStringBuilder();
 
 			builder.AppendLine("Assembly," +
 			                   "Method," +
@@ -146,9 +148,9 @@ public static unsafe class MonoProfiler
 			                   "Memory Usage (Total)," +
 			                   "Memory Usage (Own)");
 
-			foreach (var record in this)
+			foreach (CallRecord record in this)
 			{
-				if (!AssemblyMap.TryGetValue(record.assembly_handle, out var assemblyName))
+				if (!AssemblyMap.TryGetValue(record.assembly_handle, out string assemblyName))
 				{
 					continue;
 				}
@@ -164,7 +166,7 @@ public static unsafe class MonoProfiler
 				                   $"{ByteEx.Format(record.own_alloc).ToLower()}");
 			}
 
-			var result = builder.ToString();
+			string result = builder.ToString();
 
 			PoolEx.FreeStringBuilder(ref builder);
 			return result;
@@ -183,7 +185,7 @@ public static unsafe class MonoProfiler
 				return string.Empty;
 			}
 
-			var index = 0;
+			int index = 0;
 
 			AddOrUpdate(value, index = 1, (val, arg) => index = arg++);
 
@@ -207,7 +209,7 @@ public static unsafe class MonoProfiler
 	public struct CallRecord
 	{
 		public ModuleHandle assembly_handle;
-		public RuntimeMethodHandle method_handle;
+		public MonoMethod* method_handle;
 		public string method_name;
 		public ulong total_time;
 		public double total_time_percentage;
@@ -218,15 +220,68 @@ public static unsafe class MonoProfiler
 		public ulong own_alloc;
 	}
 
+	[StructLayout(LayoutKind.Explicit)]
+	public struct MonoImageUnion
+	{
+		[FieldOffset(0)]
+		public ModuleHandle handle;
+		[FieldOffset(0)]
+		public MonoImage* ptr;
+	}
+
+	[StructLayout(LayoutKind.Sequential)]
+	public readonly struct MonoImage
+	{
+		public readonly int ref_count;
+
+		public readonly void* storage;
+
+		/* Aliases storage->raw_data when storage is non-NULL. Otherwise NULL. */
+		public readonly byte* raw_data;
+		public readonly uint raw_data_len;
+
+		public static ModuleHandle image_to_handle(MonoImage* image)
+		{
+			return new MonoImageUnion() { ptr = image }.handle;
+		}
+		public static MonoImage* handle_to_image(ModuleHandle handle)
+		{
+			return new MonoImageUnion() { handle = handle }.ptr;
+		}
+	}
+
+	[StructLayout(LayoutKind.Sequential)]
+	public readonly struct MonoMethod
+	{
+		public readonly ushort flags;
+		public readonly ushort iflags;
+		public readonly uint token;
+		public readonly void* klass;
+		public readonly void* signature;
+		public readonly byte* name;
+	}
+
+	[Flags]
+	public enum ProfilerArgs : byte
+	{
+		None = 0,
+		Abort = 1 << 0,
+		Advanced = 1 << 1,
+		Memory = 1 << 2,
+		AdvancedMemory = 1 << 3,
+		Timings = 1 << 4
+	}
+
 	private static bool _enabled = false;
 	private static bool _recording = false;
 
 	public static bool Enabled => _enabled;
 	public static bool Recording => _recording;
+	public static bool Crashed { get; private set; }
 
 	public static bool IsCleared => !AssemblyRecords.Any() && !CallRecords.Any();
 
-	public const ulong NATIVE_PROTOCOL = 0;
+	public const ulong NATIVE_PROTOCOL = 1;
 
 	static MonoProfiler()
 	{
@@ -244,6 +299,7 @@ public static unsafe class MonoProfiler
 		}
 		catch (Exception ex)
 		{
+			Crashed = true; // TODO: print an error when running commands if this is true
 			Logger.Error("NativeInitFailure", ex);
 		}
 	}
@@ -257,20 +313,46 @@ public static unsafe class MonoProfiler
 		*target = Encoding.UTF8.GetString(ptr, len);
 	}
 
+	private static void memcpy_array_cb<T>(T[]* target, T* src, ulong len)
+	{
+		T[] data = new T[len];
+		*target = data;
+		ulong bytes = len * (uint)sizeof(T);
+		fixed (T* dst = data)
+		{
+			Buffer.MemoryCopy(src,dst, bytes, bytes);
+		}
+	}
+	private static void native_iter<T>(List<T>* data, ulong length, IntPtr iter, delegate*<IntPtr, out T, bool> cb) where T: struct
+	{
+		if (*data == null)
+		{
+			*data = new((int)length);
+		}
+		else if (length > (ulong)data->Capacity)
+		{
+			data->Capacity = (int)length;
+		}
+		while (cb(iter, out T inst))
+		{
+			data->Add(inst);
+		}
+	}
+
 	public static void Clear()
 	{
 		AssemblyRecords.Clear();
 		CallRecords.Clear();
 		DurationTime = default;
 	}
-	public static void ToggleProfilingTimed(float duration = 0, bool advanced = true)
+	public static void ToggleProfilingTimed(float duration, ProfilerArgs args = ProfilerArgs.Advanced | ProfilerArgs.AdvancedMemory | ProfilerArgs.Memory | ProfilerArgs.Timings)
 	{
 		_profileTimer?.Destroy();
 		_profileTimer = null;
 		_profileWarningTimer?.Destroy();
 		_profileWarningTimer = null;
 
-		if (!ToggleProfiling(true).GetValueOrDefault())
+		if (!ToggleProfiling(args).GetValueOrDefault())
 		{
 			PrintWarn();
 		}
@@ -286,7 +368,7 @@ public static unsafe class MonoProfiler
 					return;
 				}
 
-				ToggleProfiling(advanced).GetValueOrDefault();
+				ToggleProfiling(args).GetValueOrDefault();
 				PrintWarn();
 			});
 		}
@@ -302,7 +384,7 @@ public static unsafe class MonoProfiler
 
 		static void PrintWarn()
 		{
-			using var table = new StringTable("Duration", "Processing", "Basic", "Advanced");
+			using StringTable table = new StringTable("Duration", "Processing", "Basic", "Advanced");
 
 			table.AddRow(
 				TimeEx.Format(DurationTime.TotalSeconds).ToLower(),
@@ -313,7 +395,7 @@ public static unsafe class MonoProfiler
 			Logger.Warn(table.ToStringMinimal());
 		}
 	}
-	public static bool? ToggleProfiling(bool advanced = true)
+	public static bool? ToggleProfiling(ProfilerArgs args = ProfilerArgs.Advanced | ProfilerArgs.AdvancedMemory | ProfilerArgs.Memory | ProfilerArgs.Timings)
 	{
 		if (!Enabled)
 		{
@@ -322,8 +404,10 @@ public static unsafe class MonoProfiler
 		}
 
 		bool state;
-		AssemblyRecord[] basicOutput = null;
-		CallRecord[] advancedOutput = null;
+		AssemblyRecords.Clear();
+		CallRecords.Clear();
+		List<AssemblyRecord> basicOutput = AssemblyRecords;
+		List<CallRecord> advancedOutput = CallRecords;
 
 		if (Recording)
 		{
@@ -331,7 +415,14 @@ public static unsafe class MonoProfiler
 			_dataProcessTimer.Start();
 		}
 
-		var result = profiler_toggle(advanced, &state, &basicOutput, &advancedOutput, &native_string_cb, &native_iter, &native_iter);
+		ProfilerResultCode result = profiler_toggle(args, &state, &basicOutput, &advancedOutput, &native_string_cb, &native_iter, &native_iter);
+
+		if (result == ProfilerResultCode.Aborted)
+		{
+			// Handle abort;
+			Logger.Warn("Profiler aborted");
+			return false;
+		}
 
 		if (!state)
 		{
@@ -345,20 +436,12 @@ public static unsafe class MonoProfiler
 			return null;
 		}
 
-		if (basicOutput != null)
+		if (basicOutput is { Count: > 0 })
 		{
-			AssemblyRecords.Clear();
-			AssemblyRecords.AddRange(basicOutput);
-			MapBasicRecords(basicOutput);
+			MapRecords(basicOutput);
 		}
 
-		if (advancedOutput != null)
-		{
-			CallRecords.Clear();
-			CallRecords.AddRange(advancedOutput);
-		}
-
-		CallRecords.Disabled = !advanced;
+		CallRecords.Disabled = advancedOutput.IsEmpty();
 
 		_recording = state;
 
@@ -376,20 +459,18 @@ public static unsafe class MonoProfiler
 		return state;
 	}
 
-	private static void MapBasicRecords(AssemblyRecord[] records)
+	private static void MapRecords(List<AssemblyRecord> records)
 	{
-		for (int i = 0; i < records.Length; i++)
+		for (int i = 0; i < records.Count; i++)
 		{
-			ref var entry = ref records[i];
+			AssemblyRecord entry = records[i];
 
-			if (!AssemblyMap.ContainsKey(entry.assembly_handle))
-			{
-				var name = (string)null;
+			 if (AssemblyMap.ContainsKey(entry.assembly_handle)) continue;
+			 string name = null;
 
-				get_image_name(&name, entry.assembly_handle, &native_string_cb);
+			get_image_name(&name, entry.assembly_handle, &native_string_cb);
 
-				AssemblyMap[entry.assembly_handle] = name ?? "UNKNOWN";
-			}
+			AssemblyMap[entry.assembly_handle] = name ?? "UNKNOWN";
 		}
 	}
 
@@ -415,22 +496,11 @@ public static unsafe class MonoProfiler
 			assemblyName = AssemblyBank.Increment(assemblyName);
 		}
 
-		var handle = assembly.ManifestModule.ModuleHandle;
+		ModuleHandle handle = assembly.ManifestModule.ModuleHandle;
 
 		AssemblyMap[handle] = assemblyName;
 
 		register_profiler_assembly(handle);
-	}
-	private static void native_iter<T>(T[]* data, ulong length, IntPtr iter, delegate*<IntPtr, T*, bool> cb) where T: struct
-	{
-		*data = new T[(int)length];
-		ulong index = 0;
-		T inst = default;
-		while (length > index && cb(iter, &inst))
-		{
-			(*data)[index] = inst;
-			index++;
-		}
 	}
 
 	#region PInvokes
@@ -441,30 +511,27 @@ public static unsafe class MonoProfiler
 		Profiler
 	}
 
-	[DllImport("CarbonNative")]
+	private const string CBNative = "CarbonNative";
+
+	[DllImport(CBNative)]
 	private static extern ulong register_profiler_assembly(ModuleHandle handle);
-
-	[DllImport("CarbonNative")]
+	[DllImport(CBNative)]
 	private static extern bool profiler_is_enabled();
-
-	[DllImport("CarbonNative")]
+	[DllImport(CBNative)]
 	private static extern void carbon_init_logger(delegate*<Severity, int, byte*, int, LogSource, void> logger);
-
-	[DllImport("CarbonNative")]
+	[DllImport(CBNative)]
 	private static extern ulong carbon_get_protocol();
-
-	[DllImport("CarbonNative")]
+	[DllImport(CBNative)]
 	private static extern void get_image_name(string* str, ModuleHandle handle, delegate*<string*, byte*, int, void> string_marshal);
-
-	[DllImport("CarbonNative")]
+	[DllImport(CBNative)]
 	private static extern ProfilerResultCode profiler_toggle(
-		bool gen_advanced,
+		ProfilerArgs args,
 		bool* state,
-		AssemblyRecord[]* basic_out,
-		CallRecord[]* advanced_out,
+		List<AssemblyRecord>* basic_out,
+		List<CallRecord>* advanced_out,
 		delegate*<string*, byte*, int, void> string_marshal,
-		delegate*<AssemblyRecord[]*, ulong, IntPtr, delegate*<IntPtr, AssemblyRecord*, bool>, void> basic_iter,
-		delegate*<CallRecord[]*, ulong, IntPtr, delegate*<IntPtr, CallRecord*, bool>, void> advanced_iter
+		delegate*<List<AssemblyRecord>*, ulong, IntPtr, delegate*<IntPtr, out AssemblyRecord, bool>, void> basic_iter,
+		delegate*<List<CallRecord>*, ulong, IntPtr, delegate*<IntPtr, out CallRecord, bool>, void> advanced_iter
 		);
 
 	#endregion

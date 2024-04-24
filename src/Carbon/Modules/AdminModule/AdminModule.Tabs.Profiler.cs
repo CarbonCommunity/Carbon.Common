@@ -66,7 +66,7 @@ public partial class AdminModule
 			return profiler;
 		}
 
-		public static IEnumerable<MonoProfiler.AssemblyRecord> GetSortedBasic(int sort)
+		public static IEnumerable<MonoProfiler.AssemblyRecord> GetSortedAssemblies(int sort)
 		{
 			return sort switch
 			{
@@ -84,6 +84,25 @@ public partial class AdminModule
 				3 => MonoProfiler.AssemblyRecords.OrderByDescending(x => x.calls),
 				4 => MonoProfiler.AssemblyRecords.OrderByDescending(x => x.alloc),
 				_ => default
+			};
+		}
+		public static IEnumerable<MonoProfiler.CallRecord> GetSortedCalls(ModuleHandle selection, int sort)
+		{
+			var advancedRecords = MonoProfiler.CallRecords.Where(x => selection.GetHashCode() == 0 || x.assembly_handle == selection);
+
+			if (!advancedRecords.Any()) return advancedRecords;
+
+			return sort switch
+			{
+				0 => advancedRecords.OrderBy(x => x.method_name),
+				1 => advancedRecords.OrderByDescending(x => x.total_time),
+				2 => advancedRecords.OrderByDescending(x => x.total_time_percentage),
+				3 => advancedRecords.OrderByDescending(x => x.own_time),
+				4 => advancedRecords.OrderByDescending(x => x.own_time_percentage),
+				5 => advancedRecords.OrderByDescending(x => x.calls),
+				6 => advancedRecords.OrderByDescending(x => x.total_alloc),
+				7 => advancedRecords.OrderByDescending(x => x.own_alloc),
+				_ => advancedRecords
 			};
 		}
 
@@ -151,7 +170,7 @@ public partial class AdminModule
 			var filtered = Pool.GetList<MonoProfiler.AssemblyRecord>();
 			var maxVal = 0f;
 
-			filtered.AddRange(GetSortedBasic(sortIndex));
+			filtered.AddRange(GetSortedAssemblies(sortIndex));
 
 			if (filtered.Count > 0)
 			{
@@ -194,7 +213,7 @@ public partial class AdminModule
 
 			Stripe(this, 0, (float)filtered.Sum(x => x.total_time_percentage), 100, niceColor, niceColor,
 				"All",
-				$"{filtered.Sum(x => (float)x.total_time)}ms | {filtered.Sum(x => (float)x.total_time_percentage)}%",
+				$"{filtered.Sum(x => (float)x.total_time)}ms | {filtered.Sum(x => (float)x.total_time_percentage):0.0}%",
 				$"<size=7>{TimeEx.Format(MonoProfiler.DurationTime.TotalSeconds, false).ToLower()}\n{MonoProfiler.CallRecords.Count:n0} calls</size>",
 				$"adminmodule.profilerselect -1",
 				selection.GetHashCode() == 0);
@@ -263,58 +282,27 @@ public partial class AdminModule
 			AddColumn(1, true);
 
 			var searchInput = session.GetStorage(this, "asearch", string.Empty);
-			var sortIndex = session.GetStorage(this, "asort", 1);
-			var advancedRecords =
-				MonoProfiler.CallRecords.Where(x => selection.GetHashCode() == 0 || x.assembly_handle == selection);
+			var sort = session.GetStorage(this, "asort", 1);
+			var advancedRecords = GetSortedCalls(selection, sort);
 			var maxVal = 0f;
 
 			if (advancedRecords.Any())
 			{
-				switch (sortIndex)
+				maxVal = sort switch
 				{
-					case 0:
-						advancedRecords = advancedRecords.OrderBy(x => x.method_name);
-						maxVal = advancedRecords.Max(x => (float)x.total_time_percentage);
-						break;
-
-					case 1:
-						advancedRecords = advancedRecords.OrderByDescending(x => x.total_time);
-						maxVal = advancedRecords.Max(x => (float)x.total_time);
-						break;
-
-					case 2:
-						advancedRecords = advancedRecords.OrderByDescending(x => x.total_time_percentage);
-						maxVal = advancedRecords.Max(x => (float)x.total_time_percentage);
-						break;
-
-					case 3:
-						advancedRecords = advancedRecords.OrderByDescending(x => x.own_time);
-						maxVal = advancedRecords.Max(x => (float)x.own_time);
-						break;
-
-					case 4:
-						advancedRecords = advancedRecords.OrderByDescending(x => x.own_time_percentage);
-						maxVal = advancedRecords.Max(x => (float)x.own_time_percentage);
-						break;
-
-					case 5:
-						advancedRecords = advancedRecords.OrderByDescending(x => x.calls);
-						maxVal = advancedRecords.Max(x => (float)x.calls);
-						break;
-
-					case 6:
-						advancedRecords = advancedRecords.OrderByDescending(x => x.total_alloc);
-						maxVal = advancedRecords.Max(x => (float)x.total_alloc);
-						break;
-
-					case 7:
-						advancedRecords = advancedRecords.OrderByDescending(x => x.own_alloc);
-						maxVal = advancedRecords.Max(x => (float)x.own_alloc);
-						break;
-				}
+					0 => advancedRecords.Max(x => (float)x.total_time_percentage),
+					1 => advancedRecords.Max(x => (float)x.total_time),
+					2 => advancedRecords.Max(x => (float)x.total_time_percentage),
+					3 => advancedRecords.Max(x => (float)x.own_time),
+					4 => advancedRecords.Max(x => (float)x.own_time_percentage),
+					5 => advancedRecords.Max(x => (float)x.calls),
+					6 => advancedRecords.Max(x => (float)x.total_alloc),
+					7 => advancedRecords.Max(x => (float)x.own_alloc),
+					_ => maxVal
+				};
 			}
 
-			AddDropdown(1, $"<b>CALLS ({advancedRecords.Count():n0})</b>", ap => sortIndex, (ap, i) =>
+			AddDropdown(1, $"<b>CALLS ({advancedRecords.Count():n0})</b>", ap => sort, (ap, i) =>
 			{
 				ap.SetStorage(this, "asort", i);
 				DrawCalls(session, selection);
@@ -340,7 +328,7 @@ public partial class AdminModule
 					continue;
 				}
 
-				var value = sortIndex switch
+				var value = sort switch
 				{
 					1 => record.total_time,
 					2 or 0 => (float)record.total_time_percentage,
@@ -354,9 +342,9 @@ public partial class AdminModule
 
 				Stripe(this, 1, value, maxVal, intenseColor, calmColor,
 					record.method_name.Truncate(105, "..."),
-					$"{record.total_time}ms total ({record.total_time_percentage}%) | {record.own_time}ms own ({record.own_time_percentage}%)",
+					$"{record.total_time}ms total ({record.total_time_percentage:0.0}%) | {record.own_time}ms own ({record.own_time_percentage:0.0}%)",
 					$"<b>{record.calls:n0}</b> {(((int)record.calls).Plural("call", "calls"))}\n{ByteEx.Format(record.total_alloc).ToUpper()} total | {ByteEx.Format(record.own_alloc).ToUpper()} own",
-					string.Empty);
+					Community.Runtime.MonoProfilerConfig.SourceViewer ? $"adminmodule.profilerselectcall {index}" : string.Empty);
 
 				index++;
 			}
@@ -374,12 +362,34 @@ public partial class AdminModule
 	{
 		var ap = GetPlayerSession(arg.Player());
 
-		var selection = ProfilerTab.GetSortedBasic(ap.GetStorage(ap.SelectedTab, "bsort", 1))
+		var selection = ProfilerTab.GetSortedAssemblies(ap.GetStorage(ap.SelectedTab, "bsort", 1))
 			.FindAt(arg.GetInt(0));
 		ap.SetStorage(null, "profilerval", selection.assembly_handle);
 		ap.SelectedTab.OnChange(ap, ap.SelectedTab);
 
 		Draw(ap.Player);
+	}
+
+	[Conditional("!MINIMAL")]
+	[ProtectedCommand("adminmodule.profilerselectcall")]
+	private void ProfilerSelectCall(ConsoleSystem.Arg arg)
+	{
+		var index = arg.GetInt(0);
+		var ap = GetPlayerSession(arg.Player());
+
+		var selection = ap.GetStorage<ModuleHandle>(null, "profilerval");
+		var call = ProfilerTab.GetSortedCalls(selection, ap.GetStorage(ap.SelectedTab, "asort", 1))
+			.FindAt(index);
+
+		var currentTab = ap.SelectedTab;
+		var tab = SourceViewerTab.MakeMethod(call);
+
+		tab.Close = ap =>
+		{
+			SetTab(ap.Player, currentTab, true);
+		};
+
+		SetTab(ap.Player, tab, true);
 	}
 
 	[Conditional("!MINIMAL")]
@@ -394,7 +404,7 @@ public partial class AdminModule
 		}
 
 		MonoProfiler.Clear();
-		MonoProfiler.ToggleProfilingTimed();
+		MonoProfiler.ToggleProfilingTimed(0f);
 
 		ap.SelectedTab.OnChange(ap, ap.SelectedTab);
 
