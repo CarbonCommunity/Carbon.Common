@@ -10,6 +10,7 @@ using System.Reflection.PortableExecutable;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.Metadata;
+using Unity.Collections.LowLevel.Unsafe;
 
 namespace Carbon.Components;
 
@@ -27,6 +28,29 @@ public class SourceCodeBank
 		if (!AssemblyBank.TryGetValue(assemblyPath, out var source))
 		{
 			AssemblyBank[assemblyPath] = source = SourceCode.Get(assemblyPath);
+		}
+
+		return source;
+	}
+	public static SourceCode Parse(string name, PEFile file)
+	{
+		if (!AssemblyBank.TryGetValue(name, out var source))
+		{
+			AssemblyBank[name] = source = SourceCode.Get(file);
+		}
+
+		return source;
+	}
+	public unsafe static SourceCode Parse(string name, ModuleHandle handle)
+	{
+		if (!AssemblyBank.TryGetValue(name, out var source))
+		{
+			var image = MonoProfiler.MonoImage.handle_to_image(handle);
+
+			var reader = new PEReader(image->raw_data, (int)image->raw_data_len);
+			var pefile = new PEFile(name, reader);
+
+			AssemblyBank[name] = source = SourceCode.Get(pefile);
 		}
 
 		return source;
@@ -110,6 +134,30 @@ public class SourceCodeBank
 			Settings.UsingDeclarations = false;
 
 			return Methods[id] = Decompiler.DecompileAsString(methodCode.MetadataToken);
+		}
+		public string ParseMethod(uint token)
+		{
+			var id = token.ToString();
+			if (Methods.TryGetValue(id, out var source)) return source;
+
+			Settings.UsingDeclarations = false;
+
+			return Methods[id] = Decompiler.DecompileAsString(Decompiler.TypeSystem.MainModule.GetDefinition(UnsafeUtility.As<uint, MethodDefinitionHandle>(ref token)).MetadataToken);
+		}
+		public unsafe string ParseMethod(MonoProfiler.MonoMethod* method, out string type)
+		{
+			var token = method->token;
+			var id = token.ToString();
+			type = null;
+
+			if (Methods.TryGetValue(id, out var source)) return source;
+
+			Settings.UsingDeclarations = false;
+
+			var iMethod = Decompiler.TypeSystem.MainModule.GetDefinition( UnsafeUtility.As<uint, MethodDefinitionHandle>(ref token));
+			type = iMethod.DeclaringType.FullName;
+
+			return Methods[id] = Decompiler.DecompileAsString(iMethod.MetadataToken);
 		}
 	}
 }

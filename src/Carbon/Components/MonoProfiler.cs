@@ -323,7 +323,6 @@ public static unsafe class MonoProfiler
 			Buffer.MemoryCopy(src,dst, bytes, bytes);
 		}
 	}
-
 	private static void native_iter<T>(List<T>* data, ulong length, IntPtr iter, delegate*<IntPtr, out T, bool> cb) where T: struct
 	{
 		if (*data == null)
@@ -346,7 +345,7 @@ public static unsafe class MonoProfiler
 		CallRecords.Clear();
 		DurationTime = default;
 	}
-	public static void ToggleProfilingTimed(float duration, ProfilerArgs args)
+	public static void ToggleProfilingTimed(float duration, ProfilerArgs args = ProfilerArgs.Advanced | ProfilerArgs.AdvancedMemory | ProfilerArgs.Memory | ProfilerArgs.Timings)
 	{
 		_profileTimer?.Destroy();
 		_profileTimer = null;
@@ -396,7 +395,7 @@ public static unsafe class MonoProfiler
 			Logger.Warn(table.ToStringMinimal());
 		}
 	}
-	public static bool? ToggleProfiling(ProfilerArgs args)
+	public static bool? ToggleProfiling(ProfilerArgs args = ProfilerArgs.Advanced | ProfilerArgs.AdvancedMemory | ProfilerArgs.Memory | ProfilerArgs.Timings)
 	{
 		if (!Enabled)
 		{
