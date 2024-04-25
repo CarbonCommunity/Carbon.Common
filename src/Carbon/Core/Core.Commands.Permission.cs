@@ -160,82 +160,119 @@ public partial class CorePlugin : CarbonPlugin
 		}
 	}
 
-	[ConsoleCommand("show", "Displays information about a specific player or group (incl. permissions, groups and user list). Do 'c.show' for syntax info.")]
+	[ConsoleCommand("show",
+		"Displays information about a specific player or group (incl. permissions, groups and user list). Do 'c.show' for syntax info.")]
 	[AuthLevel(2)]
 	private void Show(ConsoleSystem.Arg arg)
 	{
 		void PrintWarn()
 		{
 			arg.ReplyWith($"Syntax: c.show <groups|perms>\n" +
-				$"Syntax: c.show <group|user> <name|id>");
+			              $"Syntax: c.show <group|user|perm> <name|id>");
 		}
 
-		if (!arg.HasArgs(1)) { PrintWarn(); return; }
+		if (!arg.HasArgs(1))
+		{
+			PrintWarn();
+			return;
+		}
 
 		var action = arg.GetString(0);
 
 		switch (action)
 		{
 			case "user":
+			{
+				if (!arg.HasArgs(2))
 				{
-					if (!arg.HasArgs(2)) { PrintWarn(); return; }
-
-					var name = arg.GetString(1);
-					var user = permission.FindUser(name);
-
-					if (user.Value == null)
-					{
-						arg.ReplyWith($"Couldn't find that user.");
-						return;
-					}
-
-					var permissions = permission.GetUserPermissions(user.Key);
-					arg.ReplyWith($"User {user.Value.LastSeenNickname}[{user.Key}] found in {user.Value.Groups.Count:n0} groups:\n  {user.Value.Groups.Select(x => x).ToString(", ", " and ")}\n" +
-						$"and has {permissions.Count():n0} permissions:\n  {permissions.ToString(", ")}");
-					break;
+					PrintWarn();
+					return;
 				}
+
+				var name = arg.GetString(1);
+				var user = permission.FindUser(name);
+
+				if (user.Value == null)
+				{
+					arg.ReplyWith($"Couldn't find that user.");
+					return;
+				}
+
+				var permissions = permission.GetUserPermissions(user.Key);
+				arg.ReplyWith(
+					$"User {user.Value.LastSeenNickname}[{user.Key}] found in {user.Value.Groups.Count:n0} groups:\n  {user.Value.Groups.Select(x => x).ToString(", ", " and ")}\n" +
+					$"and has {permissions.Count():n0} permissions:\n  {permissions.ToString(", ")}");
+				break;
+			}
 			case "group":
+			{
+				if (!arg.HasArgs(2))
 				{
-					if (!arg.HasArgs(2)) { PrintWarn(); return; }
-
-					var name = arg.GetString(1);
-
-					if (!permission.GroupExists(name))
-					{
-						arg.ReplyWith($"Couldn't find that group.");
-						return;
-					}
-
-					var users = permission.GetUsersInGroup(name);
-					var permissions = permission.GetGroupPermissions(name, false);
-					arg.ReplyWith($"Group {name} has {users.Length:n0} users:\n  {users.Select(x => x).ToString(", ")}\n" +
-						$"and has {permissions.Length:n0} permissions:\n  {permissions.Select(x => x).ToString(", ")}");
-					break;
+					PrintWarn();
+					return;
 				}
+
+				var name = arg.GetString(1);
+
+				if (!permission.GroupExists(name))
+				{
+					arg.ReplyWith($"Couldn't find that group.");
+					return;
+				}
+
+				var users = permission.GetUsersInGroup(name);
+				var permissions = permission.GetGroupPermissions(name, false);
+				arg.ReplyWith($"Group {name} has {users.Length:n0} users:\n  {users.Select(x => x).ToString(", ")}\n" +
+				              $"and has {permissions.Length:n0} permissions:\n  {permissions.Select(x => x).ToString(", ")}");
+				break;
+			}
+			case "perm":
+			{
+				if (!arg.HasArgs(2))
+				{
+					PrintWarn();
+					return;
+				}
+
+				var name = arg.GetString(1);
+
+				if (!permission.PermissionExists(name))
+				{
+					arg.ReplyWith($"Couldn't find that permission.");
+					return;
+				}
+
+				var users = permission.GetPermissionUsers(name);
+				var groups = permission.GetPermissionGroups(name);
+				arg.ReplyWith($"Permission {name} is granted to {users.Length:n0} users:\n  {users.Select(x => x).ToString(", ")}\n" +
+				              $"and {groups.Length:n0} groups:\n  {groups.Select(x => x).ToString(", ")}");
+				break;
+			}
 			case "groups":
+			{
+				var groups = permission.GetGroups();
+				if (groups.Count() == 0)
 				{
-					var groups = permission.GetGroups();
-					if (groups.Count() == 0)
-					{
-						arg.ReplyWith($"Couldn't find any group.");
-						return;
-					}
-
-					arg.ReplyWith($"Groups:\n {groups.ToString(", ")}");
-					break;
+					arg.ReplyWith($"Couldn't find any group.");
+					return;
 				}
+
+				arg.ReplyWith($"Groups:\n {groups.ToString(", ")}");
+				break;
+			}
 			case "perms":
+			{
+				var perms = permission.GetPermissions();
+
+				if (!perms.Any())
 				{
-					var perms = permission.GetPermissions();
-					if (perms.Count() == 0)
-					{
-						arg.ReplyWith($"Couldn't find any permission.");
-					}
-
-					arg.ReplyWith($"Permissions:\n {perms.ToString(", ")}");
-
-					break;
+					arg.ReplyWith($"Couldn't find any permission.");
 				}
+
+				arg.ReplyWith($"Permissions:\n {perms.ToString(", ")}");
+
+				break;
+			}
 
 			default:
 				PrintWarn();
