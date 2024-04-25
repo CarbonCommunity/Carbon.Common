@@ -23,19 +23,16 @@ public partial class AdminModule
 
 		internal static string[] sortAssemblyOptions = new[] {
 			"Name",
-			"Total Time",
-			"Total Time (%)",
+			"Time",
 			"Calls",
 			"Memory" };
 
 		internal static string[] sortCallsOptions = new[]
 		{
 			"Method",
-			"Total Time",
-			"Total Time (%)",
-			"Own Time",
-			"Own Time (%)",
 			"Calls",
+			"Time (Total)",
+			"Time (Own)",
 			"Memory (Total)",
 			"Memory (Own)"
 		};
@@ -80,9 +77,8 @@ public partial class AdminModule
 					return assemblyName;
 				}),
 				1 => MonoProfiler.AssemblyRecords.OrderByDescending(x => x.total_time),
-				2 => MonoProfiler.AssemblyRecords.OrderByDescending(x => x.total_time_percentage),
-				3 => MonoProfiler.AssemblyRecords.OrderByDescending(x => x.calls),
-				4 => MonoProfiler.AssemblyRecords.OrderByDescending(x => x.alloc),
+				2 => MonoProfiler.AssemblyRecords.OrderByDescending(x => x.calls),
+				3 => MonoProfiler.AssemblyRecords.OrderByDescending(x => x.alloc),
 				_ => default
 			};
 		}
@@ -95,13 +91,11 @@ public partial class AdminModule
 			return sort switch
 			{
 				0 => advancedRecords.OrderBy(x => x.method_name),
-				1 => advancedRecords.OrderByDescending(x => x.total_time),
-				2 => advancedRecords.OrderByDescending(x => x.total_time_percentage),
+				1 => advancedRecords.OrderByDescending(x => x.calls),
+				2 => advancedRecords.OrderByDescending(x => x.total_time),
 				3 => advancedRecords.OrderByDescending(x => x.own_time),
-				4 => advancedRecords.OrderByDescending(x => x.own_time_percentage),
-				5 => advancedRecords.OrderByDescending(x => x.calls),
-				6 => advancedRecords.OrderByDescending(x => x.total_alloc),
-				7 => advancedRecords.OrderByDescending(x => x.own_alloc),
+				4 => advancedRecords.OrderByDescending(x => x.total_alloc),
+				5 => advancedRecords.OrderByDescending(x => x.own_alloc),
 				_ => advancedRecords
 			};
 		}
@@ -176,10 +170,9 @@ public partial class AdminModule
 			{
 				maxVal = sortIndex switch
 				{
-					1 => filtered.Max(x => (float)x.total_time),
-					0 or 2 => filtered.Max(x => (float)x.total_time_percentage),
-					3 => filtered.Max(x => (float)x.calls),
-					4 => filtered.Max(x => (float)x.alloc),
+					0 or 1 => filtered.Max(x => (float)x.total_time),
+					2 => filtered.Max(x => (float)x.calls),
+					3 => filtered.Max(x => (float)x.alloc),
 					_ => maxVal
 				};
 			}
@@ -290,14 +283,11 @@ public partial class AdminModule
 			{
 				maxVal = sort switch
 				{
-					0 => advancedRecords.Max(x => (float)x.total_time_percentage),
-					1 => advancedRecords.Max(x => (float)x.total_time),
-					2 => advancedRecords.Max(x => (float)x.total_time_percentage),
+					0 or 1 => advancedRecords.Max(x => (float)x.calls),
+					2 => advancedRecords.Max(x => (float)x.total_time),
 					3 => advancedRecords.Max(x => (float)x.own_time),
-					4 => advancedRecords.Max(x => (float)x.own_time_percentage),
-					5 => advancedRecords.Max(x => (float)x.calls),
-					6 => advancedRecords.Max(x => (float)x.total_alloc),
-					7 => advancedRecords.Max(x => (float)x.own_alloc),
+					4 => advancedRecords.Max(x => (float)x.total_alloc),
+					5 => advancedRecords.Max(x => (float)x.own_alloc),
 					_ => maxVal
 				};
 			}
@@ -330,13 +320,11 @@ public partial class AdminModule
 
 				var value = sort switch
 				{
-					1 => record.total_time,
-					2 or 0 => (float)record.total_time_percentage,
+					0 or 1 => record.calls,
+					2 => record.total_time,
 					3 => record.own_time,
-					4 => (float)record.own_time_percentage,
-					5 => record.calls,
-					6 => record.total_alloc,
-					7 => record.own_alloc,
+					4 => record.total_alloc,
+					5 => record.own_alloc,
 					_ => 0f
 				};
 
