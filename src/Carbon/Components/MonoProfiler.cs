@@ -511,19 +511,22 @@ public static unsafe class MonoProfiler
 		Profiler
 	}
 
-	private const string CBNative = "CarbonNative";
-
-	[DllImport(CBNative)]
+	[DllImport("CarbonNative")]
 	private static extern ulong register_profiler_assembly(ModuleHandle handle);
-	[DllImport(CBNative)]
+
+	[DllImport("CarbonNative")]
 	private static extern bool profiler_is_enabled();
-	[DllImport(CBNative)]
+
+	[DllImport("CarbonNative")]
 	private static extern void carbon_init_logger(delegate*<Severity, int, byte*, int, LogSource, void> logger);
-	[DllImport(CBNative)]
+
+	[DllImport("CarbonNative")]
 	private static extern ulong carbon_get_protocol();
-	[DllImport(CBNative)]
+
+	[DllImport("CarbonNative")]
 	private static extern void get_image_name(string* str, ModuleHandle handle, delegate*<string*, byte*, int, void> string_marshal);
-	[DllImport(CBNative)]
+
+	[DllImport("CarbonNative")]
 	private static extern ProfilerResultCode profiler_toggle(
 		ProfilerArgs args,
 		bool* state,

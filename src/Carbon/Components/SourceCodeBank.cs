@@ -155,6 +155,12 @@ public class SourceCodeBank
 			Settings.UsingDeclarations = false;
 
 			var iMethod = Decompiler.TypeSystem.MainModule.GetDefinition( UnsafeUtility.As<uint, MethodDefinitionHandle>(ref token));
+
+			if (iMethod == null)
+			{
+				return "No method body available";
+			}
+
 			type = iMethod.DeclaringType.FullName;
 
 			return Methods[id] = Decompiler.DecompileAsString(iMethod.MetadataToken);
