@@ -12,6 +12,7 @@ using Facepunch;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
+using UnityEngine.UI;
 
 namespace Carbon.Modules;
 
@@ -20,7 +21,6 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 	public class SourceViewerTab : Tab
 	{
 		public Action<PlayerSession> Close;
-		public bool Loading;
 
 		internal const string AttrCastout =
 			"[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.InternalCall, MethodCodeType = System.Runtime.CompilerServices.MethodCodeType.Runtime)]";
@@ -37,7 +37,6 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			var tab = new SourceViewerTab("testchat", "TestChat", Community.Runtime.CorePlugin);
 			tab.OnChange += (_, tab1) =>
 			{
-				tab.Loading = false;
 				tab1.AddColumn(0, true);
 			};
 			tab.Over += (_, cui, container, panel, ap) =>
@@ -51,14 +50,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 				for (int i = 0; i < lines.Length; i++) temp.Add($"{i + 1}");
 
-				cui.CreateText(container, blur, "0.3 0.7 0.9 0.5",
-					string.Join("\n", temp), size,
-					align: TextAnchor.UpperRight, font: CUI.Handler.FontTypes.DroidSansMono,
-					xMin: 0f, xMax: 0.02f, yMin: 0.2f, yMax: 0.95f);
-
 				cui.CreateImage(container, blur, "fade", Cache.CUI.WhiteColor, yMin: 0.96f);
-				cui.CreatePanel(container, blur, "0.2 0.2 0.2 1", xMin: 0.0275f, xMax: 0.0275f, OxMax: 1f);
-				cui.CreatePanel(container, blur, "0.2 0.2 0.2 1", yMin: 0.96f, yMax: 0.96f, OyMax: 1f);
 
 				cui.CreateText(container, blur, "0.8 0.8 0.8 1",
 					$"{fileName} <color=orange>*</color>", 8,
@@ -75,26 +67,40 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					xMin: 0.978f, xMax: 1f, yMin: 0.96f, command: "adminmodule.profilerpreviewclose");
 				cui.CreateImage(container, exit, "close", "1 1 1 0.8", xMin: 0.2f, xMax: 0.8f, yMin: 0.2f, yMax: 0.8f);
 
-				if (tab.Loading)
-				{
-					cui.CreateText(container, blur, "0.8 0.8 0.8 1",
-						"Loading, please wait..."
-							.Replace("\r", "")
-							.Replace("\"", "'")
-							.Replace("\t", "<color=#454545>————</color>"), size,
-						align: TextAnchor.UpperLeft, font: CUI.Handler.FontTypes.DroidSansMono,
-						xMin: 0.036f, xMax: 1f, yMin: 0.2f, yMax: 0.95f);
-				}
-				else
-				{
-					cui.CreateText(container, blur, "0.8 0.8 0.8 1",
-						resultContent
-							.Replace("\r", "")
-							.Replace("\"", "'")
-							.Replace("\t", "<color=#454545>————</color>"), size,
-						align: TextAnchor.UpperLeft, font: CUI.Handler.FontTypes.DroidSansMono,
-						xMin: 0.036f, xMax: 2f, yMin: 0.2f, yMax: 0.95f);
-				}
+				var scrollview = cui.CreateScrollView(container, blur,
+					vertical: true, horizontal: true, movementType: ScrollRect.MovementType.Clamped, elasticity: 0.5f,
+					inertia: true, decelerationRate: 0.2f, scrollSensitivity: 50, maskSoftness: "0 0",
+					contentTransform: out var contentTransform, verticalScrollBar: out var verticalScroll,
+					horizontalScrollBar: out var horizontalScroll,
+					yMax: 0.96f);
+
+				cui.CreatePanel(container, blur, "0.2 0.2 0.2 1", yMin: 1, yMax: 1, OyMin: -20f, OyMax: -19f);
+				cui.CreatePanel(container, scrollview, "0.2 0.2 0.2 1", xMin: 0, xMax: 0, OxMin: 29, OxMax: 30);
+
+				var longestLine = lines.Array.Max(x => x.Length);
+				var height = -(11.2f * lines.Length.Clamp(45, int.MaxValue));
+				var width = 2.75f * longestLine.Clamp(547, int.MaxValue);
+
+				contentTransform.AnchorMin = "0 1";
+				contentTransform.AnchorMax = "0 1";
+				contentTransform.OffsetMin = $"0 {height}";
+				contentTransform.OffsetMax = $"{width} 0";
+				verticalScroll.Size = 2;
+				horizontalScroll.Size = 2;
+				horizontalScroll.AutoHide = false;
+
+				cui.CreateText(container, scrollview, "0.3 0.7 0.9 0.5",
+					string.Join("\n", temp), size,
+					align: TextAnchor.UpperRight, font: CUI.Handler.FontTypes.DroidSansMono,
+					xMin: 0, xMax: 0, OxMin: 0, OxMax: 20, yMin: 1, yMax: 1f, OyMax: -7.5f, OyMin: height);
+
+				cui.CreateText(container, scrollview, "0.8 0.8 0.8 1",
+					resultContent
+						.Replace("\r", "")
+						.Replace("\"", "'")
+						.Replace("\t", "<color=#454545>————</color>"), size,
+					align: TextAnchor.UpperLeft, font: CUI.Handler.FontTypes.DroidSansMono,
+					xMin: 0, xMax: 0, yMin: 1f, yMax: 1f, OxMin: 40, OxMax: 40 + width, OyMax: -7.5f, OyMin: height);
 
 				Pool.FreeList(ref temp);
 			};

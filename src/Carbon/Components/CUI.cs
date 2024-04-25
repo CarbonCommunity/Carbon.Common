@@ -367,24 +367,7 @@ public readonly struct CUI : IDisposable
 				case CuiNeedsKeyboardComponent: _needsKeyboards.Add(element); break;
 				case CuiCountdownComponent: _countdowns.Add(element); break;
 				case CuiOutlineComponent: _outlines.Add(element); break;
-				case CuiScrollViewComponent scrollView:
-				{
-					if (scrollView.ContentTransform != null)
-					{
-						_rects.Add(scrollView.ContentTransform);
-					}
-
-					if (scrollView.HorizontalScrollBar != null)
-					{
-						_scrollBars.Add(scrollView.HorizontalScrollBar);
-					}
-					if (scrollView.VerticalScrollBar != null)
-					{
-						_scrollBars.Add(scrollView.VerticalScrollBar);
-					}
-
-					_scrollViews.Add(element); break;
-				}
+				case CuiScrollViewComponent: _scrollViews.Add(element); break;
 				case CuiScrollBarComponent: _scrollBars.Add(element); break;
 			}
 		}
@@ -707,13 +690,13 @@ public readonly struct CUI : IDisposable
 				element.DecelerationRate = _defaultScrollView.DecelerationRate;
 				element.ScrollSensitivity = _defaultScrollView.ScrollSensitivity;
 				element.MaskSoftness = _defaultScrollView.MaskSoftness;
-				element.ContentTransform = TakeFromPoolRect();
+				element.ContentTransform = new();
 				element.ContentTransform.AnchorMin = "0 0";
 				element.ContentTransform.AnchorMax = "1 1";
 				element.ContentTransform.OffsetMin = "0 0";
 				element.ContentTransform.OffsetMax = "0 0";
-				element.HorizontalScrollBar = TakeFromPoolScrollbar();
-				element.VerticalScrollBar = TakeFromPoolScrollbar();
+				element.HorizontalScrollBar = new();
+				element.VerticalScrollBar = new();
 
 				_scrollViews.RemoveAt(0);
 			}
