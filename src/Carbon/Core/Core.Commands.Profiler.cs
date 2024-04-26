@@ -74,7 +74,7 @@ public partial class CorePlugin : CarbonPlugin
 		static void WriteFileString(string extension, string data)
 		{
 			var date = DateTime.Now;
-			var file = Path.Combine(Defines.GetRustRootFolder(), $"profile-{date.Year}_{date.Month}_{date.Day}_{date.Hour}{date.Minute}{date.Second}.{extension}");
+			var file = Path.Combine(Defines.GetProfilesFolder(), $"profile-{date.Year}_{date.Month}_{date.Day}_{date.Hour}{date.Minute}{date.Second}.{extension}");
 			OsEx.File.Create(file, data);
 
 			Logger.Warn($" Stored output at {file}");

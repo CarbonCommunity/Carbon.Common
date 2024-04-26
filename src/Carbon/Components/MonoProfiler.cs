@@ -198,18 +198,37 @@ public static unsafe class MonoProfiler
 	[StructLayout(LayoutKind.Sequential)]
 	public struct AssemblyRecord
 	{
-		public ModuleHandle assembly_handle;
+		[JsonIgnore] public ModuleHandle assembly_handle;
 		public ulong total_time;
 		public double total_time_percentage;
 		public ulong calls;
 		public ulong alloc;
+
+		public string assembly_name;
+		public MonoProfilerConfig.ProfileTypes assembly_type;
+
+		public string GetAssemblyName()
+		{
+			if (string.IsNullOrEmpty(assembly_name) && !AssemblyMap.TryGetValue(assembly_handle, out assembly_name))
+			{
+				return string.Empty;
+			}
+
+			return assembly_name;
+		}
+
+		public MonoProfilerConfig.ProfileTypes GetAssemblyType()
+		{
+			AssemblyType.TryGetValue(assembly_handle, out assembly_type);
+			return assembly_type;
+		}
 	}
 
 	[StructLayout(LayoutKind.Sequential)]
 	public struct CallRecord
 	{
-		public ModuleHandle assembly_handle;
-		public MonoMethod* method_handle;
+		[JsonIgnore] public ModuleHandle assembly_handle;
+		[JsonIgnore] public MonoMethod* method_handle;
 		public string method_name;
 		public ulong total_time;
 		public double total_time_percentage;
@@ -218,6 +237,25 @@ public static unsafe class MonoProfiler
 		public ulong calls;
 		public ulong total_alloc;
 		public ulong own_alloc;
+
+		public string assembly_name;
+		public MonoProfilerConfig.ProfileTypes assembly_type;
+
+		public string GetAssemblyName()
+		{
+			if (string.IsNullOrEmpty(assembly_name) && !AssemblyMap.TryGetValue(assembly_handle, out assembly_name))
+			{
+				return string.Empty;
+			}
+
+			return assembly_name;
+		}
+
+		public MonoProfilerConfig.ProfileTypes GetAssemblyType()
+		{
+			AssemblyType.TryGetValue(assembly_handle, out assembly_type);
+			return assembly_type;
+		}
 	}
 
 	[StructLayout(LayoutKind.Explicit)]
@@ -384,13 +422,13 @@ public static unsafe class MonoProfiler
 
 		static void PrintWarn()
 		{
-			using StringTable table = new StringTable("Duration", "Processing", "Basic", "Advanced");
+			using StringTable table = new StringTable(" Duration", "Processing", "Assemblies", "Calls");
 
 			table.AddRow(
-				TimeEx.Format(DurationTime.TotalSeconds).ToLower(),
+				$" {TimeEx.Format(DurationTime.TotalSeconds).ToLower()}",
 				$"{DataProcessingTime.TotalMilliseconds:0}ms",
-				AssemblyRecords.Count.ToString("n0"),
-				CallRecords.Count.ToString("n0"));
+				AssemblyRecords.Count,
+				CallRecords.Count);
 
 			Logger.Warn(table.ToStringMinimal());
 		}
@@ -406,8 +444,8 @@ public static unsafe class MonoProfiler
 		bool state;
 		AssemblyRecords.Clear();
 		CallRecords.Clear();
-		List<AssemblyRecord> basicOutput = AssemblyRecords;
-		List<CallRecord> advancedOutput = CallRecords;
+		List<AssemblyRecord> assemblyOutput = AssemblyRecords;
+		List<CallRecord> callOutput = CallRecords;
 
 		if (Recording)
 		{
@@ -415,12 +453,13 @@ public static unsafe class MonoProfiler
 			_dataProcessTimer.Start();
 		}
 
-		ProfilerResultCode result = profiler_toggle(args, &state, &basicOutput, &advancedOutput, &native_string_cb, &native_iter, &native_iter);
+		ProfilerResultCode result = profiler_toggle(args, &state, &assemblyOutput, &callOutput, &native_string_cb, &native_iter, &native_iter);
 
 		if (result == ProfilerResultCode.Aborted)
 		{
 			// Handle abort;
 			Logger.Warn("Profiler aborted");
+			_recording = false;
 			return false;
 		}
 
@@ -436,12 +475,12 @@ public static unsafe class MonoProfiler
 			return null;
 		}
 
-		if (basicOutput is { Count: > 0 })
+		if (assemblyOutput is { Count: > 0 })
 		{
-			MapRecords(basicOutput);
+			MapRecords(assemblyOutput);
 		}
 
-		CallRecords.Disabled = advancedOutput.IsEmpty();
+		CallRecords.Disabled = callOutput.IsEmpty();
 
 		_recording = state;
 

@@ -22,12 +22,6 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 	{
 		public Action<PlayerSession> Close;
 
-		internal const string AttrCastout =
-			"[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.InternalCall, MethodCodeType = System.Runtime.CompilerServices.MethodCodeType.Runtime)]";
-
-		internal const string AttrCastout2 =
-			"[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]";
-
 		public SourceViewerTab(string id, string name, RustPlugin plugin, Action<PlayerSession, Tab> onChange = null, string access = null) : base(id, name, plugin, onChange, access)
 		{
 		}
@@ -76,6 +70,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 				cui.CreatePanel(container, blur, "0.2 0.2 0.2 1", yMin: 1, yMax: 1, OyMin: -20f, OyMax: -19f);
 				cui.CreatePanel(container, scrollview, "0.2 0.2 0.2 1", xMin: 0, xMax: 0, OxMin: 29, OxMax: 30);
+				cui.CreatePanel(container, blur, "0.2 0.2 0.2 1", xMin: 0, xMax: 0, OxMin: 29, OxMax: 30, yMin: 0.96f);
 
 				var longestLine = lines.Array.Max(x => x.Length);
 				var height = -(11.2f * lines.Length.Clamp(45, int.MaxValue));
@@ -110,9 +105,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		public static SourceViewerTab MakeMethod(string assembly, string type, string method, int size = 8)
 		{
 			var code = SourceCodeBank.Parse(assembly);
-			var codeResult = code.ParseMethod(type, method)
-				.Replace(AttrCastout, string.Empty)
-				.Replace(AttrCastout2, string.Empty).Trim();
+			var codeResult = code.ParseMethod(type, method).Trim();
 			return Make($"<color=#878787>{type}.</color>{method}<color=#878787>.cs</color>",
 				ProcessSyntaxHighlight(codeResult), $"{Path.GetFileNameWithoutExtension(assembly)}.dll", size);
 		}
@@ -120,11 +113,9 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		{
 			var assemblyName = MonoProfiler.AssemblyMap[call.assembly_handle];
 			var code = SourceCodeBank.Parse(assemblyName, call.assembly_handle);
-			var codeResult = code.ParseMethod(call.method_handle, out var type)
-				.Replace(AttrCastout, string.Empty)
-				.Replace(AttrCastout2, string.Empty).Trim();
+			var codeResult = code.ParseMethod(call.method_handle, out var type).Trim();
 			return Make(
-				$"<color=#878787>{type}.</color>{call.method_name.Replace($"{type}::", string.Empty)}<color=#878787>.cs</color>",
+				$"<color=#878787>{type}.</color>{call.method_name.Replace($"{type}::", string.Empty)}",
 				ProcessSyntaxHighlight(codeResult), $"{assemblyName}.dll", size);
 		}
 
