@@ -1,12 +1,10 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Text;
 using API.Logger;
 using Carbon.Profiler;
-using Facepunch;
 using Newtonsoft.Json;
 using Timer = Oxide.Plugins.Timer;
 
@@ -198,18 +196,20 @@ public static unsafe class MonoProfiler
 	[StructLayout(LayoutKind.Sequential)]
 	public struct AssemblyRecord
 	{
-		public ModuleHandle assembly_handle;
+		[JsonIgnore] public ModuleHandle assembly_handle;
 		public ulong total_time;
 		public double total_time_percentage;
 		public ulong calls;
 		public ulong alloc;
+		public string assembly_name;
+		public MonoProfilerConfig.ProfileTypes assembly_type;
 	}
 
 	[StructLayout(LayoutKind.Sequential)]
 	public struct CallRecord
 	{
-		public ModuleHandle assembly_handle;
-		public MonoMethod* method_handle;
+		[JsonIgnore] public ModuleHandle assembly_handle;
+		[JsonIgnore] public MonoMethod* method_handle;
 		public string method_name;
 		public ulong total_time;
 		public double total_time_percentage;
@@ -218,6 +218,8 @@ public static unsafe class MonoProfiler
 		public ulong calls;
 		public ulong total_alloc;
 		public ulong own_alloc;
+		public string assembly_name;
+		public MonoProfilerConfig.ProfileTypes assembly_type;
 	}
 
 	[StructLayout(LayoutKind.Explicit)]
@@ -345,8 +347,14 @@ public static unsafe class MonoProfiler
 		CallRecords.Clear();
 		DurationTime = default;
 	}
-	public static void ToggleProfilingTimed(float duration, ProfilerArgs args = ProfilerArgs.Advanced | ProfilerArgs.AdvancedMemory | ProfilerArgs.Memory | ProfilerArgs.Timings)
+	public static void ToggleProfilingTimed(float duration, ProfilerArgs args = ProfilerArgs.Advanced | ProfilerArgs.AdvancedMemory | ProfilerArgs.Memory | ProfilerArgs.Timings, Action<ProfilerArgs> onTimerEnded = null)
 	{
+		if (Crashed)
+		{
+			Logger.Error($"CarbonNative did not properly initialize. Please report to the developers.");
+			return;
+		}
+
 		_profileTimer?.Destroy();
 		_profileTimer = null;
 		_profileWarningTimer?.Destroy();
@@ -370,6 +378,8 @@ public static unsafe class MonoProfiler
 
 				ToggleProfiling(args).GetValueOrDefault();
 				PrintWarn();
+
+				onTimerEnded?.Invoke(args);
 			});
 		}
 		else if(Recording)
@@ -384,13 +394,13 @@ public static unsafe class MonoProfiler
 
 		static void PrintWarn()
 		{
-			using StringTable table = new StringTable("Duration", "Processing", "Basic", "Advanced");
+			using StringTable table = new StringTable(" Duration", "Processing", "Assemblies", "Calls");
 
 			table.AddRow(
-				TimeEx.Format(DurationTime.TotalSeconds).ToLower(),
+				$" {TimeEx.Format(DurationTime.TotalSeconds).ToLower()}",
 				$"{DataProcessingTime.TotalMilliseconds:0}ms",
-				AssemblyRecords.Count.ToString("n0"),
-				CallRecords.Count.ToString("n0"));
+				AssemblyRecords.Count,
+				CallRecords.Count);
 
 			Logger.Warn(table.ToStringMinimal());
 		}
@@ -406,8 +416,8 @@ public static unsafe class MonoProfiler
 		bool state;
 		AssemblyRecords.Clear();
 		CallRecords.Clear();
-		List<AssemblyRecord> basicOutput = AssemblyRecords;
-		List<CallRecord> advancedOutput = CallRecords;
+		List<AssemblyRecord> assemblyOutput = AssemblyRecords;
+		List<CallRecord> callOutput = CallRecords;
 
 		if (Recording)
 		{
@@ -415,12 +425,13 @@ public static unsafe class MonoProfiler
 			_dataProcessTimer.Start();
 		}
 
-		ProfilerResultCode result = profiler_toggle(args, &state, &basicOutput, &advancedOutput, &native_string_cb, &native_iter, &native_iter);
+		ProfilerResultCode result = profiler_toggle(args, &state, &assemblyOutput, &callOutput, &native_string_cb, &native_iter, &native_iter);
 
 		if (result == ProfilerResultCode.Aborted)
 		{
 			// Handle abort;
 			Logger.Warn("Profiler aborted");
+			_recording = false;
 			return false;
 		}
 
@@ -436,12 +447,12 @@ public static unsafe class MonoProfiler
 			return null;
 		}
 
-		if (basicOutput is { Count: > 0 })
+		if (assemblyOutput is { Count: > 0 })
 		{
-			MapRecords(basicOutput);
+			MapRecords(assemblyOutput, callOutput);
 		}
 
-		CallRecords.Disabled = advancedOutput.IsEmpty();
+		CallRecords.Disabled = callOutput.IsEmpty();
 
 		_recording = state;
 
@@ -458,12 +469,16 @@ public static unsafe class MonoProfiler
 
 		return state;
 	}
-
-	private static void MapRecords(List<AssemblyRecord> records)
+	public static void Refresh()
 	{
-		for (int i = 0; i < records.Count; i++)
+		RefreshMetadata(AssemblyRecords, CallRecords);
+	}
+
+	private static void MapRecords(IList<AssemblyRecord> assemblies, IList<CallRecord> calls)
+	{
+		for (int i = 0; i < assemblies.Count; i++)
 		{
-			AssemblyRecord entry = records[i];
+			AssemblyRecord entry = assemblies[i];
 
 			 if (AssemblyMap.ContainsKey(entry.assembly_handle)) continue;
 			 string name = null;
@@ -471,6 +486,42 @@ public static unsafe class MonoProfiler
 			get_image_name(&name, entry.assembly_handle, &native_string_cb);
 
 			AssemblyMap[entry.assembly_handle] = name ?? "UNKNOWN";
+
+			AssemblyType.TryGetValue(entry.assembly_handle, out var type);
+
+			assemblies[i] = entry with { assembly_name = name, assembly_type = type };
+		}
+
+		for (int i = 0; i < calls.Count; i++)
+		{
+			CallRecord entry = calls[i];
+
+			AssemblyMap.TryGetValue(entry.assembly_handle, out var name);
+			AssemblyType.TryGetValue(entry.assembly_handle, out var type);
+
+			calls[i] = entry with { assembly_name = name, assembly_type = type };
+		}
+	}
+	private static void RefreshMetadata(IList<AssemblyRecord> assemblies, IList<CallRecord> calls)
+	{
+		for (int i = 0; i < assemblies.Count; i++)
+		{
+			AssemblyRecord entry = assemblies[i];
+
+			AssemblyMap.TryGetValue(entry.assembly_handle, out var name);
+			AssemblyType.TryGetValue(entry.assembly_handle, out var type);
+
+			assemblies[i] = entry with { assembly_name = name, assembly_type = type };
+		}
+
+		for (int i = 0; i < calls.Count; i++)
+		{
+			CallRecord entry = calls[i];
+
+			AssemblyMap.TryGetValue(entry.assembly_handle, out var name);
+			AssemblyType.TryGetValue(entry.assembly_handle, out var type);
+
+			calls[i] = entry with { assembly_name = name, assembly_type = type };
 		}
 	}
 

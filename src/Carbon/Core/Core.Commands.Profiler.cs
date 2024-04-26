@@ -34,6 +34,19 @@ public partial class CorePlugin : CarbonPlugin
 		MonoProfiler.ToggleProfilingTimed(arg.GetFloat(0));
 	}
 
+	[ConsoleCommand("profileabort", "Aborts recording of the Carbon native Mono-profiling if it was recording.")]
+	[AuthLevel(2)]
+	private void ProfileAbort(ConsoleSystem.Arg arg)
+	{
+		if (!MonoProfiler.Recording)
+		{
+			arg.ReplyWith("No profiling process active.");
+			return;
+		}
+
+		MonoProfiler.ToggleProfiling(MonoProfiler.ProfilerArgs.Abort);
+	}
+
 	[ConsoleCommand("profiler.print", "If any parsed data available, it'll print basic and advanced information.")]
 	[AuthLevel(2)]
 	private void ProfilerPrint(ConsoleSystem.Arg arg)
@@ -43,6 +56,8 @@ public partial class CorePlugin : CarbonPlugin
 			arg.ReplyWith("Profiler is actively recording.");
 			return;
 		}
+
+		MonoProfiler.Refresh();
 
 		var mode = arg.GetString(0);
 		var toFile = arg.HasArg("-f");
@@ -74,7 +89,7 @@ public partial class CorePlugin : CarbonPlugin
 		static void WriteFileString(string extension, string data)
 		{
 			var date = DateTime.Now;
-			var file = Path.Combine(Defines.GetRustRootFolder(), $"profile-{date.Year}_{date.Month}_{date.Day}_{date.Hour}{date.Minute}{date.Second}.{extension}");
+			var file = Path.Combine(Defines.GetProfilesFolder(), $"profile-{date.Year}_{date.Month}_{date.Day}_{date.Hour}{date.Minute}{date.Second}.{extension}");
 			OsEx.File.Create(file, data);
 
 			Logger.Warn($" Stored output at {file}");

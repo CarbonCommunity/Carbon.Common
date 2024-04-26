@@ -38,20 +38,11 @@ public static class EnumerableEx
 
 		if (predicate == null)
 		{
-			foreach (var iteration in enumerable)
-			{
-				index++;
-			}
+			index += enumerable.Count();
 		}
 		else
 		{
-			foreach (var iteration in enumerable)
-			{
-				if (predicate(iteration))
-				{
-					index++;
-				}
-			}
+			index += enumerable.Count(iteration => predicate(iteration));
 		}
 
 		return index;

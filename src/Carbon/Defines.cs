@@ -199,6 +199,14 @@ public class Defines
 
 		return folder;
 	}
+	public static string GetProfilesFolder()
+	{
+		_initializeCommandLine();
+		var folder = Path.GetFullPath(Path.Combine(GetLogsFolder(), "profiler"));
+		Directory.CreateDirectory(folder);
+
+		return folder;
+	}
 	public static string GetLangFolder()
 	{
 		_initializeCommandLine();
