@@ -144,11 +144,12 @@ public class SourceCodeBank
 
 			return Methods[id] = Decompiler.DecompileAsString(Decompiler.TypeSystem.MainModule.GetDefinition(UnsafeUtility.As<uint, MethodDefinitionHandle>(ref token)).MetadataToken);
 		}
-		public unsafe string ParseMethod(MonoProfiler.MonoMethod* method, out string type)
+		public unsafe string ParseMethod(MonoProfiler.MonoMethod* methodInfo, out string type, out string method)
 		{
-			var token = method->token;
+			var token = methodInfo->token;
 			var id = token.ToString();
 			type = null;
+			method = null;
 
 			if (Methods.TryGetValue(id, out var source)) return source;
 
@@ -162,6 +163,7 @@ public class SourceCodeBank
 			}
 
 			type = iMethod.DeclaringType.FullName;
+			method = iMethod.Name;
 
 			return Methods[id] = Decompiler.DecompileAsString(iMethod.MetadataToken);
 		}

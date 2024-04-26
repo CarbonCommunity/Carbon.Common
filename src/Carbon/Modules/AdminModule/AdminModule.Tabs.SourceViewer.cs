@@ -63,7 +63,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 				var scrollview = cui.CreateScrollView(container, blur,
 					vertical: true, horizontal: true, movementType: ScrollRect.MovementType.Clamped, elasticity: 0.5f,
-					inertia: true, decelerationRate: 0.2f, scrollSensitivity: 50, maskSoftness: "0 0",
+					inertia: true, decelerationRate: 0.2f, scrollSensitivity: 75, maskSoftness: "0 0",
 					contentTransform: out var contentTransform, verticalScrollBar: out var verticalScroll,
 					horizontalScrollBar: out var horizontalScroll,
 					yMax: 0.96f);
@@ -113,10 +113,11 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		{
 			var assemblyName = MonoProfiler.AssemblyMap[call.assembly_handle];
 			var code = SourceCodeBank.Parse(assemblyName, call.assembly_handle);
-			var codeResult = code.ParseMethod(call.method_handle, out var type).Trim();
+			var codeResult = code.ParseMethod(call.method_handle, out var type, out var method).Trim();
+
 			return Make(
-				$"<color=#878787>{type}.</color>{call.method_name.Replace($"{type}::", string.Empty)}",
-				ProcessSyntaxHighlight(codeResult), $"{assemblyName}.dll", size);
+				$"<color=#878787>{type}.</color>{method}",
+				ProcessSyntaxHighlight(codeResult), assemblyName, size);
 		}
 
 		public static string ProcessSyntaxHighlight(string content)

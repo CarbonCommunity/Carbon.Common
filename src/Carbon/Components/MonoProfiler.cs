@@ -203,25 +203,8 @@ public static unsafe class MonoProfiler
 		public double total_time_percentage;
 		public ulong calls;
 		public ulong alloc;
-
 		public string assembly_name;
 		public MonoProfilerConfig.ProfileTypes assembly_type;
-
-		public string GetAssemblyName()
-		{
-			if (string.IsNullOrEmpty(assembly_name) && !AssemblyMap.TryGetValue(assembly_handle, out assembly_name))
-			{
-				return string.Empty;
-			}
-
-			return assembly_name;
-		}
-
-		public MonoProfilerConfig.ProfileTypes GetAssemblyType()
-		{
-			AssemblyType.TryGetValue(assembly_handle, out assembly_type);
-			return assembly_type;
-		}
 	}
 
 	[StructLayout(LayoutKind.Sequential)]
@@ -237,25 +220,8 @@ public static unsafe class MonoProfiler
 		public ulong calls;
 		public ulong total_alloc;
 		public ulong own_alloc;
-
 		public string assembly_name;
 		public MonoProfilerConfig.ProfileTypes assembly_type;
-
-		public string GetAssemblyName()
-		{
-			if (string.IsNullOrEmpty(assembly_name) && !AssemblyMap.TryGetValue(assembly_handle, out assembly_name))
-			{
-				return string.Empty;
-			}
-
-			return assembly_name;
-		}
-
-		public MonoProfilerConfig.ProfileTypes GetAssemblyType()
-		{
-			AssemblyType.TryGetValue(assembly_handle, out assembly_type);
-			return assembly_type;
-		}
 	}
 
 	[StructLayout(LayoutKind.Explicit)]
@@ -383,8 +349,14 @@ public static unsafe class MonoProfiler
 		CallRecords.Clear();
 		DurationTime = default;
 	}
-	public static void ToggleProfilingTimed(float duration, ProfilerArgs args = ProfilerArgs.Advanced | ProfilerArgs.AdvancedMemory | ProfilerArgs.Memory | ProfilerArgs.Timings)
+	public static void ToggleProfilingTimed(float duration, ProfilerArgs args = ProfilerArgs.Advanced | ProfilerArgs.AdvancedMemory | ProfilerArgs.Memory | ProfilerArgs.Timings, Action<ProfilerArgs> onTimerEnded = null)
 	{
+		if (Crashed)
+		{
+			Logger.Error($"CarbonNative did not properly initialize. Please report to the developers.");
+			return;
+		}
+
 		_profileTimer?.Destroy();
 		_profileTimer = null;
 		_profileWarningTimer?.Destroy();
@@ -408,6 +380,8 @@ public static unsafe class MonoProfiler
 
 				ToggleProfiling(args).GetValueOrDefault();
 				PrintWarn();
+
+				onTimerEnded?.Invoke(args);
 			});
 		}
 		else if(Recording)
@@ -477,7 +451,7 @@ public static unsafe class MonoProfiler
 
 		if (assemblyOutput is { Count: > 0 })
 		{
-			MapRecords(assemblyOutput);
+			MapRecords(assemblyOutput, callOutput);
 		}
 
 		CallRecords.Disabled = callOutput.IsEmpty();
@@ -497,12 +471,16 @@ public static unsafe class MonoProfiler
 
 		return state;
 	}
-
-	private static void MapRecords(List<AssemblyRecord> records)
+	public static void Refresh()
 	{
-		for (int i = 0; i < records.Count; i++)
+		RefreshMetadata(AssemblyRecords, CallRecords);
+	}
+
+	private static void MapRecords(IList<AssemblyRecord> assemblies, IList<CallRecord> calls)
+	{
+		for (int i = 0; i < assemblies.Count; i++)
 		{
-			AssemblyRecord entry = records[i];
+			AssemblyRecord entry = assemblies[i];
 
 			 if (AssemblyMap.ContainsKey(entry.assembly_handle)) continue;
 			 string name = null;
@@ -510,6 +488,42 @@ public static unsafe class MonoProfiler
 			get_image_name(&name, entry.assembly_handle, &native_string_cb);
 
 			AssemblyMap[entry.assembly_handle] = name ?? "UNKNOWN";
+
+			AssemblyType.TryGetValue(entry.assembly_handle, out var type);
+
+			assemblies[i] = entry with { assembly_name = name, assembly_type = type };
+		}
+
+		for (int i = 0; i < calls.Count; i++)
+		{
+			CallRecord entry = calls[i];
+
+			AssemblyMap.TryGetValue(entry.assembly_handle, out var name);
+			AssemblyType.TryGetValue(entry.assembly_handle, out var type);
+
+			calls[i] = entry with { assembly_name = name, assembly_type = type };
+		}
+	}
+	private static void RefreshMetadata(IList<AssemblyRecord> assemblies, IList<CallRecord> calls)
+	{
+		for (int i = 0; i < assemblies.Count; i++)
+		{
+			AssemblyRecord entry = assemblies[i];
+
+			AssemblyMap.TryGetValue(entry.assembly_handle, out var name);
+			AssemblyType.TryGetValue(entry.assembly_handle, out var type);
+
+			assemblies[i] = entry with { assembly_name = name, assembly_type = type };
+		}
+
+		for (int i = 0; i < calls.Count; i++)
+		{
+			CallRecord entry = calls[i];
+
+			AssemblyMap.TryGetValue(entry.assembly_handle, out var name);
+			AssemblyType.TryGetValue(entry.assembly_handle, out var type);
+
+			calls[i] = entry with { assembly_name = name, assembly_type = type };
 		}
 	}
 
