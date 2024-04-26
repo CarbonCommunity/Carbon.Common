@@ -1,11 +1,10 @@
-﻿using Carbon.Profiler;
-using Facepunch;
+﻿using Facepunch;
 
 #if !MINIMAL
 
 /*
 *
- * Copyright (c) 2022-2023 Carbon Community
+ * Copyright (c) 2022-2024 Carbon Community
  * All rights reserved.
  *
  */
@@ -342,8 +341,15 @@ public partial class AdminModule
 	[ProtectedCommand("adminmodule.profilerselectcall")]
 	private void ProfilerSelectCall(ConsoleSystem.Arg arg)
 	{
+		var player = arg.Player();
+
+		if (!HasAccess(player, "profiler.sourceviewer"))
+		{
+			return;
+		}
+
 		var index = arg.GetInt(0);
-		var ap = GetPlayerSession(arg.Player());
+		var ap = GetPlayerSession(player);
 
 		var selection = ap.GetStorage<ModuleHandle>(null, "profilerval");
 		var call = ProfilerTab.GetSortedCalls(selection, ap.GetStorage(ap.SelectedTab, "asort", 1), ap.GetStorage(ap.SelectedTab, "asearch", string.Empty))
@@ -354,17 +360,24 @@ public partial class AdminModule
 
 		tab.Close = ap =>
 		{
-			SetTab(ap.Player, currentTab, true);
+			SetTab(player, currentTab, true);
 		};
 
-		SetTab(ap.Player, tab, true);
+		SetTab(player, tab, true);
 	}
 
 	[Conditional("!MINIMAL")]
 	[ProtectedCommand("adminmodule.profilertoggle")]
 	private void ProfilerToggle(ConsoleSystem.Arg arg)
 	{
-		var ap = GetPlayerSession(arg.Player());
+		var player = arg.Player();
+
+		if (!HasAccess(player, "profiler.startstop"))
+		{
+			return;
+		}
+
+		var ap = GetPlayerSession(player);
 
 		if (!MonoProfiler.Enabled)
 		{
@@ -381,7 +394,7 @@ public partial class AdminModule
 			dictionary["advmemory"] = ModalModule.Modal.Field.Make("Advamced Memory", ModalModule.Modal.Field.FieldTypes.Boolean, false, true);
 			dictionary["timings"] = ModalModule.Modal.Field.Make("Timings", ModalModule.Modal.Field.FieldTypes.Boolean, false, true);
 
-			Modal.Open(ap.Player, "Profile Recording", dictionary, (_, _) =>
+			Modal.Open(player, "Profile Recording", dictionary, (_, _) =>
 			{
 				var profilerArgs = (MonoProfiler.ProfilerArgs)default;
 
@@ -393,20 +406,23 @@ public partial class AdminModule
 				MonoProfiler.Clear();
 				MonoProfiler.ToggleProfilingTimed(dictionary["duration"].Get<float>(), profilerArgs, args =>
 				{
-					ap.SelectedTab.OnChange(ap, ap.SelectedTab);
-					Draw(ap.Player);
+					if (ap.IsInMenu && ap.SelectedTab != null && ap.SelectedTab.Id == "profiler")
+					{
+						ap.SelectedTab.OnChange(ap, ap.SelectedTab);
+						Draw(ap.Player);
+					}
 				});
 
 				PoolEx.FreeDictionary(ref dictionary);
 
 				ap.SelectedTab.OnChange(ap, ap.SelectedTab);
-				Draw(ap.Player);
+				Draw(player);
 			}, onCancel: () =>
 			{
 				PoolEx.FreeDictionary(ref dictionary);
 
 				ap.SelectedTab.OnChange(ap, ap.SelectedTab);
-				Draw(ap.Player);
+				Draw(player);
 			});
 		}
 		else
@@ -416,7 +432,7 @@ public partial class AdminModule
 
 			ap.SelectedTab.OnChange(ap, ap.SelectedTab);
 
-			Draw(ap.Player);
+			Draw(player);
 		}
 	}
 

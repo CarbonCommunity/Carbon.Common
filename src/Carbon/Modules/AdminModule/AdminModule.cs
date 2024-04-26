@@ -80,7 +80,9 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		"players.see_ips",
 		"plugins.use",
 		"plugins.setup",
-		"profiler.use"
+		"profiler.use",
+		"profiler.startstop",
+		"profiler.sourceviewer"
 	};
 
 	internal bool _logRegistration;

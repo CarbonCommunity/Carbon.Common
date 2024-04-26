@@ -1,12 +1,10 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Text;
 using API.Logger;
 using Carbon.Profiler;
-using Facepunch;
 using Newtonsoft.Json;
 using Timer = Oxide.Plugins.Timer;
 
