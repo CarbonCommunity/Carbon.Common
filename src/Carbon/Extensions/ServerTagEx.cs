@@ -1,6 +1,6 @@
 ﻿/*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -13,9 +13,9 @@ public static class ServerTagEx
 	{
 		var tags = Steamworks.SteamServer.GameTags;
 
-		if (!tags.Contains($",{tag}"))
+		if (!tags.Contains(tag))
 		{
-			Steamworks.SteamServer.GameTags = $"{tags},{tag}";
+			Steamworks.SteamServer.GameTags = ServerTagCompressor.CompressTags($"{tags}{tag}");
 			return true;
 		}
 
@@ -26,9 +26,9 @@ public static class ServerTagEx
 	{
 		var tags = Steamworks.SteamServer.GameTags;
 
-		if (tags.Contains($",{tag}"))
+		if (tags.Contains(tag))
 		{
-			Steamworks.SteamServer.GameTags = tags.Replace($",{tag}", "");
+			Steamworks.SteamServer.GameTags = tags.Replace(tag, string.Empty);
 			return true;
 		}
 
