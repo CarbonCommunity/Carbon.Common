@@ -9,24 +9,36 @@ namespace Carbon.Extensions;
 
 public static class ServerTagEx
 {
-	public static bool SetRequiredTag(string tag)
+	public static void SetRequiredTag(string tag, bool compact)
 	{
 		var tags = Steamworks.SteamServer.GameTags;
 
-		if (tags.Contains(tag)) return false;
-		var indexOf = tags.IndexOf('^');
+		if (compact)
+		{
+			if (tags.Contains(tag)) return;
+			var indexOf = tags.IndexOf('^');
 
-		Steamworks.SteamServer.GameTags = indexOf > 0 ? tags.Insert(indexOf, tag) : $"{tags}{(tags.EndsWith(",") ? string.Empty : ",")}{tag}";
+			Steamworks.SteamServer.GameTags = indexOf > 0 ? tags.Insert(indexOf, tag) : $"{tags}{(tags.EndsWith(",") ? string.Empty : ",")}{tag}";
+			return;
+		}
 
-		return true;
+		if (tags.Contains($",{tag}")) return;
+
+		Steamworks.SteamServer.GameTags = $"{tags},{tag}";
 	}
 
-	public static bool UnsetRequiredTag(string tag)
+	public static void UnsetRequiredTag(string tag, bool compact)
 	{
 		var tags = Steamworks.SteamServer.GameTags;
 
-		if (!tags.Contains(tag)) return false;
-		Steamworks.SteamServer.GameTags = tags.Replace(tag, string.Empty);
-		return true;
+		if (compact)
+		{
+			if (!tags.Contains(tag)) return;
+			Steamworks.SteamServer.GameTags = tags.Replace(tag, string.Empty);
+			return;
+		}
+
+		if (!tags.Contains($",{tag}")) return;
+		Steamworks.SteamServer.GameTags = tags.Replace($",{tag}", string.Empty);
 	}
 }
