@@ -15,7 +15,17 @@ public static class ServerTagEx
 
 		if (!tags.Contains(tag))
 		{
-			Steamworks.SteamServer.GameTags = ServerTagCompressor.CompressTags($"{tags}{tag}");
+			var indexOf = tags.IndexOf('^');
+
+			if (indexOf > 0)
+			{
+				Steamworks.SteamServer.GameTags = tags.Insert(indexOf, tag);
+			}
+			else
+			{
+				Steamworks.SteamServer.GameTags = $"{tags}{(tags.EndsWith(",") ? string.Empty : ",")}{tag}";
+			}
+
 			return true;
 		}
 
@@ -28,7 +38,7 @@ public static class ServerTagEx
 
 		if (tags.Contains(tag))
 		{
-			Steamworks.SteamServer.GameTags = tags.Replace(tag, string.Empty);
+			Steamworks.SteamServer.GameTags = tags.Replace(tag, "");
 			return true;
 		}
 
