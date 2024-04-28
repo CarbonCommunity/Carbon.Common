@@ -13,35 +13,20 @@ public static class ServerTagEx
 	{
 		var tags = Steamworks.SteamServer.GameTags;
 
-		if (!tags.Contains(tag))
-		{
-			var indexOf = tags.IndexOf('^');
+		if (tags.Contains(tag)) return false;
+		var indexOf = tags.IndexOf('^');
 
-			if (indexOf > 0)
-			{
-				Steamworks.SteamServer.GameTags = tags.Insert(indexOf, tag);
-			}
-			else
-			{
-				Steamworks.SteamServer.GameTags = $"{tags}{(tags.EndsWith(",") ? string.Empty : ",")}{tag}";
-			}
+		Steamworks.SteamServer.GameTags = indexOf > 0 ? tags.Insert(indexOf, tag) : $"{tags}{(tags.EndsWith(",") ? string.Empty : ",")}{tag}";
 
-			return true;
-		}
-
-		return false;
+		return true;
 	}
 
 	public static bool UnsetRequiredTag(string tag)
 	{
 		var tags = Steamworks.SteamServer.GameTags;
 
-		if (tags.Contains(tag))
-		{
-			Steamworks.SteamServer.GameTags = tags.Replace(tag, "");
-			return true;
-		}
-
-		return false;
+		if (!tags.Contains(tag)) return false;
+		Steamworks.SteamServer.GameTags = tags.Replace(tag, string.Empty);
+		return true;
 	}
 }
