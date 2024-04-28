@@ -1034,7 +1034,6 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 				if (IsLoggedIn)
 				{
-
 					var extension = Path.GetExtension(plugin.File);
 
 					switch (extension)

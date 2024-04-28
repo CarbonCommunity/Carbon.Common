@@ -21,7 +21,7 @@ using Timer = Oxide.Plugins.Timer;
 namespace Carbon.Components;
 
 [SuppressUnmanagedCodeSecurity]
-public static unsafe class MonoProfiler
+public static unsafe partial class MonoProfiler
 {
 	public static AssemblyOutput AssemblyRecords = new();
 	public static CallOutput CallRecords = new();
@@ -279,7 +279,7 @@ public static unsafe class MonoProfiler
 
 	public static bool Enabled => _enabled;
 	public static bool Recording => _recording;
-	public static bool Crashed { get; private set; }
+	public static bool Crashed { get; }
 
 	public static bool IsCleared => !AssemblyRecords.Any() && !CallRecords.Any();
 
@@ -347,7 +347,7 @@ public static unsafe class MonoProfiler
 		CallRecords.Clear();
 		DurationTime = default;
 	}
-	public static void ToggleProfilingTimed(float duration, ProfilerArgs args = ProfilerArgs.Advanced | ProfilerArgs.AdvancedMemory | ProfilerArgs.Memory | ProfilerArgs.Timings, Action<ProfilerArgs> onTimerEnded = null)
+	public static void ToggleProfilingTimed(float duration, ProfilerArgs args = ProfilerArgs.Advanced | ProfilerArgs.AdvancedMemory | ProfilerArgs.Memory | ProfilerArgs.Timings, Action<ProfilerArgs> onTimerEnded = null, bool logging = true)
 	{
 		if (Crashed)
 		{
@@ -360,14 +360,20 @@ public static unsafe class MonoProfiler
 		_profileWarningTimer?.Destroy();
 		_profileWarningTimer = null;
 
-		if (!ToggleProfiling(args).GetValueOrDefault())
+		if (!ToggleProfiling(args, logging).GetValueOrDefault())
 		{
-			PrintWarn();
+			if (logging)
+			{
+				PrintWarn();
+			}
 		}
 
 		if (duration >= 1f && Recording)
 		{
-			Logger.Warn($"[Profiler] Profiling duration {TimeEx.Format(duration).ToLower()}..");
+			if (logging)
+			{
+				Logger.Warn($"[Profiler] Profiling duration {TimeEx.Format(duration).ToLower()}..");
+			}
 
 			_profileTimer = Community.Runtime.CorePlugin.timer.In(duration, () =>
 			{
@@ -376,13 +382,18 @@ public static unsafe class MonoProfiler
 					return;
 				}
 
-				ToggleProfiling(args).GetValueOrDefault();
-				PrintWarn();
+				ToggleProfiling(args, logging).GetValueOrDefault();
+
+				if (logging)
+				{
+					PrintWarn();
+				}
 
 				onTimerEnded?.Invoke(args);
+				_profileTimer = null;
 			});
 		}
-		else if(Recording)
+		else if(Recording && logging)
 		{
 			_profileWarningTimer = Community.Runtime.CorePlugin.timer.Every(60, () =>
 			{
@@ -405,7 +416,7 @@ public static unsafe class MonoProfiler
 			Logger.Warn(table.ToStringMinimal());
 		}
 	}
-	public static bool? ToggleProfiling(ProfilerArgs args = ProfilerArgs.Advanced | ProfilerArgs.AdvancedMemory | ProfilerArgs.Memory | ProfilerArgs.Timings)
+	public static bool? ToggleProfiling(ProfilerArgs args = ProfilerArgs.Advanced | ProfilerArgs.AdvancedMemory | ProfilerArgs.Memory | ProfilerArgs.Timings, bool logging = true)
 	{
 		if (!Enabled)
 		{
@@ -430,8 +441,17 @@ public static unsafe class MonoProfiler
 		if (result == ProfilerResultCode.Aborted)
 		{
 			// Handle abort;
-			Logger.Warn("Profiler aborted");
+
+			if (logging)
+			{
+				Logger.Warn("Profiler aborted");
+			}
+
 			_recording = false;
+			_profileTimer?.Destroy();
+			_profileWarningTimer?.Destroy();
+			_profileTimer = null;
+			_profileWarningTimer = null;
 			return false;
 		}
 
@@ -458,11 +478,21 @@ public static unsafe class MonoProfiler
 
 		if (state)
 		{
+			if (logging)
+			{
+				Logger.Warn("[MonoProfiler] Recording started..");
+			}
+
 			_durationTimer = PoolEx.GetStopwatch();
 			_durationTimer.Start();
 		}
 		else
 		{
+			if (logging)
+			{
+				Logger.Warn("[MonoProfiler] Stopped recording");
+			}
+
 			DurationTime = _durationTimer.Elapsed;
 			PoolEx.FreeStopwatch(ref _durationTimer);
 		}

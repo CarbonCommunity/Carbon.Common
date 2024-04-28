@@ -207,9 +207,9 @@ public partial class AdminModule
 			});
 
 			Stripe(this, 0, (float)filtered.Sum(x => x.total_time_percentage), 100, niceColor, niceColor,
-				"All",
-				$"{filtered.Sum(x => (float)x.total_time):n0}ms | {filtered.Sum(x => (float)x.total_time_percentage):0.0}%",
-				$"<size=7>{TimeEx.Format(MonoProfiler.DurationTime.TotalSeconds, false).ToLower()}\n{MonoProfiler.CallRecords.Count:n0} calls</size>",
+				MonoProfiler.Recording ? "Recording..." : "All",
+				MonoProfiler.Recording ? "please wait" : $"{filtered.Sum(x => (float)x.total_time):n0}ms | {filtered.Sum(x => (float)x.total_time_percentage):0.0}%",
+				$"<size=7>{TimeEx.Format(MonoProfiler.Recording ? MonoProfiler.CurrentDurationTime.TotalSeconds : MonoProfiler.DurationTime.TotalSeconds, false).ToLower()}\n{(MonoProfiler.Recording ? string.Empty : $"{MonoProfiler.CallRecords.Count:n0} calls")}</size>",
 				$"adminmodule.profilerselect -1",
 				selection.GetHashCode() == 0);
 
@@ -392,7 +392,7 @@ public partial class AdminModule
 			dictionary["advanced"] = ModalModule.Modal.Field.Make("Advanced", ModalModule.Modal.Field.FieldTypes.Boolean, false, true);
 			dictionary["memory"] = ModalModule.Modal.Field.Make("Memory", ModalModule.Modal.Field.FieldTypes.Boolean, false, true);
 			dictionary["advmemory"] = ModalModule.Modal.Field.Make("Advanced Memory", ModalModule.Modal.Field.FieldTypes.Boolean, false, true);
-			dictionary["timings"] = ModalModule.Modal.Field.Make("Timings", ModalModule.Modal.Field.FieldTypes.Boolean, false, true);
+			dictionary["timings"] = ModalModule.Modal.Field.Make("Timings (Performance Intensive)", ModalModule.Modal.Field.FieldTypes.Boolean, false, true);
 
 			Modal.Open(player, "Profile Recording", dictionary, (_, _) =>
 			{
