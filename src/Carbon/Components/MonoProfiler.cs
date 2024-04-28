@@ -223,7 +223,7 @@ public static unsafe class MonoProfiler
 	}
 
 	[StructLayout(LayoutKind.Explicit)]
-	public struct MonoImageUnion
+	private struct MonoImageUnion
 	{
 		[FieldOffset(0)]
 		public ModuleHandle handle;

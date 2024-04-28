@@ -391,7 +391,7 @@ public partial class AdminModule
 			dictionary["duration"] = ModalModule.Modal.Field.Make("Duration", ModalModule.Modal.Field.FieldTypes.Float, true, 3f, customIsInvalid: field => field.Value.ToString().ToFloat() <= 0 ? "Duration must be above zero." : string.Empty);
 			dictionary["advanced"] = ModalModule.Modal.Field.Make("Advanced", ModalModule.Modal.Field.FieldTypes.Boolean, false, true);
 			dictionary["memory"] = ModalModule.Modal.Field.Make("Memory", ModalModule.Modal.Field.FieldTypes.Boolean, false, true);
-			dictionary["advmemory"] = ModalModule.Modal.Field.Make("Advamced Memory", ModalModule.Modal.Field.FieldTypes.Boolean, false, true);
+			dictionary["advmemory"] = ModalModule.Modal.Field.Make("Advanced Memory", ModalModule.Modal.Field.FieldTypes.Boolean, false, true);
 			dictionary["timings"] = ModalModule.Modal.Field.Make("Timings", ModalModule.Modal.Field.FieldTypes.Boolean, false, true);
 
 			Modal.Open(player, "Profile Recording", dictionary, (_, _) =>
