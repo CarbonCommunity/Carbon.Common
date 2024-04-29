@@ -73,7 +73,7 @@ public static unsafe class MonoProfiler
 				}
 
 				table.AddRow($" {assemblyName.displayName}",
-					record.total_time == 0 ? string.Empty : $"{record.total_time}ms",
+					record.total_time == 0 ? string.Empty : record.GetTotalTime(),
 					record.total_time_percentage == 0 ? string.Empty : $"{record.total_time_percentage:0}%",
 					record.calls == 0 ? string.Empty : $"{record.calls:n0}",
 					$"{ByteEx.Format(record.alloc).ToLower()}");
@@ -99,7 +99,7 @@ public static unsafe class MonoProfiler
 				}
 
 				builder.AppendLine($"{assemblyName.displayName}," +
-				                   $"{record.total_time}ms," +
+				                   $"{record.GetTotalTime()}," +
 				                   $"{record.total_time_percentage:0}%," +
 				                   $"{record.calls:n0}," +
 				                   $"{ByteEx.Format(record.alloc).ToLower()}");
@@ -132,9 +132,9 @@ public static unsafe class MonoProfiler
 				}
 
 				table.AddRow($" {assemblyName.displayName}", $"{record.method_name}",
-					record.total_time == 0 ? string.Empty : $"{record.total_time}ms",
+					record.total_time == 0 ? string.Empty : record.GetTotalTime(),
 					record.total_time_percentage == 0 ? string.Empty : $"{record.total_time_percentage:0}%",
-					record.own_time == 0 ? string.Empty : $"{record.own_time}ms",
+					record.own_time == 0 ? string.Empty : record.GetOwnTime(),
 					record.own_time_percentage == 0 ? string.Empty : $"{record.own_time_percentage:0}%",
 					record.calls == 0 ? string.Empty : $"{record.calls:n0}",
 					record.total_alloc == 0 ? string.Empty : $"{ByteEx.Format(record.total_alloc).ToLower()}",
@@ -166,9 +166,9 @@ public static unsafe class MonoProfiler
 
 				builder.AppendLine($"{assemblyName.displayName}," +
 				                   $"{record.method_name}," +
-				                   $"{record.total_time}ms," +
+				                   $"{record.GetTotalTime()}," +
 				                   $"{record.total_time_percentage:0}%," +
-				                   $"{record.own_time}ms," +
+				                   $"{record.GetOwnTime()}," +
 				                   $"{record.own_time_percentage:0}%," +
 				                   $"{record.calls:n0}," +
 				                   $"{ByteEx.Format(record.total_alloc).ToLower()}," +
@@ -213,16 +213,9 @@ public static unsafe class MonoProfiler
 
 		// managed
 		public AssemblyNameEntry assembly_name;
+		public double total_time_ms => total_time * 1000;
 
-		public string GetAssemblyName()
-		{
-			return AssemblyMap[assembly_handle].displayName;
-		}
-
-		public MonoProfilerConfig.ProfileTypes GetAssemblyType()
-		{
-			return AssemblyMap[assembly_handle].profileType;
-		}
+		public string GetTotalTime() => (total_time_ms < 1 ? $"{total_time:n0}μs" : $"{total_time_ms:n0}ms");
 	}
 
 	[StructLayout(LayoutKind.Sequential)]
@@ -254,16 +247,11 @@ public static unsafe class MonoProfiler
 
 		// managed
 		public string method_name;
+		public double total_time_ms => total_time * 1000;
+		public double own_time_ms => own_time * 1000;
 
-		public string GetAssemblyName()
-		{
-			return AssemblyMap[assembly_handle].displayName;
-		}
-
-		public MonoProfilerConfig.ProfileTypes GetAssemblyType()
-		{
-			return AssemblyMap[assembly_handle].profileType;
-		}
+		public string GetTotalTime() => (total_time_ms < 1 ? $"{total_time:n0}μs" : $"{total_time_ms:n0}ms");
+		public string GetOwnTime() => (own_time_ms < 1 ? $"{own_time:n0}μs" : $"{own_time_ms:n0}ms");
 	}
 
 	[StructLayout(LayoutKind.Explicit)]
@@ -315,7 +303,7 @@ public static unsafe class MonoProfiler
 		CallMemory = 1 << 1,
 		AdvancedMemory = 1 << 2,
 		Timings = 1 << 3,
-		Stack = 1 << 4,
+		Calls = 1 << 4,
 		FastResume = 1 << 5 // Pass this when you're toggling the profiler multiple times on the same frame
 	}
 
@@ -394,7 +382,7 @@ public static unsafe class MonoProfiler
 		CallRecords.Clear();
 		DurationTime = default;
 	}
-	public static void ToggleProfilingTimed(float duration, ProfilerArgs args = ProfilerArgs.AdvancedMemory | ProfilerArgs.CallMemory | ProfilerArgs.Timings | ProfilerArgs.Stack, Action<ProfilerArgs> onTimerEnded = null)
+	public static void ToggleProfilingTimed(float duration, ProfilerArgs args = ProfilerArgs.AdvancedMemory | ProfilerArgs.CallMemory | ProfilerArgs.Timings | ProfilerArgs.Calls, Action<ProfilerArgs> onTimerEnded = null)
 	{
 		if (Crashed)
 		{
@@ -452,7 +440,7 @@ public static unsafe class MonoProfiler
 			Logger.Warn(table.ToStringMinimal());
 		}
 	}
-	public static bool? ToggleProfiling(ProfilerArgs args = ProfilerArgs.AdvancedMemory | ProfilerArgs.CallMemory | ProfilerArgs.Timings | ProfilerArgs.Stack)
+	public static bool? ToggleProfiling(ProfilerArgs args = ProfilerArgs.AdvancedMemory | ProfilerArgs.CallMemory | ProfilerArgs.Timings | ProfilerArgs.Calls)
 	{
 		if (!Enabled)
 		{

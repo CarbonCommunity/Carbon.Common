@@ -41,7 +41,7 @@ public class SourceCodeBank
 
 		return source;
 	}
-	public unsafe static SourceCode Parse(string name, ModuleHandle handle)
+	public static unsafe SourceCode Parse(string name, ModuleHandle handle)
 	{
 		if (!AssemblyBank.TryGetValue(name, out var source))
 		{

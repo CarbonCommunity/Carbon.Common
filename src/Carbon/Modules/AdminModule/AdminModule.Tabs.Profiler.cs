@@ -51,7 +51,6 @@ public partial class AdminModule
 			var profiler = new ProfilerTab("profiler", "Profiler", Community.Runtime.CorePlugin);
 			profiler.OnChange = (ap, _) =>
 			{
-				MonoProfiler.Refresh();
 				profiler.Draw(ap);
 			};
 			profiler.Over = (_, cui, container, parent, _) =>
@@ -75,7 +74,7 @@ public partial class AdminModule
 				2 => MonoProfiler.AssemblyRecords.OrderByDescending(x => x.calls),
 				3 => MonoProfiler.AssemblyRecords.OrderByDescending(x => x.alloc),
 				_ => default
-			})!.Where(x => string.IsNullOrEmpty(search) || x.assembly_name.Contains(search, CompareOptions.OrdinalIgnoreCase));
+			})!.Where(x => string.IsNullOrEmpty(search) || x.assembly_name.displayName.Contains(search, CompareOptions.OrdinalIgnoreCase));
 		}
 		public static IEnumerable<MonoProfiler.CallRecord> GetSortedCalls(ModuleHandle selection, int sort, string search)
 		{
@@ -243,9 +242,9 @@ public partial class AdminModule
 				};
 
 				Stripe(this, 0, value, maxVal, intenseColor, calmColor,
-					record.assembly_name,
-					$"{record.total_time:n0}ms ({record.total_time_percentage:0.0}%) | {ByteEx.Format(record.alloc).ToUpper()}",
-					$"{record.assembly_type}\n<b>{record.calls:n0}</b> calls", $"adminmodule.profilerselect {i}", record.assembly_handle == selection);
+					record.assembly_name.displayName,
+					$"{record.GetTotalTime()} ({record.total_time_percentage:0.0}%) | {ByteEx.Format(record.alloc).ToUpper()}",
+					$"{record.assembly_name.profileType}\n<b>{record.calls:n0}</b> calls", $"adminmodule.profilerselect {i}", record.assembly_handle == selection);
 			}
 
 			if (filtered.Count == 0)
@@ -309,7 +308,7 @@ public partial class AdminModule
 
 				Stripe(this, 1, value, maxVal, intenseColor, calmColor,
 					record.method_name.Truncate(105, "..."),
-					$"{record.total_time:n0}ms total ({record.total_time_percentage:0.0}%) | {record.own_time:n0}ms own ({record.own_time_percentage:0.0}%)",
+					$"{record.GetTotalTime()} total ({record.total_time_percentage:0.0}%) | {record.GetOwnTime()} own ({record.own_time_percentage:0.0}%)",
 					$"<b>{record.calls:n0}</b> {(((int)record.calls).Plural("call", "calls"))}\n{ByteEx.Format(record.total_alloc).ToUpper()} total | {ByteEx.Format(record.own_alloc).ToUpper()} own",
 					Community.Runtime.MonoProfilerConfig.SourceViewer ? $"adminmodule.profilerselectcall {index}" : string.Empty);
 
@@ -389,18 +388,18 @@ public partial class AdminModule
 			var dictionary = PoolEx.GetDictionary<string, ModalModule.Modal.Field>();
 
 			dictionary["duration"] = ModalModule.Modal.Field.Make("Duration", ModalModule.Modal.Field.FieldTypes.Float, true, 3f, customIsInvalid: field => field.Value.ToString().ToFloat() <= 0 ? "Duration must be above zero." : string.Empty);
-			dictionary["advanced"] = ModalModule.Modal.Field.Make("Advanced", ModalModule.Modal.Field.FieldTypes.Boolean, false, true);
-			dictionary["memory"] = ModalModule.Modal.Field.Make("Memory", ModalModule.Modal.Field.FieldTypes.Boolean, false, true);
-			dictionary["advmemory"] = ModalModule.Modal.Field.Make("Advamced Memory", ModalModule.Modal.Field.FieldTypes.Boolean, false, true);
-			dictionary["timings"] = ModalModule.Modal.Field.Make("Timings", ModalModule.Modal.Field.FieldTypes.Boolean, false, true);
+			dictionary["calls"] = ModalModule.Modal.Field.Make("Calls", ModalModule.Modal.Field.FieldTypes.Boolean, false, true);
+			dictionary["advancedmemory"] = ModalModule.Modal.Field.Make("Advanced Memory", ModalModule.Modal.Field.FieldTypes.Boolean, false, true);
+			dictionary["callmemory"] = ModalModule.Modal.Field.Make("Call Memory", ModalModule.Modal.Field.FieldTypes.Boolean, false, true);
+			dictionary["timings"] = ModalModule.Modal.Field.Make("Timings (Performance Intensive)", ModalModule.Modal.Field.FieldTypes.Boolean, false, true);
 
 			Modal.Open(player, "Profile Recording", dictionary, (_, _) =>
 			{
-				var profilerArgs = (MonoProfiler.ProfilerArgs)default;
+				MonoProfiler.ProfilerArgs profilerArgs = default;
 
-				if (dictionary["advanced"].Get<bool>()) profilerArgs |= MonoProfiler.ProfilerArgs.Advanced;
-				if (dictionary["memory"].Get<bool>()) profilerArgs |= MonoProfiler.ProfilerArgs.Memory;
-				if (dictionary["advmemory"].Get<bool>()) profilerArgs |= MonoProfiler.ProfilerArgs.AdvancedMemory;
+				if (dictionary["advancedmemory"].Get<bool>()) profilerArgs |= MonoProfiler.ProfilerArgs.AdvancedMemory;
+				if (dictionary["callmemory"].Get<bool>()) profilerArgs |= MonoProfiler.ProfilerArgs.CallMemory;
+				if (dictionary["calls"].Get<bool>()) profilerArgs |= MonoProfiler.ProfilerArgs.Calls;
 				if (dictionary["timings"].Get<bool>()) profilerArgs |= MonoProfiler.ProfilerArgs.Timings;
 
 				MonoProfiler.Clear();
@@ -447,8 +446,6 @@ public partial class AdminModule
 
 		var ap = GetPlayerSession(arg.Player());
 		var index = arg.GetInt(0);
-
-		MonoProfiler.Refresh();
 
 		switch (index)
 		{
