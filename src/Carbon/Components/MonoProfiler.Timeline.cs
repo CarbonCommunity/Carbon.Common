@@ -17,10 +17,9 @@ public partial class MonoProfiler
 		public float Rate;
 		public float Duration;
 		public Timeline Timeline = new();
-		public ProfilerArgs Args = ProfilerArgs.Advanced | ProfilerArgs.AdvancedMemory |
-		                           ProfilerArgs.Memory | ProfilerArgs.Timings;
+		public ProfilerArgs Args = AllFlags;
 
-		public Action<TimelineSnapshot> OnSnapshot;
+		public Action<Sample> OnSnapshot;
 		public Action<bool> OnStopped;
 
 		private bool _started;
@@ -28,9 +27,9 @@ public partial class MonoProfiler
 
 		public double CurrentDuration => (DateTime.Now - _timeSinceStart).TotalSeconds;
 
-		private TimelineSnapshot Record(AssemblyOutput assemblies, CallOutput calls)
+		private Sample Record(AssemblyOutput assemblies, CallOutput calls)
 		{
-			TimelineSnapshot snapshot = default;
+			Sample snapshot = default;
 			snapshot.Assemblies = new();
 			snapshot.Assemblies.AddRange(assemblies);
 			snapshot.Calls = new();
@@ -39,7 +38,7 @@ public partial class MonoProfiler
 			Record(snapshot);
 			return snapshot;
 		}
-		private void Record(TimelineSnapshot snapshot)
+		private void Record(Sample snapshot)
 		{
 			Timeline.Add(DateTime.Now, snapshot);
 		}
@@ -61,7 +60,7 @@ public partial class MonoProfiler
 
 			Rate = rate;
 			Duration = duration;
-			Args = args;
+			Args = args | ProfilerArgs.FastResume;
 			OnStopped = onStopped;
 
 			if (Recording)
@@ -127,9 +126,9 @@ public partial class MonoProfiler
 		}
 	}
 
-	public class Timeline : Dictionary<DateTime, TimelineSnapshot>;
+	public class Timeline : Dictionary<DateTime, Sample>;
 
-	public struct TimelineSnapshot
+	public struct Sample
 	{
 		public AssemblyOutput Assemblies;
 		public CallOutput Calls;

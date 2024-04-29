@@ -56,7 +56,7 @@ public partial class CorePlugin : CarbonPlugin
 			arg.ReplyWith("Profiler is actively recording.");
 			return;
 		}
-		
+
 		var mode = arg.GetString(0);
 		var toFile = arg.HasArg("-f");
 		var output = string.Empty;

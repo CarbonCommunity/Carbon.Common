@@ -20,6 +20,12 @@ public partial class AdminModule
 		internal static Color calmColor;
 		internal static Color niceColor;
 
+		public enum SubtabTypes
+		{
+			Calls,
+			Memory
+		}
+
 		internal static string[] sortAssemblyOptions =
 		[
 			"Name",
@@ -35,6 +41,12 @@ public partial class AdminModule
 			"Time (Own)",
 			"Memory (Total)",
 			"Memory (Own)"
+		];
+		internal static string[] sortMemoryOptions =
+		[
+			"Type",
+			"Allocations",
+			"Memory"
 		];
 
 		public ProfilerTab(string id, string name, RustPlugin plugin, Action<PlayerSession, Tab> onChange = null) : base(id, name, plugin, onChange)
@@ -69,7 +81,7 @@ public partial class AdminModule
 		{
 			return (sort switch
 			{
-				0 => MonoProfiler.AssemblyRecords.OrderBy(x => x.assembly_name),
+				0 => MonoProfiler.AssemblyRecords.OrderBy(x => x.assembly_name.displayName),
 				1 => MonoProfiler.AssemblyRecords.OrderByDescending(x => x.total_time),
 				2 => MonoProfiler.AssemblyRecords.OrderByDescending(x => x.calls),
 				3 => MonoProfiler.AssemblyRecords.OrderByDescending(x => x.alloc),
@@ -92,6 +104,20 @@ public partial class AdminModule
 				5 => advancedRecords.OrderByDescending(x => x.own_alloc),
 				_ => advancedRecords
 			})!.Where(x => string.IsNullOrEmpty(search) || x.method_name.Contains(search, CompareOptions.OrdinalIgnoreCase));;
+		}
+		public static IEnumerable<MonoProfiler.MemoryRecord> GetSortedMemory(int sort, string search)
+		{
+			var records = MonoProfiler.MemoryRecords.AsEnumerable();
+
+			if (!records.Any()) return records;
+
+			return (sort switch
+			{
+				0 => records.OrderBy(x => x.class_name),
+				1 => records.OrderByDescending(x => x.allocations),
+				2 => records.OrderByDescending(x => x.total_alloc_size),
+				_ => records
+			})!.Where(x => string.IsNullOrEmpty(search) || x.class_name.Contains(search, CompareOptions.OrdinalIgnoreCase));;
 		}
 
 		internal void Draw(PlayerSession ap)
@@ -258,66 +284,151 @@ public partial class AdminModule
 		{
 			AddColumn(1, true);
 
-			var searchInput = session.GetStorage(this, "asearch", string.Empty);
-			var sort = session.GetStorage(this, "asort", 1);
-			var advancedRecords = GetSortedCalls(selection, sort, searchInput);
-			var maxVal = 0f;
+			var subtab = session.GetStorage<SubtabTypes>(this, "subtab", default);
 
-			if (advancedRecords.Any())
-			{
-				maxVal = sort switch
+			AddButtonArray(1, new OptionButton("Calls", ap =>
 				{
-					0 or 1 => advancedRecords.Max(x => (float)x.calls),
-					2 => advancedRecords.Max(x => (float)x.total_time),
-					3 => advancedRecords.Max(x => (float)x.own_time),
-					4 => advancedRecords.Max(x => (float)x.total_alloc),
-					5 => advancedRecords.Max(x => (float)x.own_alloc),
-					_ => maxVal
-				};
-			}
-
-			AddDropdown(1, $"<b>CALLS ({advancedRecords.Count():n0})</b>", ap => sort, (ap, i) =>
-			{
-				ap.SetStorage(this, "asort", i);
-				DrawCalls(session, selection);
-			}, sortCallsOptions);
-
-			AddInputButton(1, "Search", 0.075f, new OptionInput(null, ap => searchInput, 0, false, (ap, args) =>
-			{
-				ap.SetStorage(this, "asearch", args.ToString(" "));
-				DrawCalls(ap, selection);
-			}), new OptionButton("X", ap =>
-			{
-				ap.SetStorage(this, "asearch", string.Empty);
-				DrawCalls(ap, selection);
-
-			}, _ => string.IsNullOrEmpty(searchInput) ? OptionButton.Types.None : OptionButton.Types.Important));
-
-			var index = 0;
-			foreach (var record in advancedRecords)
-			{
-				var value = sort switch
+					session.SetStorage(this, "subtab", SubtabTypes.Calls);
+					DrawCalls(session, selection);
+				}, ap => subtab == SubtabTypes.Calls ? OptionButton.Types.Selected : OptionButton.Types.None),
+				new OptionButton("Memory", ap =>
 				{
-					0 or 1 => record.calls,
-					2 => record.total_time,
-					3 => record.own_time,
-					4 => record.total_alloc,
-					5 => record.own_alloc,
-					_ => 0f
-				};
+					session.SetStorage(this, "subtab", SubtabTypes.Memory);
+					DrawCalls(session, selection);
+				}, ap => subtab == SubtabTypes.Memory ? OptionButton.Types.Selected : OptionButton.Types.None));
 
-				Stripe(this, 1, value, maxVal, intenseColor, calmColor,
-					record.method_name.Truncate(105, "..."),
-					$"{record.GetTotalTime()} total ({record.total_time_percentage:0.0}%) | {record.GetOwnTime()} own ({record.own_time_percentage:0.0}%)",
-					$"<b>{record.calls:n0}</b> {(((int)record.calls).Plural("call", "calls"))}\n{ByteEx.Format(record.total_alloc).ToUpper()} total | {ByteEx.Format(record.own_alloc).ToUpper()} own",
-					Community.Runtime.MonoProfilerConfig.SourceViewer ? $"adminmodule.profilerselectcall {index}" : string.Empty);
-
-				index++;
-			}
-
-			if (!advancedRecords.Any())
+			switch (subtab)
 			{
-				AddText(1, "No calls available", 8, "1 1 1 0.5");
+				case SubtabTypes.Memory:
+				{
+					var searchInput = session.GetStorage(this, "msearch", string.Empty);
+					var sort = session.GetStorage(this, "msort", 1);
+					var advancedRecords = GetSortedMemory(sort, searchInput);
+					var maxVal = 0f;
+
+					if (advancedRecords.Any())
+					{
+						maxVal = sort switch
+						{
+							0 or 1 => advancedRecords.Max(x => (float)x.allocations),
+							2 => advancedRecords.Max(x => (float)x.total_alloc_size),
+							_ => maxVal
+						};
+					}
+
+					AddDropdown(1, $"<b>MEMORY ({advancedRecords.Count():n0})</b>", ap => sort, (ap, i) =>
+					{
+						ap.SetStorage(this, "msort", i);
+						DrawCalls(session, selection);
+					}, sortMemoryOptions);
+
+					AddInputButton(1, "Search", 0.075f, new OptionInput(null, ap => searchInput, 0, false, (ap, args) =>
+					{
+						ap.SetStorage(this, "msearch", args.ToString(" "));
+						DrawCalls(ap, selection);
+					}), new OptionButton("X", ap =>
+					{
+						ap.SetStorage(this, "msearch", string.Empty);
+						DrawCalls(ap, selection);
+
+					}, _ => string.IsNullOrEmpty(searchInput) ? OptionButton.Types.None : OptionButton.Types.Important));
+
+					var index = 0;
+					foreach (var record in advancedRecords)
+					{
+						var value = sort switch
+						{
+							0 or 1 => record.allocations,
+							2 => record.total_alloc_size,
+							_ => 0f
+						};
+
+						Stripe(this, 1, value, maxVal, intenseColor, calmColor,
+							record.class_name,
+							$"{record.allocations:n0} allocated | {ByteEx.Format(record.total_alloc_size).ToUpper()} total",
+							$"<b>{record.instance_size} B</b>",
+							string.Empty);
+
+						index++;
+					}
+
+					if (!advancedRecords.Any())
+					{
+						AddText(1, "No memory records available", 8, "1 1 1 0.5");
+					}
+
+					break;
+				}
+
+				default:
+				case SubtabTypes.Calls:
+				{
+					var searchInput = session.GetStorage(this, "asearch", string.Empty);
+					var sort = session.GetStorage(this, "asort", 1);
+					var advancedRecords = GetSortedCalls(selection, sort, searchInput);
+					var maxVal = 0f;
+
+					if (advancedRecords.Any())
+					{
+						maxVal = sort switch
+						{
+							0 or 1 => advancedRecords.Max(x => (float)x.calls),
+							2 => advancedRecords.Max(x => (float)x.total_time),
+							3 => advancedRecords.Max(x => (float)x.own_time),
+							4 => advancedRecords.Max(x => (float)x.total_alloc),
+							5 => advancedRecords.Max(x => (float)x.own_alloc),
+							_ => maxVal
+						};
+					}
+
+					AddDropdown(1, $"<b>CALLS ({advancedRecords.Count():n0})</b>", ap => sort, (ap, i) =>
+					{
+						ap.SetStorage(this, "asort", i);
+						DrawCalls(session, selection);
+					}, sortCallsOptions);
+
+					AddInputButton(1, "Search", 0.075f, new OptionInput(null, ap => searchInput, 0, false, (ap, args) =>
+					{
+						ap.SetStorage(this, "asearch", args.ToString(" "));
+						DrawCalls(ap, selection);
+					}), new OptionButton("X", ap =>
+					{
+						ap.SetStorage(this, "asearch", string.Empty);
+						DrawCalls(ap, selection);
+
+					}, _ => string.IsNullOrEmpty(searchInput) ? OptionButton.Types.None : OptionButton.Types.Important));
+
+					var index = 0;
+					foreach (var record in advancedRecords)
+					{
+						var value = sort switch
+						{
+							0 or 1 => record.calls,
+							2 => record.total_time,
+							3 => record.own_time,
+							4 => record.total_alloc,
+							5 => record.own_alloc,
+							_ => 0f
+						};
+
+						Stripe(this, 1, value, maxVal, intenseColor, calmColor,
+							record.method_name.Truncate(105, "..."),
+							$"{record.GetTotalTime()} total ({record.total_time_percentage:0.0}%) | {record.GetOwnTime()} own ({record.own_time_percentage:0.0}%)",
+							$"<b>{record.calls:n0}</b> {(((int)record.calls).Plural("call", "calls"))}\n{ByteEx.Format(record.total_alloc).ToUpper()} total | {ByteEx.Format(record.own_alloc).ToUpper()} own",
+							Community.Runtime.MonoProfilerConfig.SourceViewer
+								? $"adminmodule.profilerselectcall {index}"
+								: string.Empty);
+
+						index++;
+					}
+
+					if (!advancedRecords.Any())
+					{
+						AddText(1, "No call records available", 8, "1 1 1 0.5");
+					}
+
+					break;
+				}
 			}
 		}
 	}
