@@ -8,6 +8,7 @@
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using Oxide.Core.Extensions;
+using Oxide.Core.Logging;
 using Oxide.Plugins;
 using Logger = Carbon.Logger;
 
@@ -202,11 +203,11 @@ public class OxideMod
 		var type = typeof(T);
 
 		if (type == typeof(Permission)) return Community.Runtime.CorePlugin.permission as T;
-		else if (type == typeof(Lang)) return Community.Runtime.CorePlugin.lang as T;
-		else if (type == typeof(Command)) return Community.Runtime.CorePlugin.cmd as T;
-		else if (type == typeof(Game.Rust.Libraries.Rust)) return Community.Runtime.CorePlugin.rust as T;
-		else if (type == typeof(WebRequests)) return Community.Runtime.CorePlugin.webrequest as T;
-		else if (type == typeof(Timers)) return Community.Runtime.CorePlugin.timer as T;
+		if (type == typeof(Lang)) return Community.Runtime.CorePlugin.lang as T;
+		if (type == typeof(Command)) return Community.Runtime.CorePlugin.cmd as T;
+		if (type == typeof(Game.Rust.Libraries.Rust)) return Community.Runtime.CorePlugin.rust as T;
+		if (type == typeof(WebRequests)) return Community.Runtime.CorePlugin.webrequest as T;
+		if (type == typeof(Timers)) return Community.Runtime.CorePlugin.timer as T;
 
 		name ??= type.Name;
 
@@ -242,6 +243,8 @@ public class OxideMod
 	public static readonly VersionNumber Version = new(_assemblyVersion.Major, _assemblyVersion.Minor, _assemblyVersion.Build);
 
 	#region Logging
+
+	public CompoundLogger RootLogger { get; set; } = new();
 
 	/// <summary>
 	/// Outputs to the game's console a message with severity level 'DEBUG'.

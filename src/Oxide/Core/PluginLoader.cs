@@ -9,7 +9,7 @@ namespace Oxide.Core.Plugins
 {
 	public class PluginLoader
 	{
-		public virtual Type[] CorePlugins { get; }
+		public virtual Type[] CorePlugins { get; } = [];
 
 		public virtual IEnumerable<string> ScanDirectory(string directory)
 		{

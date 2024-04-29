@@ -391,6 +391,11 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 		Queue(true, mappedUrls);
 	}
 
+	public void AddImage(string keyOrUrl, byte[] imageData, FileStorage.Type type = FileStorage.Type.png)
+	{
+		_protoData.Map[keyOrUrl] = FileStorage.server.Store(imageData, type, RelationshipManager.ServerInstance.net.ID);
+	}
+
 	public void AddMap(string key, string url)
 	{
 		_protoData.CustomMap[key] = url;
