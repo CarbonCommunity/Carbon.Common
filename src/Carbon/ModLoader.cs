@@ -331,6 +331,8 @@ public static class ModLoader
 			Plugin.InternalApplyAllPluginReferences();
 		}
 
+		plugin.IClearMemory();
+
 		return true;
 	}
 
