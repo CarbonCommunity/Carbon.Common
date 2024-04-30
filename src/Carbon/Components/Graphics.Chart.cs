@@ -27,7 +27,7 @@ public struct Chart
 	internal string[] horizontalLabels;
 	internal Brush textColor;
 	internal System.Drawing.Graphics graphic;
-	internal Action<byte[]> onProcessEnded;
+	internal Action<byte[], Exception> onProcessEnded;
 	internal byte[] image;
 
 	public static Chart Create(int width, int height, ChartSettings settings, ChartRect rect,
@@ -48,7 +48,7 @@ public struct Chart
 		return chart;
 	}
 
-	public void StartProcess(Action<byte[]> onProcessEnded = null)
+	public void StartProcess(Action<byte[], Exception> onProcessEnded = null)
 	{
 		this.onProcessEnded = onProcessEnded;
 
@@ -96,10 +96,6 @@ public struct Chart
 		{
 			LineAlignment = StringAlignment.Center, Alignment = StringAlignment.Center
 		};
-		var leftAlignment = new StringFormat
-		{
-			LineAlignment = StringAlignment.Center, Alignment = StringAlignment.Near
-		};
 		var font = new Font("Arial", 15);
 
 		if (Settings.HorizontalLabels)
@@ -108,8 +104,7 @@ public struct Chart
 			{
 				var x = Rect.X + (i) * (Rect.Width / (horizontalLabels.Length - 1));
 				var y = Rect.Y + Rect.Height + 5;
-				graphic.DrawString(horizontalLabels[i], font, textColor, x, y + 15,
-					i == 0 ? leftAlignment : i == horizontalLabels.Length - 1 ? rightAlignment : centerAlignment);
+				graphic.DrawString(horizontalLabels[i], font, textColor, x, y + 15, centerAlignment);
 			}
 		}
 
@@ -208,6 +203,7 @@ public struct Chart
 	public class ProcessingThread : BaseThreadedJob
 	{
 		public Chart Chart;
+		public Exception Exception;
 
 		public override void ThreadFunction()
 		{
@@ -233,6 +229,7 @@ public struct Chart
 			}
 			catch (Exception ex)
 			{
+				Exception = ex;
 				Logger.Error("Chart processing failed! Report to developers", ex);
 			}
 
@@ -241,7 +238,7 @@ public struct Chart
 
 		public override void OnFinished()
 		{
-			Chart.onProcessEnded?.Invoke(Chart.image);
+			Chart.onProcessEnded?.Invoke(Chart.image, Exception);
 
 			base.OnFinished();
 		}

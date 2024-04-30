@@ -1,7 +1,10 @@
 ﻿using API.Commands;
+using Carbon.Components.Graphics;
+using ConVar;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Oxide.Game.Rust.Cui;
+using UnityEngine.UI;
 using static Carbon.Components.CUI;
 using static ConsoleSystem;
 using Color = UnityEngine.Color;
@@ -1070,6 +1073,107 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		widget.Callback?.Invoke(session, cui, container, widget.WidgetPanel);
 
 	}
+	public void TabPanelChart(CUI cui, CuiElementContainer container, string parent, PlayerSession session, Tab.OptionChart chart, float height, float offset)
+	{
+		var panel = cui.CreatePanel(container, parent,
+			color: Cache.CUI.BlankColor,
+			xMin: 0, xMax: 1f, yMin: offset, yMax: offset + height);
+
+		var scroll = cui.CreateScrollView(container, panel, false, true,
+			ScrollRect.MovementType.Clamped,
+			0.5f, true, 0.3f, 75, "0 0",
+			out var content, out var hScroll, out _,
+			xMin: 0);
+
+		content.AnchorMin = "0 0";
+		content.AnchorMax = "0 1";
+		content.OffsetMin = "0 0";
+		content.OffsetMax = "3500 0";
+
+		hScroll.TrackColor = "0 0 0 0";
+		hScroll.HandleColor = hScroll.HighlightColor = "0.2 0.2 0.2 1";
+		hScroll.Size = 1;
+		hScroll.Invert = true;
+
+		var vLabelPanel = cui.CreatePanel(container, panel, Cache.CUI.BlankColor,
+			xMin: 0f, xMax: 0.05f, yMin: 0.078f);
+
+		var identifier = chart.GetIdentifier();
+		var loadingOverlay = cui.CreatePanel(container, panel, "0 0 0 0.2", blur: true, id: $"{identifier}_loading");
+		var loadingText = cui.CreateText(container, loadingOverlay, "1 1 1 0.5", "Processing Chart...", 10, id: $"{identifier}_loadingtxt");
+
+		var chartImage = cui.CreateImage(container, scroll, 0, Cache.CUI.WhiteColor,
+			xMin: 0.01f, id: $"{identifier}_chart");
+
+		var labelCount = chart.Chart.verticalLabels.Length;
+		var labelIndex = 0;
+		foreach (var label in chart.Chart.verticalLabels)
+		{
+			var labelOffset = labelIndex.Scale(0, labelCount - 1, 0, 150);
+
+			cui.CreateText(container, vLabelPanel, "1 1 1 0.9", label, 7,
+				xMin: 0f, xMax: 0.9f, yMin: 0f, yMax: 0f, OyMin: labelOffset, OyMax: labelOffset, align: TextAnchor.MiddleRight);
+
+			labelIndex++;
+		}
+
+		var layerIndex = 0;
+		var xOffset = 0f;
+		var xOffsetWidth = 47.5f;
+		var xMoving = 50;
+		var spacing = -5;
+
+		foreach (var layer in chart.Chart.Layers)
+		{
+			var text = layer.Name;
+			var textLength = text.Length;
+			var pColor = layer.LayerSettings.PrimaryColor;
+			var rustSColor = $"{pColor.R / 255f} {pColor.G / 255f} {pColor.B / 255f} 1";
+
+			cui.CreateButton(container, panel, $"{pColor.R / 255f} {pColor.G / 255f} {pColor.B / 255f} 0.25", Cache.CUI.WhiteColor, $"<color={CUI.RustToHexColor(rustSColor)}>\u29bf {text}</color>", 8,
+				xMin: 0.01f, xMax: 0, yMin: 0.94f, yMax: 1f, OxMin: xMoving + xOffset, OxMax: xMoving + (xOffset += xOffsetWidth + (textLength * 3f)), OyMin: -15, OyMax: -15);
+
+			xOffset += spacing;
+
+			layerIndex++;
+		}
+
+		Community.Runtime.CorePlugin.NextFrame(() =>
+		{
+			Tab.OptionChart.Cache.GetOrProcessCache(identifier, chart.Chart, chartCache =>
+			{
+				using var cui = new CUI(Handler);
+				using var pool = cui.UpdatePool();
+
+				switch (chartCache.Status)
+				{
+					case Tab.OptionChart.ChartCache.StatusTypes.Finalized:
+					{
+						if (!chartCache.HasPlayerReceivedData(session.Player.userID))
+						{
+							CommunityEntity.ServerInstance.ClientRPC(RpcTarget.Player("CL_ReceiveFilePng", session.Player), chartCache.Crc,
+								(uint)chartCache.Data.Length, chartCache.Data, 0, (byte)FileStorage.Type.png);
+						}
+
+						pool.Add(cui.UpdatePanel(loadingOverlay, "0 0 0 0", xMax: 0, blur: false));
+						pool.Add(cui.UpdateText(loadingText, "0 0 0 0", string.Empty, 0));
+						pool.Add(cui.UpdateImage(chartImage, chartCache.Crc, Cache.CUI.WhiteColor));
+						pool.Send(session.Player);
+						break;
+					}
+
+					default:
+					case Tab.OptionChart.ChartCache.StatusTypes.Failure:
+					{
+						pool.Add(cui.UpdateText(loadingText, "0.9 0.1 0.1 0.75", "Failed to load chart!", 10));
+						pool.Send(session.Player);
+						break;
+					}
+				}
+
+			});
+		});
+	}
 	public void TabTooltip(CUI cui, CuiElementContainer container, string parent, Tab.Option tooltip, string command, PlayerSession admin, float height, float offset)
 	{
 		if (admin.Tooltip == tooltip)
@@ -1300,6 +1404,10 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 										case Tab.OptionWidget widget:
 											TabPanelWidget(cui, container, panel, ap, widget, rowHeight * (widget.Height + 1), rowIndex);
+											break;
+
+										case Tab.OptionChart chart:
+											TabPanelChart(cui, container, panel, ap, chart, rowHeight * (Tab.OptionChart.Height + 1), rowIndex);
 											break;
 									}
 

@@ -1,4 +1,5 @@
-﻿using Facepunch;
+﻿using System.Windows.Media;
+using Facepunch;
 using Oxide.Game.Rust.Cui;
 
 namespace Carbon.Modules;
@@ -260,6 +261,22 @@ public partial class AdminModule
 			option.Name = string.Empty;
 			option.Height = height;
 			option.Callback = callback;
+
+			return AddRow(column, option);
+		}
+		public Tab AddChart(int column, IEnumerable<Components.Graphics.Chart.Layer> layers,
+			IEnumerable<string> verticalLabels, IEnumerable<string> horizontalLabels,
+			Components.Graphics.Chart.ChartSettings settings)
+		{
+			var space = Pool.Get<OptionSpace>();
+
+			for (int i = 0; i < 8; i++)
+			{
+				AddRow(column, space);
+			}
+
+			var option = Pool.Get<OptionChart>();
+			option.Setup(layers, verticalLabels, horizontalLabels, settings);
 
 			return AddRow(column, option);
 		}
@@ -545,6 +562,134 @@ public partial class AdminModule
 			public OptionSpace() { }
 			public OptionSpace(string name, string tooltip = null, bool hidden = false) : base(name, tooltip, hidden)
 			{
+			}
+		}
+		public class OptionChart : Option
+		{
+			public static ChartCacheDatabase Cache = new();
+
+			public class ChartCacheDatabase : Dictionary<string, ChartCache>
+			{
+				public ChartCache GetOrProcessCache(string identifier, Components.Graphics.Chart chart, Action<ChartCache> onProcessed)
+				{
+					if (string.IsNullOrEmpty(identifier))
+					{
+						return default;
+					}
+
+					if (TryGetValue(identifier, out var chartCache) && chartCache.Status != ChartCache.StatusTypes.Failure)
+					{
+						onProcessed?.Invoke(chartCache);
+						return chartCache;
+					}
+
+					chartCache.Dispose();
+					chartCache = default;
+					chartCache.Pool = new();
+					chartCache.Status = ChartCache.StatusTypes.Processing;
+
+					chart.StartProcess((data, exception) =>
+					{
+						if (exception != null)
+						{
+							chartCache.Status = ChartCache.StatusTypes.Failure;
+							this[identifier] = chartCache;
+							onProcessed?.Invoke(chartCache);
+							return;
+						}
+
+						chartCache.Status = ChartCache.StatusTypes.Finalized;
+						chartCache.Crc = FileStorage.server.GetCRC(data, FileStorage.Type.png);
+						chartCache.Data = data;
+						this[identifier] = chartCache;
+						onProcessed?.Invoke(chartCache);
+					});
+
+					return this[identifier] = chartCache;
+				}
+			}
+
+			public struct ChartCache
+			{
+				public enum StatusTypes
+				{
+					Finalized,
+					Processing,
+					Failure
+				}
+
+				public StatusTypes Status;
+				public uint Crc;
+				public byte[] Data;
+				public List<ulong> Pool;
+
+				public bool HasPlayerReceivedData(ulong player)
+				{
+					var has = Pool.Contains(player);
+
+					if (!has)
+					{
+						Pool.Add(player);
+					}
+
+					return has;
+				}
+
+				public void Dispose()
+				{
+					if (Data != null)
+					{
+						Array.Clear(Data, 0, Data.Length);
+					}
+
+					Data = null;
+					Crc = default;
+					Status = default;
+					Pool?.Clear();
+					Pool = null;
+				}
+			}
+
+			public const int Height = 8;
+			public Components.Graphics.Chart.ChartSettings Settings;
+			public Components.Graphics.Chart Chart;
+
+			internal static int _lastValue;
+			internal string _identifier { get; private set; }
+
+			public string GetIdentifier()
+			{
+				if (string.IsNullOrEmpty(_identifier))
+				{
+					_identifier = GenerateIdentifier();
+				}
+
+				return _identifier;
+			}
+
+			public static string GenerateIdentifier()
+			{
+				return $"chart_{_lastValue++}";
+			}
+
+			public OptionChart() { }
+
+			public void Setup(IEnumerable<Components.Graphics.Chart.Layer> layers,
+				IEnumerable<string> verticalLabels, IEnumerable<string> horizontalLabels,
+				Components.Graphics.Chart.ChartSettings settings)
+			{
+				Components.Graphics.Chart.ChartRect rect = default;
+				const float xOffset = 75;
+				const int width = 10750;
+				rect.Width = width - (xOffset * 2f);
+				rect.Height = 450;
+				rect.X = xOffset;
+				rect.Y = 100;
+
+				Chart = Components.Graphics.Chart.Create(width, 600, settings, rect, layers, verticalLabels.ToArray(),
+					horizontalLabels.ToArray(), System.Drawing.Brushes.White, System.Drawing.Color.Transparent);
+
+				GetIdentifier();
 			}
 		}
 	}
