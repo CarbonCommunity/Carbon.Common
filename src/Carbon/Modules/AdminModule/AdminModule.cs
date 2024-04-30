@@ -1099,13 +1099,10 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			xMin: 0f, xMax: 0.05f, yMin: 0.078f);
 
 		var identifier = chart.GetIdentifier();
-		var loadingOverlay = cui.CreatePanel(container, panel, "0 0 0 0.2", blur: true, id: $"{identifier}_loading");
-		var loadingText = cui.CreateText(container, loadingOverlay, "1 1 1 0.5", "Processing Chart...", 10, id: $"{identifier}_loadingtxt");
-
-		var chartImage = cui.CreateImage(container, scroll, 0, Cache.CUI.WhiteColor, xMin: 0.01f, id: $"{identifier}_chart");
 
 		var labelCount = chart.Chart.verticalLabels.Length;
 		var labelIndex = 0;
+
 		foreach (var label in chart.Chart.verticalLabels)
 		{
 			var labelOffset = labelIndex.Scale(0, labelCount - 1, 0, 150);
@@ -1137,6 +1134,10 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 			layerIndex++;
 		}
+
+		var loadingOverlay = cui.CreatePanel(container, panel, "0 0 0 0.2", blur: true, id: $"{identifier}_loading");
+		var loadingText = cui.CreateText(container, loadingOverlay, "1 1 1 0.5", "Please wait...", 10, id: $"{identifier}_loadingtxt");
+		var chartImage = cui.CreateImage(container, scroll, 0, Cache.CUI.WhiteColor, xMin: 0.01f, id: $"{identifier}_chart");
 
 		Community.Runtime.CorePlugin.NextFrame(() =>
 		{
