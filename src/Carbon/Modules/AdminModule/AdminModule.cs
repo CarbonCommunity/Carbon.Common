@@ -1073,7 +1073,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		widget.Callback?.Invoke(session, cui, container, widget.WidgetPanel);
 
 	}
-	public void TabPanelChart(CUI cui, CuiElementContainer container, string parent, PlayerSession session, Tab.OptionChart chart, float height, float offset)
+	public void TabPanelChart(CUI cui, CuiElementContainer container, string parent, PlayerSession session, Tab.OptionChart chart, float height, float offset, string layerCommand)
 	{
 		var panel = cui.CreatePanel(container, parent,
 			color: Cache.CUI.BlankColor,
@@ -1102,8 +1102,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		var loadingOverlay = cui.CreatePanel(container, panel, "0 0 0 0.2", blur: true, id: $"{identifier}_loading");
 		var loadingText = cui.CreateText(container, loadingOverlay, "1 1 1 0.5", "Processing Chart...", 10, id: $"{identifier}_loadingtxt");
 
-		var chartImage = cui.CreateImage(container, scroll, 0, Cache.CUI.WhiteColor,
-			xMin: 0.01f, id: $"{identifier}_chart");
+		var chartImage = cui.CreateImage(container, scroll, 0, Cache.CUI.WhiteColor, xMin: 0.01f, id: $"{identifier}_chart");
 
 		var labelCount = chart.Chart.verticalLabels.Length;
 		var labelIndex = 0;
@@ -1130,8 +1129,9 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			var pColor = layer.LayerSettings.PrimaryColor;
 			var rustSColor = $"{pColor.R / 255f} {pColor.G / 255f} {pColor.B / 255f} 1";
 
-			cui.CreateButton(container, panel, $"{pColor.R / 255f} {pColor.G / 255f} {pColor.B / 255f} 0.25", Cache.CUI.WhiteColor, $"<color={CUI.RustToHexColor(rustSColor)}>\u29bf {text}</color>", 8,
-				xMin: 0.01f, xMax: 0, yMin: 0.94f, yMax: 1f, OxMin: xMoving + xOffset, OxMax: xMoving + (xOffset += xOffsetWidth + (textLength * 3f)), OyMin: -15, OyMax: -15);
+			cui.CreateProtectedButton(container, panel, $"{pColor.R / 255f} {pColor.G / 255f} {pColor.B / 255f} 0.25", layer.Disabled ? "0.5 0.5 0.5 0.6" : rustSColor, $"\u29bf {text}", 8,
+				xMin: 0.01f, xMax: 0, yMin: 0.94f, yMax: 1f, OxMin: xMoving + xOffset, OxMax: xMoving + (xOffset += xOffsetWidth + (textLength * 3f)), OyMin: -15, OyMax: -15,
+				command: $"{layerCommand} {layerIndex}");
 
 			xOffset += spacing;
 
@@ -1407,7 +1407,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 											break;
 
 										case Tab.OptionChart chart:
-											TabPanelChart(cui, container, panel, ap, chart, rowHeight * (Tab.OptionChart.Height + 1), rowIndex);
+											TabPanelChart(cui, container, panel, ap, chart, rowHeight * (Tab.OptionChart.Height + 1), rowIndex, layerCommand: PanelId + $".callaction {i} {actualI} layer");
 											break;
 									}
 
@@ -1881,6 +1881,20 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					return false;
 				}
 				break;
+
+			case Tab.OptionChart chart:
+			{
+				switch (args.ElementAt(0))
+				{
+					case "layer":
+						var layerIndex = args.ElementAt(1).ToInt();
+						var layer = chart.Chart.Layers.ElementAt(layerIndex);
+						layer.ToggleDisabled();
+						chart.GetIdentifier(reset: true);
+						return true;
+				}
+				break;
+			}
 		}
 
 		return false;

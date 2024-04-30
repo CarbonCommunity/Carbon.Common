@@ -71,18 +71,25 @@ public struct Chart
 		public Color GridColor;
 		public int ShadowLayers;
 	}
-	public struct Layer
-	{
-		public string Name;
-		public int[] Data;
-		public LayerSettings LayerSettings;
-	}
 	public struct ChartRect
 	{
 		public float Width;
 		public float Height;
 		public float X;
 		public float Y;
+	}
+
+	public class Layer
+	{
+		public string Name;
+		public int[] Data;
+		public bool Disabled;
+		public LayerSettings LayerSettings;
+
+		public void ToggleDisabled()
+		{
+			Disabled = !Disabled;
+		}
 	}
 
 	internal void DrawChart(System.Drawing.Graphics graphic, IEnumerable<Layer> layers, string[] verticalLabels, string[] horizontalLabels)
@@ -138,10 +145,14 @@ public struct Chart
 
 		foreach (var layer in layers)
 		{
+			if (layer.Disabled)
+			{
+				continue;
+			}
+
 			if (Settings.LegendLabels)
 			{
-				graphic.DrawString($"\u25cf {layer.Name}", font2, new SolidBrush(layer.LayerSettings.PrimaryColor),
-					xOffset * 2f, Rect.Y + Rect.Height + 30);
+				graphic.DrawString($"\u25cf {layer.Name}", font2, new SolidBrush(layer.LayerSettings.PrimaryColor),xOffset * 2f, Rect.Y + Rect.Height + 30);
 			}
 
 			DrawChartContent(graphic, layer.Data, Rect.Width, Rect.Height, Rect.X, Rect.Y, layer.LayerSettings);

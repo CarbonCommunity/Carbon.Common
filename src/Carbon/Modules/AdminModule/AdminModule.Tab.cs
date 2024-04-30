@@ -654,12 +654,11 @@ public partial class AdminModule
 			public Components.Graphics.Chart.ChartSettings Settings;
 			public Components.Graphics.Chart Chart;
 
-			internal static int _lastValue;
 			internal string _identifier { get; private set; }
 
-			public string GetIdentifier()
+			public string GetIdentifier(bool reset = false)
 			{
-				if (string.IsNullOrEmpty(_identifier))
+				if (reset || string.IsNullOrEmpty(_identifier))
 				{
 					_identifier = GenerateIdentifier();
 				}
@@ -667,9 +666,9 @@ public partial class AdminModule
 				return _identifier;
 			}
 
-			public static string GenerateIdentifier()
+			public string GenerateIdentifier()
 			{
-				return $"chart_{_lastValue++}";
+				return $"chart_{Chart.Layers.Where(x => !x.Disabled).Sum(x => x.Name.Length + x.Data.Sum(y => y) + (x.Disabled ? 0 : 1))}";
 			}
 
 			public OptionChart() { }
