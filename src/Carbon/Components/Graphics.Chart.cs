@@ -62,7 +62,6 @@ public struct Chart
 	{
 		public bool VerticalLabels;
 		public bool HorizontalLabels;
-		public bool LegendLabels;
 	}
 	public struct LayerSettings
 	{
@@ -140,8 +139,15 @@ public struct Chart
 		graphic.DrawLine(Pens.DimGray, Rect.X, Rect.Y, Rect.X, Rect.Y + Rect.Height);
 		graphic.DrawLine(Pens.DimGray, Rect.X, Rect.Y + Rect.Height, Rect.X + Rect.Width, Rect.Y + Rect.Height);
 
-		var xOffset = 0f;
-		var font2 = new Font("Arial", 15);
+		foreach (var layer in layers)
+		{
+			if (layer.Disabled)
+			{
+				continue;
+			}
+
+			DrawChartContentShadows(graphic, layer.Data, Rect.Width, Rect.Height, Rect.X, Rect.Y, layer.LayerSettings);
+		}
 
 		foreach (var layer in layers)
 		{
@@ -150,23 +156,13 @@ public struct Chart
 				continue;
 			}
 
-			if (Settings.LegendLabels)
-			{
-				graphic.DrawString($"\u25cf {layer.Name}", font2, new SolidBrush(layer.LayerSettings.PrimaryColor),xOffset * 2f, Rect.Y + Rect.Height + 30);
-			}
-
-			DrawChartContent(graphic, layer.Data, Rect.Width, Rect.Height, Rect.X, Rect.Y, layer.LayerSettings);
-
-			xOffset += 120;
+			DrawChartContentLineDots(graphic, layer.Data, Rect.Width, Rect.Height, Rect.X, Rect.Y, layer.LayerSettings);
 		}
 	}
-	internal void DrawChartContent(System.Drawing.Graphics graphic, int[] data, float chartWidth, float chartHeight, float chartX, float chartY, LayerSettings layerSettings)
+	internal void DrawChartContentShadows(System.Drawing.Graphics graphic, int[] data, float chartWidth, float chartHeight, float chartX, float chartY, LayerSettings layerSettings)
 	{
 		var highestValue = data.Max();
 		var spaceBetweenPoints = chartWidth / (data.Length - 1);
-		var linePen = new Pen(layerSettings.PrimaryColor, 2);
-		var markerBrush = new SolidBrush(layerSettings.PrimaryColor);
-		var font = new Font("Arial", 12);
 
 		for (int i = 0; i < data.Length; i++)
 		{
@@ -177,20 +173,15 @@ public struct Chart
 			var nextX = final ? x : chartX + spaceBetweenPoints * (i + 1);
 			var nextY = final ? y : chartY + chartHeight - data[i + 1] * (chartHeight / highestValue);
 
-			// LinearGradientBrush shadowBrush = new LinearGradientBrush(
-			// 	new PointF(x, y),
-			// 	new PointF(nextX, nextY),
-			// 	Color.LightGray,
-			// 	Color.Transparent); // Transparent at the top to blend with background
-
 			void CreateShadow(float multiply, int alpha)
 			{
-				PointF[] shadowPoints = new PointF[4];
-				shadowPoints[0] = new PointF(x, y * multiply);
-				shadowPoints[1] = new PointF(nextX, nextY * multiply);
-				shadowPoints[2] = new PointF(nextX, chartY + chartHeight);
-				shadowPoints[3] = new PointF(x, chartY + chartHeight);
-
+				PointF[] shadowPoints =
+				[
+					new PointF(x, y * multiply),
+                    new PointF(nextX, nextY * multiply),
+                    new PointF(nextX, chartY + chartHeight),
+                    new PointF(x, chartY + chartHeight),
+				];
 				var color = Color.FromArgb(alpha, layerSettings.SecondaryColor);
 				graphic.FillPolygon(new SolidBrush(color), shadowPoints);
 			}
@@ -203,7 +194,23 @@ public struct Chart
 					s.Scale(0, layerSettings.ShadowLayers, 1f, 0.75f),
 					(int)s.Scale(0, layerSettings.ShadowLayers, 50f, 0f));
 			}
+		}
+	}
+	internal void DrawChartContentLineDots(System.Drawing.Graphics graphic, int[] data, float chartWidth, float chartHeight, float chartX, float chartY, LayerSettings layerSettings)
+	{
+		var highestValue = data.Max();
+		var spaceBetweenPoints = chartWidth / (data.Length - 1);
+		var linePen = new Pen(layerSettings.PrimaryColor, 2);
+		var markerBrush = new SolidBrush(layerSettings.PrimaryColor);
 
+		for (int i = 0; i < data.Length; i++)
+		{
+			var final = i >= data.Length - 1;
+			var x = chartX + spaceBetweenPoints * i;
+			var y = chartY + chartHeight - data[i] * (chartHeight / highestValue);
+
+			var nextX = final ? x : chartX + spaceBetweenPoints * (i + 1);
+			var nextY = final ? y : chartY + chartHeight - data[i + 1] * (chartHeight / highestValue);
 
 			graphic.DrawLine(linePen, x, y, nextX, nextY);
 			graphic.FillEllipse(markerBrush, x - 7.5f, y - 7.5f, 15, 15);
