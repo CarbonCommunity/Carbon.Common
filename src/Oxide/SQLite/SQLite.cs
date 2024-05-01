@@ -1,6 +1,7 @@
 ﻿using System.Data;
 using Mono.Data.Sqlite;
 using Logger = Carbon.Logger;
+using ThreadPriority = System.Threading.ThreadPriority;
 
 namespace Oxide.Core.SQLite.Libraries
 {
@@ -203,6 +204,9 @@ namespace Oxide.Core.SQLite.Libraries
 		{
 			_dataDirectory = Interface.Oxide.DataDirectory;
 			_worker = new Thread(Worker);
+			_worker.IsBackground = true;
+			_worker.Priority = ThreadPriority.BelowNormal;
+			_worker.Name = "SQLite";
 			_worker.Start();
 		}
 

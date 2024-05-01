@@ -1,6 +1,6 @@
 ﻿/*
  *
- * Copyright (c) 2022-2024 Carbon Community  
+ * Copyright (c) 2022-2024 Carbon Community
  * All rights reserved.
  *
  */
@@ -40,7 +40,12 @@ public class BaseThreadedJob : IDisposable
 		if (Community.IsServerInitialized || ConVar.Global.skipAssetWarmup_crashes)
 		{
 			cancellationToken = new CancellationTokenSource();
-			_task = Task.Factory.StartNew(Run, cancellationToken.Token);
+
+			const TaskCreationOptions options = TaskCreationOptions.LongRunning |
+			                                    TaskCreationOptions.PreferFairness |
+			                                    TaskCreationOptions.AttachedToParent;
+
+			_task = Task.Factory.StartNew(Run, cancellationToken.Token, options, TaskScheduler.FromCurrentSynchronizationContext());
 		}
 		else Run();
 	}

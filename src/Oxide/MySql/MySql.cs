@@ -2,10 +2,11 @@
 using System.Data.Common;
 using MySql.Data.MySqlClient;
 using Logger = Carbon.Logger;
+using ThreadPriority = System.Threading.ThreadPriority;
 
 /*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -16,7 +17,10 @@ public class MySql : Library, IDatabaseProvider
 {
 	public MySql()
 	{
-		_worker = new Thread(new ThreadStart(Worker));
+		_worker = new Thread(Worker);
+		_worker.IsBackground = true;
+		_worker.Priority = ThreadPriority.BelowNormal;
+		_worker.Name = "MySQL";
 		_worker.Start();
 	}
 
