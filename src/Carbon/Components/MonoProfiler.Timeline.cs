@@ -19,7 +19,7 @@ public partial class MonoProfiler
 		public Timeline Timeline = new();
 		public ProfilerArgs Args = AllFlags;
 
-		public Action<Sample> OnSnapshot;
+		public Action<Sample> OnSample;
 		public Action<bool> OnStopped;
 
 		private bool _started;
@@ -80,7 +80,7 @@ public partial class MonoProfiler
 				ToggleProfilingTimed(recording.Rate, recording.Args, _ =>
 				{
 					var snapshot = recording.Record(AssemblyRecords, CallRecords);
-					recording.OnSnapshot?.Invoke(snapshot);
+					recording.OnSample?.Invoke(snapshot);
 
 					if (recording.CurrentDuration >= recording.Duration)
 					{
