@@ -1139,7 +1139,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		var loadingText = cui.CreateText(container, loadingOverlay, "1 1 1 0.5", "Please wait...", 10, id: $"{identifier}_loadingtxt");
 		var chartImage = cui.CreateImage(container, scroll, 0, Cache.CUI.WhiteColor, xMin: 0.01f, id: $"{identifier}_chart");
 
-		cui.CreateText(container, panel, Cache.CUI.WhiteColor, chart.Name, chart.NameSize, xMin: 0.025f, xMax: 0.95f, yMin: 0.5f, OyMax: 10, align: chart.NameAlign, font: Handler.FontTypes.RobotoCondensedBold);
+		cui.CreateText(container, panel, Cache.CUI.WhiteColor, chart.Name, chart.NameSize, xMin: 0.025f, xMax: 0.95f, yMin: 1, yMax: 1, OyMin: 10, OyMax: 10, align: chart.NameAlign, font: Handler.FontTypes.RobotoCondensedBold);
 
 		Community.Runtime.CorePlugin.NextFrame(() =>
 		{
