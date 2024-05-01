@@ -1081,7 +1081,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 		var scroll = cui.CreateScrollView(container, panel, false, true,
 			ScrollRect.MovementType.Clamped,
-			0.5f, true, 0.3f, 75, "0 0",
+			0.5f, true, 0.3f, 120, "0 0",
 			out var content, out var hScroll, out _,
 			xMin: 0);
 
@@ -1138,6 +1138,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		var loadingOverlay = cui.CreatePanel(container, panel, "0 0 0 0.2", blur: true, id: $"{identifier}_loading");
 		var loadingText = cui.CreateText(container, loadingOverlay, "1 1 1 0.5", "Please wait...", 10, id: $"{identifier}_loadingtxt");
 		var chartImage = cui.CreateImage(container, scroll, 0, Cache.CUI.WhiteColor, xMin: 0.01f, id: $"{identifier}_chart");
+
+		cui.CreateText(container, panel, Cache.CUI.WhiteColor, chart.Name, chart.NameSize, xMin: 0.025f, xMax: 0.95f, yMin: 0.5f, OyMax: 10, align: chart.NameAlign, font: Handler.FontTypes.RobotoCondensedBold);
 
 		Community.Runtime.CorePlugin.NextFrame(() =>
 		{

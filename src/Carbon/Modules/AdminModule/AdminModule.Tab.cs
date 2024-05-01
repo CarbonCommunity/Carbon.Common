@@ -264,7 +264,7 @@ public partial class AdminModule
 
 			return AddRow(column, option);
 		}
-		public Tab AddChart(int column, IEnumerable<Components.Graphics.Chart.Layer> layers,
+		public Tab AddChart(int column, string name, TextAnchor nameAlign, int nameSize, IEnumerable<Components.Graphics.Chart.Layer> layers,
 			IEnumerable<string> verticalLabels, IEnumerable<string> horizontalLabels,
 			Components.Graphics.Chart.ChartSettings settings)
 		{
@@ -276,7 +276,7 @@ public partial class AdminModule
 			}
 
 			var option = Pool.Get<OptionChart>();
-			option.Setup(layers, verticalLabels, horizontalLabels, settings);
+			option.Setup(name, nameAlign, nameSize, layers, verticalLabels, horizontalLabels, settings);
 
 			return AddRow(column, option);
 		}
@@ -650,6 +650,9 @@ public partial class AdminModule
 				}
 			}
 
+			public string Name;
+			public int NameSize = 20;
+			public TextAnchor NameAlign = TextAnchor.UpperLeft;
 			public const int Height = 8;
 			public Components.Graphics.Chart.ChartSettings Settings;
 			public Components.Graphics.Chart Chart;
@@ -673,10 +676,13 @@ public partial class AdminModule
 
 			public OptionChart() { }
 
-			public void Setup(IEnumerable<Components.Graphics.Chart.Layer> layers,
+			public void Setup(string name, TextAnchor nameAlign, int nameSize, IEnumerable<Components.Graphics.Chart.Layer> layers,
 				IEnumerable<string> verticalLabels, IEnumerable<string> horizontalLabels,
 				Components.Graphics.Chart.ChartSettings settings)
 			{
+				Name = name;
+				NameAlign = nameAlign;
+				NameSize = nameSize;
 				Components.Graphics.Chart.ChartRect rect = default;
 				const float xOffset = 75;
 				const int width = 10750;
