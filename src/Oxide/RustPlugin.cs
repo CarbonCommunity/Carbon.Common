@@ -5,6 +5,7 @@
  *
  */
 
+using Logger = Carbon.Logger;
 using Player = Oxide.Game.Rust.Libraries.Player;
 
 namespace Oxide.Plugins;
@@ -271,6 +272,58 @@ public class RustPlugin : Plugin
 	{
 		return $"{Title} v{Version} by {Author}";
 	}
+
+	#region AutoPatch
+
+	private HarmonyLib.Harmony _harmonyInstanceCache;
+	private string _harmonyId => $"com.carbon.{Name}";
+	private HarmonyLib.Harmony _harmonyInstance => _harmonyInstanceCache ??= new HarmonyLib.Harmony(_harmonyId);
+
+	public void IProcessPatches()
+	{
+		foreach (var type in Type.GetNestedTypes(BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static))
+		{
+			var attribute = type.GetCustomAttributes(typeof(AutoPatchAttribute), false);
+
+			if (attribute.Length < 1)
+			{
+				continue;
+			}
+
+			try
+			{
+				var harmonyMethods = _harmonyInstance.CreateClassProcessor(type)?.Patch();
+
+				if (harmonyMethods == null || harmonyMethods.Count == 0)
+				{
+					Logger.Warn($"AutoPatch attribute found on '{type.Name}' for {ToPrettyString()} but no HarmonyPatch methods found. Skipping.");
+					continue;
+				}
+
+				foreach (MethodInfo method in harmonyMethods)
+				{
+					Logger.Log($"Automatically Harmony patched '{method.Name}' method for {ToPrettyString()}. ({type.Name})");
+				}
+			}
+			catch (Exception ex)
+			{
+				Logger.Error($"Failed to automatically Harmony patch '{type.Name}' for {ToPrettyString()}", ex);
+			}
+		}
+	}
+	public void IProcessUnpatches()
+	{
+		try
+		{
+			_harmonyInstance?.UnpatchAll(_harmonyId);
+		}
+		catch (Exception ex)
+		{
+			Logger.Error($"Failed auto unpatching {_harmonyId} for {ToPrettyString()}", ex);
+		}
+	}
+
+	#endregion
 
 	#region Printing
 
