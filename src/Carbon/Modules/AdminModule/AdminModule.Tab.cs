@@ -670,7 +670,7 @@ public partial class AdminModule
 
 			public string GenerateIdentifier()
 			{
-				return $"chart_{Chart.Layers.Where(x => !x.Disabled).Sum(x => x.Name.Length + x.Data.Sum(y => y) + (x.Disabled ? 0 : 1))}";
+				return $"chart_{Chart.Name}{Chart.Layers.Where(x => !x.Disabled).Sum(x => x.Name.Length + x.Data.Sum(y => y) + (x.Disabled ? 0 : 1))}";
 			}
 
 			public OptionChart() { }
@@ -690,7 +690,7 @@ public partial class AdminModule
 				rect.X = xOffset;
 				rect.Y = 100;
 
-				Chart = Components.Graphics.Chart.Create(width, 600, settings, rect, layers, verticalLabels.ToArray(),
+				Chart = Components.Graphics.Chart.Create(name, width, 600, settings, rect, layers, verticalLabels.ToArray(),
 					horizontalLabels.ToArray(), System.Drawing.Brushes.White, System.Drawing.Color.Transparent);
 
 				GetIdentifier();

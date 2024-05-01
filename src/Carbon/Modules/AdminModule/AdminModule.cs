@@ -1113,25 +1113,31 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			labelIndex++;
 		}
 
-		var layerIndex = 0;
+		var layerIndex = -1;
 		var xOffset = 0f;
 		var xOffsetWidth = 47.5f;
 		var xMoving = 50;
 		var spacing = -5;
 
+		CreateLayerButton("All", System.Drawing.Color.BlanchedAlmond, chart.Chart.Layers.All(x => x.Disabled));
+
 		foreach (var layer in chart.Chart.Layers)
 		{
-			var text = layer.Name;
-			var textLength = text.Length;
-			var pColor = layer.LayerSettings.PrimaryColor;
-			var rustSColor = $"{pColor.R / 255f} {pColor.G / 255f} {pColor.B / 255f} 1";
+			CreateLayerButton(layer.Name, layer.LayerSettings.PrimaryColor, !layer.Disabled);
+		}
 
-			cui.CreateProtectedButton(container, panel, $"{pColor.R / 255f} {pColor.G / 255f} {pColor.B / 255f} 0.25", layer.Disabled ? "0.5 0.5 0.5 0.6" : rustSColor, $"\u29bf {text}", 8,
+		void CreateLayerButton(string text, System.Drawing.Color color, bool enabled)
+		{
+			var textLength = text.Length;
+			var pColor = color;
+			var sColor = System.Drawing.Color.FromArgb((int)(pColor.R * 1.5f).Clamp(0, 255), (int)(pColor.G * 1.5f).Clamp(0, 255), (int)(pColor.B * 1.5f).Clamp(0, 255));
+			var rustSColor = $"{sColor.R / 255f} {sColor.G / 255f} {sColor.B / 255f} 1";
+
+			cui.CreateProtectedButton(container, panel, $"{pColor.R / 255f} {pColor.G / 255f} {pColor.B / 255f} {(!enabled ? 0.25 : 0.5)}", !enabled ? "0.8 0.8 0.8 0.8" : rustSColor, $"\u29bf {text}", 8,
 				xMin: 0.01f, xMax: 0, yMin: 0.94f, yMax: 1f, OxMin: xMoving + xOffset, OxMax: xMoving + (xOffset += xOffsetWidth + (textLength * 3f)), OyMin: -15, OyMax: -15,
 				command: $"{layerCommand} {layerIndex}");
 
 			xOffset += spacing;
-
 			layerIndex++;
 		}
 
@@ -1891,9 +1897,25 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				{
 					case "layer":
 						var layerIndex = args.ElementAt(1).ToInt();
-						var layer = chart.Chart.Layers.ElementAt(layerIndex);
-						layer.ToggleDisabled();
-						chart.GetIdentifier(reset: true);
+
+						if (layerIndex == -1)
+						{
+							var allDisabled = chart.Chart.Layers.All(x => x.Disabled);
+
+							foreach (var chartLayer in chart.Chart.Layers)
+							{
+								chartLayer.Disabled = !allDisabled;
+							}
+							
+							chart.GetIdentifier(reset: true);
+						}
+						else
+						{
+							var layer = chart.Chart.Layers.ElementAt(layerIndex);
+							layer.ToggleDisabled();
+							chart.GetIdentifier(reset: true);
+						}
+
 						return true;
 				}
 				break;

@@ -18,6 +18,7 @@ namespace Carbon.Components.Graphics;
 
 public struct Chart
 {
+	public string Name;
 	public ChartSettings Settings;
 	public ChartRect Rect;
 	public IEnumerable<Layer> Layers;
@@ -32,11 +33,12 @@ public struct Chart
 	internal Action<byte[], Exception> onProcessEnded;
 	internal byte[] image;
 
-	public static Chart Create(int width, int height, ChartSettings settings, ChartRect rect,
+	public static Chart Create(string name, int width, int height, ChartSettings settings, ChartRect rect,
 		IEnumerable<Layer> layers, string[] verticalLabels, string[] horizontalLabels, Brush textColor, Color background)
 	{
 		Chart chart = default;
 
+		chart.Name = name;
 		chart.Settings = settings;
 		chart.Rect = rect;
 		chart.Layers = layers;
