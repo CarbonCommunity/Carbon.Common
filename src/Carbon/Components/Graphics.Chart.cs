@@ -14,6 +14,8 @@ using Font = System.Drawing.Font;
 
 namespace Carbon.Components.Graphics;
 
+#pragma warning disable CS0649 // Field 'Chart.graphic' is never assigned to, and will always have its default value null
+
 public struct Chart
 {
 	public ChartSettings Settings;

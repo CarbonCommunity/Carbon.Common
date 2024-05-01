@@ -650,7 +650,6 @@ public partial class AdminModule
 				}
 			}
 
-			public string Name;
 			public int NameSize = 20;
 			public TextAnchor NameAlign = TextAnchor.UpperLeft;
 			public const int Height = 8;
