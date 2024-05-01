@@ -81,6 +81,24 @@ public partial class AdminModule
 
 			return this;
 		}
+		public Tab InsertRow(int column, int index, Option row, bool hidden = false)
+		{
+			row.CurrentlyHidden = row.Hidden = hidden;
+
+			if (Columns.TryGetValue(column, out var options))
+			{
+				options.Insert(index, row);
+			}
+			else
+			{
+
+				Columns[column] = options = new();
+				options.Insert(index, row);
+			}
+
+			return this;
+		}
+
 		public Tab AddName(int column, string name, TextAnchor align = TextAnchor.MiddleLeft, bool hidden = false)
 		{
 			var option = Pool.Get<OptionName>();
@@ -265,18 +283,29 @@ public partial class AdminModule
 			return AddRow(column, option);
 		}
 		public Tab AddChart(int column, string name, TextAnchor nameAlign, int nameSize, IEnumerable<Components.Graphics.Chart.Layer> layers,
-			IEnumerable<string> verticalLabels, IEnumerable<string> horizontalLabels,
-			Components.Graphics.Chart.ChartSettings settings)
+			IEnumerable<string> verticalLabels, IEnumerable<string> horizontalLabels, Components.Graphics.Chart.ChartSettings settings, bool responsive = true)
 		{
 			var space = Pool.Get<OptionSpace>();
+			var chartIndex = Columns[column].Count;
 
 			for (int i = 0; i < 8; i++)
 			{
 				AddRow(column, space);
 			}
 
+			if (!responsive)
+			{
+				for (int i = 1; i < Columns.Count; i++)
+				{
+					for (int z = 0; z < 9; z++)
+					{
+						InsertRow(i, chartIndex, space);
+					}
+				}
+			}
+
 			var option = Pool.Get<OptionChart>();
-			option.Setup(name, nameAlign, nameSize, layers, verticalLabels, horizontalLabels, settings);
+			option.Setup(name, nameAlign, nameSize, layers, verticalLabels, horizontalLabels, settings, responsive);
 
 			return AddRow(column, option);
 		}
@@ -585,7 +614,7 @@ public partial class AdminModule
 
 					chartCache.Dispose();
 					chartCache = default;
-					chartCache.Pool = new();
+					chartCache.ViewingPool = new();
 					chartCache.Status = ChartCache.StatusTypes.Processing;
 
 					chart.StartProcess((data, exception) =>
@@ -607,6 +636,14 @@ public partial class AdminModule
 
 					return this[identifier] = chartCache;
 				}
+
+				public void ClearPlayerViewer(ulong player)
+				{
+					foreach (var cache in this)
+					{
+						cache.Value.ClearPlayerViewer(player);
+					}
+				}
 			}
 
 			public struct ChartCache
@@ -621,15 +658,19 @@ public partial class AdminModule
 				public StatusTypes Status;
 				public uint Crc;
 				public byte[] Data;
-				public List<ulong> Pool;
+				public List<ulong> ViewingPool;
 
+				public void ClearPlayerViewer(ulong player)
+				{
+					ViewingPool.RemoveAll(x => x == player);
+				}
 				public bool HasPlayerReceivedData(ulong player)
 				{
-					var has = Pool.Contains(player);
+					var has = ViewingPool.Contains(player);
 
 					if (!has)
 					{
-						Pool.Add(player);
+						ViewingPool.Add(player);
 					}
 
 					return has;
@@ -645,11 +686,12 @@ public partial class AdminModule
 					Data = null;
 					Crc = default;
 					Status = default;
-					Pool?.Clear();
-					Pool = null;
+					ViewingPool?.Clear();
+					ViewingPool = null;
 				}
 			}
 
+			public bool Responsive;
 			public int NameSize = 20;
 			public TextAnchor NameAlign = TextAnchor.UpperLeft;
 			public const int Height = 8;
@@ -670,18 +712,19 @@ public partial class AdminModule
 
 			public string GenerateIdentifier()
 			{
-				return $"chart_{Chart.Name}{Chart.Layers.Where(x => !x.Disabled).Sum(x => x.Name.Length + x.Data.Sum(y => y) + (x.Disabled ? 0 : 1))}";
+				return $"chart_{Chart.Name}{Chart.Layers.Where(x => !x.Disabled).Select(x => x.LayerSettings.Shadows.ToString()).ToString("_")}{Chart.Layers.Where(x => !x.Disabled).Sum(x => x.Name.Length + x.Data.Sum(y => y) + (x.Disabled ? 0 : 1))}";
 			}
 
 			public OptionChart() { }
 
 			public void Setup(string name, TextAnchor nameAlign, int nameSize, IEnumerable<Components.Graphics.Chart.Layer> layers,
 				IEnumerable<string> verticalLabels, IEnumerable<string> horizontalLabels,
-				Components.Graphics.Chart.ChartSettings settings)
+				Components.Graphics.Chart.ChartSettings settings, bool responsive)
 			{
 				Name = name;
 				NameAlign = nameAlign;
 				NameSize = nameSize;
+				Responsive = responsive;
 				Components.Graphics.Chart.ChartRect rect = default;
 				const float xOffset = 75;
 				const int width = 10750;

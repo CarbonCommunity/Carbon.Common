@@ -125,7 +125,7 @@ public partial class AdminModule
 			var selection = ap.GetStorage<ModuleHandle>(null, "profilerval");
 
 			DrawAssemblies(ap, selection);
-			DrawCalls(ap, selection);
+			DrawSubtabs(ap, selection);
 		}
 
 		static void Stripe(Tab tab,
@@ -280,7 +280,7 @@ public partial class AdminModule
 
 			Pool.FreeList(ref filtered);
 		}
-		public void DrawCalls(PlayerSession session, ModuleHandle selection)
+		public void DrawSubtabs(PlayerSession session, ModuleHandle selection)
 		{
 			AddColumn(1, true);
 
@@ -289,12 +289,12 @@ public partial class AdminModule
 			AddButtonArray(1, new OptionButton("Calls", ap =>
 				{
 					session.SetStorage(this, "subtab", SubtabTypes.Calls);
-					DrawCalls(session, selection);
+					DrawSubtabs(session, selection);
 				}, ap => subtab == SubtabTypes.Calls ? OptionButton.Types.Selected : OptionButton.Types.None),
 				new OptionButton("Memory", ap =>
 				{
 					session.SetStorage(this, "subtab", SubtabTypes.Memory);
-					DrawCalls(session, selection);
+					DrawSubtabs(session, selection);
 				}, ap => subtab == SubtabTypes.Memory ? OptionButton.Types.Selected : OptionButton.Types.None));
 
 			switch (subtab)
@@ -319,17 +319,17 @@ public partial class AdminModule
 					AddDropdown(1, $"<b>MEMORY ({advancedRecords.Count():n0})</b>", ap => sort, (ap, i) =>
 					{
 						ap.SetStorage(this, "msort", i);
-						DrawCalls(session, selection);
+						DrawSubtabs(session, selection);
 					}, sortMemoryOptions);
 
 					AddInputButton(1, "Search", 0.075f, new OptionInput(null, ap => searchInput, 0, false, (ap, args) =>
 					{
 						ap.SetStorage(this, "msearch", args.ToString(" "));
-						DrawCalls(ap, selection);
+						DrawSubtabs(ap, selection);
 					}), new OptionButton("X", ap =>
 					{
 						ap.SetStorage(this, "msearch", string.Empty);
-						DrawCalls(ap, selection);
+						DrawSubtabs(ap, selection);
 
 					}, _ => string.IsNullOrEmpty(searchInput) ? OptionButton.Types.None : OptionButton.Types.Important));
 
@@ -384,17 +384,17 @@ public partial class AdminModule
 					AddDropdown(1, $"<b>CALLS ({advancedRecords.Count():n0})</b>", ap => sort, (ap, i) =>
 					{
 						ap.SetStorage(this, "asort", i);
-						DrawCalls(session, selection);
+						DrawSubtabs(session, selection);
 					}, sortCallsOptions);
 
 					AddInputButton(1, "Search", 0.075f, new OptionInput(null, ap => searchInput, 0, false, (ap, args) =>
 					{
 						ap.SetStorage(this, "asearch", args.ToString(" "));
-						DrawCalls(ap, selection);
+						DrawSubtabs(ap, selection);
 					}), new OptionButton("X", ap =>
 					{
 						ap.SetStorage(this, "asearch", string.Empty);
-						DrawCalls(ap, selection);
+						DrawSubtabs(ap, selection);
 
 					}, _ => string.IsNullOrEmpty(searchInput) ? OptionButton.Types.None : OptionButton.Types.Important));
 

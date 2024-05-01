@@ -1073,11 +1073,16 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		widget.Callback?.Invoke(session, cui, container, widget.WidgetPanel);
 
 	}
-	public void TabPanelChart(CUI cui, CuiElementContainer container, string parent, PlayerSession session, Tab.OptionChart chart, float height, float offset, string layerCommand)
+	public void TabPanelChart(CUI cui, CuiElementContainer container, string parent, PlayerSession session, Tab.OptionChart chart, float height, float offset, float panelSpacing, string layerCommand, string layerShadowCommand, Tab tab)
 	{
 		var panel = cui.CreatePanel(container, parent,
 			color: Cache.CUI.BlankColor,
-			xMin: 0, xMax: 1f, yMin: offset, yMax: offset + height);
+			xMin: 0, xMax: 1f * (chart.Responsive ? 1 : tab.Columns.Count) + panelSpacing, yMin: offset, yMax: offset + height);
+
+		if (!chart.Responsive)
+		{
+			cui.CreatePanel(container, panel, "0.15 0.15 0.15 0.3", blur: true, OyMax: 17.5f);
+		}
 
 		var scroll = cui.CreateScrollView(container, panel, false, true,
 			ScrollRect.MovementType.Clamped,
@@ -1119,23 +1124,26 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		var xMoving = 50;
 		var spacing = -5;
 
-		CreateLayerButton("All", System.Drawing.Color.BlanchedAlmond, chart.Chart.Layers.All(x => x.Disabled));
+		CreateLayerButton("All", System.Drawing.Color.BlanchedAlmond, chart.Chart.Layers.All(x => x.Disabled), !chart.Chart.Layers.All(x => x.LayerSettings.Shadows == 0));
 
 		foreach (var layer in chart.Chart.Layers)
 		{
-			CreateLayerButton(layer.Name, layer.LayerSettings.PrimaryColor, !layer.Disabled);
+			CreateLayerButton(layer.Name, layer.LayerSettings.Color, !layer.Disabled, layer.LayerSettings.Shadows > 0);
 		}
 
-		void CreateLayerButton(string text, System.Drawing.Color color, bool enabled)
+		void CreateLayerButton(string text, System.Drawing.Color color, bool mainEnabled, bool secondEnabled)
 		{
 			var textLength = text.Length;
 			var pColor = color;
 			var sColor = System.Drawing.Color.FromArgb((int)(pColor.R * 1.5f).Clamp(0, 255), (int)(pColor.G * 1.5f).Clamp(0, 255), (int)(pColor.B * 1.5f).Clamp(0, 255));
 			var rustSColor = $"{sColor.R / 255f} {sColor.G / 255f} {sColor.B / 255f} 1";
 
-			cui.CreateProtectedButton(container, panel, $"{pColor.R / 255f} {pColor.G / 255f} {pColor.B / 255f} {(!enabled ? 0.25 : 0.5)}", !enabled ? "0.8 0.8 0.8 0.8" : rustSColor, $"\u29bf {text}", 8,
+			var mainButton = cui.CreateProtectedButton(container, panel, $"{pColor.R / 255f} {pColor.G / 255f} {pColor.B / 255f} {(!mainEnabled ? 0.25 : 0.5)}", !mainEnabled ? "0.8 0.8 0.8 0.8" : rustSColor, $"    {text}", 8,
 				xMin: 0.01f, xMax: 0, yMin: 0.94f, yMax: 1f, OxMin: xMoving + xOffset, OxMax: xMoving + (xOffset += xOffsetWidth + (textLength * 3f)), OyMin: -15, OyMax: -15,
 				command: $"{layerCommand} {layerIndex}");
+
+			cui.CreateProtectedButton(container, mainButton, $"{pColor.R / 255f} {pColor.G / 255f} {pColor.B / 255f} {(!secondEnabled ? 0.25 : 0.5)}", !secondEnabled ? "0.8 0.8 0.8 0.8" : rustSColor, "\u29bf", 8,
+				xMin: 0, xMax: 0, OxMax: 12.5f, command: $"{layerShadowCommand} {layerIndex}");
 
 			xOffset += spacing;
 			layerIndex++;
@@ -1299,15 +1307,14 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 						{
 							#region Columns
 
-							var panelIndex = 0f;
 							var spacing = 0.005f;
 							var panelWidth = (tab.Columns.Count == 0 ? 0f : 1f / tab.Columns.Count) - spacing;
+							var panelIndex = (panelWidth + spacing) * (tab.Columns.Count - 1);
 
-							for (int i = 0; i < tab.Columns.Count; i++)
+							for (int i = tab.Columns.Count; i-- > 0;)
 							{
 								var rows = tab.Columns[i];
-								var panel = cui.CreatePanel(container, panels,
-									color: "0 0 0 0.5",
+								var panel = cui.CreatePanel(container, panels, color: "0 0 0 0.5",
 									xMin: panelIndex, xMax: panelIndex + panelWidth - spacing, yMin: 0, yMax: 1, id: $"sub{i}");
 
 								cui.CreateImage(container, panel, "fade", Cache.CUI.WhiteColor);
@@ -1416,7 +1423,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 											break;
 
 										case Tab.OptionChart chart:
-											TabPanelChart(cui, container, panel, ap, chart, rowHeight * (Tab.OptionChart.Height + 1), rowIndex, layerCommand: PanelId + $".callaction {i} {actualI} layer");
+											TabPanelChart(cui, container, panel, ap, chart, rowHeight * (Tab.OptionChart.Height + 1), rowIndex, rowSpacing, layerCommand: PanelId + $".callaction {i} {actualI} layer", layerShadowCommand: PanelId + $".callaction {i} {actualI} layershadow", tab);
 											break;
 									}
 
@@ -1461,7 +1468,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 								#endregion
 
-								panelIndex += panelWidth + spacing;
+								panelIndex -= panelWidth + spacing;
 							}
 
 							#endregion
@@ -1893,11 +1900,11 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 			case Tab.OptionChart chart:
 			{
+				var layerIndex = args.ElementAt(1).ToInt();
+
 				switch (args.ElementAt(0))
 				{
 					case "layer":
-						var layerIndex = args.ElementAt(1).ToInt();
-
 						if (layerIndex == -1)
 						{
 							var allDisabled = chart.Chart.Layers.All(x => x.Disabled);
@@ -1906,7 +1913,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 							{
 								chartLayer.Disabled = !allDisabled;
 							}
-							
+
 							chart.GetIdentifier(reset: true);
 						}
 						else
@@ -1915,7 +1922,39 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 							layer.ToggleDisabled();
 							chart.GetIdentifier(reset: true);
 						}
+						return true;
+					case "layershadow":
+						if (layerIndex == -1)
+						{
+							var allOff = chart.Chart.Layers.All(x => x.LayerSettings.Shadows == 0);
 
+							foreach (var chartLayer in chart.Chart.Layers)
+							{
+								if (allOff)
+								{
+									chartLayer.LayerSettings.Shadows = 1;
+								}
+								else
+								{
+									chartLayer.LayerSettings.Shadows = 0;
+								}
+							}
+
+							chart.GetIdentifier(reset: true);
+						}
+						else
+						{
+							var layer = chart.Chart.Layers.ElementAt(layerIndex);
+
+							layer.LayerSettings.Shadows++;
+
+							if (layer.LayerSettings.Shadows > 4)
+							{
+								layer.LayerSettings.Shadows = 0;
+							}
+
+							chart.GetIdentifier(reset: true);
+						}
 						return true;
 				}
 				break;
@@ -2088,7 +2127,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			cui.Destroy(SpectatePanelId, player);
 		}
 
-		if (string.IsNullOrEmpty(player.spectateFilter))
+		if (!player.IsSpectating() || string.IsNullOrEmpty(player.spectateFilter))
 		{
 			return;
 		}
