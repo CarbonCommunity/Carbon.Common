@@ -1073,11 +1073,23 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		widget.Callback?.Invoke(session, cui, container, widget.WidgetPanel);
 
 	}
-	public void TabPanelChart(CUI cui, CuiElementContainer container, string parent, PlayerSession session, Tab.OptionChart chart, float height, float offset, float panelSpacing, string layerCommand, string layerShadowCommand, Tab tab)
+	public void TabPanelChart(CUI cui, CuiElementContainer container, string parent, PlayerSession session, Tab.OptionChart chart, float height, float offset, float panelSpacing, string layerCommand, string layerShadowCommand, Tab tab, int columnIndex)
 	{
+		var currentPage = session.GetOrCreatePage(columnIndex);
+		var canExpand = !chart.Responsive &&
+		                tab.Columns.All(x => session.GetOrCreatePage(x.Key).CurrentPage == currentPage.CurrentPage);
+
+		var width = (chart.Responsive || !canExpand ? 1 : tab.Columns.Count) + (panelSpacing * tab.Columns.Count);
 		var panel = cui.CreatePanel(container, parent,
 			color: Cache.CUI.BlankColor,
-			xMin: 0, xMax: 1f * (chart.Responsive ? 1 : tab.Columns.Count) + panelSpacing, yMin: offset, yMax: offset + height);
+			xMin: 0, xMax: 1f * width, yMin: offset, yMax: offset + height);
+
+		if (!chart.Responsive && !canExpand)
+		{
+			cui.CreatePanel(container, panel, "0.15 0.15 0.15 0.3", blur: true, OyMax: 17.5f);
+			cui.CreateText(container, panel, "1 1 1 0.5", "To view the chart,\nremain on the same page number as this.", 10);
+			return;
+		}
 
 		if (!chart.Responsive)
 		{
@@ -1423,7 +1435,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 											break;
 
 										case Tab.OptionChart chart:
-											TabPanelChart(cui, container, panel, ap, chart, rowHeight * (Tab.OptionChart.Height + 1), rowIndex, rowSpacing, layerCommand: PanelId + $".callaction {i} {actualI} layer", layerShadowCommand: PanelId + $".callaction {i} {actualI} layershadow", tab);
+											TabPanelChart(cui, container, panel, ap, chart, rowHeight * (Tab.OptionChart.Height + 1), rowIndex, rowSpacing, layerCommand: PanelId + $".callaction {i} {actualI} layer", layerShadowCommand: PanelId + $".callaction {i} {actualI} layershadow", tab, i);
 											break;
 									}
 
