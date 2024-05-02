@@ -177,7 +177,7 @@ public readonly struct CUI : IDisposable
 	{
 		return Manager.Countdown(container, parent, startTime, endTime, step, command, fadeIn, fadeOut, id, destroyUi, update);
 	}
-	public Pair<string, CuiElement> CreateScrollView(CuiElementContainer container, string parent,bool vertical, bool horizontal, ScrollRect.MovementType movementType, float elasticity, bool inertia, float decelerationRate, float scrollSensitivity, string maskSoftness, out CuiRectTransformComponent contentTransform, out CuiScrollBarComponent horizontalScrollBar, out CuiScrollBarComponent verticalScrollBar, float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string id = null, string destroyUi = null, bool update = false)
+	public Pair<string, CuiElement> CreateScrollView(CuiElementContainer container, string parent,bool vertical, bool horizontal, ScrollRect.MovementType movementType, float elasticity, bool inertia, float decelerationRate, float scrollSensitivity, string maskSoftness, out CuiRectTransformComponent contentTransform, out CuiScrollbar horizontalScrollBar, out CuiScrollbar verticalScrollBar, float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string id = null, string destroyUi = null, bool update = false)
 	{
 		return Manager.ScrollView(container, parent, vertical, horizontal, movementType, elasticity, inertia, decelerationRate, scrollSensitivity, maskSoftness, out contentTransform, out horizontalScrollBar, out verticalScrollBar, xMin, xMax, yMin, yMax, OxMin, OxMax, OyMin, OyMax, fadeIn, fadeOut, needsCursor, needsKeyboard, id, destroyUi, update);
 	}
@@ -321,7 +321,7 @@ public readonly struct CUI : IDisposable
 		internal List<ICuiComponent> _countdowns = new();
 		internal List<ICuiComponent> _outlines = new();
 		internal List<ICuiComponent> _scrollViews = new();
-		internal List<ICuiComponent> _scrollBars = new();
+		internal List<ICuiComponent> _scrollbars = new();
 
 		#endregion
 
@@ -340,7 +340,7 @@ public readonly struct CUI : IDisposable
 		internal CuiCountdownComponent _defaultCountdown = new();
 		internal CuiOutlineComponent _defaultOutline = new();
 		internal CuiScrollViewComponent _defaultScrollView = new();
-		internal CuiScrollBarComponent _defaultScrollBar = new();
+		internal CuiScrollbar _defaultScrollBar = new();
 
 		#endregion
 
@@ -368,7 +368,7 @@ public readonly struct CUI : IDisposable
 				case CuiCountdownComponent: _countdowns.Add(element); break;
 				case CuiOutlineComponent: _outlines.Add(element); break;
 				case CuiScrollViewComponent: _scrollViews.Add(element); break;
-				case CuiScrollBarComponent: _scrollBars.Add(element); break;
+				case CuiScrollbar: _scrollbars.Add(element); break;
 			}
 		}
 		public void SendToPool()
@@ -695,8 +695,8 @@ public readonly struct CUI : IDisposable
 				element.ContentTransform.AnchorMax = "1 1";
 				element.ContentTransform.OffsetMin = "0 0";
 				element.ContentTransform.OffsetMax = "0 0";
-				element.HorizontalScrollBar = new();
-				element.VerticalScrollBar = new();
+				element.HorizontalScrollbar = new();
+				element.VerticalScrollbar = new();
 
 				_scrollViews.RemoveAt(0);
 			}
@@ -704,17 +704,17 @@ public readonly struct CUI : IDisposable
 			_queue.Add(element);
 			return element;
 		}
-		public CuiScrollBarComponent TakeFromPoolScrollbar()
+		public CuiScrollbar TakeFromPoolScrollbar()
 		{
-			var element = (CuiScrollBarComponent)null;
+			var element = (CuiScrollbar)null;
 
-			if (_scrollBars.Count == 0)
+			if (_scrollbars.Count == 0)
 			{
-				element = new CuiScrollBarComponent();
+				element = new CuiScrollbar();
 			}
 			else
 			{
-				element = _scrollBars[0] as CuiScrollBarComponent;
+				element = _scrollbars[0] as CuiScrollbar;
 				element.Invert = _defaultScrollBar.Invert;
 				element.AutoHide = _defaultScrollBar.AutoHide;
 				element.HandleSprite = _defaultScrollBar.HandleSprite;
@@ -725,7 +725,7 @@ public readonly struct CUI : IDisposable
 				element.TrackSprite = _defaultScrollBar.TrackSprite;
 				element.TrackColor = _defaultScrollBar.TrackColor;
 
-				_scrollBars.RemoveAt(0);
+				_scrollbars.RemoveAt(0);
 			}
 
 			_queue.Add(element);
@@ -966,7 +966,7 @@ public static class CUIStatics
 	{
 		return cui.CreateCountdown(null, null, startTime, endTime, step, command, fadeIn, fadeOut, id, destroyUi, true);
 	}
-	public static Pair<string, CuiElement> UpdateScrollView(this CUI cui, string id, bool vertical, bool horizontal, ScrollRect.MovementType movementType, float elasticity, bool inertia, float decelerationRate, float scrollSensitivity, string maskSoftness, out CuiRectTransformComponent contentTransform, out CuiScrollBarComponent horizontalScrollBar, out CuiScrollBarComponent verticalScrollBar, float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string destroyUi = null)
+	public static Pair<string, CuiElement> UpdateScrollView(this CUI cui, string id, bool vertical, bool horizontal, ScrollRect.MovementType movementType, float elasticity, bool inertia, float decelerationRate, float scrollSensitivity, string maskSoftness, out CuiRectTransformComponent contentTransform, out CuiScrollbar horizontalScrollBar, out CuiScrollbar verticalScrollBar, float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string destroyUi = null)
 	{
 		return cui.CreateScrollView(null, null, vertical, horizontal, movementType, elasticity, inertia, decelerationRate, scrollSensitivity, maskSoftness, out contentTransform, out horizontalScrollBar, out verticalScrollBar, xMin, xMax, yMin, yMax, OxMin, OxMax, OyMin, OyMax, fadeIn, fadeOut, needsCursor, needsKeyboard, id, destroyUi, true);
 	}
@@ -1310,7 +1310,7 @@ public static class CUIStatics
 		if (!update) container?.Add(element);
 		return new Pair<string, CuiElement>(id, element);
 	}
-	public static Pair<string, CuiElement> ScrollView(this Handler cui, CuiElementContainer container, string parent, bool vertical, bool horizontal, ScrollRect.MovementType movementType, float elasticity, bool inertia, float decelerationRate, float scrollSensitivity, string maskSoftness, out CuiRectTransformComponent contentTransform, out CuiScrollBarComponent horizontalScrollBar, out CuiScrollBarComponent verticalScrollBar, float xMin, float xMax, float yMin, float yMax, float OxMin, float OxMax, float OyMin, float OyMax, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string id = null, string destroyUi = null, bool update = false)
+	public static Pair<string, CuiElement> ScrollView(this Handler cui, CuiElementContainer container, string parent, bool vertical, bool horizontal, ScrollRect.MovementType movementType, float elasticity, bool inertia, float decelerationRate, float scrollSensitivity, string maskSoftness, out CuiRectTransformComponent contentTransform, out CuiScrollbar horizontalScrollBar, out CuiScrollbar verticalScrollBar, float xMin, float xMax, float yMin, float yMax, float OxMin, float OxMax, float OyMin, float OyMax, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string id = null, string destroyUi = null, bool update = false)
 	{
 		if (id == null) id = cui.AppendId();
 		var element = cui.TakeFromPool(id, parent, fadeOut, destroyUi, update);
@@ -1325,8 +1325,8 @@ public static class CUIStatics
 		scrollview.ScrollSensitivity = scrollSensitivity;
 		scrollview.MaskSoftness = maskSoftness;
 		contentTransform = scrollview.ContentTransform;
-		horizontalScrollBar = scrollview.HorizontalScrollBar;
-		verticalScrollBar = scrollview.VerticalScrollBar;
+		horizontalScrollBar = scrollview.HorizontalScrollbar;
+		verticalScrollBar = scrollview.VerticalScrollbar;
 
 		element.Components.Add(scrollview);
 
