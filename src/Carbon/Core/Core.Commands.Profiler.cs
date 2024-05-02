@@ -21,7 +21,7 @@ public partial class CorePlugin : CarbonPlugin
 		set { }
 	}
 
-	[ConsoleCommand("profile", "Toggles recording status of the Carbon native Mono-profiling. Syntax: c.profile [duration]")]
+	[ConsoleCommand("profile", "Toggles recording status of the Carbon native Mono-profiling. Syntax: c.profile [duration] [-cm] [-am] [-t] [-c] [-gc]")]
 	[AuthLevel(2)]
 	private void Profile(ConsoleSystem.Arg arg)
 	{
@@ -31,7 +31,25 @@ public partial class CorePlugin : CarbonPlugin
 			return;
 		}
 
-		MonoProfiler.ToggleProfilingTimed(arg.GetFloat(0));
+		var duration = arg.GetFloat(0);
+		var flags = MonoProfiler.ProfilerArgs.None;
+
+		if (arg.HasArg("-cm")) flags |= MonoProfiler.ProfilerArgs.CallMemory;
+		if (arg.HasArg("-am")) flags |= MonoProfiler.ProfilerArgs.AdvancedMemory;
+		if (arg.HasArg("-t")) flags |= MonoProfiler.ProfilerArgs.Timings;
+		if (arg.HasArg("-c")) flags |= MonoProfiler.ProfilerArgs.Calls;
+		if (arg.HasArg("-gc")) flags |= MonoProfiler.ProfilerArgs.GCEvents;
+
+		if (flags == MonoProfiler.ProfilerArgs.None) flags = MonoProfiler.AllFlags;
+
+		if (duration <= 0)
+		{
+			MonoProfiler.ToggleProfiling(flags);
+		}
+		else
+		{
+			MonoProfiler.ToggleProfilingTimed(duration, flags);
+		}
 	}
 
 	[ConsoleCommand("profileabort", "Aborts recording of the Carbon native Mono-profiling if it was recording.")]
@@ -196,5 +214,13 @@ public partial class CorePlugin : CarbonPlugin
 			arg.ReplyWith("Syntax: c.profiler.untrack (assembly|plugin|module|ext) value");
 			return false;
 		}
+	}
+
+	[CommandVar("profiler.recwarns", "It should or should not print a reminding warning every 5 minutes when profiling for an un-set amount of time.")]
+	[AuthLevel(2)]
+	private bool RecordingWarnings
+	{
+		get { return Community.Runtime.Config.Profiler.RecordingWarnings; }
+		set { Community.Runtime.Config.Profiler.RecordingWarnings = value; }
 	}
 }

@@ -284,6 +284,7 @@ public static class ModLoader
 			}
 		}
 
+		plugin.IProcessPatches();
 		plugin.ILoad();
 
 		ProcessCommands(type, plugin);
@@ -305,6 +306,7 @@ public static class ModLoader
 			return true;
 		}
 
+		plugin.IProcessUnpatches();
 		plugin.IUnloadDependantPlugins();
 
 		if (!premature)

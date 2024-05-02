@@ -1,6 +1,6 @@
 ﻿/*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -248,6 +248,42 @@ public static class StringEx
 	/// <param name="pluralString"></param>
 	/// <returns></returns>
 	public static string Plural(this int value, string singularString, string pluralString)
+	{
+		return value == 1 ? singularString : pluralString;
+	}
+
+	/// <summary>
+	/// Returns a plural when the number is not 1, and singular if it is.
+	/// </summary>
+	/// <param name="value"></param>
+	/// <param name="singularString"></param>
+	/// <param name="pluralString"></param>
+	/// <returns></returns>
+	public static string Plural(this uint value, string singularString, string pluralString)
+	{
+		return value == 1 ? singularString : pluralString;
+	}
+
+	/// <summary>
+	/// Returns a plural when the number is not 1, and singular if it is.
+	/// </summary>
+	/// <param name="value"></param>
+	/// <param name="singularString"></param>
+	/// <param name="pluralString"></param>
+	/// <returns></returns>
+	public static string Plural(this long value, string singularString, string pluralString)
+	{
+		return value == 1 ? singularString : pluralString;
+	}
+
+	/// <summary>
+	/// Returns a plural when the number is not 1, and singular if it is.
+	/// </summary>
+	/// <param name="value"></param>
+	/// <param name="singularString"></param>
+	/// <param name="pluralString"></param>
+	/// <returns></returns>
+	public static string Plural(this ulong value, string singularString, string pluralString)
 	{
 		return value == 1 ? singularString : pluralString;
 	}

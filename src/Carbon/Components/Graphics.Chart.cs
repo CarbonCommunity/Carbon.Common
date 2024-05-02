@@ -18,6 +18,7 @@ namespace Carbon.Components.Graphics;
 
 public struct Chart
 {
+	public string Name;
 	public ChartSettings Settings;
 	public ChartRect Rect;
 	public IEnumerable<Layer> Layers;
@@ -32,11 +33,12 @@ public struct Chart
 	internal Action<byte[], Exception> onProcessEnded;
 	internal byte[] image;
 
-	public static Chart Create(int width, int height, ChartSettings settings, ChartRect rect,
+	public static Chart Create(string name, int width, int height, ChartSettings settings, ChartRect rect,
 		IEnumerable<Layer> layers, string[] verticalLabels, string[] horizontalLabels, Brush textColor, Color background)
 	{
 		Chart chart = default;
 
+		chart.Name = name;
 		chart.Settings = settings;
 		chart.Rect = rect;
 		chart.Layers = layers;
@@ -64,13 +66,7 @@ public struct Chart
 	{
 		public bool VerticalLabels;
 		public bool HorizontalLabels;
-	}
-	public struct LayerSettings
-	{
-		public Color PrimaryColor;
-		public Color SecondaryColor;
-		public Color GridColor;
-		public int ShadowLayers;
+		public Pen GridColor;
 	}
 	public struct ChartRect
 	{
@@ -83,7 +79,7 @@ public struct Chart
 	public class Layer
 	{
 		public string Name;
-		public int[] Data;
+		public ulong[] Data;
 		public bool Disabled;
 		public LayerSettings LayerSettings;
 
@@ -92,9 +88,19 @@ public struct Chart
 			Disabled = !Disabled;
 		}
 	}
+	public class LayerSettings
+	{
+		public Color Color;
+		public int Shadows;
+	}
 
 	internal void DrawChart(System.Drawing.Graphics graphic, IEnumerable<Layer> layers, string[] verticalLabels, string[] horizontalLabels)
 	{
+		if (Settings.GridColor == null)
+		{
+			Settings.GridColor = Pens.DimGray;
+		}
+
 		var yAxisLabels = Enumerable.Range(0, verticalLabels.Length).Select(i => verticalLabels[i]).ToArray();
 		var rightAlignment = new StringFormat
 		{
@@ -161,7 +167,7 @@ public struct Chart
 			DrawChartContentLineDots(graphic, layer.Data, Rect.Width, Rect.Height, Rect.X, Rect.Y, layer.LayerSettings);
 		}
 	}
-	internal void DrawChartContentShadows(System.Drawing.Graphics graphic, int[] data, float chartWidth, float chartHeight, float chartX, float chartY, LayerSettings layerSettings)
+	internal void DrawChartContentShadows(System.Drawing.Graphics graphic, ulong[] data, float chartWidth, float chartHeight, float chartX, float chartY, LayerSettings layerSettings)
 	{
 		var highestValue = data.Max();
 		var spaceBetweenPoints = chartWidth / (data.Length - 1);
@@ -184,26 +190,30 @@ public struct Chart
                     new PointF(nextX, chartY + chartHeight),
                     new PointF(x, chartY + chartHeight),
 				];
-				var color = Color.FromArgb(alpha, layerSettings.SecondaryColor);
+
+				var color = Color.FromArgb(alpha, layerSettings.Color);
 				graphic.FillPolygon(new SolidBrush(color), shadowPoints);
 			}
 
-			CreateShadow(1, layerSettings.SecondaryColor.A);
-
-			for (float s = 1; s < layerSettings.ShadowLayers; s++)
+			for (float s = 1; s < layerSettings.Shadows; s++)
 			{
 				CreateShadow(
-					s.Scale(0, layerSettings.ShadowLayers, 1f, 0.75f),
-					(int)s.Scale(0, layerSettings.ShadowLayers, 50f, 0f));
+					s.Scale(0, layerSettings.Shadows, 1f, 0.75f),
+					(int)s.Scale(0, layerSettings.Shadows, 25f, 0f));
+			}
+
+			if (layerSettings.Shadows > 0)
+			{
+				CreateShadow(1, (int)(layerSettings.Color.A * 0.2f));
 			}
 		}
 	}
-	internal void DrawChartContentLineDots(System.Drawing.Graphics graphic, int[] data, float chartWidth, float chartHeight, float chartX, float chartY, LayerSettings layerSettings)
+	internal void DrawChartContentLineDots(System.Drawing.Graphics graphic, ulong[] data, float chartWidth, float chartHeight, float chartX, float chartY, LayerSettings layerSettings)
 	{
 		var highestValue = data.Max();
 		var spaceBetweenPoints = chartWidth / (data.Length - 1);
-		var linePen = new Pen(layerSettings.PrimaryColor, 2);
-		var markerBrush = new SolidBrush(layerSettings.PrimaryColor);
+		var linePen = new Pen(layerSettings.Color, 2);
+		var markerBrush = new SolidBrush(layerSettings.Color);
 
 		for (int i = 0; i < data.Length; i++)
 		{
