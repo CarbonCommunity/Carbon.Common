@@ -355,6 +355,13 @@ public partial class AdminModule
 
 			var subtab = session.GetStorage<SubtabTypes>(this, "subtab");
 
+			Stripe(this, 1, 100, 100, niceColor, niceColor,
+				"GC",
+				$"{MonoProfiler.GCStats.calls:n0} calls | {MonoProfiler.GCStats.GetTotalTime()}",
+				$"<size=7>{TimeEx.Format(MonoProfiler.DurationTime.TotalSeconds, false).ToLower()}\n{MonoProfiler.CallRecords.Count:n0} calls</size>",
+				$"adminmodule.profilerselect -1",
+				selection.GetHashCode() == 0);
+
 			AddButtonArray(1, new OptionButton("Calls", ap =>
 				{
 					session.SetStorage(this, "subtab", SubtabTypes.Calls);
@@ -384,13 +391,6 @@ public partial class AdminModule
 							_ => maxVal
 						};
 					}
-
-					Stripe(this, 0, 100, 100, niceColor, niceColor,
-						"GC",
-						$"{MonoProfiler.GCStats.calls:n0} calls | {MonoProfiler.GCStats.GetTotalTime()}",
-						$"<size=7>{TimeEx.Format(MonoProfiler.DurationTime.TotalSeconds, false).ToLower()}\n{MonoProfiler.CallRecords.Count:n0} calls</size>",
-						$"adminmodule.profilerselect -1",
-						selection.GetHashCode() == 0);
 
 					AddDropdown(1, $"<b>MEMORY ({advancedRecords.Count():n0})</b>", ap => sort, (ap, i) =>
 					{
@@ -664,7 +664,7 @@ public partial class AdminModule
 				calls.ToString("n0"), null);
 
 			Stripe(session.SelectedTab, 0, memory, highest, intenseColor, niceColor,
-				"Memory", $"{recording.Timeline.SumULong(x => x.Value.Memory.SumULong(y => y.allocations))} | " +
+				"Memory", $"{recording.Timeline.SumULong(x => x.Value.Memory.SumULong(y => y.allocations)):n0} allocs. | " +
 				          $"{ByteEx.Format(recording.Timeline.SumULong(x => x.Value.Memory.SumULong(y => y.total_alloc_size))).ToUpper()} total alloc. | " +
 				          $"{ByteEx.Format(recording.Timeline.SumUInt(x => x.Value.Memory.SumUInt(y => y.instance_size))).ToUpper()} inst. size",
 				memory.ToString("n0"), null);
