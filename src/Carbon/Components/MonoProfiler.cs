@@ -26,13 +26,14 @@ public static unsafe partial class MonoProfiler
 	public const ProfilerArgs AllFlags = AllNoTimingsFlags | ProfilerArgs.Timings;
 	public const ProfilerArgs AllNoTimingsFlags = ProfilerArgs.Calls | ProfilerArgs.CallMemory | ProfilerArgs.AdvancedMemory;
 
+	public static GCRecord GCStats;
 	public static AssemblyOutput AssemblyRecords = new();
 	public static CallOutput CallRecords = new();
 	public static List<MemoryRecord> MemoryRecords = new();
-	public static RuntimeAssemblyBank AssemblyBank = new();
-	public static Dictionary<ModuleHandle, AssemblyNameEntry> AssemblyMap = new();
-	public static Dictionary<IntPtr, string> ClassMap = new();
-	public static Dictionary<IntPtr, string> MethodMap = new();
+	private static RuntimeAssemblyBank AssemblyBank = new();
+	public static ConcurrentDictionary<ModuleHandle, AssemblyNameEntry> AssemblyMap = new();
+	private static Dictionary<IntPtr, string> ClassMap = new();
+	private static Dictionary<IntPtr, string> MethodMap = new();
 	public static TimeSpan DataProcessingTime;
 	public static TimeSpan DurationTime;
 	public static TimeSpan CurrentDurationTime => (_durationTimer?.Elapsed).GetValueOrDefault();
@@ -206,11 +207,19 @@ public static unsafe partial class MonoProfiler
 	}
 
 	[StructLayout(LayoutKind.Sequential)]
+	public struct GCRecord
+	{
+		public ulong calls;
+		public ulong total_time;
+	}
+
+	[StructLayout(LayoutKind.Sequential)]
 	public struct AssemblyRecord
 	{
 		[JsonIgnore] public ModuleHandle assembly_handle;
 		public ulong total_time;
 		public double total_time_percentage;
+		public ulong total_exceptions;
 		public ulong calls;
 		public ulong alloc;
 
@@ -247,6 +256,8 @@ public static unsafe partial class MonoProfiler
 		public ulong calls;
 		public ulong total_alloc;
 		public ulong own_alloc;
+		public ulong total_exceptions;
+		public ulong own_exceptions;
 
 		// managed
 		public string method_name;
@@ -307,7 +318,8 @@ public static unsafe partial class MonoProfiler
 		AdvancedMemory = 1 << 2,
 		Timings = 1 << 3,
 		Calls = 1 << 4,
-		FastResume = 1 << 5 // Pass this when you're toggling the profiler multiple times on the same frame
+		FastResume = 1 << 5, // Pass this when you're toggling the profiler multiple times on the same frame
+		GCEvents = 1 << 6
 	}
 
 
@@ -317,7 +329,7 @@ public static unsafe partial class MonoProfiler
 
 	public static bool IsCleared => !AssemblyRecords.Any() && !CallRecords.Any();
 
-	public const ulong NATIVE_PROTOCOL = 2;
+	public const ulong NATIVE_PROTOCOL = 3;
 
 	static MonoProfiler()
 	{
@@ -386,7 +398,7 @@ public static unsafe partial class MonoProfiler
 		MemoryRecords.Clear();
 		DurationTime = default;
 	}
-	public static void ToggleProfilingTimed(float duration, ProfilerArgs args = ProfilerArgs.AdvancedMemory | ProfilerArgs.CallMemory | ProfilerArgs.Timings | ProfilerArgs.Calls, Action<ProfilerArgs> onTimerEnded = null, bool logging = true)
+	public static void ToggleProfilingTimed(float duration, ProfilerArgs args = ProfilerArgs.AdvancedMemory | ProfilerArgs.CallMemory | ProfilerArgs.Timings | ProfilerArgs.Calls | ProfilerArgs.GCEvents, Action<ProfilerArgs> onTimerEnded = null, bool logging = true)
 	{
 		if (Crashed)
 		{
@@ -454,7 +466,7 @@ public static unsafe partial class MonoProfiler
 			Logger.Warn(table.ToStringMinimal());
 		}
 	}
-	public static bool? ToggleProfiling(ProfilerArgs args = ProfilerArgs.AdvancedMemory | ProfilerArgs.CallMemory | ProfilerArgs.Timings | ProfilerArgs.Calls, bool logging = true)
+	public static bool? ToggleProfiling(ProfilerArgs args, bool logging = true)
 	{
 		if (!Enabled)
 		{
@@ -469,6 +481,7 @@ public static unsafe partial class MonoProfiler
 		List<AssemblyRecord> assemblyOutput = AssemblyRecords;
 		List<CallRecord> callOutput = CallRecords;
 		List<MemoryRecord> memoryOutput = MemoryRecords;
+		GCRecord gcOutput = default;
 
 		if (Recording)
 		{
@@ -476,7 +489,7 @@ public static unsafe partial class MonoProfiler
 			_dataProcessTimer.Start();
 		}
 
-		ProfilerResultCode result = profiler_toggle(args, &state, &assemblyOutput, &callOutput, &memoryOutput);
+		ProfilerResultCode result = profiler_toggle(args, &state, &gcOutput, &assemblyOutput, &callOutput, &memoryOutput);
 
 		if (result == ProfilerResultCode.Aborted)
 		{
@@ -513,6 +526,8 @@ public static unsafe partial class MonoProfiler
 		{
 			MapMemoryRecords(memoryOutput);
 		}
+
+		GCStats = gcOutput;
 
 		CallRecords.Disabled = callOutput.IsEmpty();
 
@@ -636,9 +651,7 @@ public static unsafe partial class MonoProfiler
 
 		AssemblyMap[handle] = new AssemblyNameEntry()
 		{
-			name = assembly.GetName().Name,
-			displayName = assemblyName,
-			profileType = profileType
+			name = assembly.GetName().Name, displayName = assemblyName, profileType = profileType
 		};
 
 		register_profiler_assembly(handle);
@@ -677,6 +690,7 @@ public static unsafe partial class MonoProfiler
 	[DllImport("CarbonNative")]
 	private static extern ulong profiler_register_callbacks(ProfilerCallbacks* callbacks);
 
+	// THREAD SAFE
 	[DllImport("CarbonNative")]
 	private static extern ulong register_profiler_assembly(ModuleHandle handle);
 
@@ -702,6 +716,7 @@ public static unsafe partial class MonoProfiler
 	private static extern ProfilerResultCode profiler_toggle(
 		ProfilerArgs args,
 		bool* state,
+		GCRecord* gc_out,
 		List<AssemblyRecord>* basic_out,
 		List<CallRecord>* advanced_out,
 		List<MemoryRecord>* mem_out
