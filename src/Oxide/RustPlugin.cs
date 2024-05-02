@@ -276,8 +276,8 @@ public class RustPlugin : Plugin
 	#region AutoPatch
 
 	private HarmonyLib.Harmony _harmonyInstanceCache;
-	private string _harmonyId => $"com.carbon.{Name}";
-	private HarmonyLib.Harmony _harmonyInstance => _harmonyInstanceCache ??= new HarmonyLib.Harmony(_harmonyId);
+	protected string HarmonyId => $"com.carbon.{Name}";
+	protected HarmonyLib.Harmony HarmonyInstance => _harmonyInstanceCache ??= new HarmonyLib.Harmony(HarmonyId);
 
 	public void IProcessPatches()
 	{
@@ -292,7 +292,7 @@ public class RustPlugin : Plugin
 
 			try
 			{
-				var harmonyMethods = _harmonyInstance.CreateClassProcessor(type)?.Patch();
+				var harmonyMethods = HarmonyInstance.CreateClassProcessor(type)?.Patch();
 
 				if (harmonyMethods == null || harmonyMethods.Count == 0)
 				{
@@ -315,11 +315,11 @@ public class RustPlugin : Plugin
 	{
 		try
 		{
-			_harmonyInstance?.UnpatchAll(_harmonyId);
+			HarmonyInstance?.UnpatchAll(HarmonyId);
 		}
 		catch (Exception ex)
 		{
-			Logger.Error($"Failed auto unpatching {_harmonyId} for {ToPrettyString()}", ex);
+			Logger.Error($"Failed auto unpatching {HarmonyId} for {ToPrettyString()}", ex);
 		}
 	}
 
