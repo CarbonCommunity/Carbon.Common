@@ -27,7 +27,7 @@ public partial class CorePlugin : CarbonPlugin
 	{
 		if (!MonoProfiler.Enabled)
 		{
-			arg.ReplyWith("Mono profiler is disabled. Run `c.profiler true` to enable it. Must restart the server for changes to apply.");
+			arg.ReplyWith("Mono profiler is disabled. Enable it in the 'carbon/config.profiler.json' config file. Must restart the server for changes to apply.");
 			return;
 		}
 
