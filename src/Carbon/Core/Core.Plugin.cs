@@ -86,6 +86,11 @@ public partial class CorePlugin : CarbonPlugin
 
 		cmd.AddConsoleCommand("help", this, nameof(Help), authLevel: 2);
 
+#if !MINIMAL
+		CarbonAuto.Init();
+		API.Abstracts.CarbonAuto.Singleton.Load();
+#endif
+
 		return true;
 	}
 
@@ -103,11 +108,6 @@ public partial class CorePlugin : CarbonPlugin
 			Array.Clear(lines, 0, lines.Length);
 			lines = null;
 		}
-
-#if !MINIMAL
-		CarbonAuto.Init();
-		API.Abstracts.CarbonAuto.Singleton.Load();
-#endif
 	}
 	private void OnServerSave()
 	{
