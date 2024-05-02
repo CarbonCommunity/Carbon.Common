@@ -19,12 +19,41 @@ public partial class AdminModule
 		internal static Color intenseColor;
 		internal static Color calmColor;
 		internal static Color niceColor;
+		internal static MonoProfiler.TimelineRecording recording = new();
+
+		public static readonly System.Drawing.Color[] ChartColors =
+		[
+			System.Drawing.Color.Tomato,
+			System.Drawing.Color.MediumVioletRed,
+			System.Drawing.Color.Violet,
+			System.Drawing.Color.SteelBlue,
+			System.Drawing.Color.SlateBlue,
+			System.Drawing.Color.Orange,
+			System.Drawing.Color.LightSeaGreen,
+			System.Drawing.Color.Red,
+			System.Drawing.Color.Chocolate,
+			System.Drawing.Color.DarkCyan
+		];
 
 		public enum SubtabTypes
 		{
 			Calls,
 			Memory
 		}
+
+		internal static string[] timelineChartOptions =
+		[
+			"Assembly Calls",
+			"Assembly Memory",
+			"Assembly Time",
+			"Calls",
+			"Call Time (Total)",
+			"Call Time (Own)",
+			"Call Memory (Total)",
+			"Call Memory (Own)",
+			"Memory Allocs",
+			"Memory Allocs (Memory)",
+		];
 
 		internal static string[] sortAssemblyOptions =
 		[
@@ -57,7 +86,6 @@ public partial class AdminModule
 		}
 
 		public static ProfilerTab GetOrCache(PlayerSession session) => _instance ??= Make(session);
-
 		public static ProfilerTab Make(PlayerSession session)
 		{
 			var profiler = new ProfilerTab("profiler", "Profiler", Community.Runtime.CorePlugin);
@@ -124,8 +152,8 @@ public partial class AdminModule
 		{
 			var selection = ap.GetStorage<ModuleHandle>(null, "profilerval");
 
-			DrawAssemblies(ap, selection);
 			DrawSubtabs(ap, selection);
+			DrawAssemblies(ap, selection);
 		}
 
 		static void Stripe(Tab tab,
@@ -179,6 +207,14 @@ public partial class AdminModule
 		{
 			AddColumn(0, true);
 
+			var timelineMode = session.GetStorage<bool>(null, "timeline");
+
+			if (timelineMode)
+			{
+				DrawTimeline(session);
+				return;
+			}
+
 			var searchInput = session.GetStorage(this, "bsearch", string.Empty);
 			var sortIndex = session.GetStorage(this, "bsort", 1);
 			var filtered = Pool.GetList<MonoProfiler.AssemblyRecord>();
@@ -201,6 +237,11 @@ public partial class AdminModule
 			{
 				var tabSpacing = 1;
 				const float offset = -46f;
+
+				cui.CreateProtectedButton(container, panel, "0.2 0.2 0.2 0.7", $"1 1 1 {(!timelineMode ? 0.2 : 0.5)}",
+					"TIMELINE\nMODE", 8, xMin: 0.83f, xMax: 0.925f, OxMin: offset * tabSpacing, OxMax: offset * tabSpacing,
+					command: "adminmodule.timelinemode");
+				tabSpacing++;
 
 				cui.CreateProtectedButton(container, panel, "0.2 0.2 0.2 0.7", "1 1 1 0.2",
 					"<size=6>EXPORT\n</size>PROTO", 8,
@@ -233,7 +274,7 @@ public partial class AdminModule
 
 			Stripe(this, 0, (float)filtered.Sum(x => x.total_time_percentage), 100, niceColor, niceColor,
 				"All",
-				$"{filtered.Sum(x => (float)x.total_time):n0}ms | {filtered.Sum(x => (float)x.total_time_percentage):0.0}%",
+				$"{filtered.Sum(x => (float)x.total_time_ms):n0}ms | {filtered.Sum(x => (float)x.total_time_percentage):0.0}%",
 				$"<size=7>{TimeEx.Format(MonoProfiler.DurationTime.TotalSeconds, false).ToLower()}\n{MonoProfiler.CallRecords.Count:n0} calls</size>",
 				$"adminmodule.profilerselect -1",
 				selection.GetHashCode() == 0);
@@ -284,7 +325,24 @@ public partial class AdminModule
 		{
 			AddColumn(1, true);
 
-			var subtab = session.GetStorage<SubtabTypes>(this, "subtab", default);
+			var timelineMode = session.GetStorage<bool>(null, "timeline");
+
+			if (timelineMode)
+			{
+				var timelineChartType = session.GetStorage<int>(this, "timelinect");
+
+				AddSpace(1);
+				AddDropdown(1, "Chart Options", ap => timelineChartType, (ap, i) =>
+				{
+					ap.SetStorage(this, "timelinect", i);
+					DrawSubtabs(session, selection);
+					DrawAssemblies(session, selection);
+				}, timelineChartOptions);
+
+				return;
+			}
+
+			var subtab = session.GetStorage<SubtabTypes>(this, "subtab");
 
 			AddButtonArray(1, new OptionButton("Calls", ap =>
 				{
@@ -430,6 +488,269 @@ public partial class AdminModule
 					break;
 				}
 			}
+		}
+		public void DrawTimeline(PlayerSession session)
+		{
+			var timelineChartType = session.GetStorage<int>(this, "timelinect");
+
+			AddWidget(0, 0, (ap, cui, container, panel) =>
+			{
+				var tabSpacing = 1;
+				const float offset = -46f;
+
+				cui.CreateProtectedButton(container, panel, "0.2 0.2 0.2 0.7", $"1 1 1 0.5",
+					"TIMELINE\nMODE", 8, xMin: 0.83f, xMax: 0.925f, OxMin: offset * tabSpacing, OxMax: offset * tabSpacing,
+					command: "adminmodule.timelinemode");
+				tabSpacing++;
+
+				cui.CreateProtectedButton(container, panel, !recording.IsDiscarded() || recording.IsRecording() ? "0.9 0.1 0.1 1" : "0.2 0.2 0.2 0.7", "1 1 1 0.5",
+					recording.IsRecording() ? "ABORT" : "CLEAR", 8,
+					xMin: 0.83f, xMax: 0.925f, command: "adminmodule.timelineclear");
+
+				cui.CreateProtectedButton(container, panel,
+					recording.IsRecording() ? "0.9 0.1 0.1 1" : "0.2 0.2 0.2 0.7", "1 1 1 0.5", "REC", 8,
+					xMin: 0.93f, xMax: 0.99f, command: "adminmodule.timelinetoggle");
+			});
+
+			Components.Graphics.Chart.ChartSettings settings = default;
+			settings.HorizontalLabels = true;
+
+			Components.Graphics.Chart.Layer[] layers = default;
+			string[] vLabels = default;
+			string[] hLabels = default;
+
+			switch (timelineChartType)
+			{
+				case 0:
+					GenerateProfilerDataChart_Assembly(recording, assembly => (int)assembly.calls,
+						value => value.ToString("n0"),
+						5, 7, out layers, out vLabels, out hLabels);
+					break;
+
+				case 1:
+					GenerateProfilerDataChart_Assembly(recording, assembly => (int)assembly.alloc,
+						value => ByteEx.Format(value).ToUpper(),
+						5, 7, out layers, out vLabels, out hLabels);
+					break;
+
+				case 2:
+					GenerateProfilerDataChart_Assembly(recording, assembly => (int)assembly.total_time_ms,
+						value => $"{(value < 1 ? $"{value * 0.001f}μs" : $"{value:n0}ms")}",
+						5, 7, out layers, out vLabels, out hLabels);
+					break;
+
+				case 3:
+					GenerateProfilerDataChart_Call(recording, call => (int)call.calls,
+						value => value.ToString("n0"),
+						5, 7, out layers, out vLabels, out hLabels);
+					break;
+
+				case 4:
+					GenerateProfilerDataChart_Call(recording, call => (int)call.total_time_ms,
+						value => $"{(value < 1 ? $"{value * 0.001f}μs" : $"{value:n0}ms")}",
+						5, 7, out layers, out vLabels, out hLabels);
+					break;
+
+				case 5:
+					GenerateProfilerDataChart_Call(recording, call => (int)call.own_time_ms,
+						value => $"{(value < 1 ? $"{value * 0.001f}μs" : $"{value:n0}ms")}",
+						5, 7, out layers, out vLabels, out hLabels);
+					break;
+
+				case 6:
+					GenerateProfilerDataChart_Call(recording, call => (int)call.total_alloc,
+						value => ByteEx.Format(value).ToUpper(),
+						5, 7, out layers, out vLabels, out hLabels);
+					break;
+
+				case 7:
+					GenerateProfilerDataChart_Call(recording, call => (int)call.own_alloc,
+						value => ByteEx.Format(value).ToUpper(),
+						5, 7, out layers, out vLabels, out hLabels);
+					break;
+
+				case 8:
+					GenerateProfilerDataChart_Memory(recording, memory => (int)memory.total_alloc_size,
+						value => ByteEx.Format(value).ToUpper(),
+						6, 6, out layers, out vLabels, out hLabels);
+					break;
+
+				case 9:
+					GenerateProfilerDataChart_Memory(recording, memory => (int)memory.allocations,
+						value => ByteEx.Format(value).ToUpper(),
+						6, 6, out layers, out vLabels, out hLabels);
+					break;
+			}
+
+			AddChart(0, timelineChartOptions[timelineChartType], TextAnchor.UpperLeft, 18, layers, vLabels, hLabels,
+				settings, responsive: false);
+
+			AddName(0, "Recording Info");
+			AddInput(0, "Status", ap => recording.Status.ToString());
+			AddInput(0, "Duration", ap => $"{recording.Duration:0.0}s ({recording.Rate:0.0}s rate)");
+			AddInput(0, "Flags", ap => recording.Args.ToString());
+			AddInput(0, "Samples", ap => $"{recording.Timeline.Count:n0} " +
+			                              $"({recording.Timeline.Sum(x => x.Value.Assemblies.Count):n0} assemblies, " +
+			                              $"{recording.Timeline.Sum(x => x.Value.Calls.Count):n0} calls, " +
+			                              $"{recording.Timeline.Sum(x => x.Value.Memory.Count):n0} memory)");
+		}
+
+		public static void GenerateProfilerDataChart_Assembly(MonoProfiler.TimelineRecording recording,
+			Func<MonoProfiler.AssemblyRecord, int> value, Func<int, string> valueFormat,
+			int valueCuts, int assemblyCount, out Components.Graphics.Chart.Layer[] layers, out string[] vLabels, out string[] hLabels)
+		{
+			var pooledLayers = Pool.GetList<Components.Graphics.Chart.Layer>();
+			var pooledVerticalLabels = Pool.GetList<string>();
+			var pooledHorizontalLabels = Pool.GetList<string>();
+			pooledHorizontalLabels.AddRange(recording.Timeline.Select(sample => $"{sample.Key.Hour:00}:{sample.Key.Minute:00}:{sample.Key.Second:00}"));
+
+			var records = recording.Timeline.SelectMany(x =>
+				x.Value.Assemblies.OrderByDescending(value));
+
+			var maxValue = records.Any() ? records.Max(value) : 0;
+
+			if (records.Any())
+			{
+				for (int i = 0; i < valueCuts; i++)
+				{
+					pooledVerticalLabels.Add(valueFormat(i.Scale(0, valueCuts, 0, maxValue)));
+				}
+			}
+
+			pooledVerticalLabels.Add(valueFormat(maxValue));
+
+			var index = 0;
+			foreach (var assembly in records.Take(assemblyCount))
+			{
+				var color = ChartColors[index];
+
+				pooledLayers.Add(new Components.Graphics.Chart.Layer
+				{
+					Name = assembly.assembly_name.displayName,
+					Data = recording.Timeline.Select(x => x.Value.Assemblies.Where(x => x.assembly_handle == assembly.assembly_handle).Sum(value)).ToArray(),
+					LayerSettings = new()
+					{
+						Color = color,
+						Shadows = 1
+					}
+				});
+
+				index++;
+			}
+
+			layers = [.. pooledLayers];
+			vLabels = [.. pooledVerticalLabels];
+			hLabels = [.. pooledHorizontalLabels];
+
+			Pool.FreeList(ref pooledVerticalLabels);
+			Pool.FreeList(ref pooledHorizontalLabels);
+			Pool.FreeList(ref pooledLayers);
+		}
+
+		public static void GenerateProfilerDataChart_Call(MonoProfiler.TimelineRecording recording,
+			Func<MonoProfiler.CallRecord, int> value, Func<int, string> valueFormat,
+			int valueCuts, int callCount, out Components.Graphics.Chart.Layer[] layers, out string[] vLabels, out string[] hLabels)
+		{
+			var pooledLayers = Pool.GetList<Components.Graphics.Chart.Layer>();
+			var pooledVerticalLabels = Pool.GetList<string>();
+			var pooledHorizontalLabels = Pool.GetList<string>();
+			pooledHorizontalLabels.AddRange(recording.Timeline.Select(sample => $"{sample.Key.Hour:00}:{sample.Key.Minute:00}:{sample.Key.Second:00}"));
+
+			var records = recording.Timeline.SelectMany(x =>
+				x.Value.Calls.OrderByDescending(value));
+
+			var maxValue = records.Any() ? records.Max(value) : 0;
+
+			if (records.Any())
+			{
+				for (int i = 0; i < valueCuts; i++)
+				{
+					pooledVerticalLabels.Add(valueFormat(i.Scale(0, valueCuts, 0, maxValue)));
+				}
+			}
+
+			pooledVerticalLabels.Add(valueFormat(maxValue));
+
+			var index = 0;
+			foreach (var assembly in records.Take(callCount))
+			{
+				var color = ChartColors[index];
+
+				MonoProfiler.AssemblyMap.TryGetValue(assembly.assembly_handle, out var name);
+
+				pooledLayers.Add(new Components.Graphics.Chart.Layer
+				{
+					Name = name.displayName,
+					Data = recording.Timeline.Select(x => x.Value.Calls.Where(x => x.assembly_handle == assembly.assembly_handle).Sum(value)).ToArray(),
+					LayerSettings = new()
+					{
+						Color = color,
+						Shadows = 1
+					}
+				});
+
+				index++;
+			}
+
+			layers = [.. pooledLayers];
+			vLabels = [.. pooledVerticalLabels];
+			hLabels = [.. pooledHorizontalLabels];
+
+			Pool.FreeList(ref pooledVerticalLabels);
+			Pool.FreeList(ref pooledHorizontalLabels);
+			Pool.FreeList(ref pooledLayers);
+		}
+
+		public static void GenerateProfilerDataChart_Memory(MonoProfiler.TimelineRecording recording,
+			Func<MonoProfiler.MemoryRecord, int> value, Func<int, string> valueFormat,
+			int valueCuts, int memoryCount, out Components.Graphics.Chart.Layer[] layers, out string[] vLabels, out string[] hLabels)
+		{
+			var pooledLayers = Pool.GetList<Components.Graphics.Chart.Layer>();
+			var pooledVerticalLabels = Pool.GetList<string>();
+			var pooledHorizontalLabels = Pool.GetList<string>();
+			pooledHorizontalLabels.AddRange(recording.Timeline.Select(sample => $"{sample.Key.Hour:00}:{sample.Key.Minute:00}:{sample.Key.Second:00}"));
+
+			var records = recording.Timeline.SelectMany(x =>
+				x.Value.Memory.OrderByDescending(value));
+
+			var maxValue = records.Any() ? records.Max(value) : 0;
+
+			if (records.Any())
+			{
+				for (int i = 0; i < valueCuts; i++)
+				{
+					pooledVerticalLabels.Add(valueFormat(i.Scale(0, valueCuts, 0, maxValue)));
+				}
+			}
+
+			pooledVerticalLabels.Add(valueFormat(maxValue));
+
+			var index = 0;
+			foreach (var assembly in records.Take(memoryCount))
+			{
+				var color = ChartColors[index];
+
+				pooledLayers.Add(new Components.Graphics.Chart.Layer
+				{
+					Name = assembly.class_name,
+					Data = recording.Timeline.Select(x => x.Value.Memory.Where(x => x.assembly_handle == assembly.assembly_handle).Sum(value)).ToArray(),
+					LayerSettings = new()
+					{
+						Color = color,
+						Shadows = 1
+					}
+				});
+
+				index++;
+			}
+
+			layers = [.. pooledLayers];
+			vLabels = [.. pooledVerticalLabels];
+			hLabels = [.. pooledHorizontalLabels];
+
+			Pool.FreeList(ref pooledVerticalLabels);
+			Pool.FreeList(ref pooledHorizontalLabels);
+			Pool.FreeList(ref pooledLayers);
 		}
 	}
 
@@ -600,6 +921,115 @@ public partial class AdminModule
 		{
 			MonoProfiler.Clear();
 			ap.SetStorage(null, "profilerval", (ModuleHandle)default);
+		}
+
+		ap.SelectedTab.OnChange(ap, ap.SelectedTab);
+
+		Draw(ap.Player);
+	}
+
+	[Conditional("!MINIMAL")]
+	[ProtectedCommand("adminmodule.timelinemode")]
+	private void TimelineMode(ConsoleSystem.Arg arg)
+	{
+		var ap = GetPlayerSession(arg.Player());
+
+		ap.SetStorage(null, "timeline", !ap.GetStorage<bool>(null, "timeline"));
+
+		ap.SelectedTab.OnChange(ap, ap.SelectedTab);
+
+		Draw(ap.Player);
+	}
+
+	[Conditional("!MINIMAL")]
+	[ProtectedCommand("adminmodule.timelinetoggle")]
+	private void TimelineToggle(ConsoleSystem.Arg arg)
+	{
+		var player = arg.Player();
+
+		if (!HasAccess(player, "profiler.startstop"))
+		{
+			return;
+		}
+
+		var ap = GetPlayerSession(player);
+
+		if (!MonoProfiler.Enabled)
+		{
+			return;
+		}
+
+		if (!MonoProfiler.Recording)
+		{
+			var dictionary = PoolEx.GetDictionary<string, ModalModule.Modal.Field>();
+
+			dictionary["duration"] = ModalModule.Modal.Field.Make("Duration", ModalModule.Modal.Field.FieldTypes.Float, true, 3f,
+				customIsInvalid: field => field.Get<float>() <= 0 ? "Duration must be above zero." : field.Get<float>() > 100 ? $"You cannot record above {TimeEx.Format(100, shortName: false).ToLower()}." : string.Empty);
+			dictionary["rate"] = ModalModule.Modal.Field.Make("Duration", ModalModule.Modal.Field.FieldTypes.Float, true, 1f,
+				customIsInvalid: field => field.Get<float>() < 1 ? "Rate must be above or equal to one second." : field.Get<float>() > 10 ? $"Rate must be under or equal to 10 seconds." : string.Empty);
+			dictionary["calls"] = ModalModule.Modal.Field.Make("Calls", ModalModule.Modal.Field.FieldTypes.Boolean, false, true);
+			dictionary["advancedmemory"] = ModalModule.Modal.Field.Make("Advanced Memory", ModalModule.Modal.Field.FieldTypes.Boolean, false, true);
+			dictionary["callmemory"] = ModalModule.Modal.Field.Make("Call Memory", ModalModule.Modal.Field.FieldTypes.Boolean, false, true);
+			dictionary["timings"] = ModalModule.Modal.Field.Make("Timings (Performance Intensive)", ModalModule.Modal.Field.FieldTypes.Boolean, false, true);
+
+			Modal.Open(player, "Timeline Profiling", dictionary, (player, _) =>
+			{
+				MonoProfiler.ProfilerArgs profilerArgs = default;
+
+				if (dictionary["advancedmemory"].Get<bool>()) profilerArgs |= MonoProfiler.ProfilerArgs.AdvancedMemory;
+				if (dictionary["callmemory"].Get<bool>()) profilerArgs |= MonoProfiler.ProfilerArgs.CallMemory;
+				if (dictionary["calls"].Get<bool>()) profilerArgs |= MonoProfiler.ProfilerArgs.Calls;
+				if (dictionary["timings"].Get<bool>()) profilerArgs |= MonoProfiler.ProfilerArgs.Timings;
+
+				ProfilerTab.recording.Discard();
+				ProfilerTab.recording.Start(dictionary["duration"].Get<float>(), dictionary["duration"].Get<float>(), profilerArgs, discarded =>
+				{
+					if (discarded)
+					{
+						Notifications.Add(player, "Timeline profiling has been discarded.");
+					}
+
+					if (ap.IsInMenu && ap.SelectedTab != null && ap.SelectedTab.Id == "profiler")
+					{
+						ap.SelectedTab.OnChange(ap, ap.SelectedTab);
+						Draw(ap.Player);
+					}
+				});
+
+				PoolEx.FreeDictionary(ref dictionary);
+
+				ap.SelectedTab.OnChange(ap, ap.SelectedTab);
+				Draw(player);
+			}, onCancel: () =>
+			{
+				PoolEx.FreeDictionary(ref dictionary);
+
+				ap.SelectedTab.OnChange(ap, ap.SelectedTab);
+				Draw(player);
+			});
+		}
+		else
+		{
+			ProfilerTab.recording?.Stop();
+			ap.SelectedTab.OnChange(ap, ap.SelectedTab);
+
+			Draw(player);
+		}
+	}
+
+	[Conditional("!MINIMAL")]
+	[ProtectedCommand("adminmodule.timelineclear")]
+	private void TimelineClear(ConsoleSystem.Arg arg)
+	{
+		var ap = GetPlayerSession(arg.Player());
+
+		if (ProfilerTab.recording.IsRecording())
+		{
+			ProfilerTab.recording.Stop(true);
+		}
+		else
+		{
+			ProfilerTab.recording.Discard();
 		}
 
 		ap.SelectedTab.OnChange(ap, ap.SelectedTab);

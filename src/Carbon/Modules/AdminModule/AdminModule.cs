@@ -1086,14 +1086,21 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 		if (!chart.Responsive && !canExpand)
 		{
-			cui.CreatePanel(container, panel, "0.15 0.15 0.15 0.3", blur: true, OyMax: 17.5f);
+			cui.CreatePanel(container, panel, "0.15 0.15 0.15 0.3", blur: true, OyMax: 25f);
 			cui.CreateText(container, panel, "1 1 1 0.5", "To view the chart,\nremain on the same page number as this.", 10);
+			return;
+		}
+
+		if (chart.IsEmpty())
+		{
+			cui.CreatePanel(container, panel, "0.15 0.15 0.15 0.3", blur: true, OyMax: 25f);
+			cui.CreateText(container, panel, "1 1 1 0.5", "No data available.", 10);
 			return;
 		}
 
 		if (!chart.Responsive)
 		{
-			cui.CreatePanel(container, panel, "0.15 0.15 0.15 0.3", blur: true, OyMax: 17.5f);
+			cui.CreatePanel(container, panel, "0.15 0.15 0.15 0.3", blur: true, OyMax: 25f);
 		}
 
 		var scroll = cui.CreateScrollView(container, panel, false, true,
@@ -1118,16 +1125,20 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		var identifier = chart.GetIdentifier();
 
 		var labelCount = chart.Chart.verticalLabels.Length;
-		var labelIndex = 0;
 
-		foreach (var label in chart.Chart.verticalLabels)
+		if (labelCount != 1)
 		{
-			var labelOffset = labelIndex.Scale(0, labelCount - 1, 0, 150);
+			var labelIndex = 0;
 
-			cui.CreateText(container, vLabelPanel, "1 1 1 0.9", label, 7,
-				xMin: 0f, xMax: 0.9f, yMin: 0f, yMax: 0f, OyMin: labelOffset, OyMax: labelOffset, align: TextAnchor.MiddleRight);
+			foreach (var label in chart.Chart.verticalLabels)
+			{
+				var labelOffset = labelIndex.Scale(0, labelCount - 1, 0, 150);
 
-			labelIndex++;
+				cui.CreateText(container, vLabelPanel, "1 1 1 0.9", label, 7,
+					xMin: 0f, xMax: 0.9f, yMin: 0f, yMax: 0f, OyMin: labelOffset, OyMax: labelOffset, align: TextAnchor.MiddleRight);
+
+				labelIndex++;
+			}
 		}
 
 		var layerIndex = -1;
@@ -1165,7 +1176,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		var loadingText = cui.CreateText(container, loadingOverlay, "1 1 1 0.5", "Please wait...", 10, id: $"{identifier}_loadingtxt");
 		var chartImage = cui.CreateImage(container, scroll, 0, Cache.CUI.WhiteColor, xMin: 0.01f, id: $"{identifier}_chart");
 
-		cui.CreateText(container, panel, Cache.CUI.WhiteColor, chart.Name, chart.NameSize, xMin: 0.025f, xMax: 0.95f, yMin: 1, yMax: 1, OyMin: 10, OyMax: 10, align: chart.NameAlign, font: Handler.FontTypes.RobotoCondensedBold);
+		cui.CreateText(container, panel, Cache.CUI.WhiteColor, chart.Name, chart.NameSize, xMin: 0.025f, xMax: 0.95f, yMin: 1, yMax: 1, OyMin: 10, OyMax: 17.5f, align: chart.NameAlign, font: Handler.FontTypes.RobotoCondensedBold);
 
 		Community.Runtime.CorePlugin.NextFrame(() =>
 		{

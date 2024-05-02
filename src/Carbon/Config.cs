@@ -23,12 +23,18 @@ public class Config
 	public DebuggingConfig Debugging { get; set; } = new();
 	public LoggingConfig Logging { get; set; } = new();
 	public CompilerConfig Compiler { get; set; } = new();
+	public ProfilerConfig Profiler { get; set; } = new();
 	public MiscConfig Misc { get; set; } = new();
 
 	public class CompilerConfig
 	{
 		public bool UnloadOnFailure { get; set; } = false;
 		public List<string> ConditionalCompilationSymbols { get; set; }
+	}
+
+	public class ProfilerConfig
+	{
+		public bool RecordingWarnings { get; set; } = true;
 	}
 
 	public class WatchersConfig

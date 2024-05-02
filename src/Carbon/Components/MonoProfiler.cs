@@ -28,7 +28,7 @@ public static unsafe partial class MonoProfiler
 
 	public static AssemblyOutput AssemblyRecords = new();
 	public static CallOutput CallRecords = new();
-	public static List<MemoryRecord> MemoryRecords = new();
+	public static MemoryOutput MemoryRecords = new();
 	public static RuntimeAssemblyBank AssemblyBank = new();
 	public static Dictionary<ModuleHandle, AssemblyNameEntry> AssemblyMap = new();
 	public static Dictionary<IntPtr, string> ClassMap = new();
@@ -188,6 +188,11 @@ public static unsafe partial class MonoProfiler
 			return JsonConvert.SerializeObject(this, indented ? Formatting.Indented : Formatting.None);
 		}
 	}
+	public class MemoryOutput : List<MemoryRecord>
+	{
+
+	}
+
 	public class RuntimeAssemblyBank : ConcurrentDictionary<string, int>
 	{
 		public string Increment(string value)
@@ -433,9 +438,9 @@ public static unsafe partial class MonoProfiler
 		}
 		else if(Recording && logging)
 		{
-			_profileWarningTimer = Community.Runtime.CorePlugin.timer.Every(60, () =>
+			_profileWarningTimer = Community.Runtime.CorePlugin.timer.Every(60 * 5, () =>
 			{
-				Logger.Warn($" Reminder: You've been profile recording for {TimeEx.Format(MonoProfiler.CurrentDurationTime.TotalSeconds).ToLower()}..");
+				Logger.Warn($" Reminder: You've been profiling for {TimeEx.Format(MonoProfiler.CurrentDurationTime.TotalSeconds).ToLower()}..");
 			});
 		}
 
@@ -634,7 +639,7 @@ public static unsafe partial class MonoProfiler
 
 		ModuleHandle handle = assembly.ManifestModule.ModuleHandle;
 
-		AssemblyMap[handle] = new AssemblyNameEntry()
+		AssemblyMap[handle] = new AssemblyNameEntry
 		{
 			name = assembly.GetName().Name,
 			displayName = assemblyName,
@@ -651,12 +656,9 @@ public static unsafe partial class MonoProfiler
 	{
 		private delegate*<string*, byte*, int, void> string_marshal;
 		private delegate*<byte[]*, byte*, ulong, void> bytes_marshal;
-		private delegate*<List<AssemblyRecord>*, ulong, IntPtr, delegate*<IntPtr, out AssemblyRecord, bool>, void>
-			basic_iter;
-		private delegate*<List<CallRecord>*, ulong, IntPtr, delegate*<IntPtr, out CallRecord, bool>, void>
-			advanced_iter;
-		private delegate*<List<MemoryRecord>*, ulong, IntPtr, delegate*<IntPtr, out MemoryRecord, bool>, void>
-			memory_iter;
+		private delegate*<List<AssemblyRecord>*, ulong, IntPtr, delegate*<IntPtr, out AssemblyRecord, bool>, void> basic_iter;
+		private delegate*<List<CallRecord>*, ulong, IntPtr, delegate*<IntPtr, out CallRecord, bool>, void> advanced_iter;
+		private delegate*<List<MemoryRecord>*, ulong, IntPtr, delegate*<IntPtr, out MemoryRecord, bool>, void> memory_iter;
 
 		public ProfilerCallbacks()
 		{

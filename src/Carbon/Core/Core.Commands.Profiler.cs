@@ -197,4 +197,12 @@ public partial class CorePlugin : CarbonPlugin
 			return false;
 		}
 	}
+
+	[CommandVar("profiler.recwarns", "It should or should not print a reminding warning every 5 minutes when profiling for an un-set amount of time.")]
+	[AuthLevel(2)]
+	private bool RecordingWarnings
+	{
+		get { return Community.Runtime.Config.Profiler.RecordingWarnings; }
+		set { Community.Runtime.Config.Profiler.RecordingWarnings = value; }
+	}
 }

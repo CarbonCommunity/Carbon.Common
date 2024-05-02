@@ -309,6 +309,11 @@ public partial class AdminModule
 
 			return AddRow(column, option);
 		}
+		public Tab AddSpace(int column)
+		{
+			var option = Pool.Get<OptionSpace>();
+			return AddRow(column, option);
+		}
 
 		public void CreateDialog(string title, Action<PlayerSession> onConfirm, Action<PlayerSession> onDecline)
 		{
@@ -709,10 +714,14 @@ public partial class AdminModule
 
 				return _identifier;
 			}
-
 			public string GenerateIdentifier()
 			{
 				return $"chart_{Chart.Name}{Chart.Layers.Where(x => !x.Disabled).Select(x => x.LayerSettings.Shadows.ToString()).ToString("_")}{Chart.Layers.Where(x => !x.Disabled).Sum(x => x.Name.Length + x.Data.Sum(y => y) + (x.Disabled ? 0 : 1))}";
+			}
+
+			public bool IsEmpty()
+			{
+				return Chart.horizontalLabels.Length == 0 && Chart.verticalLabels.Length == 0 && !Chart.Layers.Any();
 			}
 
 			public OptionChart() { }
