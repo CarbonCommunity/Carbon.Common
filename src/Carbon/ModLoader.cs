@@ -333,7 +333,7 @@ public static class ModLoader
 			Plugin.InternalApplyAllPluginReferences();
 		}
 
-		plugin.IClearMemory();
+		// plugin.IClearMemory();
 
 		return true;
 	}
