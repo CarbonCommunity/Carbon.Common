@@ -716,7 +716,7 @@ public partial class AdminModule
 			}
 			public string GenerateIdentifier()
 			{
-				return $"chart_{Chart.Name}{Chart.Layers.Where(x => !x.Disabled).Select(x => x.LayerSettings.Shadows.ToString()).ToString("_")}{Chart.Layers.Where(x => !x.Disabled).Sum(x => x.Name.Length + x.Data.Sum(y => y) + (x.Disabled ? 0 : 1))}";
+				return $"chart_{Chart.Name}{Chart.Layers.Where(x => !x.Disabled).Select(x => x.LayerSettings.Shadows.ToString()).ToString("_")}{Chart.Layers.Where(x => !x.Disabled).SumULong(x => (ulong)(x.Name.Length) + x.Data.SumULong(y => y) + (ulong)(x.Disabled ? 0 : 1))}";
 			}
 
 			public bool IsEmpty()

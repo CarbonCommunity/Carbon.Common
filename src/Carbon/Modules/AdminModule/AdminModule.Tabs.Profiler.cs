@@ -140,7 +140,7 @@ public partial class AdminModule
 				6 => advancedRecords.OrderByDescending(x => x.total_exceptions),
 				7 => advancedRecords.OrderByDescending(x => x.own_exceptions),
 				_ => advancedRecords
-			})!.Where(x => string.IsNullOrEmpty(search) || x.method_name.Contains(search, CompareOptions.OrdinalIgnoreCase));;
+			})!.Where(x => string.IsNullOrEmpty(search) || x.method_name.Contains(search, CompareOptions.OrdinalIgnoreCase));
 		}
 		public static IEnumerable<MonoProfiler.MemoryRecord> GetSortedMemory(int sort, string search)
 		{
@@ -154,7 +154,7 @@ public partial class AdminModule
 				1 => records.OrderByDescending(x => x.allocations),
 				2 => records.OrderByDescending(x => x.total_alloc_size),
 				_ => records
-			})!.Where(x => string.IsNullOrEmpty(search) || x.class_name.Contains(search, CompareOptions.OrdinalIgnoreCase));;
+			})!.Where(x => string.IsNullOrEmpty(search) || x.class_name.Contains(search, CompareOptions.OrdinalIgnoreCase));
 		}
 
 		internal void Draw(PlayerSession ap)
@@ -321,7 +321,7 @@ public partial class AdminModule
 
 				Stripe(this, 0, value, maxVal, intenseColor, calmColor,
 					record.assembly_name.displayName,
-					$"{record.GetTotalTime()} ({record.total_time_percentage:0.0}%) | {ByteEx.Format(record.alloc).ToUpper()} | {record.total_exceptions:n0} exceptions",
+					$"{record.GetTotalTime()} ({record.total_time_percentage:0.0}%) | {ByteEx.Format(record.alloc).ToUpper()} | {record.total_exceptions:n0} excep.",
 					$"{record.assembly_name.profileType}\n<b>{record.calls:n0}</b> calls", $"adminmodule.profilerselect {i}", record.assembly_handle == selection);
 			}
 
@@ -384,6 +384,13 @@ public partial class AdminModule
 							_ => maxVal
 						};
 					}
+
+					Stripe(this, 0, 100, 100, niceColor, niceColor,
+						"GC",
+						$"{MonoProfiler.GCStats.calls:n0} calls | {MonoProfiler.GCStats.GetTotalTime()}",
+						$"<size=7>{TimeEx.Format(MonoProfiler.DurationTime.TotalSeconds, false).ToLower()}\n{MonoProfiler.CallRecords.Count:n0} calls</size>",
+						$"adminmodule.profilerselect -1",
+						selection.GetHashCode() == 0);
 
 					AddDropdown(1, $"<b>MEMORY ({advancedRecords.Count():n0})</b>", ap => sort, (ap, i) =>
 					{
@@ -487,7 +494,7 @@ public partial class AdminModule
 						Stripe(this, 1, value, maxVal, intenseColor, calmColor,
 							record.method_name.Truncate(105, "..."),
 							$"{record.GetTotalTime()} total ({record.total_time_percentage:0.0}%) | {record.GetOwnTime()} own ({record.own_time_percentage:0.0}%) | {record.total_exceptions:n0} total / {record.own_exceptions:n0} own excep.",
-							$"<b>{record.calls:n0}</b> {(((int)record.calls).Plural("call", "calls"))}\n{ByteEx.Format(record.total_alloc).ToUpper()} total | {ByteEx.Format(record.own_alloc).ToUpper()} own",
+							$"<b>{record.calls:n0}</b> {((record.calls).Plural("call", "calls"))}\n{ByteEx.Format(record.total_alloc).ToUpper()} total | {ByteEx.Format(record.own_alloc).ToUpper()} own",
 							Community.Runtime.MonoProfilerConfig.SourceViewer
 								? $"adminmodule.profilerselectcall {index}"
 								: string.Empty);
@@ -537,85 +544,85 @@ public partial class AdminModule
 			switch (timelineChartType)
 			{
 				case 0:
-					GenerateProfilerDataChart_Assembly(recording, assembly => (int)assembly.calls,
+					GenerateProfilerDataChart_Assembly(recording, assembly => assembly.calls,
 						value => value.ToString("n0"),
 						5, 7, out layers, out vLabels, out hLabels);
 					break;
 
 				case 1:
-					GenerateProfilerDataChart_Assembly(recording, assembly => (int)assembly.alloc,
+					GenerateProfilerDataChart_Assembly(recording, assembly => assembly.alloc,
 						value => ByteEx.Format(value).ToUpper(),
 						5, 7, out layers, out vLabels, out hLabels);
 					break;
 
 				case 2:
-					GenerateProfilerDataChart_Assembly(recording, assembly => (int)assembly.total_time_ms,
-						value => $"{(value < 1 ? $"{value * 0.001f}μs" : $"{value:n0}ms")}",
+					GenerateProfilerDataChart_Assembly(recording, assembly => assembly.total_time,
+						value => $"{(value < 1000 ? $"{value:n0}μs" : $"{value * 1000:n0}ms")}",
 						5, 7, out layers, out vLabels, out hLabels);
 					break;
 
 				case 3:
-					GenerateProfilerDataChart_Assembly(recording, assembly => (int)assembly.total_exceptions,
+					GenerateProfilerDataChart_Assembly(recording, assembly => assembly.total_exceptions,
 						value => value.ToString("n0"),
 						3, 5, out layers, out vLabels, out hLabels);
 					break;
 
 				case 4:
-					GenerateProfilerDataChart_Call(recording, call => (int)call.calls,
+					GenerateProfilerDataChart_Call(recording, call => call.calls,
 						value => value.ToString("n0"),
 						5, 7, out layers, out vLabels, out hLabels);
 					break;
 
 				case 5:
-					GenerateProfilerDataChart_Call(recording, call => (int)call.total_time_ms,
-						value => $"{(value < 1 ? $"{value * 0.001f}μs" : $"{value:n0}ms")}",
+					GenerateProfilerDataChart_Call(recording, call => call.total_time,
+						value => $"{(value < 1000 ? $"{value:n0}μs" : $"{value * 1000:n0}ms")}",
 						5, 7, out layers, out vLabels, out hLabels);
 					break;
 
 				case 6:
-					GenerateProfilerDataChart_Call(recording, call => (int)call.own_time_ms,
-						value => $"{(value < 1 ? $"{value * 0.001f}μs" : $"{value:n0}ms")}",
+					GenerateProfilerDataChart_Call(recording, call => call.own_time,
+						value => $"{(value < 1000 ? $"{value:n0}μs" : $"{value * 1000:n0}ms")}",
 						5, 7, out layers, out vLabels, out hLabels);
 					break;
 
 				case 7:
-					GenerateProfilerDataChart_Call(recording, call => (int)call.total_alloc,
+					GenerateProfilerDataChart_Call(recording, call => call.total_alloc,
 						value => ByteEx.Format(value).ToUpper(),
 						5, 7, out layers, out vLabels, out hLabels);
 					break;
 
 				case 8:
-					GenerateProfilerDataChart_Call(recording, call => (int)call.own_alloc,
+					GenerateProfilerDataChart_Call(recording, call => call.own_alloc,
 						value => ByteEx.Format(value).ToUpper(),
 						5, 7, out layers, out vLabels, out hLabels);
 					break;
 
 				case 9:
-					GenerateProfilerDataChart_Call(recording, call => (int)call.total_exceptions,
+					GenerateProfilerDataChart_Call(recording, call => call.total_exceptions,
 						value => value.ToString("n0"),
 						3, 5, out layers, out vLabels, out hLabels);
 					break;
 
 				case 10:
-					GenerateProfilerDataChart_Call(recording, call => (int)call.own_exceptions,
+					GenerateProfilerDataChart_Call(recording, call => call.own_exceptions,
 						value => value.ToString("n0"),
 						3, 5, out layers, out vLabels, out hLabels);
 					break;
 
 				case 11:
-					GenerateProfilerDataChart_Memory(recording, memory => (int)memory.total_alloc_size,
+					GenerateProfilerDataChart_Memory(recording, memory => memory.total_alloc_size,
 						value => ByteEx.Format(value).ToUpper(),
 						6, 6, out layers, out vLabels, out hLabels);
 					break;
 
 				case 12:
-					GenerateProfilerDataChart_Memory(recording, memory => (int)memory.total_alloc_size,
+					GenerateProfilerDataChart_Memory(recording, memory => memory.total_alloc_size,
 						value => ByteEx.Format(value).ToUpper(),
 						6, 6, out layers, out vLabels, out hLabels);
 					break;
 
 				case 13:
-					GenerateProfilerDataChart_Memory(recording, memory => (int)memory.allocations,
+					GenerateProfilerDataChart_Memory(recording, memory => memory.allocations,
 						value => ByteEx.Format(value).ToUpper(),
 						6, 6, out layers, out vLabels, out hLabels);
 					break;
@@ -628,14 +635,43 @@ public partial class AdminModule
 			AddInput(0, "Status", ap => recording.Status.ToString());
 			AddInput(0, "Duration", ap => $"{recording.Duration:0.0}s ({recording.Rate:0.0}s rate)");
 			AddInput(0, "Flags", ap => recording.Args.ToString());
-			AddInput(0, "Samples", ap => $"{recording.Timeline.Count:n0} " +
-			                              $"({recording.Timeline.Sum(x => x.Value.Assemblies.Count):n0} assemblies, " +
-			                              $"{recording.Timeline.Sum(x => x.Value.Calls.Count):n0} calls, " +
-			                              $"{recording.Timeline.Sum(x => x.Value.Memory.Count):n0} memory)");
+			AddName(0, $"Samples ({recording.Timeline.Count:n0})");
+
+			var assemblies = recording.Timeline.Sum(x => x.Value.Assemblies.Count);
+			var calls = recording.Timeline.Sum(x => x.Value.Calls.Count);
+			var memory = recording.Timeline.Sum(x => x.Value.Memory.Count);
+			var highest = 0;
+
+			if (assemblies > highest) highest = assemblies;
+			if (calls > highest) highest = calls;
+			if (memory > highest) highest = memory;
+
+			Stripe(session.SelectedTab, 0, assemblies, highest, intenseColor, niceColor,
+				"Assemblies", $"{recording.Timeline.SumULong(x => x.Value.Assemblies.SumULong(y => y.calls)):n0} calls | " +
+				              $"{ByteEx.Format(recording.Timeline.SumULong(x => x.Value.Assemblies.SumULong(y => y.alloc))).ToUpper()} allocs. | " +
+				              $"{recording.Timeline.Sum(x => x.Value.Assemblies.Sum(y => y.total_time_ms)):n0}ms time | " +
+				              $"{recording.Timeline.SumULong(x => x.Value.Assemblies.SumULong(y => y.total_exceptions)):n0} excep.",
+				assemblies.ToString("n0"), null);
+
+			Stripe(session.SelectedTab, 0, calls, highest, intenseColor, niceColor,
+				"Calls", $"{recording.Timeline.SumULong(x => x.Value.Calls.SumULong(y => y.calls)):n0} calls | " +
+				         $"{ByteEx.Format(recording.Timeline.SumULong(x => x.Value.Calls.SumULong(y => y.total_alloc))).ToUpper()} total / " +
+				         $"{ByteEx.Format(recording.Timeline.SumULong(x => x.Value.Calls.SumULong(y => y.own_alloc))).ToUpper()} own allocs. | " +
+				         $"{recording.Timeline.Sum(x => x.Value.Calls.Sum(y => y.total_time_ms)):n0}ms total / " +
+				         $"{recording.Timeline.Sum(x => x.Value.Calls.Sum(y => y.own_time_ms)):n0}ms own time | " +
+				         $"{recording.Timeline.SumULong(x => x.Value.Calls.SumULong(y => y.total_exceptions)):n0} total / " +
+				         $"{recording.Timeline.SumULong(x => x.Value.Calls.SumULong(y => y.own_exceptions)):n0} own excep.",
+				calls.ToString("n0"), null);
+
+			Stripe(session.SelectedTab, 0, memory, highest, intenseColor, niceColor,
+				"Memory", $"{recording.Timeline.SumULong(x => x.Value.Memory.SumULong(y => y.allocations))} | " +
+				          $"{ByteEx.Format(recording.Timeline.SumULong(x => x.Value.Memory.SumULong(y => y.total_alloc_size))).ToUpper()} total alloc. | " +
+				          $"{ByteEx.Format(recording.Timeline.SumUInt(x => x.Value.Memory.SumUInt(y => y.instance_size))).ToUpper()} inst. size",
+				memory.ToString("n0"), null);
 		}
 
 		public static void GenerateProfilerDataChart_Assembly(MonoProfiler.TimelineRecording recording,
-			Func<MonoProfiler.AssemblyRecord, int> value, Func<int, string> valueFormat,
+			Func<MonoProfiler.AssemblyRecord, ulong> value, Func<ulong, string> valueFormat,
 			int valueCuts, int assemblyCount, out Components.Graphics.Chart.Layer[] layers, out string[] vLabels, out string[] hLabels)
 		{
 			var pooledLayers = Pool.GetList<Components.Graphics.Chart.Layer>();
@@ -652,7 +688,7 @@ public partial class AdminModule
 			{
 				for (int i = 0; i < valueCuts; i++)
 				{
-					pooledVerticalLabels.Add(valueFormat(i.Scale(0, valueCuts, 0, maxValue)));
+					pooledVerticalLabels.Add(valueFormat(((ulong)i).Scale(0, (ulong)valueCuts, 0, maxValue)));
 				}
 			}
 
@@ -666,7 +702,7 @@ public partial class AdminModule
 				pooledLayers.Add(new Components.Graphics.Chart.Layer
 				{
 					Name = assembly.assembly_name.displayName,
-					Data = recording.Timeline.Select(x => x.Value.Assemblies.Where(x => x.assembly_handle == assembly.assembly_handle).Sum(value)).ToArray(),
+					Data = recording.Timeline.Select(x => x.Value.Assemblies.Where(x => x.assembly_handle == assembly.assembly_handle).SumULong(value)).ToArray(),
 					LayerSettings = new()
 					{
 						Color = color,
@@ -687,7 +723,7 @@ public partial class AdminModule
 		}
 
 		public static void GenerateProfilerDataChart_Call(MonoProfiler.TimelineRecording recording,
-			Func<MonoProfiler.CallRecord, int> value, Func<int, string> valueFormat,
+			Func<MonoProfiler.CallRecord, ulong> value, Func<ulong, string> valueFormat,
 			int valueCuts, int callCount, out Components.Graphics.Chart.Layer[] layers, out string[] vLabels, out string[] hLabels)
 		{
 			var pooledLayers = Pool.GetList<Components.Graphics.Chart.Layer>();
@@ -704,7 +740,7 @@ public partial class AdminModule
 			{
 				for (int i = 0; i < valueCuts; i++)
 				{
-					pooledVerticalLabels.Add(valueFormat(i.Scale(0, valueCuts, 0, maxValue)));
+					pooledVerticalLabels.Add(valueFormat(((ulong)i).Scale(0, (ulong)valueCuts, 0, maxValue)));
 				}
 			}
 
@@ -720,7 +756,7 @@ public partial class AdminModule
 				pooledLayers.Add(new Components.Graphics.Chart.Layer
 				{
 					Name = name.displayName,
-					Data = recording.Timeline.Select(x => x.Value.Calls.Where(x => x.assembly_handle == assembly.assembly_handle).Sum(value)).ToArray(),
+					Data = recording.Timeline.Select(x => x.Value.Calls.Where(x => x.assembly_handle == assembly.assembly_handle).SumULong(value)).ToArray(),
 					LayerSettings = new()
 					{
 						Color = color,
@@ -741,7 +777,7 @@ public partial class AdminModule
 		}
 
 		public static void GenerateProfilerDataChart_Memory(MonoProfiler.TimelineRecording recording,
-			Func<MonoProfiler.MemoryRecord, int> value, Func<int, string> valueFormat,
+			Func<MonoProfiler.MemoryRecord, ulong> value, Func<ulong, string> valueFormat,
 			int valueCuts, int memoryCount, out Components.Graphics.Chart.Layer[] layers, out string[] vLabels, out string[] hLabels)
 		{
 			var pooledLayers = Pool.GetList<Components.Graphics.Chart.Layer>();
@@ -758,7 +794,7 @@ public partial class AdminModule
 			{
 				for (int i = 0; i < valueCuts; i++)
 				{
-					pooledVerticalLabels.Add(valueFormat(i.Scale(0, valueCuts, 0, maxValue)));
+					pooledVerticalLabels.Add(valueFormat(((ulong)i).Scale(0, (ulong)valueCuts, 0, maxValue)));
 				}
 			}
 
@@ -772,7 +808,7 @@ public partial class AdminModule
 				pooledLayers.Add(new Components.Graphics.Chart.Layer
 				{
 					Name = assembly.class_name,
-					Data = recording.Timeline.Select(x => x.Value.Memory.Where(x => x.assembly_handle == assembly.assembly_handle).Sum(value)).ToArray(),
+					Data = recording.Timeline.Select(x => x.Value.Memory.Where(x => x.assembly_handle == assembly.assembly_handle).SumULong(value)).ToArray(),
 					LayerSettings = new()
 					{
 						Color = color,

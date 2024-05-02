@@ -67,28 +67,10 @@ public partial class CorePlugin : CarbonPlugin
 
 						foreach (var plugin in array)
 						{
-							var hookTimeAverageValue =
-#if DEBUG
-								(float)plugin.HookTimeAverage.CalculateAverage();
-#else
-								0;
-#endif
-							var memoryAverageValue =
-#if DEBUG
-								(float)plugin.MemoryAverage.CalculateAverage();
-#else
-								0;
-#endif
-							var hookTimeAverage = Mathf.RoundToInt(hookTimeAverageValue) == 0
-								? string.Empty
-								: $" (avg {hookTimeAverageValue:0}ms)";
-							var memoryAverage = Mathf.RoundToInt(memoryAverageValue) == 0
-								? string.Empty
-								: $" (avg {ByteEx.Format(memoryAverageValue, shortName: true, stringFormat: "{0}{1}").ToLower()})";
 							body.AddRow(string.Empty, plugin.Title, plugin.Author, $"v{plugin.Version}",
-								plugin.TotalHookTime.TotalMilliseconds == 0 ? string.Empty : $"{plugin.TotalHookTime.TotalMilliseconds:0}ms{hookTimeAverage}",
+								plugin.TotalHookTime.TotalMilliseconds == 0 ? string.Empty : $"{plugin.TotalHookTime.TotalMilliseconds:0}ms",
 								plugin.TotalHookFires == 0 ? string.Empty : $"{plugin.TotalHookFires:n0}",
-								plugin.TotalMemoryUsed == 0 ? string.Empty : $"{ByteEx.Format(plugin.TotalMemoryUsed, shortName: true, stringFormat: "{0}{1}").ToLower()}{memoryAverage}",
+								plugin.TotalMemoryUsed == 0 ? string.Empty : $"{ByteEx.Format(plugin.TotalMemoryUsed, shortName: true, stringFormat: "{0}{1}").ToLower()}",
 								plugin.TotalHookLagSpikes == 0 ? string.Empty : $"{plugin.TotalHookLagSpikes:n0}",
 								plugin.IsPrecompiled
 									? string.Empty

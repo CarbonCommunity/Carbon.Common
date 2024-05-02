@@ -79,7 +79,7 @@ public struct Chart
 	public class Layer
 	{
 		public string Name;
-		public int[] Data;
+		public ulong[] Data;
 		public bool Disabled;
 		public LayerSettings LayerSettings;
 
@@ -167,7 +167,7 @@ public struct Chart
 			DrawChartContentLineDots(graphic, layer.Data, Rect.Width, Rect.Height, Rect.X, Rect.Y, layer.LayerSettings);
 		}
 	}
-	internal void DrawChartContentShadows(System.Drawing.Graphics graphic, int[] data, float chartWidth, float chartHeight, float chartX, float chartY, LayerSettings layerSettings)
+	internal void DrawChartContentShadows(System.Drawing.Graphics graphic, ulong[] data, float chartWidth, float chartHeight, float chartX, float chartY, LayerSettings layerSettings)
 	{
 		var highestValue = data.Max();
 		var spaceBetweenPoints = chartWidth / (data.Length - 1);
@@ -208,7 +208,7 @@ public struct Chart
 			}
 		}
 	}
-	internal void DrawChartContentLineDots(System.Drawing.Graphics graphic, int[] data, float chartWidth, float chartHeight, float chartX, float chartY, LayerSettings layerSettings)
+	internal void DrawChartContentLineDots(System.Drawing.Graphics graphic, ulong[] data, float chartWidth, float chartHeight, float chartX, float chartY, LayerSettings layerSettings)
 	{
 		var highestValue = data.Max();
 		var spaceBetweenPoints = chartWidth / (data.Length - 1);

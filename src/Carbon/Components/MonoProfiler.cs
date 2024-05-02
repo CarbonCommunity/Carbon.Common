@@ -216,6 +216,11 @@ public static unsafe partial class MonoProfiler
 	{
 		public ulong calls;
 		public ulong total_time;
+
+		// managed
+		public double total_time_ms => total_time * 0.001f;
+
+		public string GetTotalTime() => (total_time_ms < 1 ? $"{total_time:n0}μs" : $"{total_time_ms:n0}ms");
 	}
 
 	[StructLayout(LayoutKind.Sequential)]

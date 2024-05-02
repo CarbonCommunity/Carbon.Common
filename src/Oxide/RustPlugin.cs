@@ -79,14 +79,6 @@ public class RustPlugin : Plugin
 			return false;
 		}
 
-#if DEBUG
-		timer.Every(1f, () =>
-		{
-			HookTimeAverage?.Calibrate();
-			MemoryAverage?.Calibrate();
-		});
-#endif
-
 		return true;
 	}
 

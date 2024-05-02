@@ -54,7 +54,6 @@ public class Config
 
 	public class DebuggingConfig
 	{
-		public float PluginTrackingTime { get; set; } = 60f;
 		public string ScriptDebuggingOrigin = string.Empty;
 		public bool UnityStacktrace { get; set; } =
 #if DEBUG
