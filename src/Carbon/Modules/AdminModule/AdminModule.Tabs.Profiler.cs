@@ -46,11 +46,14 @@ public partial class AdminModule
 			"Assembly Calls",
 			"Assembly Memory",
 			"Assembly Time",
+			"Assembly Exceptions",
 			"Calls",
 			"Call Time (Total)",
 			"Call Time (Own)",
 			"Call Memory (Total)",
 			"Call Memory (Own)",
+			"Call Exceptions (Total)",
+			"Call Exceptions (Own)",
 			"Memory Allocs",
 			"Memory Allocs (Memory)",
 		];
@@ -60,7 +63,8 @@ public partial class AdminModule
 			"Name",
 			"Time",
 			"Calls",
-			"Memory"
+			"Memory",
+			"Exceptions"
 		];
 		internal static string[] sortCallsOptions =
 		[
@@ -69,7 +73,9 @@ public partial class AdminModule
 			"Time (Total)",
 			"Time (Own)",
 			"Memory (Total)",
-			"Memory (Own)"
+			"Memory (Own)",
+			"Exceptions (Total)",
+			"Exceptions (Own)"
 		];
 		internal static string[] sortMemoryOptions =
 		[
@@ -113,6 +119,7 @@ public partial class AdminModule
 				1 => MonoProfiler.AssemblyRecords.OrderByDescending(x => x.total_time),
 				2 => MonoProfiler.AssemblyRecords.OrderByDescending(x => x.calls),
 				3 => MonoProfiler.AssemblyRecords.OrderByDescending(x => x.alloc),
+				4 => MonoProfiler.AssemblyRecords.OrderByDescending(x => x.total_exceptions),
 				_ => default
 			})!.Where(x => string.IsNullOrEmpty(search) || x.assembly_name.displayName.Contains(search, CompareOptions.OrdinalIgnoreCase));
 		}
@@ -130,6 +137,8 @@ public partial class AdminModule
 				3 => advancedRecords.OrderByDescending(x => x.own_time),
 				4 => advancedRecords.OrderByDescending(x => x.total_alloc),
 				5 => advancedRecords.OrderByDescending(x => x.own_alloc),
+				6 => advancedRecords.OrderByDescending(x => x.total_exceptions),
+				7 => advancedRecords.OrderByDescending(x => x.own_exceptions),
 				_ => advancedRecords
 			})!.Where(x => string.IsNullOrEmpty(search) || x.method_name.Contains(search, CompareOptions.OrdinalIgnoreCase));;
 		}
@@ -229,6 +238,7 @@ public partial class AdminModule
 					0 or 1 => filtered.Max(x => (float)x.total_time),
 					2 => filtered.Max(x => (float)x.calls),
 					3 => filtered.Max(x => (float)x.alloc),
+					4 => filtered.Max(x => (float)x.total_exceptions),
 					_ => maxVal
 				};
 			}
@@ -305,12 +315,13 @@ public partial class AdminModule
 					0 or 1 => record.total_time,
 					2 => record.calls,
 					3 => record.alloc,
+					4 => record.total_exceptions,
 					_ => 0f
 				};
 
 				Stripe(this, 0, value, maxVal, intenseColor, calmColor,
 					record.assembly_name.displayName,
-					$"{record.GetTotalTime()} ({record.total_time_percentage:0.0}%) | {ByteEx.Format(record.alloc).ToUpper()}",
+					$"{record.GetTotalTime()} ({record.total_time_percentage:0.0}%) | {ByteEx.Format(record.alloc).ToUpper()} | {record.total_exceptions:n0} exceptions",
 					$"{record.assembly_name.profileType}\n<b>{record.calls:n0}</b> calls", $"adminmodule.profilerselect {i}", record.assembly_handle == selection);
 			}
 
@@ -435,6 +446,8 @@ public partial class AdminModule
 							3 => advancedRecords.Max(x => (float)x.own_time),
 							4 => advancedRecords.Max(x => (float)x.total_alloc),
 							5 => advancedRecords.Max(x => (float)x.own_alloc),
+							6 => advancedRecords.Max(x => (float)x.total_exceptions),
+							7 => advancedRecords.Max(x => (float)x.own_exceptions),
 							_ => maxVal
 						};
 					}
@@ -466,12 +479,14 @@ public partial class AdminModule
 							3 => record.own_time,
 							4 => record.total_alloc,
 							5 => record.own_alloc,
+							6 => record.total_exceptions,
+							7 => record.own_exceptions,
 							_ => 0f
 						};
 
 						Stripe(this, 1, value, maxVal, intenseColor, calmColor,
 							record.method_name.Truncate(105, "..."),
-							$"{record.GetTotalTime()} total ({record.total_time_percentage:0.0}%) | {record.GetOwnTime()} own ({record.own_time_percentage:0.0}%)",
+							$"{record.GetTotalTime()} total ({record.total_time_percentage:0.0}%) | {record.GetOwnTime()} own ({record.own_time_percentage:0.0}%) | {record.total_exceptions:n0} total / {record.own_exceptions:n0} own excep.",
 							$"<b>{record.calls:n0}</b> {(((int)record.calls).Plural("call", "calls"))}\n{ByteEx.Format(record.total_alloc).ToUpper()} total | {ByteEx.Format(record.own_alloc).ToUpper()} own",
 							Community.Runtime.MonoProfilerConfig.SourceViewer
 								? $"adminmodule.profilerselectcall {index}"
@@ -540,42 +555,66 @@ public partial class AdminModule
 					break;
 
 				case 3:
+					GenerateProfilerDataChart_Assembly(recording, assembly => (int)assembly.total_exceptions,
+						value => value.ToString("n0"),
+						3, 5, out layers, out vLabels, out hLabels);
+					break;
+
+				case 4:
 					GenerateProfilerDataChart_Call(recording, call => (int)call.calls,
 						value => value.ToString("n0"),
 						5, 7, out layers, out vLabels, out hLabels);
 					break;
 
-				case 4:
+				case 5:
 					GenerateProfilerDataChart_Call(recording, call => (int)call.total_time_ms,
 						value => $"{(value < 1 ? $"{value * 0.001f}μs" : $"{value:n0}ms")}",
 						5, 7, out layers, out vLabels, out hLabels);
 					break;
 
-				case 5:
+				case 6:
 					GenerateProfilerDataChart_Call(recording, call => (int)call.own_time_ms,
 						value => $"{(value < 1 ? $"{value * 0.001f}μs" : $"{value:n0}ms")}",
 						5, 7, out layers, out vLabels, out hLabels);
 					break;
 
-				case 6:
+				case 7:
 					GenerateProfilerDataChart_Call(recording, call => (int)call.total_alloc,
 						value => ByteEx.Format(value).ToUpper(),
 						5, 7, out layers, out vLabels, out hLabels);
 					break;
 
-				case 7:
+				case 8:
 					GenerateProfilerDataChart_Call(recording, call => (int)call.own_alloc,
 						value => ByteEx.Format(value).ToUpper(),
 						5, 7, out layers, out vLabels, out hLabels);
 					break;
 
-				case 8:
+				case 9:
+					GenerateProfilerDataChart_Call(recording, call => (int)call.total_exceptions,
+						value => value.ToString("n0"),
+						3, 5, out layers, out vLabels, out hLabels);
+					break;
+
+				case 10:
+					GenerateProfilerDataChart_Call(recording, call => (int)call.own_exceptions,
+						value => value.ToString("n0"),
+						3, 5, out layers, out vLabels, out hLabels);
+					break;
+
+				case 11:
 					GenerateProfilerDataChart_Memory(recording, memory => (int)memory.total_alloc_size,
 						value => ByteEx.Format(value).ToUpper(),
 						6, 6, out layers, out vLabels, out hLabels);
 					break;
 
-				case 9:
+				case 12:
+					GenerateProfilerDataChart_Memory(recording, memory => (int)memory.total_alloc_size,
+						value => ByteEx.Format(value).ToUpper(),
+						6, 6, out layers, out vLabels, out hLabels);
+					break;
+
+				case 13:
 					GenerateProfilerDataChart_Memory(recording, memory => (int)memory.allocations,
 						value => ByteEx.Format(value).ToUpper(),
 						6, 6, out layers, out vLabels, out hLabels);
@@ -965,7 +1004,7 @@ public partial class AdminModule
 
 			dictionary["duration"] = ModalModule.Modal.Field.Make("Duration", ModalModule.Modal.Field.FieldTypes.Float, true, 3f,
 				customIsInvalid: field => field.Get<float>() <= 0 ? "Duration must be above zero." : field.Get<float>() > 100 ? $"You cannot record above {TimeEx.Format(100, shortName: false).ToLower()}." : string.Empty);
-			dictionary["rate"] = ModalModule.Modal.Field.Make("Duration", ModalModule.Modal.Field.FieldTypes.Float, true, 1f,
+			dictionary["rate"] = ModalModule.Modal.Field.Make("Rate", ModalModule.Modal.Field.FieldTypes.Float, true, 1f,
 				customIsInvalid: field => field.Get<float>() < 1 ? "Rate must be above or equal to one second." : field.Get<float>() > 10 ? $"Rate must be under or equal to 10 seconds." : string.Empty);
 			dictionary["calls"] = ModalModule.Modal.Field.Make("Calls", ModalModule.Modal.Field.FieldTypes.Boolean, false, true);
 			dictionary["advancedmemory"] = ModalModule.Modal.Field.Make("Advanced Memory", ModalModule.Modal.Field.FieldTypes.Boolean, false, true);
@@ -982,7 +1021,7 @@ public partial class AdminModule
 				if (dictionary["timings"].Get<bool>()) profilerArgs |= MonoProfiler.ProfilerArgs.Timings;
 
 				ProfilerTab.recording.Discard();
-				ProfilerTab.recording.Start(dictionary["duration"].Get<float>(), dictionary["duration"].Get<float>(), profilerArgs, discarded =>
+				ProfilerTab.recording.Start(dictionary["rate"].Get<float>(), dictionary["duration"].Get<float>(), profilerArgs, discarded =>
 				{
 					if (discarded)
 					{
