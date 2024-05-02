@@ -64,7 +64,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				var scrollview = cui.CreateScrollView(container, blur,
 					vertical: true, horizontal: true, movementType: ScrollRect.MovementType.Clamped, elasticity: 0.5f,
 					inertia: true, decelerationRate: 0.2f, scrollSensitivity: 75, maskSoftness: "0 0",
-					contentTransform: out var contentTransform, verticalScrollBar: out var verticalScroll,
+					contentTransformComponent: out var contentTransform, verticalScrollBar: out var verticalScroll,
 					horizontalScrollBar: out var horizontalScroll,
 					yMax: 0.96f);
 
