@@ -607,7 +607,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 							buttonColor = "#802f2f";
 							elementColor = "#c35b5b";
 							icon = "trashcan";
-							status = "UNINSTALL";
+							status = "REMOVE";
 							scale = 0.564f;
 							callMode = 2;
 						}
@@ -1034,7 +1034,6 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 				if (IsLoggedIn)
 				{
-
 					var extension = Path.GetExtension(plugin.File);
 
 					switch (extension)

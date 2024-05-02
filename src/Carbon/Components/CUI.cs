@@ -177,6 +177,10 @@ public readonly struct CUI : IDisposable
 	{
 		return Manager.Countdown(container, parent, startTime, endTime, step, command, fadeIn, fadeOut, id, destroyUi, update);
 	}
+	public Pair<string, CuiElement> CreateScrollView(CuiElementContainer container, string parent,bool vertical, bool horizontal, ScrollRect.MovementType movementType, float elasticity, bool inertia, float decelerationRate, float scrollSensitivity, string maskSoftness, out CuiRectTransformComponent contentTransform, out CuiScrollBarComponent horizontalScrollBar, out CuiScrollBarComponent verticalScrollBar, float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string id = null, string destroyUi = null, bool update = false)
+	{
+		return Manager.ScrollView(container, parent, vertical, horizontal, movementType, elasticity, inertia, decelerationRate, scrollSensitivity, maskSoftness, out contentTransform, out horizontalScrollBar, out verticalScrollBar, xMin, xMax, yMin, yMax, OxMin, OxMax, OyMin, OyMax, fadeIn, fadeOut, needsCursor, needsKeyboard, id, destroyUi, update);
+	}
 
 	public static string HexToRustColor(string hexColor, float? alpha = null, bool includeAlpha = true)
 	{
@@ -316,6 +320,8 @@ public readonly struct CUI : IDisposable
 		internal List<ICuiComponent> _needsKeyboards = new();
 		internal List<ICuiComponent> _countdowns = new();
 		internal List<ICuiComponent> _outlines = new();
+		internal List<ICuiComponent> _scrollViews = new();
+		internal List<ICuiComponent> _scrollBars = new();
 
 		#endregion
 
@@ -333,6 +339,8 @@ public readonly struct CUI : IDisposable
 		internal CuiInputFieldComponent _defaultInputField = new();
 		internal CuiCountdownComponent _defaultCountdown = new();
 		internal CuiOutlineComponent _defaultOutline = new();
+		internal CuiScrollViewComponent _defaultScrollView = new();
+		internal CuiScrollBarComponent _defaultScrollBar = new();
 
 		#endregion
 
@@ -357,9 +365,12 @@ public readonly struct CUI : IDisposable
 				case CuiInputFieldComponent: _inputFields.Add(element); break;
 				case CuiNeedsCursorComponent: _needsCursors.Add(element); break;
 				case CuiNeedsKeyboardComponent: _needsKeyboards.Add(element); break;
+				case CuiCountdownComponent: _countdowns.Add(element); break;
+				case CuiOutlineComponent: _outlines.Add(element); break;
+				case CuiScrollViewComponent: _scrollViews.Add(element); break;
+				case CuiScrollBarComponent: _scrollBars.Add(element); break;
 			}
 		}
-
 		public void SendToPool()
 		{
 			foreach (var entry in _queue)
@@ -660,6 +671,66 @@ public readonly struct CUI : IDisposable
 			_queue.Add(element);
 			return element;
 		}
+		public CuiScrollViewComponent TakeFromPoolScrollView()
+		{
+			var element = (CuiScrollViewComponent)null;
+
+			if (_scrollViews.Count == 0)
+			{
+				element = new CuiScrollViewComponent();
+			}
+			else
+			{
+				element = _scrollViews[0] as CuiScrollViewComponent;
+				element.Vertical = _defaultScrollView.Vertical;
+				element.Horizontal = _defaultScrollView.Horizontal;
+				element.MovementType = _defaultScrollView.MovementType;
+				element.Elasticity = _defaultScrollView.Elasticity;
+				element.Inertia = _defaultScrollView.Inertia;
+				element.DecelerationRate = _defaultScrollView.DecelerationRate;
+				element.ScrollSensitivity = _defaultScrollView.ScrollSensitivity;
+				element.MaskSoftness = _defaultScrollView.MaskSoftness;
+				element.ContentTransform = new();
+				element.ContentTransform.AnchorMin = "0 0";
+				element.ContentTransform.AnchorMax = "1 1";
+				element.ContentTransform.OffsetMin = "0 0";
+				element.ContentTransform.OffsetMax = "0 0";
+				element.HorizontalScrollBar = new();
+				element.VerticalScrollBar = new();
+
+				_scrollViews.RemoveAt(0);
+			}
+
+			_queue.Add(element);
+			return element;
+		}
+		public CuiScrollBarComponent TakeFromPoolScrollbar()
+		{
+			var element = (CuiScrollBarComponent)null;
+
+			if (_scrollBars.Count == 0)
+			{
+				element = new CuiScrollBarComponent();
+			}
+			else
+			{
+				element = _scrollBars[0] as CuiScrollBarComponent;
+				element.Invert = _defaultScrollBar.Invert;
+				element.AutoHide = _defaultScrollBar.AutoHide;
+				element.HandleSprite = _defaultScrollBar.HandleSprite;
+				element.Size = _defaultScrollBar.Size;
+				element.HandleColor = _defaultScrollBar.HandleColor;
+				element.HighlightColor = _defaultScrollBar.HighlightColor;
+				element.PressedColor = _defaultScrollBar.PressedColor;
+				element.TrackSprite = _defaultScrollBar.TrackSprite;
+				element.TrackColor = _defaultScrollBar.TrackColor;
+
+				_scrollBars.RemoveAt(0);
+			}
+
+			_queue.Add(element);
+			return element;
+		}
 
 		#endregion
 
@@ -894,6 +965,10 @@ public static class CUIStatics
 	public static Pair<string, CuiElement> UpdateCountdown(this CUI cui, string id, int startTime, int endTime, int step, string command, float fadeIn = 0f, float fadeOut = 0f, string destroyUi = null)
 	{
 		return cui.CreateCountdown(null, null, startTime, endTime, step, command, fadeIn, fadeOut, id, destroyUi, true);
+	}
+	public static Pair<string, CuiElement> UpdateScrollView(this CUI cui, string id, bool vertical, bool horizontal, ScrollRect.MovementType movementType, float elasticity, bool inertia, float decelerationRate, float scrollSensitivity, string maskSoftness, out CuiRectTransformComponent contentTransform, out CuiScrollBarComponent horizontalScrollBar, out CuiScrollBarComponent verticalScrollBar, float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string destroyUi = null)
+	{
+		return cui.CreateScrollView(null, null, vertical, horizontal, movementType, elasticity, inertia, decelerationRate, scrollSensitivity, maskSoftness, out contentTransform, out horizontalScrollBar, out verticalScrollBar, xMin, xMax, yMin, yMax, OxMin, OxMax, OyMin, OyMax, fadeIn, fadeOut, needsCursor, needsKeyboard, id, destroyUi, true);
 	}
 
 	public static Pair<string, CuiElement> Panel(this Handler cui, CuiElementContainer container, string parent, string color, string material, float xMin, float xMax, float yMin, float yMax, float OxMin, float OxMax, float OyMin, float OyMax, bool blur = false, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string outlineColor = null, string outlineDistance = null, bool outlineUseGraphicAlpha = false, string id = null, string destroyUi = null, bool update = false)
@@ -1231,6 +1306,42 @@ public static class CUIStatics
 		countdown.Command = command;
 		countdown.FadeIn = fadeIn;
 		element.Components.Add(countdown);
+
+		if (!update) container?.Add(element);
+		return new Pair<string, CuiElement>(id, element);
+	}
+	public static Pair<string, CuiElement> ScrollView(this Handler cui, CuiElementContainer container, string parent, bool vertical, bool horizontal, ScrollRect.MovementType movementType, float elasticity, bool inertia, float decelerationRate, float scrollSensitivity, string maskSoftness, out CuiRectTransformComponent contentTransform, out CuiScrollBarComponent horizontalScrollBar, out CuiScrollBarComponent verticalScrollBar, float xMin, float xMax, float yMin, float yMax, float OxMin, float OxMax, float OyMin, float OyMax, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string id = null, string destroyUi = null, bool update = false)
+	{
+		if (id == null) id = cui.AppendId();
+		var element = cui.TakeFromPool(id, parent, fadeOut, destroyUi, update);
+
+		var scrollview = cui.TakeFromPoolScrollView();
+		scrollview.Vertical = vertical;
+		scrollview.Horizontal = horizontal;
+		scrollview.MovementType = movementType;
+		scrollview.Elasticity = elasticity;
+		scrollview.Inertia = inertia;
+		scrollview.DecelerationRate = decelerationRate;
+		scrollview.ScrollSensitivity = scrollSensitivity;
+		scrollview.MaskSoftness = maskSoftness;
+		contentTransform = scrollview.ContentTransform;
+		horizontalScrollBar = scrollview.HorizontalScrollBar;
+		verticalScrollBar = scrollview.VerticalScrollBar;
+
+		element.Components.Add(scrollview);
+
+		if (!update || (update && (xMin != 0 || xMax != 1 || yMin != 0 || yMax != 1)))
+		{
+			var rect = cui.TakeFromPoolRect();
+			rect.AnchorMin = $"{xMin} {yMin}";
+			rect.AnchorMax = $"{xMax} {yMax}";
+			rect.OffsetMin = $"{OxMin} {OyMin}";
+			rect.OffsetMax = $"{OxMax} {OyMax}";
+			element.Components.Add(rect);
+		}
+
+		if (needsCursor) element.Components.Add(cui.TakeFromPoolNeedsCursor());
+		if (needsKeyboard) element.Components.Add(cui.TakeFromPoolNeedsKeyboard());
 
 		if (!update) container?.Add(element);
 		return new Pair<string, CuiElement>(id, element);

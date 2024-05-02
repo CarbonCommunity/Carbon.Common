@@ -92,30 +92,6 @@ public partial class CorePlugin : CarbonPlugin
 	[AuthLevel(2)]
 	private double LogSplitSize { get { return Community.Runtime.Config.Logging.LogSplitSize; } set { Community.Runtime.Config.Logging.LogSplitSize = value; Community.Runtime.SaveConfig(); } }
 
-#if DEBUG
-	[CommandVar("plugintrackingtime", "Plugin average time value for memory and hook time tracking. [DEBUG]")]
-	[AuthLevel(2)]
-	private float PluginTrackingTime
-	{
-		get { return Community.Runtime.Config.Debugging.PluginTrackingTime; }
-		set
-		{
-			Community.Runtime.Config.Debugging.PluginTrackingTime = value;
-
-			foreach(var mod in ModLoader.LoadedPackages)
-			{
-				foreach(var plugin in mod.Plugins)
-				{
-					plugin.MemoryAverage.Time = value;
-					plugin.HookTimeAverage.Time = value;
-				}
-			}
-
-			Community.Runtime.SaveConfig();
-		}
-	}
-#endif
-
 #if WIN
 	[CommandVar("consoleinfo", "Show the Windows-only Carbon information at the bottom of the console.")]
 	[AuthLevel(2)]

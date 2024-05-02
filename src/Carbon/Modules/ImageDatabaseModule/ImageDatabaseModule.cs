@@ -45,8 +45,11 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 		["star"] = "https://carbonmod.gg/assets/media/cui/star.png",
 		["glow"] = "https://carbonmod.gg/assets/media/cui/glow.png",
 		["gear"] = "https://carbonmod.gg/assets/media/cui/gear.png",
-		["close"] = "https://carbonmod.gg/assets/media/cui/close.png"
+		["close"] = "https://carbonmod.gg/assets/media/cui/close.png",
+		["fade"] = "https://carbonmod.gg/assets/media/cui/fade.png",
+		["graph"] = "https://carbonmod.gg/assets/media/cui/graph.png"
 	};
+
 	internal IEnumerator _executeQueue(QueuedThread thread, Action<List<QueuedThreadResult>> onFinished)
 	{
 		thread.Start();
@@ -386,6 +389,11 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 		}
 
 		Queue(true, mappedUrls);
+	}
+
+	public void AddImage(string keyOrUrl, byte[] imageData, FileStorage.Type type = FileStorage.Type.png)
+	{
+		_protoData.Map[keyOrUrl] = FileStorage.server.Store(imageData, type, RelationshipManager.ServerInstance.net.ID);
 	}
 
 	public void AddMap(string key, string url)

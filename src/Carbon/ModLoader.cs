@@ -1,4 +1,5 @@
 ﻿using API.Events;
+using Carbon.Profiler;
 using Newtonsoft.Json;
 
 /*
@@ -283,13 +284,19 @@ public static class ModLoader
 			}
 		}
 
+		plugin.IProcessPatches();
 		plugin.ILoad();
 
 		ProcessCommands(type, plugin);
 
 		Interface.Oxide.RootPluginManager.AddPlugin(plugin);
 
-		Logger.Log($"{(precompiled ? "Preloaded" : "Loaded")} plugin {plugin.ToPrettyString()}{(precompiled ? string.Empty : $" [{plugin.CompileTime.TotalMilliseconds:0}ms]")}");
+		var isProfiled = MonoProfiler.Recording && Community.Runtime.MonoProfilerConfig.IsWhitelisted(MonoProfilerConfig.ProfileTypes.Plugin, Path.GetFileNameWithoutExtension(plugin.FileName));
+
+		Logger.Log($"{(precompiled ? "Preloaded" : "Loaded")} plugin {plugin.ToPrettyString()}" +
+		           $"{(precompiled ? string.Empty : $" [{plugin.CompileTime.TotalMilliseconds:0}ms]")}" +
+		           $"{(isProfiled ? " [PROFILING]" : string.Empty)}");
+
 		return true;
 	}
 	public static bool UninitializePlugin(RustPlugin plugin, bool premature = false)
@@ -299,6 +306,7 @@ public static class ModLoader
 			return true;
 		}
 
+		plugin.IProcessUnpatches();
 		plugin.IUnloadDependantPlugins();
 
 		if (!premature)
@@ -324,6 +332,9 @@ public static class ModLoader
 
 			Plugin.InternalApplyAllPluginReferences();
 		}
+
+		plugin.IClearMemory();
+
 		return true;
 	}
 

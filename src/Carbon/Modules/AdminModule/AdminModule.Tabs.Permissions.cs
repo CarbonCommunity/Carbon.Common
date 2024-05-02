@@ -189,7 +189,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 						var tab = Singleton.GetTab(ap.Player);
 						ap.SetStorage(tab, "playerfilterpl", player);
 						PlayersTab.RefreshPlayers(tab, ap);
-						PlayersTab.ShowInfo(tab, ap, existentPlayer);
+						PlayersTab.ShowInfo(1, tab, ap, existentPlayer);
 					}, ap => Tab.OptionButton.Types.Warned),
 					new Tab.OptionButton(!groupEdit ? $"{(hookableType == HookableTypes.Plugin ? "Modules" : "Groups")}" : "Plugins", (ap2) =>
 					{

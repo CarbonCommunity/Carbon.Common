@@ -1,4 +1,5 @@
-﻿using Facepunch;
+﻿using System.Windows.Media;
+using Facepunch;
 using Oxide.Game.Rust.Cui;
 
 namespace Carbon.Modules;
@@ -80,6 +81,24 @@ public partial class AdminModule
 
 			return this;
 		}
+		public Tab InsertRow(int column, int index, Option row, bool hidden = false)
+		{
+			row.CurrentlyHidden = row.Hidden = hidden;
+
+			if (Columns.TryGetValue(column, out var options))
+			{
+				options.Insert(index, row);
+			}
+			else
+			{
+
+				Columns[column] = options = new();
+				options.Insert(index, row);
+			}
+
+			return this;
+		}
+
 		public Tab AddName(int column, string name, TextAnchor align = TextAnchor.MiddleLeft, bool hidden = false)
 		{
 			var option = Pool.Get<OptionName>();
@@ -261,6 +280,38 @@ public partial class AdminModule
 			option.Height = height;
 			option.Callback = callback;
 
+			return AddRow(column, option);
+		}
+		public Tab AddChart(int column, string name, TextAnchor nameAlign, int nameSize, IEnumerable<Components.Graphics.Chart.Layer> layers,
+			IEnumerable<string> verticalLabels, IEnumerable<string> horizontalLabels, Components.Graphics.Chart.ChartSettings settings, bool responsive = true)
+		{
+			var space = Pool.Get<OptionSpace>();
+			var chartIndex = Columns[column].Count;
+
+			for (int i = 0; i < 8; i++)
+			{
+				AddRow(column, space);
+			}
+
+			if (!responsive)
+			{
+				for (int i = 1; i < Columns.Count; i++)
+				{
+					for (int z = 0; z < 9; z++)
+					{
+						InsertRow(i, chartIndex, space);
+					}
+				}
+			}
+
+			var option = Pool.Get<OptionChart>();
+			option.Setup(name, nameAlign, nameSize, layers, verticalLabels, horizontalLabels, settings, responsive);
+
+			return AddRow(column, option);
+		}
+		public Tab AddSpace(int column)
+		{
+			var option = Pool.Get<OptionSpace>();
 			return AddRow(column, option);
 		}
 
@@ -545,6 +596,156 @@ public partial class AdminModule
 			public OptionSpace() { }
 			public OptionSpace(string name, string tooltip = null, bool hidden = false) : base(name, tooltip, hidden)
 			{
+			}
+		}
+		public class OptionChart : Option
+		{
+			public static ChartCacheDatabase Cache = new();
+
+			public class ChartCacheDatabase : Dictionary<string, ChartCache>
+			{
+				public ChartCache GetOrProcessCache(string identifier, Components.Graphics.Chart chart, Action<ChartCache> onProcessed)
+				{
+					if (string.IsNullOrEmpty(identifier))
+					{
+						return default;
+					}
+
+					if (TryGetValue(identifier, out var chartCache) && chartCache.Status != ChartCache.StatusTypes.Failure)
+					{
+						onProcessed?.Invoke(chartCache);
+						return chartCache;
+					}
+
+					chartCache.Dispose();
+					chartCache = default;
+					chartCache.ViewingPool = new();
+					chartCache.Status = ChartCache.StatusTypes.Processing;
+
+					chart.StartProcess((data, exception) =>
+					{
+						if (exception != null)
+						{
+							chartCache.Status = ChartCache.StatusTypes.Failure;
+							this[identifier] = chartCache;
+							onProcessed?.Invoke(chartCache);
+							return;
+						}
+
+						chartCache.Status = ChartCache.StatusTypes.Finalized;
+						chartCache.Crc = FileStorage.server.GetCRC(data, FileStorage.Type.png);
+						chartCache.Data = data;
+						this[identifier] = chartCache;
+						onProcessed?.Invoke(chartCache);
+					});
+
+					return this[identifier] = chartCache;
+				}
+
+				public void ClearPlayerViewer(ulong player)
+				{
+					foreach (var cache in this)
+					{
+						cache.Value.ClearPlayerViewer(player);
+					}
+				}
+			}
+
+			public struct ChartCache
+			{
+				public enum StatusTypes
+				{
+					Finalized,
+					Processing,
+					Failure
+				}
+
+				public StatusTypes Status;
+				public uint Crc;
+				public byte[] Data;
+				public List<ulong> ViewingPool;
+
+				public void ClearPlayerViewer(ulong player)
+				{
+					ViewingPool.RemoveAll(x => x == player);
+				}
+				public bool HasPlayerReceivedData(ulong player)
+				{
+					var has = ViewingPool.Contains(player);
+
+					if (!has)
+					{
+						ViewingPool.Add(player);
+					}
+
+					return has;
+				}
+
+				public void Dispose()
+				{
+					if (Data != null)
+					{
+						Array.Clear(Data, 0, Data.Length);
+					}
+
+					Data = null;
+					Crc = default;
+					Status = default;
+					ViewingPool?.Clear();
+					ViewingPool = null;
+				}
+			}
+
+			public bool Responsive;
+			public int NameSize = 20;
+			public TextAnchor NameAlign = TextAnchor.UpperLeft;
+			public const int Height = 8;
+			public Components.Graphics.Chart.ChartSettings Settings;
+			public Components.Graphics.Chart Chart;
+
+			internal string _identifier { get; private set; }
+
+			public string GetIdentifier(bool reset = false)
+			{
+				if (reset || string.IsNullOrEmpty(_identifier))
+				{
+					_identifier = GenerateIdentifier();
+				}
+
+				return _identifier;
+			}
+			public string GenerateIdentifier()
+			{
+				return $"chart_{Chart.Name}{Chart.Layers.Where(x => !x.Disabled).Select(x => x.LayerSettings.Shadows.ToString()).ToString("_")}{Chart.Layers.Where(x => !x.Disabled).SumULong(x => (ulong)(x.Name.Length) + x.Data.SumULong(y => y) + (ulong)(x.Disabled ? 0 : 1))}";
+			}
+
+			public bool IsEmpty()
+			{
+				return !Chart.Layers.Any();
+			}
+
+			public OptionChart() { }
+
+			public void Setup(string name, TextAnchor nameAlign, int nameSize, IEnumerable<Components.Graphics.Chart.Layer> layers,
+				IEnumerable<string> verticalLabels, IEnumerable<string> horizontalLabels,
+				Components.Graphics.Chart.ChartSettings settings, bool responsive)
+			{
+				Name = name;
+				NameAlign = nameAlign;
+				NameSize = nameSize;
+				Responsive = responsive;
+				Components.Graphics.Chart.ChartRect rect = default;
+				const float xOffset = 75;
+				const int width = 10750;
+				rect.Width = width - (xOffset * 2f);
+				rect.Height = 450;
+				rect.X = xOffset;
+				rect.Y = 100;
+
+				Chart = Components.Graphics.Chart.Create(name, width, 600, settings, rect, layers, verticalLabels.ToArray(),
+					horizontalLabels.ToArray(), System.Drawing.Brushes.White, System.Drawing.Color.Transparent);
+
+				GetIdentifier();
 			}
 		}
 	}

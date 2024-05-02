@@ -23,12 +23,18 @@ public class Config
 	public DebuggingConfig Debugging { get; set; } = new();
 	public LoggingConfig Logging { get; set; } = new();
 	public CompilerConfig Compiler { get; set; } = new();
+	public ProfilerConfig Profiler { get; set; } = new();
 	public MiscConfig Misc { get; set; } = new();
 
 	public class CompilerConfig
 	{
 		public bool UnloadOnFailure { get; set; } = false;
 		public List<string> ConditionalCompilationSymbols { get; set; }
+	}
+
+	public class ProfilerConfig
+	{
+		public bool RecordingWarnings { get; set; } = true;
 	}
 
 	public class WatchersConfig
@@ -48,7 +54,6 @@ public class Config
 
 	public class DebuggingConfig
 	{
-		public float PluginTrackingTime { get; set; } = 60f;
 		public string ScriptDebuggingOrigin = string.Empty;
 		public bool UnityStacktrace { get; set; } =
 #if DEBUG

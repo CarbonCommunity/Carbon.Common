@@ -94,6 +94,22 @@ public partial class AdminModule
 	}
 
 	[Conditional("!MINIMAL")]
+	[ProtectedCommand(PanelId + ".profiler")]
+	private void ShowProfiler(ConsoleSystem.Arg args)
+	{
+		var player = args.Player();
+
+		if (GetTab(player).Id == "profiler")
+		{
+			SetTab(player, 0);
+		}
+		else
+		{
+			SetTab(player, ProfilerTab.GetOrCache(GetPlayerSession(player)));
+		}
+	}
+
+	[Conditional("!MINIMAL")]
 	[ProtectedCommand(PanelId + ".close")]
 	private void CloseUI(ConsoleSystem.Arg args)
 	{

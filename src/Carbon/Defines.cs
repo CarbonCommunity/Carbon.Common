@@ -70,10 +70,15 @@ public class Defines
 		_initializeCommandLine();
 		return Path.Combine(GetRootFolder(), "config.client.json");
 	}
+	public static string GetMonoProfilerConfigFile()
+	{
+		_initializeCommandLine();
+		return Path.Combine(GetRootFolder(), "config.profiler.json");
+	}
 	public static string GetCarbonAutoFile()
 	{
 		_initializeCommandLine();
-		return Path.Combine(GetRootFolder(), "config.auto.cfg");
+		return Path.Combine(GetRootFolder(), "config.auto.json");
 	}
 
 	public static string GetRootFolder()
@@ -194,6 +199,14 @@ public class Defines
 
 		return folder;
 	}
+	public static string GetProfilesFolder()
+	{
+		_initializeCommandLine();
+		var folder = Path.GetFullPath(Path.Combine(GetLogsFolder(), "profiler"));
+		Directory.CreateDirectory(folder);
+
+		return folder;
+	}
 	public static string GetLangFolder()
 	{
 		_initializeCommandLine();
@@ -213,7 +226,7 @@ public class Defines
 	public static string GetRustRootFolder()
 	{
 		_initializeCommandLine();
-		var folder = Path.GetFullPath(Path.Combine(Path.Combine(Application.dataPath)));
+		var folder = Path.GetFullPath(Path.Combine(Path.Combine(Application.dataPath, "..")));
 
 		return folder;
 	}
