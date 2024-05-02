@@ -355,13 +355,6 @@ public partial class AdminModule
 
 			var subtab = session.GetStorage<SubtabTypes>(this, "subtab");
 
-			Stripe(this, 1, 100, 100, niceColor, niceColor,
-				"GC",
-				$"{MonoProfiler.GCStats.calls:n0} calls | {MonoProfiler.GCStats.GetTotalTime()}",
-				$"<size=7>{TimeEx.Format(MonoProfiler.DurationTime.TotalSeconds, false).ToLower()}\n{MonoProfiler.CallRecords.Count:n0} calls</size>",
-				$"adminmodule.profilerselect -1",
-				selection.GetHashCode() == 0);
-
 			AddButtonArray(1, new OptionButton("Calls", ap =>
 				{
 					session.SetStorage(this, "subtab", SubtabTypes.Calls);
@@ -372,6 +365,9 @@ public partial class AdminModule
 					session.SetStorage(this, "subtab", SubtabTypes.Memory);
 					DrawSubtabs(session, selection);
 				}, ap => subtab == SubtabTypes.Memory ? OptionButton.Types.Selected : OptionButton.Types.None));
+
+			Stripe(this, 1, 100, 100, niceColor, niceColor,
+				"GC", $"{MonoProfiler.GCStats.calls:n0} calls | {MonoProfiler.GCStats.GetTotalTime()}", string.Empty, null, true);
 
 			switch (subtab)
 			{
@@ -934,7 +930,7 @@ public partial class AdminModule
 		else
 		{
 			MonoProfiler.Clear();
-			MonoProfiler.ToggleProfilingTimed(0f);
+			MonoProfiler.ToggleProfiling();
 
 			ap.SelectedTab.OnChange(ap, ap.SelectedTab);
 

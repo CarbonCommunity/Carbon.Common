@@ -24,7 +24,8 @@ namespace Carbon.Components;
 public static unsafe partial class MonoProfiler
 {
 	public const ProfilerArgs AllFlags = AllNoTimingsFlags | ProfilerArgs.Timings;
-	public const ProfilerArgs AllNoTimingsFlags = ProfilerArgs.Calls | ProfilerArgs.CallMemory | ProfilerArgs.AdvancedMemory;
+	public const ProfilerArgs AllNoTimingsFlags = ProfilerArgs.Calls | ProfilerArgs.CallMemory
+	                                                                 | ProfilerArgs.AdvancedMemory | ProfilerArgs.GCEvents;
 
 	public static GCRecord GCStats;
 	public static AssemblyOutput AssemblyRecords = new();
@@ -407,8 +408,9 @@ public static unsafe partial class MonoProfiler
 		CallRecords.Clear();
 		MemoryRecords.Clear();
 		DurationTime = default;
+		GCStats = default;
 	}
-	public static void ToggleProfilingTimed(float duration, ProfilerArgs args = ProfilerArgs.AdvancedMemory | ProfilerArgs.CallMemory | ProfilerArgs.Timings | ProfilerArgs.Calls | ProfilerArgs.GCEvents, Action<ProfilerArgs> onTimerEnded = null, bool logging = true)
+	public static void ToggleProfilingTimed(float duration, ProfilerArgs args = AllFlags, Action<ProfilerArgs> onTimerEnded = null, bool logging = true)
 	{
 		if (Crashed)
 		{
@@ -476,7 +478,7 @@ public static unsafe partial class MonoProfiler
 			Logger.Warn(table.ToStringMinimal());
 		}
 	}
-	public static bool? ToggleProfiling(ProfilerArgs args = ProfilerArgs.AdvancedMemory | ProfilerArgs.CallMemory | ProfilerArgs.Timings | ProfilerArgs.Calls, bool logging = true)
+	public static bool? ToggleProfiling(ProfilerArgs args = AllFlags, bool logging = true)
 	{
 		if (!Enabled)
 		{

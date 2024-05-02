@@ -721,7 +721,7 @@ public partial class AdminModule
 
 			public bool IsEmpty()
 			{
-				return Chart.horizontalLabels.Length == 0 && Chart.verticalLabels.Length == 0 && !Chart.Layers.Any();
+				return !Chart.Layers.Any();
 			}
 
 			public OptionChart() { }

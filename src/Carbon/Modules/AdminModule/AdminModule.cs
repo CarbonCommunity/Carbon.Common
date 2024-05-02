@@ -1848,7 +1848,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 										break;
 
 									default:
-										page.CurrentPage = args.ElementAt(1).ToInt();
+										page.CurrentPage += args.ElementAt(1).ToInt();
 										break;
 								}
 
