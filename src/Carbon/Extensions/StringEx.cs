@@ -133,12 +133,7 @@ public static class StringEx
 	public static string ToCamelCase(this string str)
 	{
 		var splits = str.Split(' ');
-		var result = "";
-
-		foreach (var split in splits)
-		{
-			result += $"{split[0].ToString().ToUpper()}{split.Substring(1, split.Length - 1)} ";
-		}
+		var result = splits.Aggregate("", (current, split) => current + $"{split[0].ToString().ToUpper()}{split[1..]} ");
 
 		if (splits.Length == 0)
 		{
@@ -146,7 +141,6 @@ public static class StringEx
 		}
 
 		Array.Clear(splits, 0, splits.Length);
-		splits = null;
 		return result;
 	}
 

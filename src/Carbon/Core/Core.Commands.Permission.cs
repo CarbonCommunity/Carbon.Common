@@ -160,8 +160,7 @@ public partial class CorePlugin : CarbonPlugin
 		}
 	}
 
-	[ConsoleCommand("show",
-		"Displays information about a specific player or group (incl. permissions, groups and user list). Do 'c.show' for syntax info.")]
+	[ConsoleCommand("show", "Displays information about a specific player or group (incl. permissions, groups and user list). Do 'c.show' for syntax info.")]
 	[AuthLevel(2)]
 	private void Show(ConsoleSystem.Arg arg)
 	{
@@ -286,31 +285,64 @@ public partial class CorePlugin : CarbonPlugin
 	{
 		void PrintWarn()
 		{
-			arg.ReplyWith($"Syntax: c.usergroup <add|remove> <player> <group>");
-		}
-
-		if (!arg.HasArgs(3))
-		{
-			PrintWarn();
-			return;
+			arg.ReplyWith($"Syntax: c.usergroup <add|remove> <player> <group>\n" +
+			              $"Syntax: c.usergroup <addall|removeall> <group>");
 		}
 
 		var action = arg.GetString(0);
-		var player = arg.GetString(1);
-		var group = arg.GetString(2);
+		var player = string.Empty;
+		var group = string.Empty;
+		KeyValuePair<string, UserData> user = default;
 
-		var user = permission.FindUser(player);
-
-		if (user.Value == null)
+		switch (action)
 		{
-			arg.ReplyWith($"Couldn't find that player.");
-			return;
-		}
+			case "add":
+			case "remove":
+			{
+				if (!arg.HasArgs(3))
+				{
+					PrintWarn();
+					return;
+				}
 
-		if (!permission.GroupExists(group))
-		{
-			arg.ReplyWith($"Group '{group}' could not be found.");
-			return;
+				player = arg.GetString(1);
+				group = arg.GetString(2);
+
+				if (!permission.GroupExists(group))
+				{
+					arg.ReplyWith($"Group '{group}' could not be found.");
+					return;
+				}
+
+				user = permission.FindUser(player);
+
+				if (user.Value == null)
+				{
+					arg.ReplyWith($"Couldn't find that player.");
+					return;
+				}
+
+				break;
+			}
+
+			default:
+			{
+				if (!arg.HasArgs(2))
+				{
+					PrintWarn();
+					return;
+				}
+
+				group = arg.GetString(1);
+
+				if (!permission.GroupExists(group))
+				{
+					arg.ReplyWith($"Group '{group}' could not be found.");
+					return;
+				}
+
+				break;
+			}
 		}
 
 		switch (action)
@@ -336,6 +368,26 @@ public partial class CorePlugin : CarbonPlugin
 				permission.RemoveUserGroup(user.Key, group);
 				arg.ReplyWith($"Removed {user.Value.LastSeenNickname}[{user.Key}] from '{group}' group.");
 				break;
+
+			case "addall":
+			{
+				group = group.ToLower();
+
+				var count = permission.userdata.Count(userDataValue =>
+					permission.GetUserData(userDataValue.Key).Groups.Add(group));
+				arg.ReplyWith($"Added {count:n0} users to '{group}' group.");
+				break;
+			}
+
+			case "removeall":
+			{
+				group = group.ToLower();
+
+				var count = permission.userdata.Count(userDataValue =>
+					permission.GetUserData(userDataValue.Key).Groups.Remove(group));
+				arg.ReplyWith($"Removed {count:n0} users from '{group}' group.");
+				break;
+			}
 
 			default:
 				PrintWarn();
