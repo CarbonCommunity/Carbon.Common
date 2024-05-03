@@ -2,7 +2,25 @@
 
 public class CarbonAuto : API.Abstracts.CarbonAuto
 {
-	internal Dictionary<string, object> _autoCache = new();
+	internal Dictionary<string, AutoVar> _autoCache = new();
+
+	public struct AutoVar
+	{
+		public CarbonAutoVar Variable;
+		public object ReflectionInfo;
+
+		public readonly object GetValue()
+		{
+			var core = Community.Runtime.CorePlugin;
+
+			return ReflectionInfo switch
+			{
+				FieldInfo field => field.IsStatic ? field.GetValue(null) : field.GetValue(core),
+				PropertyInfo property => property.GetValue(core),
+				_ => null
+			};
+		}
+	}
 
 	public static void Init()
 	{
@@ -19,21 +37,29 @@ public class CarbonAuto : API.Abstracts.CarbonAuto
 
 		foreach (var field in fields)
 		{
-			var commandVarAttr = field.GetCustomAttribute<CommandVarAttribute>();
-			if (commandVarAttr == null || !commandVarAttr.Saved) continue;
+			var attribute = field.GetCustomAttribute<CarbonAutoVar>();
+			if (attribute == null) continue;
 
-			_autoCache.Add($"c.{commandVarAttr.Name}", field);
+			AutoVar var = default;
+			var.Variable = attribute;
+			var.ReflectionInfo = field;
+
+			_autoCache.Add($"c.{attribute.Name}", var);
 		}
 
 		foreach (var property in properties)
 		{
-			var commandVarAttr = property.GetCustomAttribute<CommandVarAttribute>();
-			if (commandVarAttr == null || !commandVarAttr.Saved) continue;
+			var attribute = property.GetCustomAttribute<CarbonAutoVar>();
+			if (attribute == null) continue;
 
-			_autoCache.Add($"c.{commandVarAttr.Name}", property);
+			AutoVar var = default;
+			var.Variable = attribute;
+			var.ReflectionInfo = property;
+
+			_autoCache.Add($"c.{attribute.Name}", var);
 		}
 	}
-	public override bool IsChanged()
+	public override bool IsForceModded()
 	{
 		using (TimeMeasure.New("CarbonAuto.IsChanged"))
 		{
@@ -41,22 +67,12 @@ public class CarbonAuto : API.Abstracts.CarbonAuto
 
 			foreach (var cache in _autoCache)
 			{
-				switch (cache.Value)
+				if (!cache.Value.Variable.ForceModded)
 				{
-					case FieldInfo field:
-						{
-							var value = field.IsStatic ? field.GetValue(null) : field.GetValue(core);
-							if (value is float floatValue && floatValue != -1) return true;
-						}
-						break;
-
-					case PropertyInfo property:
-						{
-							var value = property.GetValue(core);
-							if (value is float floatValue && floatValue != -1) return true;
-						}
-						break;
+					continue;
 				}
+
+				if (cache.Value.GetValue() is float and not -1) return true;
 			}
 		}
 
@@ -76,16 +92,7 @@ public class CarbonAuto : API.Abstracts.CarbonAuto
 
 				foreach (var cache in _autoCache)
 				{
-					switch (cache.Value)
-					{
-						case FieldInfo field:
-							sb.Add($"{cache.Key} \"{(field.IsStatic ? field.GetValue(null) : field.GetValue(core))}\"");
-							break;
-
-						case PropertyInfo property:
-							sb.Add($"{cache.Key} \"{property.GetValue(core)}\"");
-							break;
-					}
+					sb.Add($"{cache.Key} \"{cache.Value.GetValue()}\"");
 				}
 
 				OsEx.File.Create(Defines.GetCarbonAutoFile(), sb.ToNewLine());
@@ -120,9 +127,9 @@ public class CarbonAuto : API.Abstracts.CarbonAuto
 					ConsoleSystem.Run(option, line, Array.Empty<string>());
 				}
 
-				if (IsChanged())
+				if (IsForceModded())
 				{
-					Logger.Warn($" The server Carbon auto options have been changed.\n" +
+					Logger.Warn($" The server Carbon auto options have been changed which are gameplay significant.\n" +
 								$" Any values that aren't \"-1\" will force the server to modded!");
 				}
 			}
@@ -131,5 +138,16 @@ public class CarbonAuto : API.Abstracts.CarbonAuto
 				Logger.Error($"Failed saving Carbon auto file", ex);
 			}
 		}
+	}
+}
+
+[AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
+public class CarbonAutoVar : CommandVarAttribute
+{
+	public bool ForceModded;
+
+	public CarbonAutoVar(string name, string help = null, bool @protected = false, bool forceModded = true) : base(name, @protected, help)
+	{
+		ForceModded = forceModded;
 	}
 }
