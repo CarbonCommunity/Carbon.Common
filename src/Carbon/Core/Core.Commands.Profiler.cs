@@ -17,7 +17,7 @@ public partial class CorePlugin : CarbonPlugin
 	[AuthLevel(2)]
 	private bool IsProfiling
 	{
-		get { return MonoProfiler.Recording; }
+		get { return MonoProfiler.IsRecording; }
 		set { }
 	}
 
@@ -42,13 +42,25 @@ public partial class CorePlugin : CarbonPlugin
 
 		if (flags == MonoProfiler.ProfilerArgs.None) flags = MonoProfiler.AllFlags;
 
+		if (MonoProfiler.IsRecording)
+		{
+			Analytics.profiler_ended(flags, MonoProfiler.CurrentDurationTime.TotalSeconds, false);
+			MonoProfiler.ToggleProfiling(flags);
+			return;
+		}
+
 		if (duration <= 0)
 		{
 			MonoProfiler.ToggleProfiling(flags);
+			Analytics.profiler_started(flags, false);
 		}
 		else
 		{
-			MonoProfiler.ToggleProfilingTimed(duration, flags);
+			MonoProfiler.ToggleProfilingTimed(duration, flags, args =>
+			{
+				Analytics.profiler_ended(flags, duration, true);
+			});
+			Analytics.profiler_started(flags, true);
 		}
 	}
 
@@ -56,7 +68,7 @@ public partial class CorePlugin : CarbonPlugin
 	[AuthLevel(2)]
 	private void ProfileAbort(ConsoleSystem.Arg arg)
 	{
-		if (!MonoProfiler.Recording)
+		if (!MonoProfiler.IsRecording)
 		{
 			arg.ReplyWith("No profiling process active.");
 			return;
@@ -69,7 +81,7 @@ public partial class CorePlugin : CarbonPlugin
 	[AuthLevel(2)]
 	private void ProfilerPrint(ConsoleSystem.Arg arg)
 	{
-		if (MonoProfiler.Recording)
+		if (MonoProfiler.IsRecording)
 		{
 			arg.ReplyWith("Profiler is actively recording.");
 			return;

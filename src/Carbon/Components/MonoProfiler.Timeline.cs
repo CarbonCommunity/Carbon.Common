@@ -78,7 +78,7 @@ public partial class MonoProfiler
 			Args = args | ProfilerArgs.FastResume;
 			OnStopped = onStopped;
 
-			if (Recording)
+			if (MonoProfiler.IsRecording)
 			{
 				ToggleProfiling(ProfilerArgs.Abort);
 			}
@@ -111,7 +111,7 @@ public partial class MonoProfiler
 		}
 		public void Stop(bool discard = false)
 		{
-			if (Recording)
+			if (MonoProfiler.IsRecording)
 			{
 				var snapshot = Record(AssemblyRecords, CallRecords, MemoryRecords);
 				OnSample?.Invoke(snapshot);
@@ -132,7 +132,7 @@ public partial class MonoProfiler
 		}
 		public void Discard()
 		{
-			if (Recording)
+			if (MonoProfiler.IsRecording)
 			{
 				ToggleProfiling(ProfilerArgs.Abort);
 			}

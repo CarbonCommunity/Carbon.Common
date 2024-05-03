@@ -335,7 +335,7 @@ public static unsafe partial class MonoProfiler
 
 
 	public static bool Enabled { get; private set; }
-	public static bool Recording { get; private set; }
+	public static bool IsRecording { get; private set; }
 	public static bool Crashed { get; private set; }
 
 	public static bool IsCleared => !AssemblyRecords.Any() && !CallRecords.Any();
@@ -431,7 +431,7 @@ public static unsafe partial class MonoProfiler
 			}
 		}
 
-		if (duration >= 1f && Recording)
+		if (duration >= 1f && IsRecording)
 		{
 			if (logging)
 			{
@@ -440,7 +440,7 @@ public static unsafe partial class MonoProfiler
 
 			_profileTimer = Community.Runtime.CorePlugin.timer.In(duration, () =>
 			{
-				if (!Recording)
+				if (!IsRecording)
 				{
 					return;
 				}
@@ -455,7 +455,7 @@ public static unsafe partial class MonoProfiler
 				onTimerEnded?.Invoke(args);
 			});
 		}
-		else if(Recording && logging)
+		else if(IsRecording && logging)
 		{
 			_profileWarningTimer = Community.Runtime.CorePlugin.timer.Every(60 * 5, () =>
 			{
@@ -495,7 +495,7 @@ public static unsafe partial class MonoProfiler
 		List<MemoryRecord> memoryOutput = MemoryRecords;
 		GCRecord gcOutput = default;
 
-		if (Recording)
+		if (IsRecording)
 		{
 			_dataProcessTimer = PoolEx.GetStopwatch();
 			_dataProcessTimer.Start();
@@ -510,7 +510,7 @@ public static unsafe partial class MonoProfiler
 			{
 				Logger.Warn("[MonoProfiler] Profiler aborted");
 			}
-			Recording = false;
+			IsRecording = false;
 			return false;
 		}
 
@@ -543,7 +543,7 @@ public static unsafe partial class MonoProfiler
 
 		CallRecords.Disabled = callOutput.IsEmpty();
 
-		Recording = state;
+		IsRecording = state;
 
 		if (state)
 		{

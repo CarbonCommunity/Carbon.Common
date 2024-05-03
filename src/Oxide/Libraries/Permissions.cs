@@ -576,7 +576,7 @@ public class Permission : Library
 		if (!GroupExists(name)) return;
 		if (!GetUserData(id).Groups.Add(name.ToLower())) return;
 
-		// OnUserGroupRemoved
+		// OnUserGroupAdded
 		HookCaller.CallStaticHook(3469176166, id, name);
 	}
 	public virtual void RemoveUserGroup(string id, string name)

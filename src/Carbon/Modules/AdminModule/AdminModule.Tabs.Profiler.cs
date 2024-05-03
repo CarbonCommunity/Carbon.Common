@@ -273,12 +273,12 @@ public partial class AdminModule
 					xMin: 0.83f, xMax: 0.925f, OxMin: offset * tabSpacing, OxMax: offset * tabSpacing, command: "adminmodule.profilerexport 0");
 				tabSpacing++;
 
-				cui.CreateProtectedButton(container, panel, !MonoProfiler.IsCleared || MonoProfiler.Recording ? "0.9 0.1 0.1 1" : "0.2 0.2 0.2 0.7", "1 1 1 0.5",
-					MonoProfiler.Recording ? "ABORT" : "CLEAR", 8,
+				cui.CreateProtectedButton(container, panel, !MonoProfiler.IsCleared || MonoProfiler.IsRecording ? "0.9 0.1 0.1 1" : "0.2 0.2 0.2 0.7", "1 1 1 0.5",
+					MonoProfiler.IsRecording ? "ABORT" : "CLEAR", 8,
 					xMin: 0.83f, xMax: 0.925f, command: "adminmodule.profilerclear");
 
 				cui.CreateProtectedButton(container, panel,
-					MonoProfiler.Recording ? "0.9 0.1 0.1 1" : "0.2 0.2 0.2 0.7", "1 1 1 0.5", "REC<size=6>\n[SHIFT]</size>", 8,
+					MonoProfiler.IsRecording ? "0.9 0.1 0.1 1" : "0.2 0.2 0.2 0.7", "1 1 1 0.5", "REC<size=6>\n[SHIFT]</size>", 8,
 					xMin: 0.93f, xMax: 0.99f, command: "adminmodule.profilertoggle");
 			});
 
@@ -552,8 +552,8 @@ public partial class AdminModule
 					break;
 
 				case 2:
-					GenerateProfilerDataChart_Assembly(recording, assembly => assembly.total_time,
-						value => $"{(value < 1000 ? $"{value:n0}μs" : $"{value * 1000:n0}ms")}",
+					GenerateProfilerDataChart_Assembly(recording, assembly => (ulong)assembly.total_time_ms,
+						value => $"{value:n0}ms",
 						5, 7, out layers, out vLabels, out hLabels);
 					break;
 
@@ -564,43 +564,43 @@ public partial class AdminModule
 					break;
 
 				case 4:
-					GenerateProfilerDataChart_Call(recording, call => call.calls,
+					GenerateProfilerDataChart_Call(recording, call => call.calls, assembly => assembly.calls,
 						value => value.ToString("n0"),
 						5, 7, out layers, out vLabels, out hLabels);
 					break;
 
 				case 5:
-					GenerateProfilerDataChart_Call(recording, call => call.total_time,
-						value => $"{(value < 1000 ? $"{value:n0}μs" : $"{value * 1000:n0}ms")}",
+					GenerateProfilerDataChart_Call(recording, call => (ulong)call.total_time_ms, assembly => (ulong)assembly.total_time_ms,
+						value => $"{value:n0}ms",
 						5, 7, out layers, out vLabels, out hLabels);
 					break;
 
 				case 6:
-					GenerateProfilerDataChart_Call(recording, call => call.own_time,
-						value => $"{(value < 1000 ? $"{value:n0}μs" : $"{value * 1000:n0}ms")}",
+					GenerateProfilerDataChart_Call(recording, call => (ulong)call.own_time_ms, assembly => (ulong)assembly.total_time_ms,
+						value => $"{value:n0}ms",
 						5, 7, out layers, out vLabels, out hLabels);
 					break;
 
 				case 7:
-					GenerateProfilerDataChart_Call(recording, call => call.total_alloc,
+					GenerateProfilerDataChart_Call(recording, call => call.total_alloc, assembly => assembly.alloc,
 						value => ByteEx.Format(value).ToUpper(),
 						5, 7, out layers, out vLabels, out hLabels);
 					break;
 
 				case 8:
-					GenerateProfilerDataChart_Call(recording, call => call.own_alloc,
+					GenerateProfilerDataChart_Call(recording, call => call.own_alloc, assembly => assembly.alloc,
 						value => ByteEx.Format(value).ToUpper(),
 						5, 7, out layers, out vLabels, out hLabels);
 					break;
 
 				case 9:
-					GenerateProfilerDataChart_Call(recording, call => call.total_exceptions,
+					GenerateProfilerDataChart_Call(recording, call => call.total_exceptions, assembly => assembly.total_exceptions,
 						value => value.ToString("n0"),
 						3, 5, out layers, out vLabels, out hLabels);
 					break;
 
 				case 10:
-					GenerateProfilerDataChart_Call(recording, call => call.own_exceptions,
+					GenerateProfilerDataChart_Call(recording, call => call.own_exceptions, assembly => assembly.total_exceptions,
 						value => value.ToString("n0"),
 						3, 5, out layers, out vLabels, out hLabels);
 					break;
@@ -719,7 +719,7 @@ public partial class AdminModule
 		}
 
 		public static void GenerateProfilerDataChart_Call(MonoProfiler.TimelineRecording recording,
-			Func<MonoProfiler.CallRecord, ulong> value, Func<ulong, string> valueFormat,
+			Func<MonoProfiler.CallRecord, ulong> callValue, Func<MonoProfiler.AssemblyRecord, ulong> assemblyValue, Func<ulong, string> valueFormat,
 			int valueCuts, int callCount, out Components.Graphics.Chart.Layer[] layers, out string[] vLabels, out string[] hLabels)
 		{
 			var pooledLayers = Pool.GetList<Components.Graphics.Chart.Layer>();
@@ -728,9 +728,9 @@ public partial class AdminModule
 			pooledHorizontalLabels.AddRange(recording.Timeline.Select(sample => $"{sample.Key.Hour:00}:{sample.Key.Minute:00}:{sample.Key.Second:00}"));
 
 			var records = recording.Timeline.SelectMany(x =>
-				x.Value.Calls.OrderByDescending(value));
+				x.Value.Assemblies.OrderByDescending(assemblyValue));
 
-			var maxValue = records.Any() ? records.Max(value) : 0;
+			var maxValue = records.Any() ? records.Max(assemblyValue) : 0;
 
 			if (records.Any())
 			{
@@ -752,7 +752,7 @@ public partial class AdminModule
 				pooledLayers.Add(new Components.Graphics.Chart.Layer
 				{
 					Name = name.displayName,
-					Data = recording.Timeline.Select(x => x.Value.Calls.Where(x => x.assembly_handle == assembly.assembly_handle).SumULong(value)).ToArray(),
+					Data = recording.Timeline.Select(x => x.Value.Calls.Where(x => x.assembly_handle == assembly.assembly_handle).SumULong(callValue)).ToArray(),
 					LayerSettings = new()
 					{
 						Color = color,
@@ -886,7 +886,7 @@ public partial class AdminModule
 			return;
 		}
 
-		if (!MonoProfiler.Recording && ap.Player.serverInput.IsDown(BUTTON.SPRINT))
+		if (!MonoProfiler.IsRecording && ap.Player.serverInput.IsDown(BUTTON.SPRINT))
 		{
 			var dictionary = PoolEx.GetDictionary<string, ModalModule.Modal.Field>();
 
@@ -905,15 +905,21 @@ public partial class AdminModule
 				if (dictionary["calls"].Get<bool>()) profilerArgs |= MonoProfiler.ProfilerArgs.Calls;
 				if (dictionary["timings"].Get<bool>()) profilerArgs |= MonoProfiler.ProfilerArgs.Timings;
 
+				var duration = dictionary["duration"].Get<float>();
+
 				MonoProfiler.Clear();
-				MonoProfiler.ToggleProfilingTimed(dictionary["duration"].Get<float>(), profilerArgs, args =>
+				MonoProfiler.ToggleProfilingTimed(duration, profilerArgs, args =>
 				{
 					if (ap.IsInMenu && ap.SelectedTab != null && ap.SelectedTab.Id == "profiler")
 					{
 						ap.SelectedTab.OnChange(ap, ap.SelectedTab);
 						Draw(ap.Player);
 					}
+
+					Analytics.profiler_ended(profilerArgs, duration, true);
 				});
+
+				Analytics.profiler_started(profilerArgs, true);
 
 				PoolEx.FreeDictionary(ref dictionary);
 
@@ -929,6 +935,8 @@ public partial class AdminModule
 		}
 		else
 		{
+			Analytics.profiler_ended(MonoProfiler.AllFlags, MonoProfiler.CurrentDurationTime.TotalSeconds, false);
+
 			MonoProfiler.Clear();
 			MonoProfiler.ToggleProfiling();
 
@@ -984,7 +992,7 @@ public partial class AdminModule
 	{
 		var ap = GetPlayerSession(arg.Player());
 
-		if (MonoProfiler.Recording)
+		if (MonoProfiler.IsRecording)
 		{
 			MonoProfiler.ToggleProfiling(MonoProfiler.ProfilerArgs.Abort);
 		}
@@ -1030,7 +1038,7 @@ public partial class AdminModule
 			return;
 		}
 
-		if (!MonoProfiler.Recording)
+		if (!MonoProfiler.IsRecording)
 		{
 			var dictionary = PoolEx.GetDictionary<string, ModalModule.Modal.Field>();
 
@@ -1065,7 +1073,10 @@ public partial class AdminModule
 						ap.SelectedTab.OnChange(ap, ap.SelectedTab);
 						Draw(ap.Player);
 					}
+
+					Analytics.profiler_tl_ended(profilerArgs, ProfilerTab.recording.CurrentDuration, ProfilerTab.recording.Status);
 				});
+				Analytics.profiler_tl_started(profilerArgs);
 
 				PoolEx.FreeDictionary(ref dictionary);
 
@@ -1084,6 +1095,8 @@ public partial class AdminModule
 			ProfilerTab.recording?.Stop();
 			ap.SelectedTab.OnChange(ap, ap.SelectedTab);
 
+			Analytics.profiler_tl_ended(ProfilerTab.recording.Args, ProfilerTab.recording.CurrentDuration, ProfilerTab.recording.Status);
+
 			Draw(player);
 		}
 	}
@@ -1097,6 +1110,7 @@ public partial class AdminModule
 		if (ProfilerTab.recording.IsRecording())
 		{
 			ProfilerTab.recording.Stop(true);
+			Analytics.profiler_tl_ended(ProfilerTab.recording.Args, ProfilerTab.recording.CurrentDuration, ProfilerTab.recording.Status);
 		}
 		else
 		{
