@@ -36,15 +36,13 @@ public partial class MonoProfiler
 		public bool IsDiscarded() => Status == StatusTypes.Discarded;
 		public bool IsClear() => Timeline.Count == 0;
 
-		private Sample Record(AssemblyOutput assemblies, CallOutput calls, MemoryOutput memory)
+		private Sample Record(AssemblyOutput assemblies, CallOutput calls, MemoryOutput memory, GCRecord gc)
 		{
-			Sample snapshot = default;
-			snapshot.Assemblies = new();
+			var snapshot = Sample.Create();
 			snapshot.Assemblies.AddRange(assemblies);
-			snapshot.Calls = new();
 			snapshot.Calls.AddRange(calls);
-			snapshot.Memory = new();
 			snapshot.Memory.AddRange(memory);
+			snapshot.GC = gc;
 
 			Record(snapshot);
 			return snapshot;
@@ -94,7 +92,7 @@ public partial class MonoProfiler
 			{
 				ToggleProfilingTimed(recording.Rate, recording.Args, _ =>
 				{
-					var snapshot = recording.Record(AssemblyRecords, CallRecords, MemoryRecords);
+					var snapshot = recording.Record(AssemblyRecords, CallRecords, MemoryRecords, GCStats);
 					recording.OnSample?.Invoke(snapshot);
 
 					if (recording.CurrentDuration >= recording.Duration)
@@ -113,7 +111,7 @@ public partial class MonoProfiler
 		{
 			if (MonoProfiler.IsRecording)
 			{
-				var snapshot = Record(AssemblyRecords, CallRecords, MemoryRecords);
+				var snapshot = Record(AssemblyRecords, CallRecords, MemoryRecords, GCStats);
 				OnSample?.Invoke(snapshot);
 			}
 
@@ -154,12 +152,34 @@ public partial class MonoProfiler
 		public AssemblyOutput Assemblies;
 		public CallOutput Calls;
 		public MemoryOutput Memory;
+		public GCRecord GC;
 
+		public static Sample Create() => new()
+		{
+			Assemblies = new(),
+			Calls = new(),
+			Memory = new()
+		};
+
+		public void Resample()
+		{
+			Clear();
+
+			Assemblies.AddRange(AssemblyRecords);
+			Calls.AddRange(CallRecords);
+			Memory.AddRange(MemoryRecords);
+			GC = GCStats;
+		}
 		public void Clear()
 		{
+			Assemblies ??= new();
+			Calls ??= new();
+			Memory ??= new();
+
 			Assemblies?.Clear();
 			Calls?.Clear();
 			Memory?.Clear();
+			GC = default;
 		}
 	}
 }

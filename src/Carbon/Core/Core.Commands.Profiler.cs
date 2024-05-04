@@ -13,6 +13,8 @@ namespace Carbon.Core;
 
 public partial class CorePlugin : CarbonPlugin
 {
+	public static MonoProfiler.Sample ProfileSample = MonoProfiler.Sample.Create();
+
 	[CommandVar("profilestatus", "Mono profiling status.")]
 	[AuthLevel(2)]
 	private bool IsProfiling
@@ -46,6 +48,7 @@ public partial class CorePlugin : CarbonPlugin
 		{
 			Analytics.profiler_ended(flags, MonoProfiler.CurrentDurationTime.TotalSeconds, false);
 			MonoProfiler.ToggleProfiling(flags);
+			ProfileSample.Resample();
 			return;
 		}
 
@@ -59,6 +62,7 @@ public partial class CorePlugin : CarbonPlugin
 			MonoProfiler.ToggleProfilingTimed(duration, flags, args =>
 			{
 				Analytics.profiler_ended(flags, duration, true);
+				ProfileSample.Resample();
 			});
 			Analytics.profiler_started(flags, true);
 		}
@@ -75,6 +79,7 @@ public partial class CorePlugin : CarbonPlugin
 		}
 
 		MonoProfiler.ToggleProfiling(MonoProfiler.ProfilerArgs.Abort);
+		ProfileSample.Clear();
 	}
 
 	[ConsoleCommand("profiler.print", "If any parsed data available, it'll print basic and advanced information.")]
@@ -94,7 +99,7 @@ public partial class CorePlugin : CarbonPlugin
 		switch (mode)
 		{
 			case "-c":
-				output = $"{MonoProfiler.AssemblyRecords.ToCSV()}{(toFile ? $"\n{MonoProfiler.CallRecords.ToCSV()}" : string.Empty)}";
+				output = $"{ProfileSample.Assemblies.ToCSV()}{(toFile ? $"\n{ProfileSample.Calls.ToCSV()}\n{ProfileSample.Memory.ToCSV()}" : string.Empty)}";
 				if (toFile) WriteFileString("csv", output); else arg.ReplyWith(output);
 				break;
 
@@ -108,7 +113,7 @@ public partial class CorePlugin : CarbonPlugin
 
 			default:
 			case "-t":
-				output = $"{MonoProfiler.AssemblyRecords.ToTable()}{(toFile ? $"\n\n{MonoProfiler.CallRecords.ToTable()}" : string.Empty)}";
+				output = $"{ProfileSample.Assemblies.ToTable()}{(toFile ? $"\n\n{ProfileSample.Calls.ToTable()}\n{ProfileSample.Memory.ToCSV()}" : string.Empty)}";
 				if (toFile) WriteFileString("txt", output); else arg.ReplyWith(output);
 				break;
 

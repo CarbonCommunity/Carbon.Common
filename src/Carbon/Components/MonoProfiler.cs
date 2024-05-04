@@ -192,7 +192,58 @@ public static unsafe partial class MonoProfiler
 	}
 	public class MemoryOutput : List<MemoryRecord>
 	{
+		public string ToTable()
+		{
+			using StringTable table = new StringTable("Assembly", "Class", "Allocations", "Total Alloc. Size", "Instance Size");
 
+			foreach (MemoryRecord record in this)
+			{
+				if (!AssemblyMap.TryGetValue(record.assembly_handle, out AssemblyNameEntry assemblyName))
+				{
+					continue;
+				}
+
+				table.AddRow($" {assemblyName.displayName}", $"{record.class_name}",
+					record.allocations == 0 ? string.Empty : record.allocations.ToString("n0"),
+					record.total_alloc_size == 0 ? string.Empty : $"{ByteEx.Format(record.total_alloc_size).ToLower()}",
+					record.instance_size == 0 ? string.Empty : $"{record.instance_size:n0}b");
+			}
+
+			return table.ToStringMinimal().Trim();
+		}
+		public string ToCSV()
+		{
+			StringBuilder builder = PoolEx.GetStringBuilder();
+
+			builder.AppendLine("Assembly," +
+			                   "Class," +
+			                   "Allocations," +
+			                   "Total Alloc. Size," +
+			                   "Instance Size");
+
+			foreach (MemoryRecord record in this)
+			{
+				if (!AssemblyMap.TryGetValue(record.assembly_handle, out AssemblyNameEntry assemblyName))
+				{
+					continue;
+				}
+
+				builder.AppendLine($"{assemblyName.displayName}," +
+				                   $"{record.class_name}," +
+				                   $"{record.allocations.ToString("n0")}," +
+				                   $"{ByteEx.Format(record.total_alloc_size).ToLower()}," +
+				                   $"{record.instance_size:n0}b");
+			}
+
+			string result = builder.ToString();
+
+			PoolEx.FreeStringBuilder(ref builder);
+			return result;
+		}
+		public string ToJson(bool indented)
+		{
+			return JsonConvert.SerializeObject(this, indented ? Formatting.Indented : Formatting.None);
+		}
 	}
 
 	public class RuntimeAssemblyBank : ConcurrentDictionary<string, int>

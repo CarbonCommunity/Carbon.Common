@@ -367,7 +367,14 @@ public readonly struct CUI : IDisposable
 				case CuiNeedsKeyboardComponent: _needsKeyboards.Add(element); break;
 				case CuiCountdownComponent: _countdowns.Add(element); break;
 				case CuiOutlineComponent: _outlines.Add(element); break;
-				case CuiScrollViewComponent: _scrollViews.Add(element); break;
+				case CuiScrollViewComponent scrollView:
+				{
+					SendToPool(scrollView.HorizontalScrollbar);
+					SendToPool(scrollView.VerticalScrollbar);
+
+					_scrollViews.Add(element);
+					break;
+				}
 				case CuiScrollbar: _scrollbars.Add(element); break;
 			}
 		}
@@ -695,8 +702,8 @@ public readonly struct CUI : IDisposable
 				element.ContentTransform.AnchorMax = "1 1";
 				element.ContentTransform.OffsetMin = "0 0";
 				element.ContentTransform.OffsetMax = "0 0";
-				element.HorizontalScrollbar = new();
-				element.VerticalScrollbar = new();
+				element.HorizontalScrollbar = TakeFromPoolScrollbar();
+				element.VerticalScrollbar = TakeFromPoolScrollbar();
 
 				_scrollViews.RemoveAt(0);
 			}
