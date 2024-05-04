@@ -222,8 +222,8 @@ namespace Oxide.Game.Rust.Libraries.Covalence
 				{
 					return;
 				}
+
 				userData.Groups.Clear();
-				return;
 			}
 			else
 			{
@@ -234,7 +234,6 @@ namespace Oxide.Game.Rust.Libraries.Covalence
 
 				// OnUserGroupRemoved
 				HookCaller.CallStaticHook(2616322405, Id, name);
-				return;
 			}
 		}
 

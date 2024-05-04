@@ -192,7 +192,58 @@ public static unsafe partial class MonoProfiler
 	}
 	public class MemoryOutput : List<MemoryRecord>
 	{
+		public string ToTable()
+		{
+			using StringTable table = new StringTable("Assembly", "Class", "Allocations", "Total Alloc. Size", "Instance Size");
 
+			foreach (MemoryRecord record in this)
+			{
+				if (!AssemblyMap.TryGetValue(record.assembly_handle, out AssemblyNameEntry assemblyName))
+				{
+					continue;
+				}
+
+				table.AddRow($" {assemblyName.displayName}", $"{record.class_name}",
+					record.allocations == 0 ? string.Empty : record.allocations.ToString("n0"),
+					record.total_alloc_size == 0 ? string.Empty : $"{ByteEx.Format(record.total_alloc_size).ToLower()}",
+					record.instance_size == 0 ? string.Empty : $"{record.instance_size:n0}b");
+			}
+
+			return table.ToStringMinimal().Trim();
+		}
+		public string ToCSV()
+		{
+			StringBuilder builder = PoolEx.GetStringBuilder();
+
+			builder.AppendLine("Assembly," +
+			                   "Class," +
+			                   "Allocations," +
+			                   "Total Alloc. Size," +
+			                   "Instance Size");
+
+			foreach (MemoryRecord record in this)
+			{
+				if (!AssemblyMap.TryGetValue(record.assembly_handle, out AssemblyNameEntry assemblyName))
+				{
+					continue;
+				}
+
+				builder.AppendLine($"{assemblyName.displayName}," +
+				                   $"{record.class_name}," +
+				                   $"{record.allocations.ToString("n0")}," +
+				                   $"{ByteEx.Format(record.total_alloc_size).ToLower()}," +
+				                   $"{record.instance_size:n0}b");
+			}
+
+			string result = builder.ToString();
+
+			PoolEx.FreeStringBuilder(ref builder);
+			return result;
+		}
+		public string ToJson(bool indented)
+		{
+			return JsonConvert.SerializeObject(this, indented ? Formatting.Indented : Formatting.None);
+		}
 	}
 
 	public class RuntimeAssemblyBank : ConcurrentDictionary<string, int>
@@ -335,7 +386,7 @@ public static unsafe partial class MonoProfiler
 
 
 	public static bool Enabled { get; private set; }
-	public static bool Recording { get; private set; }
+	public static bool IsRecording { get; private set; }
 	public static bool Crashed { get; private set; }
 
 	public static bool IsCleared => !AssemblyRecords.Any() && !CallRecords.Any();
@@ -431,7 +482,7 @@ public static unsafe partial class MonoProfiler
 			}
 		}
 
-		if (duration >= 1f && Recording)
+		if (duration >= 1f && IsRecording)
 		{
 			if (logging)
 			{
@@ -440,7 +491,7 @@ public static unsafe partial class MonoProfiler
 
 			_profileTimer = Community.Runtime.CorePlugin.timer.In(duration, () =>
 			{
-				if (!Recording)
+				if (!IsRecording)
 				{
 					return;
 				}
@@ -455,7 +506,7 @@ public static unsafe partial class MonoProfiler
 				onTimerEnded?.Invoke(args);
 			});
 		}
-		else if(Recording && logging)
+		else if(IsRecording && logging)
 		{
 			_profileWarningTimer = Community.Runtime.CorePlugin.timer.Every(60 * 5, () =>
 			{
@@ -495,7 +546,7 @@ public static unsafe partial class MonoProfiler
 		List<MemoryRecord> memoryOutput = MemoryRecords;
 		GCRecord gcOutput = default;
 
-		if (Recording)
+		if (IsRecording)
 		{
 			_dataProcessTimer = PoolEx.GetStopwatch();
 			_dataProcessTimer.Start();
@@ -510,7 +561,7 @@ public static unsafe partial class MonoProfiler
 			{
 				Logger.Warn("[MonoProfiler] Profiler aborted");
 			}
-			Recording = false;
+			IsRecording = false;
 			return false;
 		}
 
@@ -543,7 +594,7 @@ public static unsafe partial class MonoProfiler
 
 		CallRecords.Disabled = callOutput.IsEmpty();
 
-		Recording = state;
+		IsRecording = state;
 
 		if (state)
 		{
