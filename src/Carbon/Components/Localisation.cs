@@ -2,7 +2,7 @@
 
 public partial struct Localisation
 {
-	internal static CorePlugin Core => Community.Runtime.CorePlugin;
+	internal static CorePlugin Core => Community.Runtime.Core;
 
 	public static Dictionary<string, string> Phrases = new()
 	{

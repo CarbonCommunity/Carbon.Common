@@ -14,7 +14,7 @@ public class CarbonAuto : API.Abstracts.CarbonAuto
 		public readonly Type GetVarType() => GetValue()?.GetType();
 		public readonly object GetValue()
 		{
-			var core = Community.Runtime.CorePlugin;
+			var core = Community.Runtime.Core;
 
 			return ReflectionInfo switch
 			{
@@ -25,7 +25,7 @@ public class CarbonAuto : API.Abstracts.CarbonAuto
 		}
 		public void SetValue(object value)
 		{
-			var core = Community.Runtime.CorePlugin;
+			var core = Community.Runtime.Core;
 
 			switch(ReflectionInfo)
 			{
@@ -88,7 +88,7 @@ public class CarbonAuto : API.Abstracts.CarbonAuto
 	{
 		using (TimeMeasure.New("CarbonAuto.IsChanged"))
 		{
-			var core = Community.Runtime.CorePlugin;
+			var core = Community.Runtime.Core;
 
 			foreach (var cache in _autoCache)
 			{
