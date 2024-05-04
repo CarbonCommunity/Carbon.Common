@@ -67,7 +67,7 @@ public partial class CorePlugin : CarbonPlugin
 
 	public IEnumerable<string> OvenBlacklistCache;
 
-	private string _ovenBlacklist;
+	private string _ovenBlacklist = "furnace,bbq.static,furnace.large";
 
 	[CarbonAutoVar("ovenblacklist", help: "Blacklisted oven entity prefabs.")]
 	[AuthLevel(2)]
