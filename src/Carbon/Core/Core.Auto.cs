@@ -78,7 +78,7 @@ public partial class CorePlugin : CarbonPlugin
 		{
 			if (_ovenBlacklist != value)
 			{
-				OvenBlacklistCache = _ovenBlacklist.ToSplitEnumerable(',');
+				OvenBlacklistCache = value.ToSplitEnumerable(',');
 			}
 
 			_ovenBlacklist = value;
