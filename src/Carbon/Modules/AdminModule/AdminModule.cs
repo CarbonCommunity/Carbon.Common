@@ -1,6 +1,7 @@
 ﻿using API.Commands;
 using Carbon.Components.Graphics;
 using ConVar;
+using HarmonyLib;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Oxide.Game.Rust.Cui;
@@ -36,7 +37,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 	internal static AdminModule Singleton { get; set; }
 
-	public static RustPlugin Core = Community.Runtime.CorePlugin;
+	public static CorePlugin Core = Community.Runtime.Core;
 	public ImageDatabaseModule ImageDatabase;
 	public ColorPickerModule ColorPicker;
 	public DatePickerModule DatePicker;
@@ -174,8 +175,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				Draw(player);
 			});
 
-			Community.Runtime.CorePlugin.cmd.AddChatCommand(command, this, action, silent: true);
-			Community.Runtime.CorePlugin.cmd.AddConsoleCommand(command, this, action, silent: true);
+			Community.Runtime.Core.cmd.AddChatCommand(command, this, action, silent: true);
+			Community.Runtime.Core.cmd.AddConsoleCommand(command, this, action, silent: true);
 		}
 
 		foreach (var perm in AdminPermissions)
@@ -187,7 +188,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 	{
 		if (initialized)
 		{
-			Community.Runtime.CorePlugin.NextTick(() =>
+			Community.Runtime.Core.NextTick(() =>
 			{
 				foreach (var player in BasePlayer.activePlayerList)
 				{
@@ -1178,7 +1179,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 		cui.CreateText(container, panel, Cache.CUI.WhiteColor, chart.Name, chart.NameSize, xMin: 0.025f, xMax: 0.95f, yMin: 1, yMax: 1, OyMin: 10, OyMax: 17.5f, align: chart.NameAlign, font: Handler.FontTypes.RobotoCondensedBold);
 
-		Community.Runtime.CorePlugin.NextFrame(() =>
+		Community.Runtime.Core.NextFrame(() =>
 		{
 			Tab.OptionChart.Cache.GetOrProcessCache(identifier, chart.Chart, chartCache =>
 			{
@@ -2063,7 +2064,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 	[Conditional("!MINIMAL")]
 	private void OnPluginUnloaded(RustPlugin plugin)
 	{
-		Community.Runtime.CorePlugin.NextTick(() =>
+		Community.Runtime.Core.NextTick(() =>
 		{
 			foreach (var player in BasePlayer.activePlayerList)
 			{
@@ -2140,7 +2141,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 		cui.Send(container, player);
 
-		Community.Runtime.CorePlugin.NextTick(() => Singleton.Close(player));
+		Community.Runtime.Core.NextTick(() => Singleton.Close(player));
 	}
 	internal static void StopSpectating(BasePlayer player, bool clearUi = true)
 	{

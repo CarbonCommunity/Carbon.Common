@@ -138,6 +138,77 @@ public partial struct Analytics
 			Include("skipped", progress == WizardProgress.Skipped).
 			Submit("admin_module_wizard");
 	}
+	public static void profiler_started(MonoProfiler.ProfilerArgs args, bool timed)
+	{
+		if (!Enabled)
+		{
+			return;
+		}
+
+		Singleton.
+			Include("settings", $"{Community.Runtime.MonoProfilerConfig.TrackCalls}tc " +
+			                    $"{Community.Runtime.MonoProfilerConfig.Assemblies.Count}a " +
+			                    $"{Community.Runtime.MonoProfilerConfig.Plugins.Count}p " +
+			                    $"{Community.Runtime.MonoProfilerConfig.Modules.Count}m " +
+			                    $"{Community.Runtime.MonoProfilerConfig.Extensions.Count}e " +
+			                    $"{Community.Runtime.MonoProfilerConfig.Harmony.Count}h").
+			Include("args", $"{args} {timed}t").
+			Submit("profiler_started");
+	}
+	public static void profiler_ended(MonoProfiler.ProfilerArgs args, double duration, bool timed)
+	{
+		if (!Enabled)
+		{
+			return;
+		}
+
+		Singleton.
+			Include("settings", $"{Community.Runtime.MonoProfilerConfig.TrackCalls}tc " +
+			                    $"{Community.Runtime.MonoProfilerConfig.Assemblies.Count}a " +
+			                    $"{Community.Runtime.MonoProfilerConfig.Plugins.Count}p " +
+			                    $"{Community.Runtime.MonoProfilerConfig.Modules.Count}m " +
+			                    $"{Community.Runtime.MonoProfilerConfig.Extensions.Count}e " +
+			                    $"{Community.Runtime.MonoProfilerConfig.Harmony.Count}h").
+			Include("args", $"{args} {timed}t").
+			Include("duration", $"{TimeEx.Format(duration).ToLower()}").
+			Submit("profiler_started");
+	}
+	public static void profiler_tl_started(MonoProfiler.ProfilerArgs args)
+	{
+		if (!Enabled)
+		{
+			return;
+		}
+
+		Singleton.
+			Include("settings", $"{Community.Runtime.MonoProfilerConfig.TrackCalls}tc " +
+			                    $"{Community.Runtime.MonoProfilerConfig.Assemblies.Count}a " +
+			                    $"{Community.Runtime.MonoProfilerConfig.Plugins.Count}p " +
+			                    $"{Community.Runtime.MonoProfilerConfig.Modules.Count}m " +
+			                    $"{Community.Runtime.MonoProfilerConfig.Extensions.Count}e " +
+			                    $"{Community.Runtime.MonoProfilerConfig.Harmony.Count}h").
+			Include("args", $"{args}").
+			Submit("profiler_tl_started");
+
+	}
+	public static void profiler_tl_ended(MonoProfiler.ProfilerArgs args, double duration, MonoProfiler.TimelineRecording.StatusTypes status)
+	{
+		if (!Enabled)
+		{
+			return;
+		}
+
+		Singleton.
+			Include("settings", $"{Community.Runtime.MonoProfilerConfig.TrackCalls}tc " +
+			                    $"{Community.Runtime.MonoProfilerConfig.Assemblies.Count}a " +
+			                    $"{Community.Runtime.MonoProfilerConfig.Plugins.Count}p " +
+			                    $"{Community.Runtime.MonoProfilerConfig.Modules.Count}m " +
+			                    $"{Community.Runtime.MonoProfilerConfig.Extensions.Count}e " +
+			                    $"{Community.Runtime.MonoProfilerConfig.Harmony.Count}h").
+			Include("args", $"{args}").
+			Include("duration", $"{TimeEx.Format(duration).ToLower()}").
+			Submit("profiler_tl_ended");
+	}
 
 	public enum WizardProgress
 	{

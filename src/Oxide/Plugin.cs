@@ -212,11 +212,11 @@ namespace Oxide.Core.Plugins
 							continue;
 						}
 
-						plugin = Community.Runtime.CorePlugin.plugins.Find(info.Title);
+						plugin = Community.Runtime.Core.plugins.Find(info.Title);
 					}
 					else
 					{
-						plugin = Community.Runtime.CorePlugin.plugins.Find(name);
+						plugin = Community.Runtime.Core.plugins.Find(name);
 					}
 
 					if (plugin != null)

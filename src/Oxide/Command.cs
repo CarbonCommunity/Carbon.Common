@@ -33,7 +33,7 @@ namespace Oxide.Game.Rust.Libraries
 						var hasPerm = authenticatedCommand.Auth.Permissions.Count(x => !string.IsNullOrEmpty(x)) == 0;
 						foreach (var permission in authenticatedCommand.Auth.Permissions)
 						{
-							if (Community.Runtime.CorePlugin.permission.UserHasPermission(player.UserIDString, permission))
+							if (Community.Runtime.Core.permission.UserHasPermission(player.UserIDString, permission))
 							{
 								hasPerm = true;
 								break;
@@ -52,7 +52,7 @@ namespace Oxide.Game.Rust.Libraries
 						var hasGroup = authenticatedCommand.Auth.Groups.Count(x => !string.IsNullOrEmpty(x)) == 0;
 						foreach (var group in authenticatedCommand.Auth.Groups)
 						{
-							if (Community.Runtime.CorePlugin.permission.UserHasGroup(player.UserIDString, group))
+							if (Community.Runtime.Core.permission.UserHasGroup(player.UserIDString, group))
 							{
 								hasGroup = true;
 								break;

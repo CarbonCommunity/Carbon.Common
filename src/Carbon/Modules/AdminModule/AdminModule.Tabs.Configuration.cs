@@ -40,7 +40,7 @@ public partial class AdminModule
 
 		public static ConfigurationTab Make()
 		{
-			var tab = new ConfigurationTab("configuration", "Configuration", Community.Runtime.CorePlugin,
+			var tab = new ConfigurationTab("configuration", "Configuration", Community.Runtime.Core,
 				(session, tab) =>
 				{
 					session.ClearStorage(null, "itemtabitem");

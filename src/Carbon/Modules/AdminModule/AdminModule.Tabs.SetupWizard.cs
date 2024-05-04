@@ -25,7 +25,7 @@ public partial class AdminModule
 
 		public static SetupWizard Make()
 		{
-			var tab = new SetupWizard("setupwizard", "Setup Wizard", Community.Runtime.CorePlugin) { IsFullscreen = true };
+			var tab = new SetupWizard("setupwizard", "Setup Wizard", Community.Runtime.Core) { IsFullscreen = true };
 			tab.Override = tab.Draw;
 
 			tab.Pages.Add(new Page("Main", (cui, t, container, panel, ap) =>
@@ -136,7 +136,7 @@ public partial class AdminModule
 
 				Singleton.DataInstance.WizardDisplayed = true;
 				Singleton.GenerateTabs();
-				Community.Runtime.CorePlugin.NextTick(() => Singleton.SetTab(ap.Player, 0));
+				Community.Runtime.Core.NextTick(() => Singleton.SetTab(ap.Player, 0));
 			}));
 
 			return tab;
@@ -286,7 +286,7 @@ public partial class AdminModule
 			ap.SetStorage(tab, "page", 0);
 			Singleton.DataInstance.WizardDisplayed = true;
 			Singleton.GenerateTabs();
-			Community.Runtime.CorePlugin.NextTick(() =>
+			Community.Runtime.Core.NextTick(() =>
 			{
 				Save();
 				Singleton.SetTab(ap.Player, 0);
@@ -297,7 +297,7 @@ public partial class AdminModule
 		{
 			currentPage += value;
 			ap.SetStorage(tab, "page", currentPage);
-			Community.Runtime.CorePlugin.NextFrame(() => Draw(ap.Player));
+			Community.Runtime.Core.NextFrame(() => Draw(ap.Player));
 		}
 
 	}

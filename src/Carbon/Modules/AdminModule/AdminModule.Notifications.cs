@@ -51,7 +51,7 @@ public partial class AdminModule
 		{
 			var queue = GetOrCreateQueue(player);
 
-			Community.Runtime.CorePlugin.timer.In(duration, () =>
+			Community.Runtime.Core.timer.In(duration, () =>
 			{
 				queue.RemoveAt(queue.Count - 1);
 				Redraw(player);

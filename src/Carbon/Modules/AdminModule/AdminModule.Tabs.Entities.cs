@@ -21,7 +21,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 	{
 		internal static int EntityCount = 0;
 
-		internal static RustPlugin Core = Community.Runtime.CorePlugin;
+		internal static RustPlugin Core = Community.Runtime.Core;
 		internal static AdminModule Admin = GetModule<AdminModule>();
 		internal static PlayerSession LastContainerLooter;
 		internal static string[] BuildingGrades = new string[]
@@ -36,7 +36,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 		public static Tab Get()
 		{
-			var tab = new Tab("entities", "Entities", Community.Runtime.CorePlugin, (ap, tab2) => { tab2.ClearColumn(1); ResetSelection(tab2, ap); DrawEntities(tab2, ap); }, "entities.use");
+			var tab = new Tab("entities", "Entities", Community.Runtime.Core, (ap, tab2) => { tab2.ClearColumn(1); ResetSelection(tab2, ap); DrawEntities(tab2, ap); }, "entities.use");
 			tab.AddColumn(0);
 			tab.AddColumn(1);
 

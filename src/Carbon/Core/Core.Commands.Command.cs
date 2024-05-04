@@ -35,6 +35,19 @@ public partial class CorePlugin : CarbonPlugin
 				value = new string('*', value.Length);
 			}
 
+			if (command.Token != null)
+			{
+				switch (command.Token)
+				{
+					case FieldInfo field when field.GetCustomAttribute<CarbonAutoVar>() is CarbonAutoVar autoVar && autoVar.ForceModded:
+						value += $" [force modded]";
+						break;
+					case PropertyInfo property when property.GetCustomAttribute<CarbonAutoVar>() is CarbonAutoVar autoVar2 && autoVar2.ForceModded:
+						value += $" [force modded]";
+						break;
+				}
+			}
+
 			body.AddRow($" {command.Name}", value, command.Help);
 		}
 

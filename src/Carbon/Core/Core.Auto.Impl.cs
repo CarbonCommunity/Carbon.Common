@@ -11,11 +11,17 @@ namespace Carbon.Core;
 public partial class CorePlugin : CarbonPlugin
 {
 #if !MINIMAL
+
 	#region Implementation
 
 	[Conditional("!MINIMAL")]
-	private object IRecyclerThinkSpeed()
+	internal object IRecyclerThinkSpeed(Recycler recycler)
 	{
+		if (recycler.IsSafezoneRecycler() && SafezoneRecycleTick != -1)
+		{
+			return SafezoneRecycleTick;
+		}
+
 		if (RecycleTick != -1)
 		{
 			return RecycleTick;
@@ -23,8 +29,9 @@ public partial class CorePlugin : CarbonPlugin
 
 		return null;
 	}
+
 	[Conditional("!MINIMAL")]
-	private object ICraftDurationMultiplier()
+	internal object ICraftDurationMultiplier()
 	{
 		if (CraftingSpeedMultiplier != -1)
 		{
@@ -33,8 +40,9 @@ public partial class CorePlugin : CarbonPlugin
 
 		return null;
 	}
+
 	[Conditional("!MINIMAL")]
-	private object IMixingSpeedMultiplier(MixingTable table, float originalValue)
+	internal object IMixingSpeedMultiplier(MixingTable table, float originalValue)
 	{
 		if (MixingSpeedMultiplier == -1 || table.currentRecipe == null)
 		{
@@ -48,8 +56,9 @@ public partial class CorePlugin : CarbonPlugin
 
 		return null;
 	}
+
 	[Conditional("!MINIMAL")]
-	private object IVendingBuyDuration()
+	internal object IVendingBuyDuration()
 	{
 		if (VendingMachineBuyDuration != -1)
 		{
@@ -58,8 +67,9 @@ public partial class CorePlugin : CarbonPlugin
 
 		return null;
 	}
+
 	[Conditional("!MINIMAL")]
-	private void IOnExcavatorInit(ExcavatorArm arm)
+	internal void IOnExcavatorInit(ExcavatorArm arm)
 	{
 		if (ExcavatorResourceTickRate != -1)
 		{
@@ -76,7 +86,30 @@ public partial class CorePlugin : CarbonPlugin
 			arm.beltSpeedMax = ExcavatorBeltSpeedMax;
 		}
 	}
+
 	[Conditional("!MINIMAL")]
+	internal object IOvenSmeltSpeedMultiplier(BaseOven oven)
+	{
+		if (Enumerable.Contains(OvenBlacklistCache, oven.ShortPrefabName) ||
+		    Enumerable.Contains(OvenBlacklistCache, oven.GetType().Name))
+		{
+			if (OvenBlacklistSpeedMultiplier != -1)
+			{
+				return OvenBlacklistSpeedMultiplier;
+			}
+
+			return null;
+		}
+
+		if (OvenSpeedMultiplier != -1)
+		{
+			return OvenSpeedMultiplier;
+		}
+
+		return null;
+	}
+
+[Conditional("!MINIMAL")]
 	private void OnItemResearch(ResearchTable table, Item targetItem, BasePlayer player)
 	{
 		if (ResearchDuration != -1)
