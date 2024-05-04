@@ -4,6 +4,8 @@ public class CarbonAuto : API.Abstracts.CarbonAuto
 {
 	internal Dictionary<string, AutoVar> _autoCache = new();
 
+	internal bool _initialized;
+
 	public struct AutoVar
 	{
 		public CarbonAutoVar Variable;
@@ -25,9 +27,17 @@ public class CarbonAuto : API.Abstracts.CarbonAuto
 	public static void Init()
 	{
 		Singleton = new CarbonAuto();
+		Singleton.Refresh();
 	}
 	public override void Refresh()
 	{
+		if (_initialized)
+		{
+			return;
+		}
+
+		_initialized = true;
+
 		var type = typeof(CorePlugin);
 		var flags = BindingFlags.Instance | BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public;
 		var fields = type.GetFields(flags);
@@ -119,7 +129,7 @@ public class CarbonAuto : API.Abstracts.CarbonAuto
 					return;
 				}
 
-				var lines = OsEx.File.ReadTextLines(Defines.GetCarbonAutoFile());
+				var lines = OsEx.File.ReadTextLines(file);
 				var option = ConsoleSystem.Option.Server.Quiet();
 
 				foreach (var line in lines)

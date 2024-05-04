@@ -20,6 +20,7 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 {
 	public override string Name => "ImageDatabase";
 	public override Type Type => typeof(ImageDatabaseModule);
+	public override VersionNumber Version => new(1, 0, 0);
 	public override bool EnabledByDefault => true;
 	public override bool ForceEnabled => true;
 
