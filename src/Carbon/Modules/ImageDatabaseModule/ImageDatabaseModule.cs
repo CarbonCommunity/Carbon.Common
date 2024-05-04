@@ -293,7 +293,7 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 
 		if (ConfigInstance.InitializedBatchLogs && thread.ImageUrls.Count > 0) Puts($"Added {thread.ImageUrls.Count:n0} to the queue (scale: {(scale == 0 ? "default" : $"{scale:0.0}")})...");
 
-		Community.Runtime.CorePlugin.persistence.StartCoroutine(_executeQueue(thread, results =>
+		Community.Runtime.Core.persistence.StartCoroutine(_executeQueue(thread, results =>
 		{
 			try
 			{
@@ -311,7 +311,7 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 			}
 		}));
 
-		Community.Runtime.CorePlugin.timer.In(ConfigInstance.TimeoutPerUrl * urls.Count(), () =>
+		Community.Runtime.Core.timer.In(ConfigInstance.TimeoutPerUrl * urls.Count(), () =>
 		{
 			if (thread._disposed) return;
 

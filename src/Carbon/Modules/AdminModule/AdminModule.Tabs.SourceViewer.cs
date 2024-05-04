@@ -28,7 +28,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 		public static SourceViewerTab Make(string fileName, string content, string context, int size = 8)
 		{
-			var tab = new SourceViewerTab("testchat", "TestChat", Community.Runtime.CorePlugin);
+			var tab = new SourceViewerTab("testchat", "TestChat", Community.Runtime.Core);
 			tab.OnChange += (_, tab1) =>
 			{
 				tab1.AddColumn(0, true);

@@ -364,7 +364,7 @@ public partial class ModalModule : CarbonModule<EmptyModuleConfig, EmptyModuleDa
 
 				case Modal.Field.FieldTypes.RustColor:
 				case Modal.Field.FieldTypes.HexColor:
-					Community.Runtime.CorePlugin.NextFrame(() =>
+					Community.Runtime.Core.NextFrame(() =>
 					{
 						ColorPicker.Open(ap.Player, (hexColor, rustColor, alpha) =>
 						{

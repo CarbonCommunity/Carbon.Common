@@ -43,3 +43,5 @@ global using UnityEngine;
 
 ///
 /// Rust References
+
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Carbon.Hooks.Base")]

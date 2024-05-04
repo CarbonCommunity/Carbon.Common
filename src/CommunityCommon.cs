@@ -126,7 +126,7 @@ public class Community
 	public Carbon.Profiler.MonoProfilerConfig MonoProfilerConfig
 	{ get; set; }
 
-	public RustPlugin CorePlugin
+	public CorePlugin CorePlugin
 	{ get; set; }
 
 	public ModLoader.ModPackage Plugins

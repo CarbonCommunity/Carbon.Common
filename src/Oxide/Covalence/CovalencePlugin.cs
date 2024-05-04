@@ -82,7 +82,7 @@ namespace Oxide.Core.Libraries.Covalence
 
 		public void UnregisterCommand(string command, Plugin plugin)
 		{
-			Community.Runtime.CorePlugin.cmd.RemoveConsoleCommand(command, plugin);
+			Community.Runtime.Core.cmd.RemoveConsoleCommand(command, plugin);
 		}
 
 		public uint ClientAppId { get; } = 252490U;

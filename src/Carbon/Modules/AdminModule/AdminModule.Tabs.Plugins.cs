@@ -94,7 +94,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		{
 			OsEx.Folder.Create(Path.Combine(Defines.GetScriptsFolder(), "backups"));
 
-			var tab = new Tab("plugins", "Plugins", Community.Runtime.CorePlugin, (ap, t) =>
+			var tab = new Tab("plugins", "Plugins", Community.Runtime.Core, (ap, t) =>
 			{
 				ap.SetStorage(t, "selectedplugin", (Plugin)null);
 				LocalInstance?.Refresh();
@@ -881,7 +881,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					LogoEnumerable = new[] { Logo };
 				}
 
-				var plugins = Community.Runtime.CorePlugin.plugins.GetAll();
+				var plugins = Community.Runtime.Core.plugins.GetAll();
 				var auth = this as IVendorAuthenticated;
 
 				foreach (var plugin in FetchedPlugins)
@@ -935,19 +935,19 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			}
 			public override void FetchList(Action<Vendor> callback = null)
 			{
-				Community.Runtime.CorePlugin.webrequest.Enqueue(ListEndpoint, null, (error, data) =>
+				Community.Runtime.Core.webrequest.Enqueue(ListEndpoint, null, (error, data) =>
 				{
 					FetchedPlugins.Clear();
-					var plugins = Community.Runtime.CorePlugin.plugins.GetAll();
+					var plugins = Community.Runtime.Core.plugins.GetAll();
 
 					ParseData(data, false, false);
 
-					Community.Runtime.CorePlugin.webrequest.Enqueue(List2Endpoint, null, (error, data) =>
+					Community.Runtime.Core.webrequest.Enqueue(List2Endpoint, null, (error, data) =>
 					{
 						ParseData(data, true, true);
 
 						VersionCheck();
-					}, Community.Runtime.CorePlugin);
+					}, Community.Runtime.Core);
 
 					void ParseData(string data, bool doSave, bool insert)
 					{
@@ -1013,7 +1013,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 							Logger.Error($" Couldn't fetch Codefling API to get the plugins list. Most likely because it's down.", ex);
 						}
 					}
-				}, Community.Runtime.CorePlugin);
+				}, Community.Runtime.Core);
 			}
 			public override void Download(string id, Action onTimeout = null)
 			{
@@ -1021,7 +1021,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				plugin.IsBusy = true;
 				plugin.DownloadCount++;
 
-				var core = Community.Runtime.CorePlugin;
+				var core = Community.Runtime.Core;
 
 				core.timer.In(2f, () =>
 				{
@@ -1208,7 +1208,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 			public void Validate(PlayerSession session, Action onComplete)
 			{
-				var core = Community.Runtime.CorePlugin;
+				var core = Community.Runtime.Core;
 
 				ValidationTimer = core.timer.Every(AuthValidationCheckRate, () =>
 				{
@@ -1257,7 +1257,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			{
 				if (!IsLoggedIn) return;
 
-				var core = Community.Runtime.CorePlugin;
+				var core = Community.Runtime.Core;
 				var authHeader = AuthHeader;
 				var headers = new Dictionary<string, string>()
 				{
@@ -1391,7 +1391,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					LogoEnumerable = new[] { Logo };
 				}
 
-				var plugins = Community.Runtime.CorePlugin.plugins.GetAll();
+				var plugins = Community.Runtime.Core.plugins.GetAll();
 
 				foreach (var plugin in FetchedPlugins)
 				{
@@ -1438,7 +1438,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 				Logger.Log($"[{Type}] Caching plugin metadata for displaying plugins in the Admin module -> Plugins tab. This might take a while..");
 
-				Community.Runtime.CorePlugin.webrequest.Enqueue(ListEndpoint.Replace("[ID]", "0"), null, (error, data) =>
+				Community.Runtime.Core.webrequest.Enqueue(ListEndpoint.Replace("[ID]", "0"), null, (error, data) =>
 				{
 					var list = JObject.Parse(data);
 
@@ -1453,7 +1453,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 					FetchPage(0, totalPages.GetValueOrDefault(), callback);
 					list = null;
-				}, Community.Runtime.CorePlugin);
+				}, Community.Runtime.Core);
 			}
 			public override void Download(string id, Action onTimeout = null)
 			{
@@ -1463,7 +1463,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 				plugin.IsBusy = true;
 
-				Community.Runtime.CorePlugin.timer.In(2f, () =>
+				Community.Runtime.Core.timer.In(2f, () =>
 				{
 					if (plugin.IsBusy)
 					{
@@ -1472,7 +1472,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					}
 				});
 
-				Community.Runtime.CorePlugin.webrequest.Enqueue(url, null, (error, source) =>
+				Community.Runtime.Core.webrequest.Enqueue(url, null, (error, source) =>
 				{
 					Singleton.Puts($"Downloaded {plugin.Name}");
 					OsEx.File.Create(path, source);
@@ -1480,7 +1480,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					plugin.IsBusy = false;
 					plugin.DownloadCount++;
 
-				}, Community.Runtime.CorePlugin, headers: new Dictionary<string, string>
+				}, Community.Runtime.Core, headers: new Dictionary<string, string>
 				{
 					["user-agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36 Edg/110.0.1587.63",
 					["accept"] = "ext/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"
@@ -1497,7 +1497,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				var plugin = FetchedPlugins.FirstOrDefault(x => x.Id == id);
 				if (plugin.HasLookup) return;
 
-				Community.Runtime.CorePlugin.webrequest.Enqueue(PluginLookupEndpoint.Replace("[ID]", plugin.Name.ToLower().Trim()), null, (error, data) =>
+				Community.Runtime.Core.webrequest.Enqueue(PluginLookupEndpoint.Replace("[ID]", plugin.Name.ToLower().Trim()), null, (error, data) =>
 				{
 					var list = JObject.Parse(data);
 					var description = list["description_md"]?.ToString();
@@ -1526,7 +1526,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 					plugin.HasLookup = true;
 					onMetadataRetrieved?.Invoke();
-				}, Community.Runtime.CorePlugin);
+				}, Community.Runtime.Core);
 			}
 
 			public void FetchPage(int page, int maxPage, Action<Vendor> callback = null)
@@ -1538,9 +1538,9 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					return;
 				}
 
-				var plugins = Community.Runtime.CorePlugin.plugins.GetAll();
+				var plugins = Community.Runtime.Core.plugins.GetAll();
 
-				Community.Runtime.CorePlugin.webrequest.Enqueue(ListEndpoint.Replace("[ID]", $"{page}"), null, (error, data) =>
+				Community.Runtime.Core.webrequest.Enqueue(ListEndpoint.Replace("[ID]", $"{page}"), null, (error, data) =>
 				{
 					var list = JObject.Parse(data);
 					var file = list["data"];
@@ -1579,8 +1579,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					}
 
 					list = null;
-				}, Community.Runtime.CorePlugin);
-				Community.Runtime.CorePlugin.timer.In(5f, () => FetchPage(page + 1, maxPage, callback));
+				}, Community.Runtime.Core);
+				Community.Runtime.Core.timer.In(5f, () => FetchPage(page + 1, maxPage, callback));
 			}
 
 			public bool Load()
@@ -1900,18 +1900,18 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				Singleton.SetTab(ap.Player, ConfigEditor.Make(OsEx.File.ReadText(path),
 					(ap, jobject) =>
 					{
-						Community.Runtime.CorePlugin.NextTick(() => Singleton.SetTab(ap.Player, "plugins", false));
+						Community.Runtime.Core.NextTick(() => Singleton.SetTab(ap.Player, "plugins", false));
 					},
 					(ap, jobject) =>
 					{
 						OsEx.File.Create(path, jobject.ToString(Formatting.Indented));
-						Community.Runtime.CorePlugin.NextTick(() => Singleton.SetTab(ap.Player, "plugins", false));
+						Community.Runtime.Core.NextTick(() => Singleton.SetTab(ap.Player, "plugins", false));
 					},
 					(ap, jobject) =>
 					{
 						OsEx.File.Create(path, jobject.ToString(Formatting.Indented));
 						plugin.ProcessorProcess.MarkDirty();
-						Community.Runtime.CorePlugin.NextTick(() => Singleton.SetTab(ap.Player, "plugins", false));
+						Community.Runtime.Core.NextTick(() => Singleton.SetTab(ap.Player, "plugins", false));
 					}));
 				Array.Clear(arg, 0, arg.Length);
 				break;
@@ -1924,7 +1924,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				if (plugin != null)
 				{
 					plugin.ProcessorProcess.MarkDirty();
-					Community.Runtime.CorePlugin.NextTick(() => Singleton.SetTab(ap.Player, "plugins", false));
+					Community.Runtime.Core.NextTick(() => Singleton.SetTab(ap.Player, "plugins", false));
 				}
 				break;
 			}
@@ -1936,7 +1936,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				Singleton.SetTab(ap.Player, LangEditor.Make(plugin,
 					(ap) =>
 					{
-						Community.Runtime.CorePlugin.NextTick(() => Singleton.SetTab(ap.Player, "plugins", false));
+						Community.Runtime.Core.NextTick(() => Singleton.SetTab(ap.Player, "plugins", false));
 					}));
 				break;
 			}
@@ -2221,7 +2221,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				};
 
 				var currentCode = auth.AuthCode;
-				var core = Community.Runtime.CorePlugin;
+				var core = Community.Runtime.Core;
 				var authHeader = auth.AuthHeader;
 
 				core.timer.In(5f, () =>

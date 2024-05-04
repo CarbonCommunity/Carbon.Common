@@ -405,7 +405,7 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 
 	public void NextFrame(Action callback)
 	{
-		Community.Runtime.CorePlugin.NextFrame(callback);
+		Community.Runtime.Core.NextFrame(callback);
 	}
 
 	public class Configuration : IModuleConfig

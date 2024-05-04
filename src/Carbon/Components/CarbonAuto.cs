@@ -11,6 +11,7 @@ public class CarbonAuto : API.Abstracts.CarbonAuto
 		public CarbonAutoVar Variable;
 		public object ReflectionInfo;
 
+		public readonly Type GetVarType() => GetValue()?.GetType();
 		public readonly object GetValue()
 		{
 			var core = Community.Runtime.CorePlugin;
@@ -22,6 +23,21 @@ public class CarbonAuto : API.Abstracts.CarbonAuto
 				_ => null
 			};
 		}
+		public void SetValue(object value)
+		{
+			var core = Community.Runtime.CorePlugin;
+
+			switch(ReflectionInfo)
+			{
+				case FieldInfo field:
+					field.SetValue(field.IsStatic ? null : core, Convert.ChangeType(value, GetVarType()));
+					break;
+				case PropertyInfo property:
+					property.SetValue(core, Convert.ChangeType(value, GetVarType()));
+					break;
+			}
+		}
+		public readonly bool IsChanged() => GetValue() != (object)-1;
 	}
 
 	public static void Init()
@@ -56,7 +72,6 @@ public class CarbonAuto : API.Abstracts.CarbonAuto
 
 			_autoCache.Add($"c.{attribute.Name}", var);
 		}
-
 		foreach (var property in properties)
 		{
 			var attribute = property.GetCustomAttribute<CarbonAutoVar>();
@@ -96,8 +111,6 @@ public class CarbonAuto : API.Abstracts.CarbonAuto
 			{
 				Refresh();
 
-				var core = Community.Runtime.CorePlugin;
-
 				using var sb = new StringBody();
 
 				foreach (var cache in _autoCache)
@@ -130,11 +143,21 @@ public class CarbonAuto : API.Abstracts.CarbonAuto
 				}
 
 				var lines = OsEx.File.ReadTextLines(file);
-				var option = ConsoleSystem.Option.Server.Quiet();
+				var option = ConsoleSystem.Option.Server;
 
+				Logger.Log($" Initializing Carbon Auto with {lines.Length:n0} variables");
 				foreach (var line in lines)
 				{
-					ConsoleSystem.Run(option, line, Array.Empty<string>());
+					using var value = TemporaryArray<string>.New(line.Split(' '));
+
+					var convar = value.Get(0);
+					var conval = value.Get(1).Replace("\"", string.Empty);
+
+					if (_autoCache.TryGetValue(convar, out var auto))
+					{
+						auto.SetValue(conval);
+						Logger.Warn($" {convar} \"{auto.GetValue()}\"{(auto.Variable.ForceModded ? " [modded]" : string.Empty)}");
+					}
 				}
 
 				if (IsForceModded())
@@ -145,7 +168,7 @@ public class CarbonAuto : API.Abstracts.CarbonAuto
 			}
 			catch (Exception ex)
 			{
-				Logger.Error($"Failed saving Carbon auto file", ex);
+				Logger.Error($"Failed loading Carbon auto file", ex);
 			}
 		}
 	}
@@ -156,8 +179,17 @@ public class CarbonAutoVar : CommandVarAttribute
 {
 	public bool ForceModded;
 
-	public CarbonAutoVar(string name, string help = null, bool @protected = false, bool forceModded = true) : base(name, @protected, help)
+	public CarbonAutoVar(string name, string help = null, bool @protected = false, bool forceModded = false) : base(name, @protected, help)
 	{
 		ForceModded = forceModded;
+	}
+}
+
+[AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
+public class CarbonAutoModdedVar : CarbonAutoVar
+{
+	public CarbonAutoModdedVar(string name, string help = null, bool @protected = false, bool forceModded = false) : base(name, help, @protected, forceModded)
+	{
+		ForceModded = true;
 	}
 }
