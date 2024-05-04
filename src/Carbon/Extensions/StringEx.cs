@@ -562,6 +562,11 @@ public static class StringEx
 
 	public static IEnumerable<string> ToSplitEnumerable(this string input, char separator)
 	{
+		if (string.IsNullOrEmpty(input))
+		{
+			yield break;
+		}
+
 		var startIndex = 0;
 
 		for (int i = 0; i < input.Length; i++)
