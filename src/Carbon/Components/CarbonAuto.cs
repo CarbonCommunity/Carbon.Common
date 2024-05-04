@@ -11,7 +11,18 @@ public class CarbonAuto : API.Abstracts.CarbonAuto
 		public CarbonAutoVar Variable;
 		public object ReflectionInfo;
 
-		public readonly Type GetVarType() => GetValue()?.GetType();
+		public readonly Type GetVarType()
+		{
+			switch(ReflectionInfo)
+			{
+				case FieldInfo field:
+					return field.FieldType;
+				case PropertyInfo property:
+					return property.PropertyType;
+			}
+
+			return null;
+		}
 		public readonly object GetValue()
 		{
 			var core = Community.Runtime.Core;
