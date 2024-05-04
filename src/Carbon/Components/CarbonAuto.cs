@@ -156,7 +156,7 @@ public class CarbonAuto : API.Abstracts.CarbonAuto
 				var lines = OsEx.File.ReadTextLines(file);
 				var option = ConsoleSystem.Option.Server;
 
-				Logger.Log($" Initializing Carbon Auto with {lines.Length:n0} variables");
+				Logger.Log($"Initialized Carbon Auto ({lines.Length:n0} {lines.Length.Plural("variable", "variables")})");
 				foreach (var line in lines)
 				{
 					using var value = TemporaryArray<string>.New(line.Split(' '));

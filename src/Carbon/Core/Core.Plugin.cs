@@ -85,12 +85,7 @@ public partial class CorePlugin : CarbonPlugin
 		});
 
 		cmd.AddConsoleCommand("help", this, nameof(Help), authLevel: 2);
-
-		var commandCount = Community.Runtime.CommandManager.Chat.Count(x => x.Reference == this) +
-		                   Community.Runtime.CommandManager.ClientConsole.Count(x => x.Reference == this);
 		
-		Logger.Log($"Initialized Carbon core plugin ({Hooks.Count:n0} {Hooks.Count.Plural("hook", "hooks")}, {commandCount:n0} {commandCount.Plural("command", "commands")})");
-
 		return true;
 	}
 
