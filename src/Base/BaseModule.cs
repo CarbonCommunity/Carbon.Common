@@ -443,6 +443,14 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 
 		try
 		{
+			if (HarmonyInstance != null)
+			{
+				foreach (var method in HarmonyInstance.GetPatchedMethods())
+				{
+					PutsWarn($"Unpatched Harmony method '{method.Name}' method. ({method.DeclaringType.Name})");
+				}
+			}
+
 			HarmonyInstance?.UnpatchAll(HarmonyDomain);
 			HarmonyInstance = null;
 		}
