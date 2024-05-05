@@ -410,35 +410,29 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 			HarmonyInstance = new(HarmonyDomain);
 		}
 
-		foreach (var type in Type.GetNestedTypes(BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static))
+		foreach (var type in Type.GetNestedTypes(BindingFlags.DeclaredOnly | BindingFlags.Public |
+		                                         BindingFlags.NonPublic | BindingFlags.Static))
 		{
-			var attribute = type.GetCustomAttributes(typeof(AutoPatchAttribute), false);
-
-			if (attribute.Length < 1)
-			{
-				continue;
-			}
-
 			try
 			{
 				var harmonyMethods = HarmonyInstance.CreateClassProcessor(type)?.Patch();
 
 				if (harmonyMethods == null || harmonyMethods.Count == 0)
 				{
-					Logger.Warn($"AutoPatch attribute found on '{type.Name}' for {ToPrettyString()} but no HarmonyPatch methods found. Skipping.");
 					continue;
 				}
 
 				foreach (MethodInfo method in harmonyMethods)
 				{
-					Logger.Log($"Automatically Harmony patched '{method.Name}' method for {ToPrettyString()}. ({type.Name})");
+					PutsWarn($"Automatically Harmony patched '{method.Name}' method. ({type.Name})");
 				}
 			}
 			catch (Exception ex)
 			{
-				Logger.Error($"Failed to automatically Harmony patch '{type.Name}' for {ToPrettyString()}", ex);
+				PutsError($"Failed to automatically Harmony patch '{type.Name}' for {ToPrettyString()}", ex);
 			}
-		}	}
+		}
+	}
 
 	public virtual void DoHarmonyUnpatch()
 	{
