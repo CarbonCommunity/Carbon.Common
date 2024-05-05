@@ -1237,6 +1237,11 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 	#region Methods
 
+	public const float MaximizedScale_XMin = 1.1f;
+	public const float MaximizedScale_XMax = 1.1f;
+	public const float MaximizedScale_YMin = 1.15f;
+	public const float MaximizedScale_YMax = 1.15f;
+
 	public const float OptionHeightOffset = 0.0035f;
 
 	public void Draw(BasePlayer player)
@@ -1262,10 +1267,15 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 			cui.CreateImage(container, PanelId, "fade", Cache.CUI.WhiteColor);
 
+			var isMaximized = DataInstance.Maximize;
+
 			var shade = cui.CreatePanel(container, parent: PanelId, id: $"{PanelId}color",
 				color: "0 0 0 0.6",
 				xMin: 0.5f, xMax: 0.5f, yMin: 0.5f, yMax: 0.5f,
-				OxMin: -475, OxMax: 475, OyMin: -300, OyMax: 300);
+				OxMin: -475 * (isMaximized ? MaximizedScale_XMin : 1),
+				OxMax: 475 * (isMaximized ? MaximizedScale_XMax : 1),
+				OyMin: -300 * (isMaximized ? MaximizedScale_YMin : 1),
+				OyMax: 300 * (isMaximized ? MaximizedScale_YMax : 1));
 			var main = cui.CreatePanel(container, shade,
 				color: "0 0 0 0.5",
 				blur: true);
@@ -1537,17 +1547,32 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			{
 				var shift = tab == null || tab.IsFullscreen ? 15 : 0;
 
-				if (HasAccess(ap.Player, "profiler.use"))
+				var maximizeButton = cui.CreateProtectedButton(container, main,
+					color: "#d1cd56",
+					textColor: Cache.CUI.BlankColor,
+					text: string.Empty, 0,
+					xMin: 0.9675f, xMax: 0.99f, yMin: 0.955f, yMax: 0.99f,
+					OxMin: -25 * 3, OxMax: -25 * 3,
+					OyMin: shift, OyMax: shift,
+					command: PanelId + ".maximize");
 				{
-					var profilerButton = cui.CreateProtectedButton(container, main,
-						color: "#6651c2",
-						textColor: Cache.CUI.BlankColor,
-						text: string.Empty, 0,
-						xMin: 0.9675f, xMax: 0.99f, yMin: 0.955f, yMax: 0.99f,
-						OxMin: -25 * 2, OxMax: -25 * 2,
-						OyMin: shift, OyMax: shift,
-						command: PanelId + ".profiler");
+					cui.CreateImage(container, maximizeButton, DataInstance.Maximize ? "minimize" : "maximize", "#fffed4",
+						xMin: 0.15f, xMax: 0.85f,
+						yMin: 0.15f, yMax: 0.85f);
 
+					cui.CreateImage(container, maximizeButton, "fade", Cache.CUI.WhiteColor);
+				}
+
+				var canAccessProfiler = HasAccess(ap.Player, "profiler.use");
+				var profilerButton = cui.CreateProtectedButton(container, main,
+					color: !canAccessProfiler ? "0.3 0.3 0.3 0.7" : "#6651c2",
+					textColor: Cache.CUI.BlankColor,
+					text: string.Empty, 0,
+					xMin: 0.9675f, xMax: 0.99f, yMin: 0.955f, yMax: 0.99f,
+					OxMin: -25 * 2, OxMax: -25 * 2,
+					OyMin: shift, OyMax: shift,
+					command: canAccessProfiler ? PanelId + ".profiler" : string.Empty);
+				{
 					cui.CreateImage(container, profilerButton, "graph", "#af9ff5",
 						xMin: 0.15f, xMax: 0.85f,
 						yMin: 0.15f, yMax: 0.85f);
@@ -1560,17 +1585,16 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					}
 				}
 
-				if (HasAccess(ap.Player, "config.use"))
+				var canAccessConfig = HasAccess(ap.Player, "config.use");
+				var configButton = cui.CreateProtectedButton(container, main,
+					color: canAccessConfig ? "0.2 0.6 0.2 0.9" : "0.3 0.3 0.3 0.7",
+					textColor: Cache.CUI.BlankColor,
+					text: string.Empty, 0,
+					xMin: 0.9675f, xMax: 0.99f, yMin: 0.955f, yMax: 0.99f,
+					OxMin: -25, OxMax: -25,
+					OyMin: shift, OyMax: shift,
+					command: canAccessConfig ? PanelId + ".config" : string.Empty);
 				{
-					var configButton = cui.CreateProtectedButton(container, main,
-						color: "0.2 0.6 0.2 0.9",
-						textColor: Cache.CUI.BlankColor,
-						text: string.Empty, 0,
-						xMin: 0.9675f, xMax: 0.99f, yMin: 0.955f, yMax: 0.99f,
-						OxMin: -25, OxMax: -25,
-						OyMin: shift, OyMax: shift,
-						command: PanelId + ".config");
-
 					cui.CreateImage(container, configButton, "gear", "0.5 1 0.5 1",
 						xMin: 0.15f, xMax: 0.85f,
 						yMin: 0.15f, yMax: 0.85f);
@@ -1590,12 +1614,13 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					xMin: 0.9675f, xMax: 0.99f, yMin: 0.955f, yMax: 0.99f,
 					OyMin: shift, OyMax: shift,
 					command: PanelId + ".close");
+				{
+					cui.CreateImage(container, closeButton, "close", "1 0.5 0.5 1",
+						xMin: 0.2f, xMax: 0.8f,
+						yMin: 0.2f, yMax: 0.8f);
 
-				cui.CreateImage(container, closeButton, "close", "1 0.5 0.5 1",
-					xMin: 0.2f, xMax: 0.8f,
-					yMin: 0.2f, yMax: 0.8f);
-
-				cui.CreateImage(container, closeButton, "fade", Cache.CUI.WhiteColor);
+					cui.CreateImage(container, closeButton, "fade", Cache.CUI.WhiteColor);
+				}
 			}
 
 			#endregion
@@ -2241,7 +2266,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 public class AdminConfig
 {
 	[JsonProperty("OpenCommands")]
-	public string[] OpenCommands = new string[] { "cp", "cpanel" };
+	public string[] OpenCommands = ["cp", "cpanel"];
 	public int MinimumAuthLevel = 2;
 	public bool DisableEntitiesTab = true;
 	public bool DisablePluginsTab = false;
@@ -2264,6 +2289,7 @@ public class AdminData
 	[JsonProperty("WizardDisplayed")]
 	public bool WizardDisplayed = false;
 	public bool HidePluginIcons = false;
+	public bool Maximize = false;
 	public DataColors Colors = new();
 
 	public class DataColors

@@ -85,7 +85,7 @@ public partial class CorePlugin : CarbonPlugin
 		});
 
 		cmd.AddConsoleCommand("help", this, nameof(Help), authLevel: 2);
-		
+
 		return true;
 	}
 

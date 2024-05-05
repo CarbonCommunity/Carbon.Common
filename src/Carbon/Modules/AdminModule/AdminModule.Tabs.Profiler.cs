@@ -718,7 +718,7 @@ public partial class AdminModule
 					LayerSettings = new()
 					{
 						Color = color,
-						Shadows = 1
+						Shadows = 0
 					}
 				});
 
@@ -772,7 +772,7 @@ public partial class AdminModule
 					LayerSettings = new()
 					{
 						Color = color,
-						Shadows = 1
+						Shadows = 0
 					}
 				});
 
@@ -824,7 +824,7 @@ public partial class AdminModule
 					LayerSettings = new()
 					{
 						Color = color,
-						Shadows = 1
+						Shadows = 0
 					}
 				});
 
