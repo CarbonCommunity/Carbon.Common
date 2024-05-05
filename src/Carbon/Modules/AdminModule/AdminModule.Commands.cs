@@ -110,6 +110,14 @@ public partial class AdminModule
 	}
 
 	[Conditional("!MINIMAL")]
+	[ProtectedCommand(PanelId + ".maximize")]
+	private void Maximize(ConsoleSystem.Arg args)
+	{
+		DataInstance.Maximize = !DataInstance.Maximize;
+		Draw(args.Player());
+	}
+
+	[Conditional("!MINIMAL")]
 	[ProtectedCommand(PanelId + ".close")]
 	private void CloseUI(ConsoleSystem.Arg args)
 	{

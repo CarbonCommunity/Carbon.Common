@@ -48,7 +48,9 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 		["gear"] = "https://carbonmod.gg/assets/media/cui/gear.png",
 		["close"] = "https://carbonmod.gg/assets/media/cui/close.png",
 		["fade"] = "https://carbonmod.gg/assets/media/cui/fade.png",
-		["graph"] = "https://carbonmod.gg/assets/media/cui/graph.png"
+		["graph"] = "https://carbonmod.gg/assets/media/cui/graph.png",
+		["maximize"] = "https://carbonmod.gg/assets/media/cui/maximize.png",
+		["minimize"] = "https://carbonmod.gg/assets/media/cui/minimize.png"
 	};
 
 	internal IEnumerator _executeQueue(QueuedThread thread, Action<List<QueuedThreadResult>> onFinished)

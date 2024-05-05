@@ -2,7 +2,7 @@
 
 public class CarbonAuto : API.Abstracts.CarbonAuto
 {
-	internal Dictionary<string, AutoVar> _autoCache = new();
+	public static Dictionary<string, AutoVar> AutoCache = new();
 
 	internal bool _initialized;
 
@@ -70,7 +70,7 @@ public class CarbonAuto : API.Abstracts.CarbonAuto
 		var fields = type.GetFields(flags);
 		var properties = type.GetProperties(flags);
 
-		_autoCache.Clear();
+		AutoCache.Clear();
 
 		foreach (var field in fields)
 		{
@@ -81,7 +81,7 @@ public class CarbonAuto : API.Abstracts.CarbonAuto
 			var.Variable = attribute;
 			var.ReflectionInfo = field;
 
-			_autoCache.Add($"c.{attribute.Name}", var);
+			AutoCache.Add($"c.{attribute.Name}", var);
 		}
 		foreach (var property in properties)
 		{
@@ -92,7 +92,7 @@ public class CarbonAuto : API.Abstracts.CarbonAuto
 			var.Variable = attribute;
 			var.ReflectionInfo = property;
 
-			_autoCache.Add($"c.{attribute.Name}", var);
+			AutoCache.Add($"c.{attribute.Name}", var);
 		}
 	}
 	public override bool IsForceModded()
@@ -101,7 +101,7 @@ public class CarbonAuto : API.Abstracts.CarbonAuto
 		{
 			var core = Community.Runtime.Core;
 
-			foreach (var cache in _autoCache)
+			foreach (var cache in AutoCache)
 			{
 				if (!cache.Value.Variable.ForceModded)
 				{
@@ -124,7 +124,7 @@ public class CarbonAuto : API.Abstracts.CarbonAuto
 
 				using var sb = new StringBody();
 
-				foreach (var cache in _autoCache)
+				foreach (var cache in AutoCache)
 				{
 					sb.Add($"{cache.Key} \"{cache.Value.GetValue()}\"");
 				}
@@ -164,7 +164,7 @@ public class CarbonAuto : API.Abstracts.CarbonAuto
 					var convar = value.Get(0);
 					var conval = value.Get(1).Replace("\"", string.Empty);
 
-					if (_autoCache.TryGetValue(convar, out var auto))
+					if (AutoCache.TryGetValue(convar, out var auto))
 					{
 						auto.SetValue(conval);
 						Logger.Warn($" {convar} \"{auto.GetValue()}\"{(auto.Variable.ForceModded ? " [modded]" : string.Empty)}");
