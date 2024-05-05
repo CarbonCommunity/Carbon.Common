@@ -17,9 +17,14 @@ public partial class CorePlugin : CarbonPlugin
 	[Conditional("!MINIMAL")]
 	internal object IRecyclerThinkSpeed(Recycler recycler)
 	{
-		if (recycler.IsSafezoneRecycler() && SafezoneRecycleTick != -1)
+		if (recycler.IsSafezoneRecycler())
 		{
-			return SafezoneRecycleTick;
+			if (SafezoneRecycleTick != -1)
+			{
+				return SafezoneRecycleTick;
+			}
+
+			return null;
 		}
 
 		if (RecycleTick != -1)
