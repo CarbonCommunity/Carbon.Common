@@ -1,5 +1,7 @@
 ﻿using Carbon.Base.Interfaces;
+using HarmonyLib;
 using Defines = Carbon.Core.Defines;
+using Harmony = HarmonyLib.Harmony;
 
 /*
  *
@@ -317,6 +319,8 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 		if (Hooks.Count > 0) Puts($"Unsubscribed from {Hooks.Count:n0} {Hooks.Count.Plural("hook", "hooks")}.");
 
 		OnUnload();
+
+		DoHarmonyUnpatch();
 	}
 	public virtual void OnEnabled(bool initialized)
 	{
@@ -338,6 +342,8 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 		{
 			OnServerInit(true);
 		}
+
+		DoHarmonyPatch();
 	}
 
 	public void OnEnableStatus()
@@ -383,6 +389,76 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 
 		Community.Runtime.ModuleProcessor.Uninstall(this);
 	}
+
+	#region Harmony
+
+	public Harmony HarmonyInstance;
+
+	public virtual string HarmonyDomain => $"com.carbon-module.{Name}";
+
+	public virtual bool AutoPatch => false;
+
+	public virtual void DoHarmonyPatch()
+	{
+		if (!AutoPatch)
+		{
+			return;
+		}
+
+		if (HarmonyInstance == null)
+		{
+			HarmonyInstance = new(HarmonyDomain);
+		}
+
+		foreach (var type in Type.GetNestedTypes(BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static))
+		{
+			var attribute = type.GetCustomAttributes(typeof(AutoPatchAttribute), false);
+
+			if (attribute.Length < 1)
+			{
+				continue;
+			}
+
+			try
+			{
+				var harmonyMethods = HarmonyInstance.CreateClassProcessor(type)?.Patch();
+
+				if (harmonyMethods == null || harmonyMethods.Count == 0)
+				{
+					Logger.Warn($"AutoPatch attribute found on '{type.Name}' for {ToPrettyString()} but no HarmonyPatch methods found. Skipping.");
+					continue;
+				}
+
+				foreach (MethodInfo method in harmonyMethods)
+				{
+					Logger.Log($"Automatically Harmony patched '{method.Name}' method for {ToPrettyString()}. ({type.Name})");
+				}
+			}
+			catch (Exception ex)
+			{
+				Logger.Error($"Failed to automatically Harmony patch '{type.Name}' for {ToPrettyString()}", ex);
+			}
+		}	}
+
+	public virtual void DoHarmonyUnpatch()
+	{
+		if (!AutoPatch)
+		{
+			return;
+		}
+
+		try
+		{
+			HarmonyInstance?.UnpatchAll(HarmonyDomain);
+			HarmonyInstance = null;
+		}
+		catch (Exception ex)
+		{
+			Logger.Error($"Failed auto unpatching {HarmonyDomain} for {ToPrettyString()}", ex);
+		}
+	}
+
+	#endregion
 
 	#region Localisation
 
