@@ -424,7 +424,7 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 
 				foreach (MethodInfo method in harmonyMethods)
 				{
-					Logger.Warn($"[{HarmonyDomain}] Patched '{type.Name}.{method.Name}' method.");
+					Logger.Warn($"[{HarmonyDomain}] Patched '{method.Name}' method. ({type.Name})");
 				}
 			}
 			catch (Exception ex)
@@ -447,7 +447,7 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 			{
 				foreach (var method in HarmonyInstance.GetPatchedMethods())
 				{
-					Logger.Warn($"[{HarmonyDomain}] Unpatched '{method.DeclaringType.Name}.{method.Name}' method");
+					Logger.Warn($"[{HarmonyDomain}] Unpatched '{method.Name}' method. ({method.DeclaringType.Name})");
 				}
 			}
 
