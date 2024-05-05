@@ -76,6 +76,12 @@ public partial class CorePlugin : CarbonPlugin
 		get => _ovenBlacklist;
 		set
 		{
+			if (string.IsNullOrEmpty(value))
+			{
+				OvenBlacklistCache = default;
+				return;
+			}
+
 			if (_ovenBlacklist != value)
 			{
 				OvenBlacklistCache = value.ToSplitEnumerable(',');
