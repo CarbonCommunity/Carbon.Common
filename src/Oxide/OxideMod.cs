@@ -202,12 +202,12 @@ public class OxideMod
 	{
 		var type = typeof(T);
 
-		if (type == typeof(Permission)) return Community.Runtime.CorePlugin.permission as T;
-		if (type == typeof(Lang)) return Community.Runtime.CorePlugin.lang as T;
-		if (type == typeof(Command)) return Community.Runtime.CorePlugin.cmd as T;
-		if (type == typeof(Game.Rust.Libraries.Rust)) return Community.Runtime.CorePlugin.rust as T;
-		if (type == typeof(WebRequests)) return Community.Runtime.CorePlugin.webrequest as T;
-		if (type == typeof(Timers)) return Community.Runtime.CorePlugin.timer as T;
+		if (type == typeof(Permission)) return Community.Runtime.Core.permission as T;
+		if (type == typeof(Lang)) return Community.Runtime.Core.lang as T;
+		if (type == typeof(Command)) return Community.Runtime.Core.cmd as T;
+		if (type == typeof(Game.Rust.Libraries.Rust)) return Community.Runtime.Core.rust as T;
+		if (type == typeof(WebRequests)) return Community.Runtime.Core.webrequest as T;
+		if (type == typeof(Timers)) return Community.Runtime.Core.timer as T;
 
 		name ??= type.Name;
 

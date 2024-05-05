@@ -255,9 +255,9 @@ public static unsafe partial class MonoProfiler
 				return string.Empty;
 			}
 
-			int index = 0;
+			int index = 1;
 
-			AddOrUpdate(value, index = 1, (val, arg) => index = arg++);
+			AddOrUpdate(value, index, (val, arg) => index = arg++);
 
 			return $"{value} ({index})";
 		}
@@ -489,7 +489,7 @@ public static unsafe partial class MonoProfiler
 				Logger.Warn($"[MonoProfiler] Profiling duration {TimeEx.Format(duration).ToLower()}..");
 			}
 
-			_profileTimer = Community.Runtime.CorePlugin.timer.In(duration, () =>
+			_profileTimer = Community.Runtime.Core.timer.In(duration, () =>
 			{
 				if (!IsRecording)
 				{
@@ -508,7 +508,7 @@ public static unsafe partial class MonoProfiler
 		}
 		else if(IsRecording && logging)
 		{
-			_profileWarningTimer = Community.Runtime.CorePlugin.timer.Every(60 * 5, () =>
+			_profileWarningTimer = Community.Runtime.Core.timer.Every(60 * 5, () =>
 			{
 				Logger.Warn($" Reminder: You've been profiling for {TimeEx.Format(MonoProfiler.CurrentDurationTime.TotalSeconds).ToLower()}..");
 			});

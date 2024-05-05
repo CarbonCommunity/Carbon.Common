@@ -96,7 +96,7 @@ public partial class AdminModule
 		public static ProfilerTab GetOrCache(PlayerSession session) => _instance ??= Make(session);
 		public static ProfilerTab Make(PlayerSession session)
 		{
-			var profiler = new ProfilerTab("profiler", "Profiler", Community.Runtime.CorePlugin);
+			var profiler = new ProfilerTab("profiler", "Profiler", Community.Runtime.Core);
 			profiler.OnChange = (ap, _) =>
 			{
 				profiler.Draw(ap);
@@ -718,7 +718,7 @@ public partial class AdminModule
 					LayerSettings = new()
 					{
 						Color = color,
-						Shadows = 1
+						Shadows = 0
 					}
 				});
 
@@ -772,7 +772,7 @@ public partial class AdminModule
 					LayerSettings = new()
 					{
 						Color = color,
-						Shadows = 1
+						Shadows = 0
 					}
 				});
 
@@ -824,7 +824,7 @@ public partial class AdminModule
 					LayerSettings = new()
 					{
 						Color = color,
-						Shadows = 1
+						Shadows = 0
 					}
 				});
 

@@ -23,7 +23,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 		public static Tab Get()
 		{
-			var players = new Tab("players", "Players", Community.Runtime.CorePlugin, (instance, tab) =>
+			var players = new Tab("players", "Players", Community.Runtime.Core, (instance, tab) =>
 			{
 				tab.ClearColumn(1);
 				RefreshPlayers(tab, instance);
@@ -124,7 +124,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					tab.AddButton(column, "View Permissions", ap =>
 					{
 						var perms = Singleton.FindTab("permissions");
-						var permission = Community.Runtime.CorePlugin.permission;
+						var permission = Community.Runtime.Core.permission;
 						Singleton.SetTab(ap.Player, "permissions");
 
 						ap.SetStorage(tab, "player", player.UserIDString);

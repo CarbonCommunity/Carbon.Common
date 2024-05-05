@@ -559,4 +559,27 @@ public static class StringEx
 
 		return trimEnd ? result.TrimEnd() : result;
 	}
+
+	public static IEnumerable<string> ToSplitEnumerable(this string input, char separator)
+	{
+		if (string.IsNullOrEmpty(input))
+		{
+			yield break;
+		}
+
+		var startIndex = 0;
+
+		for (int i = 0; i < input.Length; i++)
+		{
+			if (input[i] != separator) continue;
+
+			yield return input[startIndex..i];
+			startIndex = i + 1;
+		}
+
+		if (startIndex < input.Length)
+		{
+			yield return input[startIndex..];
+		}
+	}
 }

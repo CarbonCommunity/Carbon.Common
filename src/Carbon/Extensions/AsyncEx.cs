@@ -6,7 +6,7 @@ public class AsyncEx
 	{
 		var tcs = new TaskCompletionSource<bool>();
 
-		Community.Runtime.CorePlugin.NextTick(() =>
+		Community.Runtime.Core.NextTick(() =>
 		{
 			tcs.SetResult(true);
 		});

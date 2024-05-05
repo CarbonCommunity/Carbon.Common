@@ -28,7 +28,7 @@ public partial class AdminModule
 
 		public static ConfigEditor Make(string json, Action<PlayerSession, JObject> onCancel, Action<PlayerSession, JObject> onSave, Action<PlayerSession, JObject> onSaveAndReload, string[] blacklist = null)
 		{
-			var tab = new ConfigEditor("configeditor", "Config Editor", Community.Runtime.CorePlugin)
+			var tab = new ConfigEditor("configeditor", "Config Editor", Community.Runtime.Core)
 			{
 				Entry = JObject.Parse(json),
 				OnSave = onSave,
@@ -93,7 +93,7 @@ public partial class AdminModule
 								{
 									value = value.StartsWith("#") ? hex : rust;
 									usableToken.Replace(usableToken = $"#{value}");
-									Community.Runtime.CorePlugin.NextFrame(() => Singleton.SetTab(ap.Player, Make(Entry.ToString(), OnCancel, OnSave, OnSaveAndReload), false));
+									Community.Runtime.Core.NextFrame(() => Singleton.SetTab(ap.Player, Make(Entry.ToString(), OnCancel, OnSave, OnSaveAndReload), false));
 								}, tooltip: $"The color value of the '{name.Trim()}' property.");
 							}
 							else AddInput(column, name, ap => usableToken.ToObject<string>(), (ap, args) => { usableToken.Replace(usableToken = args.ToString(" ")); });

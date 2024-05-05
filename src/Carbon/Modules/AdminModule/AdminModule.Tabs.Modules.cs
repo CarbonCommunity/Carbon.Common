@@ -67,7 +67,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				}
 			}
 
-			tab = new Tab("modules", "Modules", Community.Runtime.CorePlugin, access: "modules.use", onChange: (ap, tab) =>
+			tab = new Tab("modules", "Modules", Community.Runtime.Core, access: "modules.use", onChange: (ap, tab) =>
 			{
 				ap.ClearStorage(tab, "selectedmodule");
 				Draw(ap);

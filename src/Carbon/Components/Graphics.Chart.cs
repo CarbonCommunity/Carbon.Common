@@ -59,7 +59,7 @@ public struct Chart
 		var thread = new ProcessingThread();
 		thread.Chart = this;
 		thread.Start();
-		Community.Runtime.CorePlugin.persistence.StartCoroutine(thread.WaitFor());
+		Community.Runtime.Core.persistence.StartCoroutine(thread.WaitFor());
 	}
 
 	public struct ChartSettings

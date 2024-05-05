@@ -15,41 +15,75 @@ public partial class CorePlugin : CarbonPlugin
 	[AuthLevel(2)]
 	public bool IsForceModded { get { return CarbonAuto.Singleton.IsForceModded(); } set { } }
 
-	[CarbonAutoVar("recycletick", help: "Configures the recycling ticks speed.", forceModded: true)]
+	#region Modded
+
+	[CarbonAutoModdedVar("recycletick", help: "Configures the recycling ticks speed.")]
 	[AuthLevel(2)]
 	public float RecycleTick = -1;
 
-	[CarbonAutoVar("safezonerecycletick", help: "Configures the SafeZone recycling ticks speed.", forceModded: true)]
+	[CarbonAutoModdedVar("safezonerecycletick", help: "Configures the SafeZone recycling ticks speed.")]
 	[AuthLevel(2)]
 	public float SafezoneRecycleTick = -1;
 
-	[CarbonAutoVar("researchduration", help: "The duration of waiting whenever researching blueprints.", forceModded: true)]
+	[CarbonAutoModdedVar("researchduration", help: "The duration of waiting whenever researching blueprints.")]
 	[AuthLevel(2)]
 	public float ResearchDuration = -1;
 
-	[CarbonAutoVar("vendingmachinebuyduration", help: "The duration of transaction delay when buying from vending machines.", forceModded: true)]
+	[CarbonAutoModdedVar("vendingmachinebuyduration", help: "The duration of transaction delay when buying from vending machines.")]
 	[AuthLevel(2)]
 	public float VendingMachineBuyDuration = -1;
 
-	[CarbonAutoVar("craftingspeedmultiplier", help: "The time multiplier of crafting items.", forceModded: true)]
+	[CarbonAutoModdedVar("craftingspeedmultiplier", help: "The time multiplier of crafting items.")]
 	[AuthLevel(2)]
 	public float CraftingSpeedMultiplier = -1;
 
-	[CarbonAutoVar("mixingspeedmultiplier", help: "The speed multiplier of mixing table crafts.", forceModded: true)]
+	[CarbonAutoModdedVar("mixingspeedmultiplier", help: "The speed multiplier of mixing table crafts.")]
 	[AuthLevel(2)]
 	public float MixingSpeedMultiplier = -1;
 
-	[CarbonAutoVar("exacavatorresourcetickrate", help: "Excavator resource tick rate.", forceModded: true)]
+	[CarbonAutoModdedVar("exacavatorresourcetickrate", help: "Excavator resource tick rate.")]
 	[AuthLevel(2)]
 	public float ExcavatorResourceTickRate = -1;
 
-	[CarbonAutoVar("excavatortimeforfullresources", help: "Excavator time for processing full resources.", forceModded: true)]
+	[CarbonAutoModdedVar("excavatortimeforfullresources", help: "Excavator time for processing full resources.")]
 	[AuthLevel(2)]
 	public float ExcavatorTimeForFullResources = -1;
 
-	[CarbonAutoVar("excavatorbeltspeedmax", help: "Excavator belt maximum speed.", forceModded: true)]
+	[CarbonAutoModdedVar("excavatorbeltspeedmax", help: "Excavator belt maximum speed.")]
 	[AuthLevel(2)]
 	public float ExcavatorBeltSpeedMax = -1;
+
+	[CarbonAutoModdedVar("ovenspeedmultiplier", help: "The burning speed of ovens.")]
+	[AuthLevel(2)]
+	public float OvenSpeedMultiplier = -1;
+
+	[CarbonAutoModdedVar("ovenblacklistspeedmultiplier", help: "The burning speed of blacklisted ovens.")]
+	[AuthLevel(2)]
+	public float OvenBlacklistSpeedMultiplier = -1;
+
+	#endregion
+
+	#region Vanilla
+
+	public IEnumerable<string> OvenBlacklistCache;
+
+	private string _ovenBlacklist = "furnace,bbq.static,furnace.large";
+
+	[CarbonAutoVar("ovenblacklist", help: "Blacklisted oven entity prefabs.")]
+	[AuthLevel(2)]
+	public string OvenBlacklist
+	{
+		get => _ovenBlacklist;
+		set
+		{
+			if (_ovenBlacklist != value)
+			{
+				OvenBlacklistCache = value.ToSplitEnumerable(',');
+			}
+
+			_ovenBlacklist = value;
+		}
+	}
 
 	[CarbonAutoVar("defaultserverchatname", help: "Default server chat name.")]
 	[AuthLevel(2)]
@@ -62,5 +96,7 @@ public partial class CorePlugin : CarbonPlugin
 	[CarbonAutoVar("defaultserverchatid", help: "Default server chat icon SteamID.")]
 	[AuthLevel(2)]
 	public long DefaultServerChatId = -1;
+
+	#endregion
 #endif
 }

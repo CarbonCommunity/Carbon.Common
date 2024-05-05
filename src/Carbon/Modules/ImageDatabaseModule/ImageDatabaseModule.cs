@@ -20,6 +20,7 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 {
 	public override string Name => "ImageDatabase";
 	public override Type Type => typeof(ImageDatabaseModule);
+	public override VersionNumber Version => new(1, 0, 0);
 	public override bool EnabledByDefault => true;
 	public override bool ForceEnabled => true;
 
@@ -47,7 +48,9 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 		["gear"] = "https://carbonmod.gg/assets/media/cui/gear.png",
 		["close"] = "https://carbonmod.gg/assets/media/cui/close.png",
 		["fade"] = "https://carbonmod.gg/assets/media/cui/fade.png",
-		["graph"] = "https://carbonmod.gg/assets/media/cui/graph.png"
+		["graph"] = "https://carbonmod.gg/assets/media/cui/graph.png",
+		["maximize"] = "https://carbonmod.gg/assets/media/cui/maximize.png",
+		["minimize"] = "https://carbonmod.gg/assets/media/cui/minimize.png"
 	};
 
 	internal IEnumerator _executeQueue(QueuedThread thread, Action<List<QueuedThreadResult>> onFinished)
@@ -292,7 +295,7 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 
 		if (ConfigInstance.InitializedBatchLogs && thread.ImageUrls.Count > 0) Puts($"Added {thread.ImageUrls.Count:n0} to the queue (scale: {(scale == 0 ? "default" : $"{scale:0.0}")})...");
 
-		Community.Runtime.CorePlugin.persistence.StartCoroutine(_executeQueue(thread, results =>
+		Community.Runtime.Core.persistence.StartCoroutine(_executeQueue(thread, results =>
 		{
 			try
 			{
@@ -310,7 +313,7 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 			}
 		}));
 
-		Community.Runtime.CorePlugin.timer.In(ConfigInstance.TimeoutPerUrl * urls.Count(), () =>
+		Community.Runtime.Core.timer.In(ConfigInstance.TimeoutPerUrl * urls.Count(), () =>
 		{
 			if (thread._disposed) return;
 
