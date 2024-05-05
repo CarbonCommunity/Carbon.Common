@@ -150,6 +150,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 	{
 		base.OnEnabled(initialized);
 
+		if (!initialized) return;
+
 		foreach (var command in ConfigInstance.OpenCommands)
 		{
 			var action = new Action<BasePlayer, string, string[]>((player, cmd, args) =>
@@ -184,6 +186,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			Permissions.RegisterPermission($"adminmodule.{perm}", this);
 		}
 	}
+
 	public override void OnDisabled(bool initialized)
 	{
 		if (initialized)
