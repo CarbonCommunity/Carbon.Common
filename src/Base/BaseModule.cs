@@ -394,7 +394,7 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 
 	public Harmony HarmonyInstance;
 
-	public virtual string HarmonyDomain => $"com.carbon-module.{Name}";
+	public virtual string HarmonyDomain => $"com.carbon-module.{Name}".Replace(" ", string.Empty).ToLower();
 
 	public virtual bool AutoPatch => false;
 
@@ -424,12 +424,12 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 
 				foreach (MethodInfo method in harmonyMethods)
 				{
-					PutsWarn($"Automatically Harmony patched '{method.Name}' method. ({type.Name})");
+					Logger.Warn($"[{HarmonyDomain}] Patched '{type.Name}.{method.Name}' method.");
 				}
 			}
 			catch (Exception ex)
 			{
-				PutsError($"Failed to automatically Harmony patch '{type.Name}' for {ToPrettyString()}", ex);
+				Logger.Error($"[{HarmonyDomain}] Failed to patch '{type.Name}'", ex);
 			}
 		}
 	}
@@ -447,7 +447,7 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 			{
 				foreach (var method in HarmonyInstance.GetPatchedMethods())
 				{
-					PutsWarn($"Unpatched Harmony method '{method.Name}' method. ({method.DeclaringType.Name})");
+					Logger.Warn($"[{HarmonyDomain}] Unpatched '{method.DeclaringType.Name}.{method.Name}' method");
 				}
 			}
 
@@ -456,7 +456,7 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 		}
 		catch (Exception ex)
 		{
-			Logger.Error($"Failed auto unpatching {HarmonyDomain} for {ToPrettyString()}", ex);
+			Logger.Error($"[{HarmonyDomain}] Failed unpatching for {ToPrettyString()}", ex);
 		}
 	}
 
