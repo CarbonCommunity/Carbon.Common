@@ -95,6 +95,11 @@ public partial class CorePlugin : CarbonPlugin
 	[Conditional("!MINIMAL")]
 	internal object IOvenSmeltSpeedMultiplier(BaseOven oven)
 	{
+		if (OvenBlacklistCache == null)
+		{
+			return null;
+		}
+
 		if (Enumerable.Contains(OvenBlacklistCache, oven.ShortPrefabName) ||
 		    Enumerable.Contains(OvenBlacklistCache, oven.GetType().Name))
 		{
