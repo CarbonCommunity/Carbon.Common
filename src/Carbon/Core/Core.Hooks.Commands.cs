@@ -7,13 +7,14 @@
 
 using API.Commands;
 using ConVar;
+using Command = API.Commands.Command;
 
 namespace Carbon.Core;
 #pragma warning disable IDE0051
 
 public partial class CorePlugin : CarbonPlugin
 {
-	public static object IOnPlayerCommand(BasePlayer player, string message)
+	public static object IOnPlayerCommand(BasePlayer player, string message, Command.Prefix prefix)
 	{
 		if (Community.Runtime == null) return Cache.True;
 
@@ -57,13 +58,21 @@ public partial class CorePlugin : CarbonPlugin
 				return Cache.False;
 			}
 
-			player.ChatMessage($"<color=orange>Unknown command:</color> {message}");
+			if (player.Connection.authLevel >= prefix.SuggestionAuthLevel && Suggestions.Lookup(command, Community.Runtime.CommandManager.Chat.Select(x => x.Name)) is var result && result.Confidence <= 5)
+			{
+				var suggestion = Suggestions.Lookup(command, Community.Runtime.CommandManager.Chat.Select(x => x.Name));
+
+				player.ChatMessage($"<color=orange>Unknown command:</color> {message}\n<size=12s>Suggesting: /{suggestion.Result}</size>");
+			}
+			else
+			{
+				player.ChatMessage($"<color=orange>Unknown command:</color> {message}");
+			}
 
 			if (HookCaller.CallStaticHook(554444971, player, command, args) != null)
 			{
 				return Cache.False;
 			}
-
 		}
 		catch (Exception ex) { Logger.Error($"Failed IOnPlayerCommand.", ex); }
 

@@ -98,6 +98,7 @@ public class Config
 		public Severity LogSeverity { get; set; } = Severity.Notice;
 		public int LogFileMode { get; set; } = 2;
 		public int LogVerbosity { get; set; } = 0;
+		public bool CommandSuggestions { get; set; } = true;
 	}
 
 	public class MiscConfig

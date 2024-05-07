@@ -284,7 +284,8 @@ public class Community
 			{
 				Value = "/",
 				PrintToChat = false,
-				PrintToConsole = false
+				PrintToConsole = false,
+				SuggestionAuthLevel = 2
 			});
 		}
 
