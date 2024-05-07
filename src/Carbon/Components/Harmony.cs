@@ -35,19 +35,21 @@ public class Harmony
 			}
 		}
 
-		CurrentPatches.Add(new PatchInfoEntry(assemblyName, assemblyName, null, null, null, harmony));
+		CurrentPatches.Add(new PatchInfoEntry(assemblyName + ".dll", assemblyName, null, null, null, harmony));
 	}
 	public static void UnpatchAll(string assembly)
 	{
-		var patches = Pool.GetList<PatchInfoEntry>();
-		patches.AddRange(CurrentPatches.Where(x => x.AssemblyName == assembly));
+		assembly += ".dll";
 
-		foreach (var a in patches )
+		var patches = Pool.GetList<PatchInfoEntry>();
+		patches.AddRange(CurrentPatches.Where(x => x.ParentAssemblyName.Equals(assembly)));
+
+		foreach (var a in patches)
 		{
 			a.Unpatch();
 		}
 
-		CurrentPatches.RemoveAll(x => x.AssemblyName == assembly);
+		CurrentPatches.RemoveAll(x => x.ParentAssemblyName.Equals(assembly));
 		Pool.FreeList(ref patches);
 	}
 
