@@ -291,6 +291,8 @@ public class Community
 		if (Config.Aliases.Count == 0)
 		{
 			Config.Aliases["carbon"] = "c.version";
+			Config.Aliases["harmony.load"] = "c.harmonyload";
+			Config.Aliases["harmony.unload"] = "c.harmonyunload";
 		}
 
 		// Mandatory for across the board access
