@@ -247,17 +247,54 @@ public class Community
 
 		Config.Compiler.ConditionalCompilationSymbols = Config.Compiler.ConditionalCompilationSymbols.Distinct().ToList();
 
-		if (Config.CommandPrefixes == null)
+		if (Config.Prefixes == null)
 		{
-			Config.CommandPrefixes = new();
+			Config.Prefixes = new();
 			needsSave = true;
 		}
 
-		if (Config.CommandPrefixes.Count == 0)
-			Config.CommandPrefixes.Add("/");
+		if (Config.Aliases == null)
+		{
+			Config.Aliases = new();
+			needsSave = true;
+		}
+		else
+		{
+			var invalidAliases = Pool.GetList<string>();
+			invalidAliases.AddRange(from alias in Config.Aliases
+				where !Config.IsValidAlias(alias.Key, out _) select alias.Key);
+
+			foreach (var invalidAlias in invalidAliases)
+			{
+				Config.Aliases.Remove(invalidAlias);
+				Logger.Warn($" Removed invalid alias: {invalidAlias}");
+			}
+
+			if (invalidAliases.Count > 0)
+			{
+				needsSave = true;
+			}
+
+			Pool.FreeList(ref invalidAliases);
+		}
+
+		if (Config.Prefixes.Count == 0)
+		{
+			Config.Prefixes.Add(new()
+			{
+				Value = "/",
+				PrintToChat = false,
+				PrintToConsole = false
+			});
+		}
+
+		if (Config.Aliases.Count == 0)
+		{
+			Config.Aliases["carbon"] = "c.version";
+		}
 
 		// Mandatory for across the board access
-		API.Commands.Command.Prefixes = Config.CommandPrefixes;
+		API.Commands.Command.Prefixes = Config.Prefixes;
 
 		Logger.CoreLog.SplitSize = (int)(Community.Runtime.Config.Logging.LogSplitSize * 1000000f);
 

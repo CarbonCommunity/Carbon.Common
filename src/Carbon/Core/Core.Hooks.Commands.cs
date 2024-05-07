@@ -26,10 +26,9 @@ public partial class CorePlugin : CarbonPlugin
 				return Cache.False;
 			}
 
-			var split = fullString.Split(ConsoleArgEx.CommandSpacing, StringSplitOptions.RemoveEmptyEntries);
-			var command = split[0].Trim();
+			using var split = TemporaryArray<string>.New(fullString.Split(ConsoleArgEx.CommandSpacing, StringSplitOptions.RemoveEmptyEntries));
+			var command = split.Get(0).Trim();
 			var args = split.Length > 1 ? Facepunch.Extend.StringExtensions.SplitQuotesStrings(fullString[(command.Length + 1)..]) : _emptyStringArray;
-			Array.Clear(split, 0, split.Length);
 
 			// OnUserCommand
 			if (HookCaller.CallStaticHook(1077563450, player, command, args) != null)
@@ -58,10 +57,13 @@ public partial class CorePlugin : CarbonPlugin
 				return Cache.False;
 			}
 
+			player.ChatMessage($"<color=orange>Unknown command:</color> {message}");
+
 			if (HookCaller.CallStaticHook(554444971, player, command, args) != null)
 			{
 				return Cache.False;
 			}
+
 		}
 		catch (Exception ex) { Logger.Error($"Failed IOnPlayerCommand.", ex); }
 
@@ -72,12 +74,7 @@ public partial class CorePlugin : CarbonPlugin
 		if (arg != null && arg.cmd != null && arg.Player() != null && arg.cmd.FullName == "chat.say") return null;
 
 		// OnServerCommand
-		if (HookCaller.CallStaticHook(3282920085, arg) != null)
-		{
-			return Cache.True;
-		}
-
-		return null;
+		return HookCaller.CallStaticHook(3282920085, arg) != null ? Cache.True : null;
 	}
 	public static object IOnPlayerChat(ulong playerId, string playerName, string message, Chat.ChatChannel channel, BasePlayer basePlayer)
 	{
@@ -97,12 +94,7 @@ public partial class CorePlugin : CarbonPlugin
 		// OnUserChat
 		var hook2 = HookCaller.CallStaticHook(2410402155, basePlayer.AsIPlayer(), message);
 
-		if (hook1 != null)
-		{
-			return hook1;
-		}
-
-		return hook2;
+		return hook1 ?? hook2;
 	}
 
 	internal static object IOnRconInitialize()

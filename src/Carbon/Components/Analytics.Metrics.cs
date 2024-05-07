@@ -70,19 +70,6 @@ public partial struct Analytics
 			Include("carbonplugin", $"{carbonPluginCount:n0}").
 			Submit("batch_plugin_types");
 	}
-	public static void o_command_attempt(string command, ConsoleSystem.Option option)
-	{
-		if (!Enabled)
-		{
-			return;
-		}
-
-		Singleton.
-			Include("command", command).
-			Include("from_player", option.Connection?.player != null).
-			Include("from_server", option.FromRcon).
-			Submit("o_command_attempt");
-	}
 	public static void plugin_time_warn(string readableHook, Plugin basePlugin, double afterHookTime, double totalMemory, BaseHookable.CachedHook cachedHook, BaseHookable hookable, bool lagSpike)
 	{
 		if (!Enabled)
