@@ -11,7 +11,7 @@ public class Harmony
 	public static void PatchAll(Assembly assembly)
 	{
 		var assemblyName = assembly.GetName().Name;
-		var harmony = new HarmonyLib.Harmony($"com.comp-harmony.{assemblyName}");
+		var harmony = new HarmonyLib.Harmony($"com.compat-harmony.{assemblyName}");
 
 		foreach (var type in assembly.GetExportedTypes().Where(x => x.GetCustomAttribute<HarmonyPatch>() != null))
 		{
@@ -35,7 +35,7 @@ public class Harmony
 			}
 		}
 
-		CurrentPatches.Add(new PatchInfoEntry(assemblyName, null, null, null, harmony));
+		CurrentPatches.Add(new PatchInfoEntry(assemblyName, assemblyName, null, null, null, harmony));
 	}
 	public static void UnpatchAll(string assembly)
 	{
@@ -53,6 +53,7 @@ public class Harmony
 
 	public class PatchInfoEntry
 	{
+		public string ParentAssemblyName;
 		public string AssemblyName;
 		public string TypeName;
 		public string MethodName;
@@ -60,9 +61,10 @@ public class Harmony
 		public HarmonyLib.Harmony Harmony;
 		public MethodBase runtime_method;
 
-		public PatchInfoEntry(string assemblyName, string methodName, string typeName, string reason,
+		public PatchInfoEntry(string parentAssemblyName, string assemblyName, string methodName, string typeName, string reason,
 			HarmonyLib.Harmony harmony)
 		{
+			this.ParentAssemblyName = parentAssemblyName;
 			this.AssemblyName = assemblyName;
 			this.MethodName = methodName;
 			this.TypeName = typeName;
@@ -70,10 +72,11 @@ public class Harmony
 			this.Harmony = harmony;
 		}
 
-		public PatchInfoEntry(MethodBase method, HarmonyLib.Harmony harmony)
+		public PatchInfoEntry(string parentAssemblyName,MethodBase method, HarmonyLib.Harmony harmony)
 		{
-			this.runtime_method = method;
+			this.ParentAssemblyName = parentAssemblyName;
 			this.Harmony = harmony;
+			this.runtime_method = method;
 		}
 
 		public void Unpatch()
