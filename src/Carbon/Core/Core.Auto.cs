@@ -33,9 +33,21 @@ public partial class CorePlugin : CarbonPlugin
 	[AuthLevel(2)]
 	public float VendingMachineBuyDuration = -1;
 
-	[CarbonAutoModdedVar("craftingspeedmultiplier", "Crafting Speed (*)", help: "The time multiplier of crafting items.")]
+	[CarbonAutoModdedVar("craftingspeedmultiplier_nowb", "Crafting Speed - No WB (*)", help: "The time multiplier of crafting items without a workbench.")]
 	[AuthLevel(2)]
-	public float CraftingSpeedMultiplier = -1;
+	public float CraftingSpeedMultiplierNoWB = -1;
+
+	[CarbonAutoModdedVar("craftingspeedmultiplier_wb1", "Crafting Speed - WB 1 (*)", help: "The time multiplier of crafting items at workbench level 1.")]
+	[AuthLevel(2)]
+	public float CraftingSpeedMultiplierWB1 = -1;
+
+	[CarbonAutoModdedVar("craftingspeedmultiplier_wb2", "Crafting Speed - WB 2 (*)", help: "The time multiplier of crafting items at workbench level 2.")]
+	[AuthLevel(2)]
+	public float CraftingSpeedMultiplierWB2 = -1;
+
+	[CarbonAutoModdedVar("craftingspeedmultiplier_wb3", "Crafting Speed - WB 3 (*)", help: "The time multiplier of crafting items at workbench level 3.")]
+	[AuthLevel(2)]
+	public float CraftingSpeedMultiplierWB3 = -1;
 
 	[CarbonAutoModdedVar("mixingspeedmultiplier", "Mixing Speed (*)", help: "The speed multiplier of mixing table crafts.")]
 	[AuthLevel(2)]
