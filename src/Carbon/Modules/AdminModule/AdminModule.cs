@@ -330,6 +330,11 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 	[Conditional("!MINIMAL")]
 	private bool CanAccess(BasePlayer player)
 	{
+		if (player == null)
+		{
+			return false;
+		}
+
 		if (HookCaller.CallStaticHook(3097360729, player) is bool result)
 		{
 			return result;
