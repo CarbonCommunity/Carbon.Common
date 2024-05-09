@@ -199,6 +199,11 @@ namespace Oxide.Game.Rust.Libraries.Covalence
 
 		public GenericPosition Position()
 		{
+			if (BasePlayer == null)
+			{
+				return GenericPosition.Blank;
+			}
+
 			var position = BasePlayer.transform.position;
 			return new GenericPosition(position.x, position.y, position.z);
 		}
@@ -217,8 +222,8 @@ namespace Oxide.Game.Rust.Libraries.Covalence
 				{
 					return;
 				}
+
 				userData.Groups.Clear();
-				return;
 			}
 			else
 			{
@@ -229,7 +234,6 @@ namespace Oxide.Game.Rust.Libraries.Covalence
 
 				// OnUserGroupRemoved
 				HookCaller.CallStaticHook(2616322405, Id, name);
-				return;
 			}
 		}
 
@@ -304,7 +308,7 @@ namespace Oxide.Game.Rust.Libraries.Covalence
 					BasePlayer.SetParent(null, true, true);
 					BasePlayer.SetServerFall(true);
 					BasePlayer.MovePosition(position);
-					BasePlayer.ClientRPCPlayer<Vector3>(null, BasePlayer, "ForcePositionTo", position);
+					BasePlayer.ClientRPC(RpcTarget.Player("ForcePositionTo", BasePlayer), position);
 				}
 				finally
 				{

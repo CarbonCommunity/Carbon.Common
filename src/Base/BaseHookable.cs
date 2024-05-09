@@ -149,11 +149,6 @@ public class BaseHookable
 	internal int _currentGcCount;
 	internal TimeSince? _initializationTime;
 
-#if DEBUG
-	public HookTimeAverage HookTimeAverage { get; protected set; }
-	public MemoryAverage MemoryAverage { get; protected set; }
-#endif
-
 	public TimeSpan CurrentHookTime { get; internal set; }
 	public static long CurrentMemory => GC.GetTotalMemory(false);
 	public static int CurrentGcCount => GC.CollectionCount(0);
@@ -165,18 +160,6 @@ public class BaseHookable
 		{
 			_initializationTime = 0;
 		}
-
-#if DEBUG
-		if (HookTimeAverage == null)
-		{
-			HookTimeAverage = new(Community.Runtime.Config.Debugging.PluginTrackingTime);
-		}
-
-		if (MemoryAverage == null)
-		{
-			MemoryAverage = new(Community.Runtime.Config.Debugging.PluginTrackingTime);
-		}
-#endif
 	}
 	public virtual void TrackStart()
 	{

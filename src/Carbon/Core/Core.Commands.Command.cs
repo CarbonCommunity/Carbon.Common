@@ -23,6 +23,7 @@ public partial class CorePlugin : CarbonPlugin
 			if (command.HasFlag(CommandFlags.Hidden) || (!string.IsNullOrEmpty(filter) && !command.Name.Contains(filter))) continue;
 
 			var value = " ";
+			var moddedStatus = string.Empty;
 
 			if (command.Token != null)
 			{
@@ -35,7 +36,18 @@ public partial class CorePlugin : CarbonPlugin
 				value = new string('*', value.Length);
 			}
 
-			body.AddRow($" {command.Name}", value, command.Help);
+			if (command.Token != null)
+			{
+				switch (command.Token)
+				{
+					case FieldInfo field when field.GetCustomAttribute<CarbonAutoVar>() is CarbonAutoVar autoVar && autoVar.ForceModded:
+					case PropertyInfo property when property.GetCustomAttribute<CarbonAutoVar>() is CarbonAutoVar autoVar2 && autoVar2.ForceModded:
+						moddedStatus += $" Marks the server to be modded.";
+						break;
+				}
+			}
+
+			body.AddRow($" {command.Name}", value, command.Help + moddedStatus);
 		}
 
 		arg.ReplyWith(body.Write(StringTable.FormatTypes.None));

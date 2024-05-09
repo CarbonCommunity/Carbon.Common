@@ -14,7 +14,7 @@ namespace Oxide.Game.Rust.Libraries;
 public class Player : Library
 {
 	internal static readonly string ipPattern = ":{1}[0-9]{1}\\d*";
-	internal Permission permission => Community.Runtime.CorePlugin.permission;
+	internal Permission permission => Community.Runtime.Core.permission;
 
 	public CultureInfo Language(BasePlayer player)
 	{
@@ -171,7 +171,7 @@ public class Player : Library
 				player.SetParent(null, true, true);
 				player.SetServerFall(true);
 				player.MovePosition(destination);
-				player.ClientRPCPlayer<Vector3>(null, player, "ForcePositionTo", destination);
+				player.ClientRPC(RpcTarget.Player("ForcePositionTo", player), destination);
 			}
 			finally
 			{

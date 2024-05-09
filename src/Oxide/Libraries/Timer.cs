@@ -13,7 +13,7 @@ namespace Oxide.Plugins;
 public class Timers : Library
 {
 	public Plugin Plugin { get; }
-	internal List<Timer> _timers { get; set; } = new List<Timer>();
+	internal List<Timer> _timers { get; set; } = new();
 
 	public Timers() { }
 	public Timers(Plugin plugin)

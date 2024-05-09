@@ -13,6 +13,8 @@ public class GenericPosition
 	public float Y;
 	public float Z;
 
+	public static GenericPosition Blank = new();
+
 	public GenericPosition()
 	{
 	}

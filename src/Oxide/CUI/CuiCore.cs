@@ -352,10 +352,13 @@ public class CuiRawImageComponent : ICuiComponent, ICuiColor
 	[JsonProperty("fadeIn", NullValueHandling = NullValueHandling.Ignore, DefaultValueHandling = DefaultValueHandling.Ignore)]
 	public float FadeIn { get; set; }
 }
-public class CuiRectTransformComponent : ICuiComponent
+public class CuiRectTransformComponent : CuiRectTransform, ICuiComponent
 {
 	public string Type => "RectTransform";
 
+}
+public class CuiRectTransform
+{
 	[DefaultValue("0 0")]
 	[JsonProperty("anchormin", NullValueHandling = NullValueHandling.Ignore, DefaultValueHandling = DefaultValueHandling.Ignore)]
 	public string AnchorMin { get; set; } = "0 0";
@@ -452,7 +455,7 @@ public class CuiScrollViewComponent : ICuiComponent
 	public string MaskSoftness { get; set; } = "0 0";
 
 	[JsonProperty("contentTransform")]
-	public CuiRectTransformComponent ContentTransform { get; set; } = new()
+	public CuiRectTransform ContentTransform { get; set; } = new()
 	{
 		AnchorMin = "0 0",
 		AnchorMax = "1 1",
@@ -461,12 +464,12 @@ public class CuiScrollViewComponent : ICuiComponent
 	};
 
 	[JsonProperty("horizontalScrollbar")]
-	public CuiScrollBarComponent HorizontalScrollBar { get; set; } = new();
+	public CuiScrollbar HorizontalScrollbar { get; set; } = new();
 
 	[JsonProperty("verticalScrollbar")]
-	public CuiScrollBarComponent VerticalScrollBar { get; set; } = new();
+	public CuiScrollbar VerticalScrollbar { get; set; } = new();
 }
-public class CuiScrollBarComponent : ICuiComponent
+public class CuiScrollbar : ICuiComponent
 {
 	public string Type => "UnityEngine.UI.Scrollbar";
 

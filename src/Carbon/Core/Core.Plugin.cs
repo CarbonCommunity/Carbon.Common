@@ -103,11 +103,6 @@ public partial class CorePlugin : CarbonPlugin
 			Array.Clear(lines, 0, lines.Length);
 			lines = null;
 		}
-
-#if !MINIMAL
-		CarbonAuto.Init();
-		API.Abstracts.CarbonAuto.Singleton.Load();
-#endif
 	}
 	private void OnServerSave()
 	{

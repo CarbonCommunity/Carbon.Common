@@ -177,9 +177,9 @@ public readonly struct CUI : IDisposable
 	{
 		return Manager.Countdown(container, parent, startTime, endTime, step, command, fadeIn, fadeOut, id, destroyUi, update);
 	}
-	public Pair<string, CuiElement> CreateScrollView(CuiElementContainer container, string parent,bool vertical, bool horizontal, ScrollRect.MovementType movementType, float elasticity, bool inertia, float decelerationRate, float scrollSensitivity, string maskSoftness, out CuiRectTransformComponent contentTransform, out CuiScrollBarComponent horizontalScrollBar, out CuiScrollBarComponent verticalScrollBar, float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string id = null, string destroyUi = null, bool update = false)
+	public Pair<string, CuiElement> CreateScrollView(CuiElementContainer container, string parent,bool vertical, bool horizontal, ScrollRect.MovementType movementType, float elasticity, bool inertia, float decelerationRate, float scrollSensitivity, string maskSoftness, out CuiRectTransform contentTransformComponent, out CuiScrollbar horizontalScrollBar, out CuiScrollbar verticalScrollBar, float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string id = null, string destroyUi = null, bool update = false)
 	{
-		return Manager.ScrollView(container, parent, vertical, horizontal, movementType, elasticity, inertia, decelerationRate, scrollSensitivity, maskSoftness, out contentTransform, out horizontalScrollBar, out verticalScrollBar, xMin, xMax, yMin, yMax, OxMin, OxMax, OyMin, OyMax, fadeIn, fadeOut, needsCursor, needsKeyboard, id, destroyUi, update);
+		return Manager.ScrollView(container, parent, vertical, horizontal, movementType, elasticity, inertia, decelerationRate, scrollSensitivity, maskSoftness, out contentTransformComponent, out horizontalScrollBar, out verticalScrollBar, xMin, xMax, yMin, yMax, OxMin, OxMax, OyMin, OyMax, fadeIn, fadeOut, needsCursor, needsKeyboard, id, destroyUi, update);
 	}
 
 	public static string HexToRustColor(string hexColor, float? alpha = null, bool includeAlpha = true)
@@ -321,7 +321,7 @@ public readonly struct CUI : IDisposable
 		internal List<ICuiComponent> _countdowns = new();
 		internal List<ICuiComponent> _outlines = new();
 		internal List<ICuiComponent> _scrollViews = new();
-		internal List<ICuiComponent> _scrollBars = new();
+		internal List<ICuiComponent> _scrollbars = new();
 
 		#endregion
 
@@ -330,7 +330,7 @@ public readonly struct CUI : IDisposable
 		internal CuiRectPosition _defaultPosition = new(0f, 1f, 0f, 1f);
 		internal CuiImageComponent _defaultImage = new();
 		internal CuiRawImageComponent _defaultRawImage = new();
-		internal CuiRectTransformComponent _defaultRectTransform = new()
+		internal CuiRectTransformComponent DefaultRectTransformComponent = new()
 		{
 			OffsetMax = "0 0"
 		};
@@ -340,7 +340,7 @@ public readonly struct CUI : IDisposable
 		internal CuiCountdownComponent _defaultCountdown = new();
 		internal CuiOutlineComponent _defaultOutline = new();
 		internal CuiScrollViewComponent _defaultScrollView = new();
-		internal CuiScrollBarComponent _defaultScrollBar = new();
+		internal CuiScrollbar _defaultScrollBar = new();
 
 		#endregion
 
@@ -369,23 +369,13 @@ public readonly struct CUI : IDisposable
 				case CuiOutlineComponent: _outlines.Add(element); break;
 				case CuiScrollViewComponent scrollView:
 				{
-					if (scrollView.ContentTransform != null)
-					{
-						_rects.Add(scrollView.ContentTransform);
-					}
+					SendToPool(scrollView.HorizontalScrollbar);
+					SendToPool(scrollView.VerticalScrollbar);
 
-					if (scrollView.HorizontalScrollBar != null)
-					{
-						_scrollBars.Add(scrollView.HorizontalScrollBar);
-					}
-					if (scrollView.VerticalScrollBar != null)
-					{
-						_scrollBars.Add(scrollView.VerticalScrollBar);
-					}
-
-					_scrollViews.Add(element); break;
+					_scrollViews.Add(element);
+					break;
 				}
-				case CuiScrollBarComponent: _scrollBars.Add(element); break;
+				case CuiScrollbar: _scrollbars.Add(element); break;
 			}
 		}
 		public void SendToPool()
@@ -523,10 +513,10 @@ public readonly struct CUI : IDisposable
 			else
 			{
 				element = _rects[0] as CuiRectTransformComponent;
-				element.AnchorMin = _defaultRectTransform.AnchorMin;
-				element.AnchorMax = _defaultRectTransform.AnchorMax;
-				element.OffsetMin = _defaultRectTransform.OffsetMin;
-				element.OffsetMax = _defaultRectTransform.OffsetMax;
+				element.AnchorMin = DefaultRectTransformComponent.AnchorMin;
+				element.AnchorMax = DefaultRectTransformComponent.AnchorMax;
+				element.OffsetMin = DefaultRectTransformComponent.OffsetMin;
+				element.OffsetMax = DefaultRectTransformComponent.OffsetMax;
 				_rects.RemoveAt(0);
 			}
 
@@ -707,13 +697,13 @@ public readonly struct CUI : IDisposable
 				element.DecelerationRate = _defaultScrollView.DecelerationRate;
 				element.ScrollSensitivity = _defaultScrollView.ScrollSensitivity;
 				element.MaskSoftness = _defaultScrollView.MaskSoftness;
-				element.ContentTransform = TakeFromPoolRect();
+				element.ContentTransform = new();
 				element.ContentTransform.AnchorMin = "0 0";
 				element.ContentTransform.AnchorMax = "1 1";
 				element.ContentTransform.OffsetMin = "0 0";
 				element.ContentTransform.OffsetMax = "0 0";
-				element.HorizontalScrollBar = TakeFromPoolScrollbar();
-				element.VerticalScrollBar = TakeFromPoolScrollbar();
+				element.HorizontalScrollbar = TakeFromPoolScrollbar();
+				element.VerticalScrollbar = TakeFromPoolScrollbar();
 
 				_scrollViews.RemoveAt(0);
 			}
@@ -721,17 +711,17 @@ public readonly struct CUI : IDisposable
 			_queue.Add(element);
 			return element;
 		}
-		public CuiScrollBarComponent TakeFromPoolScrollbar()
+		public CuiScrollbar TakeFromPoolScrollbar()
 		{
-			var element = (CuiScrollBarComponent)null;
+			var element = (CuiScrollbar)null;
 
-			if (_scrollBars.Count == 0)
+			if (_scrollbars.Count == 0)
 			{
-				element = new CuiScrollBarComponent();
+				element = new CuiScrollbar();
 			}
 			else
 			{
-				element = _scrollBars[0] as CuiScrollBarComponent;
+				element = _scrollbars[0] as CuiScrollbar;
 				element.Invert = _defaultScrollBar.Invert;
 				element.AutoHide = _defaultScrollBar.AutoHide;
 				element.HandleSprite = _defaultScrollBar.HandleSprite;
@@ -742,7 +732,7 @@ public readonly struct CUI : IDisposable
 				element.TrackSprite = _defaultScrollBar.TrackSprite;
 				element.TrackColor = _defaultScrollBar.TrackColor;
 
-				_scrollBars.RemoveAt(0);
+				_scrollbars.RemoveAt(0);
 			}
 
 			_queue.Add(element);
@@ -828,10 +818,8 @@ public readonly struct CUI : IDisposable
 						Logger.Warn($"You're trying to update element '{pair.Element.Name}' (of parent '{pair.Element.Parent}') which doesn't allow updates. Ignoring.");
 						return;
 					}
-					else
-					{
-						Add(pair.Element);
-					}
+
+					Add(pair.Element);
 				}
 			}
 			public void Add(Pair<string, CuiElement, CuiElement> pair)
@@ -843,17 +831,19 @@ public readonly struct CUI : IDisposable
 						Logger.Warn($"You're trying to update element '{pair.Element1.Name}' (of parent '{pair.Element1.Parent}') which doesn't allow updates. Ignoring.");
 						return;
 					}
-					else Add(pair.Element1);
+
+					Add(pair.Element1);
 				}
 
 				if (pair.Element2 != null)
 				{
 					if (!pair.Element2.Update)
 					{
-						Logger.Warn($"You're trying to update element '{pair.Element2.Name}' (of parent '{pair.Element2.Parent}') which doesn't allow updates. Ignoring.");
+						// Logger.Warn($"You're trying to update element '{pair.Element2.Name}' (of parent '{pair.Element2.Parent}') which doesn't allow updates. Ignoring.");
 						return;
 					}
-					else Add(pair.Element2);
+
+					Add(pair.Element2);
 				}
 			}
 
@@ -983,9 +973,9 @@ public static class CUIStatics
 	{
 		return cui.CreateCountdown(null, null, startTime, endTime, step, command, fadeIn, fadeOut, id, destroyUi, true);
 	}
-	public static Pair<string, CuiElement> UpdateScrollView(this CUI cui, string id, bool vertical, bool horizontal, ScrollRect.MovementType movementType, float elasticity, bool inertia, float decelerationRate, float scrollSensitivity, string maskSoftness, out CuiRectTransformComponent contentTransform, out CuiScrollBarComponent horizontalScrollBar, out CuiScrollBarComponent verticalScrollBar, float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string destroyUi = null)
+	public static Pair<string, CuiElement> UpdateScrollView(this CUI cui, string id, bool vertical, bool horizontal, ScrollRect.MovementType movementType, float elasticity, bool inertia, float decelerationRate, float scrollSensitivity, string maskSoftness, out CuiRectTransform contentTransformComponent, out CuiScrollbar horizontalScrollBar, out CuiScrollbar verticalScrollBar, float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string destroyUi = null)
 	{
-		return cui.CreateScrollView(null, null, vertical, horizontal, movementType, elasticity, inertia, decelerationRate, scrollSensitivity, maskSoftness, out contentTransform, out horizontalScrollBar, out verticalScrollBar, xMin, xMax, yMin, yMax, OxMin, OxMax, OyMin, OyMax, fadeIn, fadeOut, needsCursor, needsKeyboard, id, destroyUi, true);
+		return cui.CreateScrollView(null, null, vertical, horizontal, movementType, elasticity, inertia, decelerationRate, scrollSensitivity, maskSoftness, out contentTransformComponent, out horizontalScrollBar, out verticalScrollBar, xMin, xMax, yMin, yMax, OxMin, OxMax, OyMin, OyMax, fadeIn, fadeOut, needsCursor, needsKeyboard, id, destroyUi, true);
 	}
 
 	public static Pair<string, CuiElement> Panel(this Handler cui, CuiElementContainer container, string parent, string color, string material, float xMin, float xMax, float yMin, float yMax, float OxMin, float OxMax, float OyMin, float OyMax, bool blur = false, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string outlineColor = null, string outlineDistance = null, bool outlineUseGraphicAlpha = false, string id = null, string destroyUi = null, bool update = false)
@@ -1327,7 +1317,7 @@ public static class CUIStatics
 		if (!update) container?.Add(element);
 		return new Pair<string, CuiElement>(id, element);
 	}
-	public static Pair<string, CuiElement> ScrollView(this Handler cui, CuiElementContainer container, string parent, bool vertical, bool horizontal, ScrollRect.MovementType movementType, float elasticity, bool inertia, float decelerationRate, float scrollSensitivity, string maskSoftness, out CuiRectTransformComponent contentTransform, out CuiScrollBarComponent horizontalScrollBar, out CuiScrollBarComponent verticalScrollBar, float xMin, float xMax, float yMin, float yMax, float OxMin, float OxMax, float OyMin, float OyMax, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string id = null, string destroyUi = null, bool update = false)
+	public static Pair<string, CuiElement> ScrollView(this Handler cui, CuiElementContainer container, string parent, bool vertical, bool horizontal, ScrollRect.MovementType movementType, float elasticity, bool inertia, float decelerationRate, float scrollSensitivity, string maskSoftness, out CuiRectTransform contentTransformComponent, out CuiScrollbar horizontalScrollBar, out CuiScrollbar verticalScrollBar, float xMin, float xMax, float yMin, float yMax, float OxMin, float OxMax, float OyMin, float OyMax, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string id = null, string destroyUi = null, bool update = false)
 	{
 		if (id == null) id = cui.AppendId();
 		var element = cui.TakeFromPool(id, parent, fadeOut, destroyUi, update);
@@ -1341,9 +1331,9 @@ public static class CUIStatics
 		scrollview.DecelerationRate = decelerationRate;
 		scrollview.ScrollSensitivity = scrollSensitivity;
 		scrollview.MaskSoftness = maskSoftness;
-		contentTransform = scrollview.ContentTransform;
-		horizontalScrollBar = scrollview.HorizontalScrollBar;
-		verticalScrollBar = scrollview.VerticalScrollBar;
+		contentTransformComponent = scrollview.ContentTransform;
+		horizontalScrollBar = scrollview.HorizontalScrollbar;
+		verticalScrollBar = scrollview.VerticalScrollbar;
 
 		element.Components.Add(scrollview);
 

@@ -6,7 +6,8 @@ namespace Carbon.Profiler;
 public class MonoProfilerConfig
 {
 	public bool Enabled = false;
-	public bool Allocations = false;
+	public bool TrackCalls = false;
+	public bool SourceViewer = false;
 	public List<string> Assemblies = new();
 	public List<string> Plugins = new();
 	public List<string> Modules = new();

@@ -9,15 +9,12 @@ namespace Carbon.Hooks;
 
 public sealed class Updater
 {
-	private static readonly string Repository
-		= @"CarbonCommunity/Carbon.Redist";
-
 	private static string GithubReleaseUrl(string file, string protocol = null)
 	{
-		var suffix = (Community.Runtime.Analytics.Platform == "linux") ? "Unix" : default;
-		var target = (Community.Runtime.Analytics.Branch == "Release") ? "Release" : "Debug";
+		var suffix = (Community.Runtime.Analytics.Platform == "linux") ? "unix" : default;
+		var target = (Community.Runtime.Analytics.Branch == "Release") ? "release" : "debug";
 
-		return $"https://raw.githubusercontent.com/{Repository}/main/Modules/"
+		return $"https://carbonmod.gg/redist/server/"
 			+ $"{target}{suffix}/{(protocol is null ? $"{file}" : $"{protocol}/{file}")}";
 	}
 
@@ -26,10 +23,10 @@ public sealed class Updater
 		// FIXME: the update process is triggering carbon init process twice
 		// when more than one file is listed here to be downloaded [and] one of
 		// them fails with 404.
-		IReadOnlyList<string> files = new List<string>(){
+		IReadOnlyList<string> files = [
 			@"carbon/managed/hooks/Carbon.Hooks.Community.dll",
 			@"carbon/managed/hooks/Carbon.Hooks.Oxide.dll"
-		};
+		];
 
 		int failed = 0;
 		foreach (string file in files)

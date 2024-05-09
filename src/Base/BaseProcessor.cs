@@ -114,18 +114,17 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 					continue;
 				}
 
-				if (element.Value.IsDirty)
-				{
-					Execute(element.Key, element.Value);
-					yield return null;
-					continue;
-				}
-
 				if (element.Value.IsRemoved)
 				{
 					Clear(id, element.Value);
 					yield return null;
 					continue;
+				}
+
+				if (element.Value.IsDirty)
+				{
+					Execute(element.Key, element.Value);
+					yield return null;
 				}
 			}
 
@@ -257,6 +256,7 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 
 		if (InstanceBuffer.TryGetValue(Path.GetFileNameWithoutExtension(e.FullPath), out var instance2))
 		{
+			Logger.Debug(2, $"[{Name}] File created: {e.FullPath}");
 			instance2?.MarkDirty();
 			return;
 		}
@@ -270,7 +270,11 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 
 		if (!EnableWatcher || IsBlacklisted(path)) return;
 
-		if (InstanceBuffer.TryGetValue(name, out var mod)) mod.MarkDirty();
+		if (InstanceBuffer.TryGetValue(name, out var mod))
+		{
+			Logger.Debug(2, $"[{Name}] File changed: {path}");
+			mod.MarkDirty();
+		}
 	}
 	public virtual void OnRenamed(object sender, RenamedEventArgs e)
 	{
@@ -279,7 +283,11 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 
 		if (!EnableWatcher || IsBlacklisted(path)) return;
 
-		if (InstanceBuffer.TryGetValue(name, out var mod)) mod.MarkDeleted();
+		if (InstanceBuffer.TryGetValue(name, out var mod))
+		{
+			Logger.Debug(2, $"[{Name}] File renamed: {path}");
+			mod.MarkDeleted();
+		}
 		InstanceBuffer.Add(name, null);
 	}
 	public virtual void OnRemoved(object sender, FileSystemEventArgs e)
@@ -289,7 +297,11 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 
 		if (!EnableWatcher || IsBlacklisted(path)) return;
 
-		if (InstanceBuffer.TryGetValue(name, out var mod)) mod.MarkDeleted();
+		if (InstanceBuffer.TryGetValue(name, out var mod))
+		{
+			Logger.Debug(2, $"[{Name}] File deleted: {path}");
+			mod.MarkDeleted();
+		}
 	}
 
 	public bool IsBlacklisted(string path)

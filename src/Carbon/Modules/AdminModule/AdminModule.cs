@@ -1,7 +1,11 @@
 ﻿using API.Commands;
+using Carbon.Components.Graphics;
+using ConVar;
+using HarmonyLib;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Oxide.Game.Rust.Cui;
+using UnityEngine.UI;
 using static Carbon.Components.CUI;
 using static ConsoleSystem;
 using Color = UnityEngine.Color;
@@ -33,7 +37,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 	internal static AdminModule Singleton { get; set; }
 
-	public static RustPlugin Core = Community.Runtime.CorePlugin;
+	public static CorePlugin Core = Community.Runtime.Core;
 	public ImageDatabaseModule ImageDatabase;
 	public ColorPickerModule ColorPicker;
 	public DatePickerModule DatePicker;
@@ -79,7 +83,10 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		"players.craft_queue",
 		"players.see_ips",
 		"plugins.use",
-		"plugins.setup"
+		"plugins.setup",
+		"profiler.use",
+		"profiler.startstop",
+		"profiler.sourceviewer"
 	};
 
 	internal bool _logRegistration;
@@ -143,6 +150,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 	{
 		base.OnEnabled(initialized);
 
+		if (!initialized) return;
+
 		foreach (var command in ConfigInstance.OpenCommands)
 		{
 			var action = new Action<BasePlayer, string, string[]>((player, cmd, args) =>
@@ -168,8 +177,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				Draw(player);
 			});
 
-			Community.Runtime.CorePlugin.cmd.AddChatCommand(command, this, action, silent: true);
-			Community.Runtime.CorePlugin.cmd.AddConsoleCommand(command, this, action, silent: true);
+			Community.Runtime.Core.cmd.AddChatCommand(command, this, action, silent: true);
+			Community.Runtime.Core.cmd.AddConsoleCommand(command, this, action, silent: true);
 		}
 
 		foreach (var perm in AdminPermissions)
@@ -177,11 +186,12 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			Permissions.RegisterPermission($"adminmodule.{perm}", this);
 		}
 	}
+
 	public override void OnDisabled(bool initialized)
 	{
 		if (initialized)
 		{
-			Community.Runtime.CorePlugin.NextTick(() =>
+			Community.Runtime.Core.NextTick(() =>
 			{
 				foreach (var player in BasePlayer.activePlayerList)
 				{
@@ -320,6 +330,11 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 	[Conditional("!MINIMAL")]
 	private bool CanAccess(BasePlayer player)
 	{
+		if (player == null)
+		{
+			return false;
+		}
+
 		if (HookCaller.CallStaticHook(3097360729, player) is bool result)
 		{
 			return result;
@@ -1067,6 +1082,146 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		widget.Callback?.Invoke(session, cui, container, widget.WidgetPanel);
 
 	}
+	public void TabPanelChart(CUI cui, CuiElementContainer container, string parent, PlayerSession session, Tab.OptionChart chart, float height, float offset, float panelSpacing, string layerCommand, string layerShadowCommand, Tab tab, int columnIndex)
+	{
+		var currentPage = session.GetOrCreatePage(columnIndex);
+		var canExpand = !chart.Responsive &&
+		                tab.Columns.All(x => session.GetOrCreatePage(x.Key).CurrentPage == currentPage.CurrentPage);
+
+		var width = (chart.Responsive || !canExpand ? 1 : tab.Columns.Count) + (panelSpacing * tab.Columns.Count);
+		var panel = cui.CreatePanel(container, parent,
+			color: Cache.CUI.BlankColor,
+			xMin: 0, xMax: 1f * width, yMin: offset, yMax: offset + height);
+
+		if (!chart.Responsive && !canExpand)
+		{
+			cui.CreatePanel(container, panel, "0.15 0.15 0.15 0.3", blur: true, OyMax: 25f);
+			cui.CreateText(container, panel, "1 1 1 0.5", "To view the chart,\nremain on the same page number as this.", 10);
+			return;
+		}
+
+		if (chart.IsEmpty())
+		{
+			cui.CreatePanel(container, panel, "0.15 0.15 0.15 0.3", blur: true, OyMax: 25f);
+			cui.CreateText(container, panel, "1 1 1 0.5", "No data available.", 10);
+			return;
+		}
+
+		if (!chart.Responsive)
+		{
+			cui.CreatePanel(container, panel, "0.15 0.15 0.15 0.3", blur: true, OyMax: 25f);
+		}
+
+		var scroll = cui.CreateScrollView(container, panel, false, true,
+			ScrollRect.MovementType.Clamped,
+			0.5f, true, 0.3f, 120, "0 0",
+			out var content, out var hScroll, out _,
+			xMin: 0);
+
+		content.AnchorMin = "0 0";
+		content.AnchorMax = "0 1";
+		content.OffsetMin = "0 0";
+		content.OffsetMax = "3500 0";
+
+		hScroll.TrackColor = "0 0 0 0";
+		hScroll.HandleColor = hScroll.HighlightColor = "0.2 0.2 0.2 1";
+		hScroll.Size = 1;
+		hScroll.Invert = true;
+
+		var vLabelPanel = cui.CreatePanel(container, panel, Cache.CUI.BlankColor,
+			xMin: 0f, xMax: 0.05f, yMin: 0.078f);
+
+		var identifier = chart.GetIdentifier();
+
+		var labelCount = chart.Chart.verticalLabels.Length;
+
+		if (labelCount != 1)
+		{
+			var labelIndex = 0;
+
+			foreach (var label in chart.Chart.verticalLabels)
+			{
+				var labelOffset = labelIndex.Scale(0, labelCount - 1, 0, 150);
+
+				cui.CreateText(container, vLabelPanel, "1 1 1 0.9", label, 7,
+					xMin: 0f, xMax: 0.9f, yMin: 0f, yMax: 0f, OyMin: labelOffset, OyMax: labelOffset, align: TextAnchor.MiddleRight);
+
+				labelIndex++;
+			}
+		}
+
+		var layerIndex = -1;
+		var xOffset = 0f;
+		var xOffsetWidth = 47.5f;
+		var xMoving = 50;
+		var spacing = -5;
+
+		var loadingOverlay = cui.CreatePanel(container, panel, "0 0 0 0.2", blur: true, id: $"{identifier}_loading");
+		var loadingText = cui.CreateText(container, loadingOverlay, "1 1 1 0.5", "Please wait...", 10, id: $"{identifier}_loadingtxt");
+		var chartImage = cui.CreateImage(container, scroll, 0, Cache.CUI.WhiteColor, xMin: 0.01f, id: $"{identifier}_chart");
+
+		CreateLayerButton("All", System.Drawing.Color.BlanchedAlmond, chart.Chart.Layers.All(x => x.Disabled), !chart.Chart.Layers.All(x => x.LayerSettings.Shadows == 0));
+
+		foreach (var layer in chart.Chart.Layers)
+		{
+			CreateLayerButton(layer.Name, layer.LayerSettings.Color, !layer.Disabled, layer.LayerSettings.Shadows > 0);
+		}
+
+		void CreateLayerButton(string text, System.Drawing.Color color, bool mainEnabled, bool secondEnabled)
+		{
+			var textLength = text.Length;
+			var pColor = color;
+			var sColor = System.Drawing.Color.FromArgb((int)(pColor.R * 1.5f).Clamp(0, 255), (int)(pColor.G * 1.5f).Clamp(0, 255), (int)(pColor.B * 1.5f).Clamp(0, 255));
+			var rustSColor = $"{sColor.R / 255f} {sColor.G / 255f} {sColor.B / 255f} 1";
+
+			var mainButton = cui.CreateProtectedButton(container, panel, $"{pColor.R / 255f} {pColor.G / 255f} {pColor.B / 255f} {(!mainEnabled ? 0.15 : 0.5)}", rustSColor, $"    {text}", 8,
+				xMin: 0.01f, xMax: 0, yMin: 0.94f, yMax: 1f, OxMin: xMoving + xOffset, OxMax: xMoving + (xOffset += xOffsetWidth + (textLength * 3f)), OyMin: -15, OyMax: -15,
+				command: $"{layerCommand} {layerIndex} {identifier} {layerCommand}", id: $"{identifier}_layerbtn_{layerIndex}");
+
+			cui.CreateProtectedButton(container, mainButton, $"{pColor.R / 255f} {pColor.G / 255f} {pColor.B / 255f} {(!secondEnabled ? 0.15 : 0.5)}", rustSColor, "\u29bf", 8,
+				xMin: 0, xMax: 0, OxMax: 12.5f, command: $"{layerShadowCommand} {layerIndex} {identifier} {layerShadowCommand}", id: $"{identifier}_layerbtn2_{layerIndex}");
+
+			xOffset += spacing;
+			layerIndex++;
+		}
+
+		cui.CreateText(container, panel, Cache.CUI.WhiteColor, chart.Name, chart.NameSize, xMin: 0.025f, xMax: 0.95f, yMin: 1, yMax: 1, OyMin: 10, OyMax: 17.5f, align: chart.NameAlign, font: Handler.FontTypes.RobotoCondensedBold);
+
+		Community.Runtime.Core.NextFrame(() =>
+		{
+			Tab.OptionChart.Cache.GetOrProcessCache(identifier, chart.Chart, chartCache =>
+			{
+				using var cui = new CUI(Handler);
+				using var pool = cui.UpdatePool();
+
+				switch (chartCache.Status)
+				{
+					case Tab.OptionChart.ChartCache.StatusTypes.Finalized:
+					{
+						if (!chartCache.HasPlayerReceivedData(session.Player.userID))
+						{
+							CommunityEntity.ServerInstance.ClientRPC(RpcTarget.Player("CL_ReceiveFilePng", session.Player), chartCache.Crc,
+								(uint)chartCache.Data.Length, chartCache.Data, 0, (byte)FileStorage.Type.png);
+						}
+
+						pool.Add(cui.UpdatePanel(loadingOverlay, "0 0 0 0", xMax: 0, blur: false));
+						pool.Add(cui.UpdateText(loadingText, "0 0 0 0", string.Empty, 0));
+						pool.Add(cui.UpdateImage(chartImage, chartCache.Crc, Cache.CUI.WhiteColor));
+						pool.Send(session.Player);
+						break;
+					}
+
+					default:
+					case Tab.OptionChart.ChartCache.StatusTypes.Failure:
+					{
+						pool.Add(cui.UpdateText(loadingText, "0.9 0.1 0.1 0.75", "Failed to load chart!", 10));
+						pool.Send(session.Player);
+						break;
+					}
+				}
+			});
+		});
+	}
 	public void TabTooltip(CUI cui, CuiElementContainer container, string parent, Tab.Option tooltip, string command, PlayerSession admin, float height, float offset)
 	{
 		if (admin.Tooltip == tooltip)
@@ -1089,6 +1244,11 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 	#region Methods
 
+	public const float MaximizedScale_XMin = 1.1f;
+	public const float MaximizedScale_XMax = 1.1f;
+	public const float MaximizedScale_YMin = 1.15f;
+	public const float MaximizedScale_YMax = 1.15f;
+
 	public const float OptionHeightOffset = 0.0035f;
 
 	public void Draw(BasePlayer player)
@@ -1108,19 +1268,24 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			using var cui = new CUI(Handler);
 
 			var container = cui.CreateContainer(PanelId,
-				color: "0 0 0 0.75",
+				color: $"0 0 0 {DataInstance.BackgroundOpacity}",
 				xMin: 0, xMax: 1, yMin: 0, yMax: 1,
 				needsCursor: true, destroyUi: PanelId, parent: ClientPanels.HudMenu);
 
 			cui.CreateImage(container, PanelId, "fade", Cache.CUI.WhiteColor);
 
+			var isMaximized = DataInstance.Maximize;
+
 			var shade = cui.CreatePanel(container, parent: PanelId, id: $"{PanelId}color",
 				color: "0 0 0 0.6",
 				xMin: 0.5f, xMax: 0.5f, yMin: 0.5f, yMax: 0.5f,
-				OxMin: -475, OxMax: 475, OyMin: -300, OyMax: 300);
+				OxMin: -475 * (isMaximized ? MaximizedScale_XMin : 1),
+				OxMax: 475 * (isMaximized ? MaximizedScale_XMax : 1),
+				OyMin: -300 * (isMaximized ? MaximizedScale_YMin : 1),
+				OyMax: 300 * (isMaximized ? MaximizedScale_YMax : 1));
 			var main = cui.CreatePanel(container, shade,
 				color: "0 0 0 0.5",
-				blur: true);
+				blur: DataInstance.BackgroundBlur);
 
 			using (TimeMeasure.New($"{Name}.Main"))
 			{
@@ -1183,15 +1348,14 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 						{
 							#region Columns
 
-							var panelIndex = 0f;
 							var spacing = 0.005f;
 							var panelWidth = (tab.Columns.Count == 0 ? 0f : 1f / tab.Columns.Count) - spacing;
+							var panelIndex = (panelWidth + spacing) * (tab.Columns.Count - 1);
 
-							for (int i = 0; i < tab.Columns.Count; i++)
+							for (int i = tab.Columns.Count; i-- > 0;)
 							{
 								var rows = tab.Columns[i];
-								var panel = cui.CreatePanel(container, panels,
-									color: "0 0 0 0.5",
+								var panel = cui.CreatePanel(container, panels, color: "0 0 0 0.5",
 									xMin: panelIndex, xMax: panelIndex + panelWidth - spacing, yMin: 0, yMax: 1, id: $"sub{i}");
 
 								cui.CreateImage(container, panel, "fade", Cache.CUI.WhiteColor);
@@ -1298,6 +1462,10 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 										case Tab.OptionWidget widget:
 											TabPanelWidget(cui, container, panel, ap, widget, rowHeight * (widget.Height + 1), rowIndex);
 											break;
+
+										case Tab.OptionChart chart:
+											TabPanelChart(cui, container, panel, ap, chart, rowHeight * (Tab.OptionChart.Height + 1), rowIndex, rowSpacing, layerCommand: PanelId + $".callaction {i} {actualI} layer", layerShadowCommand: PanelId + $".callaction {i} {actualI} layershadow", tab, i);
+											break;
 									}
 
 									#region Reveal
@@ -1341,7 +1509,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 								#endregion
 
-								panelIndex += panelWidth + spacing;
+								panelIndex -= panelWidth + spacing;
 							}
 
 							#endregion
@@ -1386,22 +1554,64 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			{
 				var shift = tab == null || tab.IsFullscreen ? 15 : 0;
 
-				if (HasAccess(ap.Player, "config.use"))
+				var maximizeButton = cui.CreateProtectedButton(container, main,
+					color: "#d1cd56",
+					textColor: Cache.CUI.BlankColor,
+					text: string.Empty, 0,
+					xMin: 0.9675f, xMax: 0.99f, yMin: 0.955f, yMax: 0.99f,
+					OxMin: -25 * 3, OxMax: -25 * 3,
+					OyMin: shift, OyMax: shift,
+					command: PanelId + ".maximize");
 				{
-					var configButton = cui.CreateProtectedButton(container, main,
-						color: "0.2 0.6 0.2 0.9",
-						textColor: Cache.CUI.BlankColor,
-						text: string.Empty, 0,
-						xMin: 0.9675f, xMax: 0.99f, yMin: 0.955f, yMax: 0.99f,
-						OxMin: -25, OxMax: -25,
-						OyMin: shift, OyMax: shift,
-						command: PanelId + ".config");
+					cui.CreateImage(container, maximizeButton, DataInstance.Maximize ? "minimize" : "maximize", "#fffed4",
+						xMin: 0.15f, xMax: 0.85f,
+						yMin: 0.15f, yMax: 0.85f);
 
+					cui.CreateImage(container, maximizeButton, "fade", Cache.CUI.WhiteColor);
+				}
+
+				var canAccessProfiler = HasAccess(ap.Player, "profiler.use");
+				var profilerButton = cui.CreateProtectedButton(container, main,
+					color: !canAccessProfiler ? "0.3 0.3 0.3 0.7" : "#6651c2",
+					textColor: Cache.CUI.BlankColor,
+					text: string.Empty, 0,
+					xMin: 0.9675f, xMax: 0.99f, yMin: 0.955f, yMax: 0.99f,
+					OxMin: -25 * 2, OxMax: -25 * 2,
+					OyMin: shift, OyMax: shift,
+					command: canAccessProfiler ? PanelId + ".profiler" : string.Empty);
+				{
+					cui.CreateImage(container, profilerButton, "graph", "#af9ff5",
+						xMin: 0.15f, xMax: 0.85f,
+						yMin: 0.15f, yMax: 0.85f);
+
+					cui.CreateImage(container, profilerButton, "fade", Cache.CUI.WhiteColor);
+
+					if (ap.SelectedTab != null && ap.SelectedTab.Id == "profiler")
+					{
+						cui.CreatePanel(container, profilerButton, "1 0 0 1", yMax: 0.1f);
+					}
+				}
+
+				var canAccessConfig = HasAccess(ap.Player, "config.use");
+				var configButton = cui.CreateProtectedButton(container, main,
+					color: canAccessConfig ? "0.2 0.6 0.2 0.9" : "0.3 0.3 0.3 0.7",
+					textColor: Cache.CUI.BlankColor,
+					text: string.Empty, 0,
+					xMin: 0.9675f, xMax: 0.99f, yMin: 0.955f, yMax: 0.99f,
+					OxMin: -25, OxMax: -25,
+					OyMin: shift, OyMax: shift,
+					command: canAccessConfig ? PanelId + ".config" : string.Empty);
+				{
 					cui.CreateImage(container, configButton, "gear", "0.5 1 0.5 1",
 						xMin: 0.15f, xMax: 0.85f,
 						yMin: 0.15f, yMax: 0.85f);
 
 					cui.CreateImage(container, configButton, "fade", Cache.CUI.WhiteColor);
+
+					if (ap.SelectedTab != null && ap.SelectedTab.Id == "configuration")
+					{
+						cui.CreatePanel(container, configButton, "1 0 0 1", yMax: 0.1f);
+					}
 				}
 
 				var closeButton = cui.CreateProtectedButton(container, main,
@@ -1411,12 +1621,13 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					xMin: 0.9675f, xMax: 0.99f, yMin: 0.955f, yMax: 0.99f,
 					OyMin: shift, OyMax: shift,
 					command: PanelId + ".close");
+				{
+					cui.CreateImage(container, closeButton, "close", "1 0.5 0.5 1",
+						xMin: 0.2f, xMax: 0.8f,
+						yMin: 0.2f, yMax: 0.8f);
 
-				cui.CreateImage(container, closeButton, "close", "1 0.5 0.5 1",
-					xMin: 0.2f, xMax: 0.8f,
-					yMin: 0.2f, yMax: 0.8f);
-
-				cui.CreateImage(container, closeButton, "fade", Cache.CUI.WhiteColor);
+					cui.CreateImage(container, closeButton, "fade", Cache.CUI.WhiteColor);
+				}
 			}
 
 			#endregion
@@ -1670,7 +1881,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 										break;
 
 									default:
-										page.CurrentPage = args.ElementAt(1).ToInt();
+										page.CurrentPage += args.ElementAt(1).ToInt();
 										break;
 								}
 
@@ -1742,6 +1953,192 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					return false;
 				}
 				break;
+
+			case Tab.OptionChart chart:
+			{
+				var layerIndex = args.ElementAt(1).ToInt();
+
+				switch (args.ElementAt(0))
+				{
+					case "layer":
+					{
+						var oldIdentifier = args.ElementAt(2);
+						var newIdentifier = string.Empty;
+
+						using var cui = new CUI(Handler);
+						using var pool = cui.UpdatePool();
+
+						var mainEnabled = false;
+						var pColor = System.Drawing.Color.BlanchedAlmond;
+						var text = $"    All";
+
+						if (layerIndex == -1)
+						{
+							var allDisabled = chart.Chart.Layers.All(x => x.Disabled);
+
+							foreach (var chartLayer in chart.Chart.Layers)
+							{
+								chartLayer.Disabled = !allDisabled;
+							}
+
+							newIdentifier = chart.GetIdentifier(reset: true);
+							return true;
+						}
+						else
+						{
+							var layer = chart.Chart.Layers.ElementAt(layerIndex);
+							layer.ToggleDisabled();
+
+							newIdentifier = chart.GetIdentifier(reset: true);
+							mainEnabled = !layer.Disabled;
+							pColor = layer.LayerSettings.Color;
+							text = $"    {layer.Name}";
+						}
+
+						var sColor = System.Drawing.Color.FromArgb((int)(pColor.R * 1.5f).Clamp(0, 255), (int)(pColor.G * 1.5f).Clamp(0, 255), (int)(pColor.B * 1.5f).Clamp(0, 255));
+						var rustSColor = $"{sColor.R / 255f} {sColor.G / 255f} {sColor.B / 255f} 1";
+
+						var mainCommand = args.Skip(3).ToString(" ");
+
+						pool.Add(cui.UpdatePanel($"{oldIdentifier}_loading", "0 0 0 0.2", xMin: 0.01f, xMax: 0.99f, yMin: 0.01f, yMax: 0.99f, blur: true));
+						pool.Add(cui.UpdateText($"{oldIdentifier}_loadingtxt", "1 1 1 0.5", "Please wait...", 10, xMin: 0.01f, xMax: 0.99f, yMin: 0.01f, yMax: 0.99f));
+						pool.Add(cui.UpdateImage($"{oldIdentifier}_chart", 0, Cache.CUI.WhiteColor, xMin: 0.01f));
+						pool.Add(cui.UpdateProtectedButton($"{oldIdentifier}_layerbtn_{layerIndex}", $"{pColor.R / 255f} {pColor.G / 255f} {pColor.B / 255f} {(!mainEnabled ? 0.15 : 0.5)}", rustSColor, text, 8,
+							command: $"{mainCommand} {layerIndex} {oldIdentifier} {mainCommand}"));
+						pool.Send(ap.Player);
+
+						Tab.OptionChart.Cache.GetOrProcessCache(newIdentifier, chart.Chart, chartCache =>
+						{
+							using var cui = new CUI(Handler);
+							using var pool = cui.UpdatePool();
+
+							switch (chartCache.Status)
+							{
+								case Tab.OptionChart.ChartCache.StatusTypes.Finalized:
+								{
+									if (!chartCache.HasPlayerReceivedData(ap.Player.userID))
+									{
+										CommunityEntity.ServerInstance.ClientRPC(
+											RpcTarget.Player("CL_ReceiveFilePng", ap.Player), chartCache.Crc,
+											(uint)chartCache.Data.Length, chartCache.Data, 0,
+											(byte)FileStorage.Type.png);
+									}
+
+									pool.Add(cui.UpdatePanel($"{oldIdentifier}_loading", "0 0 0 0", xMax: 0, blur: false));
+									pool.Add(cui.UpdateText($"{oldIdentifier}_loadingtxt", "0 0 0 0", string.Empty, 0));
+									pool.Add(cui.UpdateImage($"{oldIdentifier}_chart", chartCache.Crc, Cache.CUI.WhiteColor));
+									pool.Send(ap.Player);
+									break;
+								}
+
+								default:
+								case Tab.OptionChart.ChartCache.StatusTypes.Failure:
+								{
+									pool.Add(cui.UpdateText($"{oldIdentifier}_loadingtxt", "0.9 0.1 0.1 0.75", "Failed to load chart!", 10));
+									pool.Send(ap.Player);
+									break;
+								}
+							}
+						});
+
+						return false;
+					}
+					case "layershadow":
+					{
+						var oldIdentifier = args.ElementAt(2);
+						var newIdentifier = string.Empty;
+
+						using var cui = new CUI(Handler);
+						using var pool = cui.UpdatePool();
+
+						var secondEnabled = false;
+						var pColor = System.Drawing.Color.BlanchedAlmond;
+
+						if (layerIndex == -1)
+						{
+							var allOff = chart.Chart.Layers.All(x => x.LayerSettings.Shadows == 0);
+
+							foreach (var chartLayer in chart.Chart.Layers)
+							{
+								if (allOff)
+								{
+									chartLayer.LayerSettings.Shadows = 1;
+								}
+								else
+								{
+									chartLayer.LayerSettings.Shadows = 0;
+								}
+							}
+
+							newIdentifier = chart.GetIdentifier(reset: true);
+							return true;
+						}
+						else
+						{
+							var layer = chart.Chart.Layers.ElementAt(layerIndex);
+
+							layer.LayerSettings.Shadows++;
+
+							if (layer.LayerSettings.Shadows > 4)
+							{
+								layer.LayerSettings.Shadows = 0;
+							}
+
+							newIdentifier = chart.GetIdentifier(reset: true);
+							pColor = layer.LayerSettings.Color;
+							secondEnabled = layer.LayerSettings.Shadows > 0;
+						}
+
+						var sColor = System.Drawing.Color.FromArgb((int)(pColor.R * 1.5f).Clamp(0, 255), (int)(pColor.G * 1.5f).Clamp(0, 255), (int)(pColor.B * 1.5f).Clamp(0, 255));
+						var rustSColor = $"{sColor.R / 255f} {sColor.G / 255f} {sColor.B / 255f} 1";
+
+						var mainCommand = args.Skip(3).ToString(" ");
+
+						pool.Add(cui.UpdatePanel($"{oldIdentifier}_loading", "0 0 0 0.2", xMin: 0.01f, xMax: 0.99f, yMin: 0.01f, yMax: 0.99f, blur: true));
+						pool.Add(cui.UpdateText($"{oldIdentifier}_loadingtxt", "1 1 1 0.5", "Please wait...", 10, xMin: 0.01f, xMax: 0.99f, yMin: 0.01f, yMax: 0.99f));
+						pool.Add(cui.UpdateImage($"{oldIdentifier}_chart", 0, Cache.CUI.WhiteColor, xMin: 0.01f));
+						pool.Add(cui.UpdateProtectedButton($"{oldIdentifier}_layerbtn2_{layerIndex}", $"{pColor.R / 255f} {pColor.G / 255f} {pColor.B / 255f} {(!secondEnabled ? 0.15 : 0.5)}", rustSColor, "\u29bf", 8,
+							command: $"{mainCommand} {layerIndex} {oldIdentifier} {mainCommand}"));
+						pool.Send(ap.Player);
+
+						Tab.OptionChart.Cache.GetOrProcessCache(newIdentifier, chart.Chart, chartCache =>
+						{
+							using var cui = new CUI(Handler);
+							using var pool = cui.UpdatePool();
+
+							switch (chartCache.Status)
+							{
+								case Tab.OptionChart.ChartCache.StatusTypes.Finalized:
+								{
+									if (!chartCache.HasPlayerReceivedData(ap.Player.userID))
+									{
+										CommunityEntity.ServerInstance.ClientRPC(
+											RpcTarget.Player("CL_ReceiveFilePng", ap.Player), chartCache.Crc,
+											(uint)chartCache.Data.Length, chartCache.Data, 0,
+											(byte)FileStorage.Type.png);
+									}
+
+									pool.Add(cui.UpdatePanel($"{oldIdentifier}_loading", "0 0 0 0", xMax: 0, blur: false));
+									pool.Add(cui.UpdateText($"{oldIdentifier}_loadingtxt", "0 0 0 0", string.Empty, 0));
+									pool.Add(cui.UpdateImage($"{oldIdentifier}_chart", chartCache.Crc, Cache.CUI.WhiteColor));
+									pool.Send(ap.Player);
+									break;
+								}
+
+								default:
+								case Tab.OptionChart.ChartCache.StatusTypes.Failure:
+								{
+									pool.Add(cui.UpdateText($"{oldIdentifier}_loadingtxt", "0.9 0.1 0.1 0.75", "Failed to load chart!", 10));
+									pool.Send(ap.Player);
+									break;
+								}
+							}
+						});
+						return false;
+					}
+				}
+				break;
+			}
 		}
 
 		return false;
@@ -1823,7 +2220,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 	[Conditional("!MINIMAL")]
 	private void OnPluginUnloaded(RustPlugin plugin)
 	{
-		Community.Runtime.CorePlugin.NextTick(() =>
+		Community.Runtime.Core.NextTick(() =>
 		{
 			foreach (var player in BasePlayer.activePlayerList)
 			{
@@ -1900,7 +2297,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 		cui.Send(container, player);
 
-		Community.Runtime.CorePlugin.NextTick(() => Singleton.Close(player));
+		Community.Runtime.Core.NextTick(() => Singleton.Close(player));
 	}
 	internal static void StopSpectating(BasePlayer player, bool clearUi = true)
 	{
@@ -1910,7 +2307,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			cui.Destroy(SpectatePanelId, player);
 		}
 
-		if (string.IsNullOrEmpty(player.spectateFilter))
+		if (!player.IsSpectating() || string.IsNullOrEmpty(player.spectateFilter))
 		{
 			return;
 		}
@@ -2000,7 +2397,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 public class AdminConfig
 {
 	[JsonProperty("OpenCommands")]
-	public string[] OpenCommands = new string[] { "cp", "cpanel" };
+	public string[] OpenCommands = ["cp", "cpanel"];
 	public int MinimumAuthLevel = 2;
 	public bool DisableEntitiesTab = true;
 	public bool DisablePluginsTab = false;
@@ -2023,6 +2420,9 @@ public class AdminData
 	[JsonProperty("WizardDisplayed")]
 	public bool WizardDisplayed = false;
 	public bool HidePluginIcons = false;
+	public bool Maximize = false;
+	public bool BackgroundBlur = true;
+	public float BackgroundOpacity = 0.75f;
 	public DataColors Colors = new();
 
 	public class DataColors

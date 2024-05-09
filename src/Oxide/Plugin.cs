@@ -212,11 +212,11 @@ namespace Oxide.Core.Plugins
 							continue;
 						}
 
-						plugin = Community.Runtime.CorePlugin.plugins.Find(info.Title);
+						plugin = Community.Runtime.Core.plugins.Find(info.Title);
 					}
 					else
 					{
-						plugin = Community.Runtime.CorePlugin.plugins.Find(name);
+						plugin = Community.Runtime.Core.plugins.Find(name);
 					}
 
 					if (plugin != null)
@@ -255,7 +255,7 @@ namespace Oxide.Core.Plugins
 				}
 				catch (Exception ex)
 				{
-					Logger.Error($"Plugin '{Name} by {Author} v{Version}' failed to assign PluginReference on field {name} ({field.FieldType.Name})", ex);
+					Logger.Error($"Plugin '{ToPrettyString()}' failed to assign PluginReference on field {name} ({field.FieldType.Name})", ex);
 				}
 			}
 
@@ -307,6 +307,24 @@ namespace Oxide.Core.Plugins
 				Logger.Error($"Failed calling Plugin.IUnload.UnloadRequirees on {ToPrettyString()}", ex);
 				return false;
 			}
+		}
+		internal bool IClearMemory()
+		{
+			try
+			{
+				foreach (var member in Type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static))
+				{
+					if (member.IsLiteral) continue;
+
+					member.SetValue(null, null);
+				}
+			}
+			catch (Exception ex)
+			{
+				Logger.Error($"Plugin '{ToPrettyString()}' failed clearing memory.", ex);
+			}
+
+			return true;
 		}
 
 		public static void InternalApplyAllPluginReferences()
