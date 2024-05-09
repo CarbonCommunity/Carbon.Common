@@ -8,12 +8,13 @@ public class Harmony
 	public static Dictionary<Assembly, List<object>> ModHooks = new();
 	public static List<PatchInfoEntry> CurrentPatches = new();
 
-	public static void PatchAll(Assembly assembly)
+	public static int PatchAll(Assembly assembly)
 	{
+		var patchCount = 0;
 		var assemblyName = assembly.GetName().Name;
 		var harmony = new HarmonyLib.Harmony($"com.compat-harmony.{assemblyName}");
 
-		foreach (var type in assembly.GetExportedTypes().Where(x => x.GetCustomAttribute<HarmonyPatch>() != null))
+		foreach (var type in assembly.GetTypes().Where(x => x.GetCustomAttribute<HarmonyPatch>() != null))
 		{
 			try
 			{
@@ -27,6 +28,7 @@ public class Harmony
 				foreach (MethodInfo method in harmonyMethods)
 				{
 					Logger.Warn($"[{harmony.Id}] Patched '{method.Name}' method. ({type.Name})");
+					patchCount++;
 				}
 			}
 			catch (Exception ex)
@@ -36,21 +38,20 @@ public class Harmony
 		}
 
 		CurrentPatches.Add(new PatchInfoEntry(assemblyName + ".dll", assemblyName, null, null, null, harmony));
+		return patchCount;
 	}
-	public static void UnpatchAll(string assembly)
+	public static int UnpatchAll(string assembly)
 	{
 		assembly += ".dll";
 
 		var patches = Pool.GetList<PatchInfoEntry>();
 		patches.AddRange(CurrentPatches.Where(x => x.ParentAssemblyName.Equals(assembly)));
 
-		foreach (var a in patches)
-		{
-			a.Unpatch();
-		}
+		var count = patches.Sum(a => a.Unpatch());
 
 		CurrentPatches.RemoveAll(x => x.ParentAssemblyName.Equals(assembly));
 		Pool.FreeList(ref patches);
+		return count;
 	}
 
 	public class PatchInfoEntry
@@ -81,11 +82,13 @@ public class Harmony
 			this.runtime_method = method;
 		}
 
-		public void Unpatch()
+		public int Unpatch()
 		{
+			var count = 0;
+
 			if (Harmony == null)
 			{
-				return;
+				return count;
 			}
 
 			try
@@ -95,6 +98,7 @@ public class Harmony
 					foreach (var method in Harmony.GetPatchedMethods())
 					{
 						Logger.Warn($"[{Harmony.Id}] Unpatched '{method.Name}' method. ({method.DeclaringType.Name})");
+						count++;
 					}
 				}
 
@@ -105,6 +109,8 @@ public class Harmony
 			{
 				Logger.Error($"Failed to unpatch '{MethodName}' ({TypeName})", ex);
 			}
+
+			return count;
 		}
 	}
 }
