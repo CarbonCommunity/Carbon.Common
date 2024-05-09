@@ -231,7 +231,7 @@ public partial class AdminModule
 					tab.AddToggle(0, "Spectating Info Overlay",
 						ap => Singleton.ConfigInstance.SpectatingInfoOverlay =
 							!Singleton.ConfigInstance.SpectatingInfoOverlay,
-						ap => !Singleton.ConfigInstance.SpectatingInfoOverlay);
+						ap => Singleton.ConfigInstance.SpectatingInfoOverlay);
 					tab.AddToggle(0, "Spectating End Teleport Back",
 						ap => Singleton.ConfigInstance.SpectatingEndTeleportBack =
 							!Singleton.ConfigInstance.SpectatingEndTeleportBack,
@@ -241,6 +241,14 @@ public partial class AdminModule
 						ap => Singleton.DataInstance.HidePluginIcons);
 
 					tab.AddName(0, "Customization");
+
+					tab.AddToggle(0, "Background Blur",
+						ap => Singleton.DataInstance.BackgroundBlur =
+							!Singleton.DataInstance.BackgroundBlur,
+						ap => Singleton.DataInstance.BackgroundBlur);
+
+					tab.AddRange(0, "Background Opacity", 0f, 100f, ap => Singleton.DataInstance.BackgroundOpacity * 100f,
+						(ap, value) => Singleton.DataInstance.BackgroundOpacity = value * 0.01f, ap => Singleton.DataInstance.BackgroundOpacity.ToString("0.0"));
 
 					tab.AddRange(0, "Title Underline Opacity", 0f, 100f,
 						ap => Singleton.DataInstance.Colors.TitleUnderlineOpacity * 100f,
