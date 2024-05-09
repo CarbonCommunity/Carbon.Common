@@ -58,9 +58,9 @@ public partial class CorePlugin : CarbonPlugin
 				return Cache.False;
 			}
 
-			if (player.Connection.authLevel >= prefix.SuggestionAuthLevel && Suggestions.Lookup(command, Community.Runtime.CommandManager.Chat.Select(x => x.Name)) is var result && result is { Confidence: <= 5 })
+			if (player.Connection.authLevel >= prefix.SuggestionAuthLevel && Suggestions.Lookup(command, Community.Runtime.CommandManager.Chat.Select(x => x.Name), minimumConfidence: 5) is var result && result.Any())
 			{
-				player.ChatMessage($"<color=orange>Unknown command:</color> {message}\n<size=12s>Suggesting: /{result.Result}</size>");
+				player.ChatMessage($"<color=orange>Unknown command:</color> {message}\n<size=12s>Suggesting: {result.Select(x => $"{prefix.Value}{x.Result}").ToString(", ", " or ")}</size>");
 			}
 			else
 			{

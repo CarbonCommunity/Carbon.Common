@@ -48,7 +48,17 @@ public class CarbonAuto : API.Abstracts.CarbonAuto
 					break;
 			}
 		}
-		public readonly bool IsChanged() => GetValue() != (object)-1;
+		public readonly bool IsChanged()
+		{
+			var value = GetValue();
+
+			if (value == null)
+			{
+				return false;
+			}
+
+			return !value.Equals(Convert.ChangeType(-1, GetVarType()));
+		}
 	}
 
 	public static void Init()

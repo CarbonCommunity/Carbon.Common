@@ -86,4 +86,61 @@ public partial class CorePlugin : CarbonPlugin
 		arg.ReplyWith(builder.ToString());
 		PoolEx.FreeStringBuilder(ref builder);
 	}
+
+	[ConsoleCommand("whymodded", "Prints an intricate list of all the reasons why the server is set to modded and solutions to fix it.")]
+	[AuthLevel(2)]
+	private void WhyModded(ConsoleSystem.Arg arg)
+	{
+		using var table = new StringTable("Reason", "Type", "Quick Fix");
+
+		if (Community.Runtime.Config.IsModded)
+		{
+			table.AddRow($"IsModded option is true", "Config", "c.modding 0");
+		}
+
+		foreach (var hookable in Community.Runtime.ModuleProcessor.Modules)
+		{
+			if (hookable is BaseModule { ForceModded: true } module && module.GetEnabled())
+			{
+				table.AddRow($"{module.Name} is enabled", "Module", $"c.setmodule \"{module.Name}\" 0");
+			}
+		}
+
+		foreach (var auto in CarbonAuto.AutoCache.Where(auto => auto.Value.Variable.ForceModded && auto.Value.IsChanged()))
+		{
+			table.AddRow($"'{auto.Value.Variable.DisplayName}' is changed", "Carbon Auto", $"{auto.Key} -1");
+		}
+
+		arg.ReplyWith($"{table.ToStringMinimal()}\nTo apply all the changes necessary to be listed under the Community section, run 'c.gocommunity'.");
+	}
+
+	[ConsoleCommand("gocommunity", "Executes a variety of changes necessary to set the server viable for the Community section. Run 'c.whymodded' to see what will be changed.")]
+	[AuthLevel(2)]
+	private void GoCommunity(ConsoleSystem.Arg arg)
+	{
+		var changes = 0;
+
+		if (Community.Runtime.Config.IsModded)
+		{
+			Community.Runtime.Config.IsModded = false;
+			changes++;
+		}
+
+		foreach (var hookable in Community.Runtime.ModuleProcessor.Modules)
+		{
+			if (hookable is BaseModule { ForceModded: true } module && module.GetEnabled())
+			{
+				module.SetEnabled(false);
+				changes++;
+			}
+		}
+
+		foreach (var auto in CarbonAuto.AutoCache.Where(auto => auto.Value.Variable.ForceModded && auto.Value.IsChanged()))
+		{
+			auto.Value.SetValue(-1);
+			changes++;
+		}
+
+		arg.ReplyWith($"Applied {changes:n0} {changes.Plural("change", "changes")} to ensure that the server is no longer modded and fit for the Community tab.");
+	}
 }

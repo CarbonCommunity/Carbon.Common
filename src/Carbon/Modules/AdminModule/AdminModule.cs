@@ -330,6 +330,11 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 	[Conditional("!MINIMAL")]
 	private bool CanAccess(BasePlayer player)
 	{
+		if (player == null)
+		{
+			return false;
+		}
+
 		if (HookCaller.CallStaticHook(3097360729, player) is bool result)
 		{
 			return result;
@@ -1263,7 +1268,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			using var cui = new CUI(Handler);
 
 			var container = cui.CreateContainer(PanelId,
-				color: "0 0 0 0.75",
+				color: $"0 0 0 {DataInstance.BackgroundOpacity}",
 				xMin: 0, xMax: 1, yMin: 0, yMax: 1,
 				needsCursor: true, destroyUi: PanelId, parent: ClientPanels.HudMenu);
 
@@ -1280,7 +1285,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				OyMax: 300 * (isMaximized ? MaximizedScale_YMax : 1));
 			var main = cui.CreatePanel(container, shade,
 				color: "0 0 0 0.5",
-				blur: true);
+				blur: DataInstance.BackgroundBlur);
 
 			using (TimeMeasure.New($"{Name}.Main"))
 			{
@@ -1978,7 +1983,6 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 							newIdentifier = chart.GetIdentifier(reset: true);
 							return true;
-							mainEnabled = chart.Chart.Layers.All(x => x.Disabled);
 						}
 						else
 						{
@@ -2068,8 +2072,6 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 							newIdentifier = chart.GetIdentifier(reset: true);
 							return true;
-
-							secondEnabled = !chart.Chart.Layers.All(x => x.LayerSettings.Shadows == 0);
 						}
 						else
 						{
@@ -2419,6 +2421,8 @@ public class AdminData
 	public bool WizardDisplayed = false;
 	public bool HidePluginIcons = false;
 	public bool Maximize = false;
+	public bool BackgroundBlur = true;
+	public float BackgroundOpacity = 0.75f;
 	public DataColors Colors = new();
 
 	public class DataColors

@@ -5,36 +5,51 @@
  *
  */
 
+using Facepunch;
+
 namespace Carbon.Components;
 
 public class Suggestions
 {
 	public static BufferBank Buffer = new();
 
-	public static SuggestionResult Lookup(string input, IEnumerable<string> options, int threshold = -1)
+	public static SuggestionResult SingleLookup(string input, IEnumerable<string> values, int minimumConfidence = -1)
 	{
+		return Lookup(input, values, 1, minimumConfidence).FirstOrDefault();
+	}
+
+	public static IEnumerable<SuggestionResult> Lookup(string input, IEnumerable<string> values, int count = 3, int minimumConfidence = -1)
+	{
+		var buffer = Pool.GetList<SuggestionResult>();
 		var minDistance = int.MaxValue;
 		var closestMatch = string.Empty;
 
-		foreach (string option in options)
+		foreach (string option in values)
 		{
 			var distance = Compute(input, option);
 
-			if (distance >= minDistance) continue;
+			if (distance >= minDistance)
+			{
+				continue;
+			}
+
 			minDistance = distance;
 			closestMatch = option;
+
+			SuggestionResult suggestionResult = default;
+			suggestionResult.Result = closestMatch;
+			suggestionResult.Confidence = minDistance;
+			buffer.Add(suggestionResult);
 		}
 
-		if (threshold != -1 && minDistance > threshold)
+		foreach (var value in buffer
+			         .OrderBy(x => x.Confidence)
+			         .Where(x => x.Confidence <= minimumConfidence).Take(count))
 		{
-			return default;
+			yield return value;
 		}
 
-		SuggestionResult suggestionResult = default;
-		suggestionResult.Result = closestMatch;
-		suggestionResult.Confidence = minDistance;
-
-		return suggestionResult;
+		Pool.FreeList(ref buffer);
 	}
 
 	public class BufferBank : List<BufferInstance>

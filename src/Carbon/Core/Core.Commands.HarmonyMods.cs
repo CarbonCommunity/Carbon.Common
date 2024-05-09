@@ -5,6 +5,7 @@
  *
  */
 
+using API.Assembly;
 using Carbon.Client;
 
 namespace Carbon.Core;
@@ -36,6 +37,8 @@ public partial class CorePlugin : CarbonPlugin
 			}
 		}
 
+		Community.Runtime.AssemblyEx.Extensions.CurrentExtensionType =
+			IExtensionManager.ExtensionTypes.HarmonyModHotload;
 		Community.Runtime.AssemblyEx.Extensions.Load(Path.Combine(Defines.GetHarmonyFolder(), $"{mod}.dll"), "Command");
 	}
 
@@ -59,6 +62,8 @@ public partial class CorePlugin : CarbonPlugin
 			if (folder.Equals(Defines.GetHarmonyFolder(), StringComparison.InvariantCultureIgnoreCase) &&
 			    file.Equals(mod, StringComparison.InvariantCultureIgnoreCase))
 			{
+				Community.Runtime.AssemblyEx.Extensions.CurrentExtensionType =
+					IExtensionManager.ExtensionTypes.HarmonyModHotload;
 				Community.Runtime.AssemblyEx.Extensions.Unload(ext.Value.Key, "Command");
 				break;
 			}
