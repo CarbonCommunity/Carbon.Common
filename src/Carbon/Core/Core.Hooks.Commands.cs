@@ -81,7 +81,7 @@ public partial class CorePlugin : CarbonPlugin
 		if (arg != null && arg.cmd != null && arg.Player() != null && arg.cmd.FullName == "chat.say") return null;
 
 		// OnServerCommand
-		return HookCaller.CallStaticHook(3282920085, arg) != null ? Cache.True : null;
+		return HookCaller.CallStaticHook(2535152661, arg) != null ? Cache.True : null;
 	}
 	public static object IOnPlayerChat(ulong playerId, string playerName, string message, Chat.ChatChannel channel, BasePlayer basePlayer)
 	{
@@ -92,14 +92,14 @@ public partial class CorePlugin : CarbonPlugin
 		if (basePlayer == null || !basePlayer.IsConnected)
 		{
 			// OnPlayerOfflineChat
-			return HookCaller.CallStaticHook(3391949391, playerId, playerName, message, channel);
+			return HookCaller.CallStaticHook(4068177051, playerId, playerName, message, channel);
 		}
 
 		// OnPlayerChat
-		var hook1 = HookCaller.CallStaticHook(735197859, basePlayer, message, channel);
+		var hook1 = HookCaller.CallStaticHook(2032160890, basePlayer, message, channel);
 
 		// OnUserChat
-		var hook2 = HookCaller.CallStaticHook(2410402155, basePlayer.AsIPlayer(), message);
+		var hook2 = HookCaller.CallStaticHook(2894159933, basePlayer.AsIPlayer(), message);
 
 		return hook1 ?? hook2;
 	}
@@ -119,7 +119,7 @@ public partial class CorePlugin : CarbonPlugin
 				value = "1";
 			}
 
-			var key = @switch.Key.Substring(1);
+			var key = @switch.Key[1..];
 			var options = ConsoleSystem.Option.Unrestricted;
 			options.PrintOutput = false;
 

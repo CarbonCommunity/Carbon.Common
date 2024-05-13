@@ -282,7 +282,7 @@ public class Permission : Library
 			permset.Remove(owner);
 
 			// OnPermissionsUnregistered
-			HookCaller.CallStaticHook(1374013157, owner);
+			HookCaller.CallStaticHook(2952085131, owner);
 		}
 	}
 	public virtual bool PermissionExists(string name, BaseHookable owner = null)
@@ -943,7 +943,7 @@ public class Permission : Library
 		if (removed)
 		{
 			// OnGroupDeleted
-			HookCaller.CallStaticHook(3899174310, group);
+			HookCaller.CallStaticHook(3702696305, group);
 		}
 		return true;
 	}
