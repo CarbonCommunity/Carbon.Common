@@ -28,7 +28,7 @@ public abstract class BaseModule : BaseHookable
 	public abstract void Save();
 	public abstract void OnUnload();
 	public abstract void Reload();
-	public abstract bool GetEnabled();
+	public abstract bool IsEnabled();
 	public abstract void SetEnabled(bool enable);
 	public abstract void Shutdown();
 
@@ -302,9 +302,9 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 			}
 		}
 	}
-	public override bool GetEnabled()
+	public override bool IsEnabled()
 	{
-		return !ForceDisabled && ModuleConfiguration != null && ModuleConfiguration.Enabled;
+		return !ForceDisabled && ModuleConfiguration is { Enabled: true };
 	}
 
 	public virtual void OnDisabled(bool initialized)
@@ -369,7 +369,7 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 	{
 		if (ForceDisabled) return;
 
-		if (initial && GetEnabled())
+		if (initial && IsEnabled())
 		{
 			OnEnableStatus();
 		}

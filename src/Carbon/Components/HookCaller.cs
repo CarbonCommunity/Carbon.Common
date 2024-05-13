@@ -179,7 +179,7 @@ public static class HookCaller
 
 			try
 			{
-				if (hookable is IModule modules && !modules.GetEnabled()) continue;
+				if (hookable is IModule modules && !modules.IsEnabled()) continue;
 
 				var methodResult = Caller.CallHook(hookable, hookId, flags: flag, args: args);
 
