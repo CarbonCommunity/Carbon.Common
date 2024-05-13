@@ -32,13 +32,13 @@ public partial class CorePlugin : CarbonPlugin
 			var args = split.Length > 1 ? Facepunch.Extend.StringExtensions.SplitQuotesStrings(fullString[(command.Length + 1)..]) : _emptyStringArray;
 
 			// OnUserCommand
-			if (HookCaller.CallStaticHook(1077563450, player, command, args) != null)
+			if (HookCaller.CallStaticHook(2198880635, player, command, args) != null)
 			{
 				return Cache.False;
 			}
 
 			// OnUserCommand
-			if (HookCaller.CallStaticHook(2623980812, player.AsIPlayer(), command, args) != null)
+			if (HookCaller.CallStaticHook(2198880635, player.AsIPlayer(), command, args) != null)
 			{
 				return Cache.False;
 			}
@@ -67,7 +67,8 @@ public partial class CorePlugin : CarbonPlugin
 				player.ChatMessage($"<color=orange>Unknown command:</color> {message}");
 			}
 
-			if (HookCaller.CallStaticHook(554444971, player, command, args) != null)
+			// OnPlayerCommand
+			if (HookCaller.CallStaticHook(2915735597, player, command, args) != null)
 			{
 				return Cache.False;
 			}

@@ -252,7 +252,7 @@ public static class ModLoader
 			Analytics.plugin_constructor_failure(plugin);
 
 			// OnConstructorFail
-			HookCaller.CallStaticHook(937285752, plugin, ex);
+			HookCaller.CallStaticHook(2684549964, plugin, ex);
 
 			Logger.Error($"Failed executing constructor for {plugin.ToPrettyString()}. This is fatal! Unloading plugin.", ex);
 			return false;

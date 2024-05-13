@@ -270,7 +270,7 @@ public class Permission : Library
 		}
 		hashSet.Add(name);
 		// OnPermissionRegistered
-		HookCaller.CallStaticHook(3007604742, name, owner);
+		HookCaller.CallStaticHook(4257240972, name, owner);
 	}
 	public virtual void UnregisterPermissions(BaseHookable owner)
 	{
@@ -426,7 +426,7 @@ public class Permission : Library
 			userData.LastSeenNickname = nickname.Sanitize();
 
 			// OnUserNameUpdated
-			HookCaller.CallStaticHook(945289215, id, lastSeenNickname, userData.LastSeenNickname);
+			HookCaller.CallStaticHook(4255507790, id, lastSeenNickname, userData.LastSeenNickname);
 		}
 	}
 
@@ -577,7 +577,7 @@ public class Permission : Library
 		if (!GetUserData(id).Groups.Add(name.ToLower())) return;
 
 		// OnUserGroupAdded
-		HookCaller.CallStaticHook(3469176166, id, name);
+		HookCaller.CallStaticHook(3116013984, id, name);
 	}
 	public virtual void RemoveUserGroup(string id, string name)
 	{
@@ -591,7 +591,7 @@ public class Permission : Library
 			foreach (var group in userData.Groups)
 			{
 				// OnUserGroupRemoved
-				HookCaller.CallStaticHook(2616322405, id, group);
+				HookCaller.CallStaticHook(1018697706, id, group);
 			}
 
 			userData.Groups.Clear();
@@ -601,7 +601,7 @@ public class Permission : Library
 			if (!userData.Groups.Remove(name.ToLower())) return;
 
 			// OnUserGroupRemoved
-			HookCaller.CallStaticHook(2616322405, id, name);
+			HookCaller.CallStaticHook(1018697706, id, name);
 		}
 	}
 	public virtual bool UserHasGroup(string id, string name)
@@ -720,7 +720,7 @@ public class Permission : Library
 				{
 					if (!(c | data.Perms.Add(s))) return false;
 					// OnUserPermissionGranted
-					HookCaller.CallStaticHook(593143994, id, s);
+					HookCaller.CallStaticHook(4054877424, id, s);
 					return true;
 
 				});
@@ -734,7 +734,7 @@ public class Permission : Library
 			{
 				if (!(c | data.Perms.Add(s))) return false;
 				// OnUserPermissionGranted
-				HookCaller.CallStaticHook(593143994, id, s);
+				HookCaller.CallStaticHook(4054877424, id, s);
 				return true;
 
 			});
@@ -745,7 +745,7 @@ public class Permission : Library
 			if (!data.Perms.Add(perm)) return false;
 
 			// OnUserPermissionGranted
-			HookCaller.CallStaticHook(593143994, id, perm);
+			HookCaller.CallStaticHook(4054877424, id, perm);
 			return true;
 		}
 	}
@@ -769,7 +769,7 @@ public class Permission : Library
 				{
 					if (!s.StartsWith(perm)) return false;
 					// OnUserPermissionRevoked
-					HookCaller.CallStaticHook(1216290467, id, s);
+					HookCaller.CallStaticHook(1879829838, id, s);
 					return true;
 				}) > 0;
 			}
@@ -783,7 +783,7 @@ public class Permission : Library
 			if (!userData.Perms.Remove(perm)) return false;
 
 			// OnUserPermissionRevoked
-			HookCaller.CallStaticHook(1216290467, id, perm);
+			HookCaller.CallStaticHook(1879829838, id, perm);
 			return true;
 		}
 	}
@@ -820,7 +820,7 @@ public class Permission : Library
 				{
 					if (!(c | data.Perms.Add(s))) return false;
 					// OnGroupPermissionGranted
-					HookCaller.CallStaticHook(2569513351, name, perm);
+					HookCaller.CallStaticHook(2479711677, name, perm);
 					return true;
 				});
 				return true;
@@ -832,7 +832,7 @@ public class Permission : Library
 			{
 				if (!(c | data.Perms.Add(s))) return false;
 				// OnGroupPermissionGranted
-				HookCaller.CallStaticHook(2569513351, name, perm);
+				HookCaller.CallStaticHook(2479711677, name, perm);
 				return true;
 			});
 			return true;
@@ -842,7 +842,7 @@ public class Permission : Library
 			if (!data.Perms.Add(perm)) return false;
 
 			// OnGroupPermissionGranted
-			HookCaller.CallStaticHook(2569513351, name, perm);
+			HookCaller.CallStaticHook(2479711677, name, perm);
 			return true;
 		}
 	}
@@ -871,7 +871,7 @@ public class Permission : Library
 				{
 					if (!s.StartsWith(perm)) return false;
 					// OnGroupPermissionRevoked
-					HookCaller.CallStaticHook(858041166, name, s);
+					HookCaller.CallStaticHook(3443835039, name, s);
 					return true;
 
 				}) > 0;
@@ -881,7 +881,7 @@ public class Permission : Library
 			foreach (var permission in groupData.Perms)
 			{
 				// OnGroupPermissionRevoked
-				HookCaller.CallStaticHook(858041166, name, permission);
+				HookCaller.CallStaticHook(3443835039, name, permission);
 			}
 
 			groupData.Perms.Clear();
@@ -892,7 +892,7 @@ public class Permission : Library
 			if (!groupData.Perms.Remove(perm)) return false;
 
 			// OnGroupPermissionRevoked
-			HookCaller.CallStaticHook(858041166, name, perm);
+			HookCaller.CallStaticHook(3443835039, name, perm);
 			return true;
 		}
 	}
@@ -915,7 +915,7 @@ public class Permission : Library
 		groupdata.Add(group, value);
 
 		// OnGroupCreated
-		HookCaller.CallStaticHook(2242151940, group, title, rank);
+		HookCaller.CallStaticHook(1889097028, group, title, rank);
 		return true;
 	}
 	public virtual bool RemoveGroup(string group)
@@ -962,7 +962,7 @@ public class Permission : Library
 		groupData.Title = title;
 
 		// OnGroupTitleSet
-		HookCaller.CallStaticHook(367139412, group, title);
+		HookCaller.CallStaticHook(1035562059, group, title);
 		return true;
 	}
 	public virtual bool SetGroupRank(string group, int rank)
@@ -979,7 +979,7 @@ public class Permission : Library
 		groupData.Rank = rank;
 
 		// OnGroupRankSet
-		HookCaller.CallStaticHook(1812963218, group, rank);
+		HookCaller.CallStaticHook(407332709, group, rank);
 		return true;
 	}
 
@@ -1028,7 +1028,7 @@ public class Permission : Library
 		groupData.ParentGroup = parent;
 
 		// OnGroupParentSet
-		HookCaller.CallStaticHook(3339885885, group, parent);
+		HookCaller.CallStaticHook(3763369361, group, parent);
 		return true;
 	}
 	public virtual bool HasCircularParent(string group, string parent)
