@@ -57,7 +57,7 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 	public DynamicConfigFile Data { get; private set; }
 	public Lang Lang { get; private set; }
 
-	public new virtual Type Type => default;
+	public virtual Type Type => default;
 
 	public D DataInstance { get; private set; }
 	public C ConfigInstance { get; private set; }
