@@ -43,7 +43,7 @@ public abstract class BaseModule : BaseHookable
 	}
 	public static BaseModule FindModule(string name)
 	{
-		return Community.Runtime.ModuleProcessor.Modules.FirstOrDefault(x => x.Type.Name == name) as BaseModule;
+		return Community.Runtime.ModuleProcessor.Modules.FirstOrDefault(x => x.HookableType.Name == name) as BaseModule;
 	}
 }
 
@@ -82,7 +82,7 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 	{
 		base.Hooks ??= new();
 		base.Name ??= Name;
-		base.Type ??= Type;
+		base.HookableType ??= Type;
 
 		if (ForceDisabled) return;
 

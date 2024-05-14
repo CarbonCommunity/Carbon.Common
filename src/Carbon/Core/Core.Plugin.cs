@@ -54,10 +54,10 @@ public partial class CorePlugin : CarbonPlugin
 
 		ApplyStacktrace();
 
-		Type = GetType();
+		HookableType = GetType();
 		Hooks = new();
 
-		foreach (var method in Type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic))
+		foreach (var method in HookableType.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic))
 		{
 			if (Community.Runtime.HookManager.IsHook(method.Name))
 			{
