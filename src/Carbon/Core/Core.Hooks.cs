@@ -53,10 +53,10 @@ public partial class CorePlugin : CarbonPlugin
 		Pool.FreeList(ref temp);
 
 		// OnServerShutdown
-		HookCaller.CallStaticHook(1708437245);
+		HookCaller.CallStaticHook(2414711472);
 
 		// OnServerSave
-		HookCaller.CallStaticHook(2032593992);
+		HookCaller.CallStaticHook(2396958305);
 
 		Logger.Log($"Shutting down Carbon..");
 		Interface.Oxide.OnShutdown();

@@ -1,10 +1,5 @@
-﻿using API.Assembly;
-using API.Commands;
-using Carbon.Base.Interfaces;
-using Carbon.Profiler;
-using HarmonyLib;
-using Newtonsoft.Json;
-using Oxide.Game.Rust.Cui;
+﻿using Carbon.Profiler;
+using Timer = Oxide.Plugins.Timer;
 
 /*
  *
@@ -18,63 +13,129 @@ namespace Carbon.Core;
 
 public partial class CorePlugin : CarbonPlugin
 {
-	[CommandVar("profiler", "Mono profiling status. Must restart the server for changes to apply.")]
+	public static MonoProfiler.Sample ProfileSample = MonoProfiler.Sample.Create();
+
+	[CommandVar("profilestatus", "Mono profiling status.")]
 	[AuthLevel(2)]
-	private bool ProfilerEnabled
+	private bool IsProfiling
 	{
-		get { return Community.Runtime.MonoProfilerConfig.Enabled; }
-		set
+		get { return MonoProfiler.IsRecording; }
+		set { }
+	}
+
+	[ConsoleCommand("profile", "Toggles recording status of the Carbon native Mono-profiling. Syntax: c.profile [duration] [-cm] [-am] [-t] [-c] [-gc]")]
+	[AuthLevel(2)]
+	private void Profile(ConsoleSystem.Arg arg)
+	{
+		if (!MonoProfiler.Enabled)
 		{
-			Community.Runtime.MonoProfilerConfig.Enabled = value;
-			Community.Runtime.SaveMonoProfilerConfig();
+			arg.ReplyWith("Mono profiler is disabled. Enable it in the 'carbon/config.profiler.json' config file. Must restart the server for changes to apply.");
+			return;
+		}
+
+		var duration = arg.GetFloat(0);
+		var flags = MonoProfiler.ProfilerArgs.None;
+
+		if (arg.HasArg("-cm")) flags |= MonoProfiler.ProfilerArgs.CallMemory;
+		if (arg.HasArg("-am")) flags |= MonoProfiler.ProfilerArgs.AdvancedMemory;
+		if (arg.HasArg("-t")) flags |= MonoProfiler.ProfilerArgs.Timings;
+		if (arg.HasArg("-c")) flags |= MonoProfiler.ProfilerArgs.Calls;
+		if (arg.HasArg("-gc")) flags |= MonoProfiler.ProfilerArgs.GCEvents;
+
+		if (flags == MonoProfiler.ProfilerArgs.None) flags = MonoProfiler.AllFlags;
+
+		if (MonoProfiler.IsRecording)
+		{
+			Analytics.profiler_ended(flags, MonoProfiler.CurrentDurationTime.TotalSeconds, false);
+			MonoProfiler.ToggleProfiling(flags);
+			ProfileSample.Resample();
+			return;
+		}
+
+		if (duration <= 0)
+		{
+			MonoProfiler.ToggleProfiling(flags);
+			Analytics.profiler_started(flags, false);
+		}
+		else
+		{
+			MonoProfiler.ToggleProfilingTimed(duration, flags, args =>
+			{
+				Analytics.profiler_ended(flags, duration, true);
+				ProfileSample.Resample();
+			});
+			Analytics.profiler_started(flags, true);
 		}
 	}
 
-	[ConsoleCommand("profile", "Toggles recording status of the Carbon native Mono-profiling. Syntax: `c.profile [-a]`, [-a] to include advanced profiling when profiling stops.")]
+	[ConsoleCommand("profileabort", "Aborts recording of the Carbon native Mono-profiling if it was recording.")]
 	[AuthLevel(2)]
-	private void ProfilerToggle(ConsoleSystem.Arg arg)
+	private void ProfileAbort(ConsoleSystem.Arg arg)
 	{
-		if (!ProfilerEnabled)
+		if (!MonoProfiler.IsRecording)
 		{
-			arg.ReplyWith("Mono profiler is disabled. Run `c.profiler true` to enable it. Must restart the server for changes to apply.");
+			arg.ReplyWith("No profiling process active.");
 			return;
 		}
 
-		if (MonoProfiler.ToggleProfiling(arg.GetString(0).Equals("-a")).GetValueOrDefault())
-		{
-			return;
-		}
-
-		arg.ReplyWith(
-			$"Basic:\n{(MonoProfiler.BasicRecords.AnyValidRecords ? MonoProfiler.BasicRecords.ToTable() : "No valid records")}\n\n" +
-			$"Advanced:\n{(MonoProfiler.AdvancedRecords.Disabled ? "Advanced profiling is disabled. Use [-a] to enable advanced profiling." : MonoProfiler.AdvancedRecords.AnyValidRecords ? MonoProfiler.AdvancedRecords.ToTable() : "No valid records")}");
+		MonoProfiler.ToggleProfiling(MonoProfiler.ProfilerArgs.Abort);
+		ProfileSample.Clear();
 	}
 
 	[ConsoleCommand("profiler.print", "If any parsed data available, it'll print basic and advanced information.")]
 	[AuthLevel(2)]
 	private void ProfilerPrint(ConsoleSystem.Arg arg)
 	{
-		if (MonoProfiler.Recording)
+		if (MonoProfiler.IsRecording)
 		{
 			arg.ReplyWith("Profiler is actively recording.");
 			return;
 		}
 
-		arg.ReplyWith(
-			$"Basic:\n{(MonoProfiler.BasicRecords.AnyValidRecords ? MonoProfiler.BasicRecords.ToTable() : "No valid records")}\n\n" +
-			$"Advanced:\n{(MonoProfiler.AdvancedRecords.Disabled ? "Advanced profiling is disabled. Use [-a] to enable advanced profiling." : MonoProfiler.AdvancedRecords.AnyValidRecords ? MonoProfiler.AdvancedRecords.ToTable() : "No valid records")}");
-	}
+		var mode = arg.GetString(0);
+		var toFile = arg.HasArg("-f");
+		var output = string.Empty;
 
-	[CommandVar("profiler.allocs", "Once the Mono profiler gets initialized, enhanced allocation data will be tracked. Must restart the server for changes to apply.")]
-	[AuthLevel(2)]
-	private bool ProfilerAllocations
-	{
-		get { return Community.Runtime.MonoProfilerConfig.Allocations; }
-		set
+		switch (mode)
 		{
-			Community.Runtime.MonoProfilerConfig.Allocations = value;
-			Community.Runtime.SaveMonoProfilerConfig();
+			case "-c":
+				output = $"{ProfileSample.Assemblies.ToCSV()}{(toFile ? $"\n{ProfileSample.Calls.ToCSV()}\n{ProfileSample.Memory.ToCSV()}" : string.Empty)}";
+				if (toFile) WriteFileString("csv", output); else arg.ReplyWith(output);
+				break;
+
+			case "-j":
+				// patret magic
+				break;
+
+			case "-p":
+				// patret magic
+				break;
+
+			default:
+			case "-t":
+				output = $"{ProfileSample.Assemblies.ToTable()}{(toFile ? $"\n\n{ProfileSample.Calls.ToTable()}\n{ProfileSample.Memory.ToCSV()}" : string.Empty)}";
+				if (toFile) WriteFileString("txt", output); else arg.ReplyWith(output);
+				break;
+
 		}
+
+		static void WriteFileString(string extension, string data)
+		{
+			var date = DateTime.Now;
+			var file = Path.Combine(Defines.GetProfilesFolder(), $"profile-{date.Year}_{date.Month}_{date.Day}_{date.Hour}{date.Minute}{date.Second}.{extension}");
+			OsEx.File.Create(file, data);
+
+			Logger.Warn($" Stored output at {file}");
+		}
+		// static void WriteFileByte(ConsoleSystem.Arg arg, string extension, byte[] data)
+		// {
+		// 	var date = DateTime.Now;
+		// 	var file = Path.Combine(Defines.GetRustRootFolder(),
+		// 		$"profile-{date.Year}_{date.Month}_{date.Day}_{date.Hour}{date.Minute}{date.Second}.{extension}");
+		// 	OsEx.File.Create(file, data);
+
+		// 	Logger.Log($"Saved at {file}");
+		// }
 	}
 
 	[ConsoleCommand("profiler.tracks", "All tracking lists present in the config which are used by the Mono profiler for tracking.")]
@@ -170,5 +231,13 @@ public partial class CorePlugin : CarbonPlugin
 			arg.ReplyWith("Syntax: c.profiler.untrack (assembly|plugin|module|ext) value");
 			return false;
 		}
+	}
+
+	[CommandVar("profiler.recwarns", "It should or should not print a reminding warning every 5 minutes when profiling for an un-set amount of time.")]
+	[AuthLevel(2)]
+	private bool RecordingWarnings
+	{
+		get { return Community.Runtime.Config.Profiler.RecordingWarnings; }
+		set { Community.Runtime.Config.Profiler.RecordingWarnings = value; }
 	}
 }

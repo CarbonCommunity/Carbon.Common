@@ -5,6 +5,7 @@
  *
  */
 
+using API.Assembly;
 using Carbon.Client;
 
 namespace Carbon.Core;
@@ -36,6 +37,8 @@ public partial class CorePlugin : CarbonPlugin
 			}
 		}
 
+		Community.Runtime.AssemblyEx.Extensions.CurrentExtensionType =
+			IExtensionManager.ExtensionTypes.HarmonyModHotload;
 		Community.Runtime.AssemblyEx.Extensions.Load(Path.Combine(Defines.GetHarmonyFolder(), $"{mod}.dll"), "Command");
 	}
 
@@ -59,9 +62,32 @@ public partial class CorePlugin : CarbonPlugin
 			if (folder.Equals(Defines.GetHarmonyFolder(), StringComparison.InvariantCultureIgnoreCase) &&
 			    file.Equals(mod, StringComparison.InvariantCultureIgnoreCase))
 			{
+				Community.Runtime.AssemblyEx.Extensions.CurrentExtensionType =
+					IExtensionManager.ExtensionTypes.HarmonyModHotload;
 				Community.Runtime.AssemblyEx.Extensions.Unload(ext.Value.Key, "Command");
 				break;
 			}
 		}
+	}
+
+	[ConsoleCommand("harmonymods", "Prints all currently loaded and processed HarmonyMods.")]
+	[AuthLevel(2)]
+	private void HarmonyMods(ConsoleSystem.Arg args)
+	{
+		using var table = new StringTable($"HarmonyMod ({Harmony.ModHooks.Count:n0})", "Version", "Assembly", "Type", "Method");
+
+		foreach (var mod in Harmony.ModHooks)
+		{
+			var parentAssembly = mod.Key.GetName().Name;
+			var first = true;
+
+			foreach (var patch in Harmony.CurrentPatches.Where(x => x.Harmony == null && x.ParentAssemblyName.Equals(parentAssembly + ".dll")))
+			{
+				table.AddRow(first ? parentAssembly : string.Empty, first ? mod.Key.GetName().Version.ToString() : string.Empty, patch.AssemblyName, patch.TypeName, patch.MethodName);
+				first = false;
+			}
+		}
+
+		args.ReplyWith($"{table.ToStringMinimal()}");
 	}
 }

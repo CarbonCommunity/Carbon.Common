@@ -11,48 +11,110 @@ namespace Carbon.Core;
 public partial class CorePlugin : CarbonPlugin
 {
 #if !MINIMAL
-	[CommandVar("recycletick", help: "Configures the recycling ticks speed.", saved: true)]
+	[CommandVar("isforcemodded", help: "Is the server forcefully set to modded due to options affecting significant gameplay changes in Carbon Auto?")]
+	[AuthLevel(2)]
+	public bool IsForceModded { get { return CarbonAuto.Singleton.IsForceModded(); } set { } }
+
+	#region Modded
+
+	[CarbonAutoModdedVar("recycletick", "Recycle Tick", help: "Configures the recycling ticks speed.")]
 	[AuthLevel(2)]
 	public float RecycleTick = -1;
 
-	[CommandVar("researchduration", help: "The duration of waiting whenever researching blueprints.", saved: true)]
+	[CarbonAutoModdedVar("safezonerecycletick", "Recycle Tick (Safezone)", help: "Configures the SafeZone recycling ticks speed.")]
+	[AuthLevel(2)]
+	public float SafezoneRecycleTick = -1;
+
+	[CarbonAutoModdedVar("researchduration", "Researching Duration", help: "The duration of waiting whenever researching blueprints.")]
 	[AuthLevel(2)]
 	public float ResearchDuration = -1;
 
-	[CommandVar("vendingmachinebuyduration", help: "The duration of transaction delay when buying from vending machines.", saved: true)]
+	[CarbonAutoModdedVar("vendingmachinebuyduration", "Vending Buy Duration", help: "The duration of transaction delay when buying from vending machines.")]
 	[AuthLevel(2)]
 	public float VendingMachineBuyDuration = -1;
 
-	[CommandVar("craftingspeedmultiplier", help: "The time multiplier of crafting items.", saved: true)]
+	[CarbonAutoModdedVar("craftingspeedmultiplier_nowb", "Crafting Speed - No WB (*)", help: "The time multiplier of crafting items without a workbench.")]
 	[AuthLevel(2)]
-	public float CraftingSpeedMultiplier = -1;
+	public float CraftingSpeedMultiplierNoWB = -1;
 
-	[CommandVar("mixingspeedmultiplier", help: "The speed multiplier of mixing table crafts.", saved: true)]
+	[CarbonAutoModdedVar("craftingspeedmultiplier_wb1", "Crafting Speed - WB 1 (*)", help: "The time multiplier of crafting items at workbench level 1.")]
+	[AuthLevel(2)]
+	public float CraftingSpeedMultiplierWB1 = -1;
+
+	[CarbonAutoModdedVar("craftingspeedmultiplier_wb2", "Crafting Speed - WB 2 (*)", help: "The time multiplier of crafting items at workbench level 2.")]
+	[AuthLevel(2)]
+	public float CraftingSpeedMultiplierWB2 = -1;
+
+	[CarbonAutoModdedVar("craftingspeedmultiplier_wb3", "Crafting Speed - WB 3 (*)", help: "The time multiplier of crafting items at workbench level 3.")]
+	[AuthLevel(2)]
+	public float CraftingSpeedMultiplierWB3 = -1;
+
+	[CarbonAutoModdedVar("mixingspeedmultiplier", "Mixing Speed (*)", help: "The speed multiplier of mixing table crafts.")]
 	[AuthLevel(2)]
 	public float MixingSpeedMultiplier = -1;
 
-	[CommandVar("exacavatorresourcetickrate", help: "Excavator resource tick rate.", saved: true)]
+	[CarbonAutoModdedVar("exacavatorresourcetickrate", "Excavator Resource Rate", help: "Excavator resource tick rate.")]
 	[AuthLevel(2)]
 	public float ExcavatorResourceTickRate = -1;
 
-	[CommandVar("excavatortimeforfullresources", help: "Excavator time for processing full resources.", saved: true)]
+	[CarbonAutoModdedVar("excavatortimeforfullresources", "Excavator Full Resources Time", help: "Excavator time for processing full resources.")]
 	[AuthLevel(2)]
 	public float ExcavatorTimeForFullResources = -1;
 
-	[CommandVar("excavatorbeltspeedmax", help: "Excavator belt maximum speed.", saved: true)]
+	[CarbonAutoModdedVar("excavatorbeltspeedmax", "Excavator Belt Max. Speed", help: "Excavator belt maximum speed.")]
 	[AuthLevel(2)]
 	public float ExcavatorBeltSpeedMax = -1;
 
-	[CommandVar("defaultserverchatname", help: "Default server chat name.", saved: true)]
+	[CarbonAutoModdedVar("ovenspeedmultiplier", "Oven Speed (*)", help: "The burning speed of ovens.")]
+	[AuthLevel(2)]
+	public float OvenSpeedMultiplier = -1;
+
+	[CarbonAutoModdedVar("ovenblacklistspeedmultiplier", "Oven Blacklist Speed (*) Duration", help: "The burning speed of blacklisted ovens.")]
+	[AuthLevel(2)]
+	public float OvenBlacklistSpeedMultiplier = -1;
+
+	#endregion
+
+	#region Vanilla
+
+	public IEnumerable<string> OvenBlacklistCache;
+
+	private string _ovenBlacklist = "furnace,bbq.static,furnace.large";
+
+	[CarbonAutoVar("ovenblacklist", "Oven Blacklist", help: "Blacklisted oven entity prefabs.")]
+	[AuthLevel(2)]
+	public string OvenBlacklist
+	{
+		get => _ovenBlacklist;
+		set
+		{
+			if (string.IsNullOrEmpty(value))
+			{
+				OvenBlacklistCache = default;
+				return;
+			}
+
+			if (_ovenBlacklist != value)
+			{
+				OvenBlacklistCache = value.SplitEnumerable(',');
+			}
+
+			_ovenBlacklist = value;
+		}
+	}
+
+	[CarbonAutoVar("defaultserverchatname", "Server Chat Name", help: "Default server chat name.")]
 	[AuthLevel(2)]
 	public string DefaultServerChatName = "-1";
 
-	[CommandVar("defaultserverchatcolor", help: "Default server chat message name color.", saved: true)]
+	[CarbonAutoVar("defaultserverchatcolor", "Server Chat Color", help: "Default server chat message name color.")]
 	[AuthLevel(2)]
 	public string DefaultServerChatColor = "-1";
 
-	[CommandVar("defaultserverchatid", help: "Default server chat icon SteamID.", saved: true)]
+	[CarbonAutoVar("defaultserverchatid", "Server Icon ID", help: "Default server chat icon SteamID.")]
 	[AuthLevel(2)]
 	public long DefaultServerChatId = -1;
+
+	#endregion
 #endif
 }

@@ -140,7 +140,7 @@ public class BaseHookable
 
 	public bool HasBuiltHookCache { get; internal set; }
 	public bool HasInitialized { get; internal set; }
-	public Type Type { get; internal set; }
+	public Type HookableType { get; internal set; }
 	public bool InternalCallHookOverriden { get; internal set; } = true;
 
 	#region Tracking
@@ -148,11 +148,6 @@ public class BaseHookable
 	internal Stopwatch _trackStopwatch = new();
 	internal int _currentGcCount;
 	internal TimeSince? _initializationTime;
-
-#if DEBUG
-	public HookTimeAverage HookTimeAverage { get; protected set; }
-	public MemoryAverage MemoryAverage { get; protected set; }
-#endif
 
 	public TimeSpan CurrentHookTime { get; internal set; }
 	public static long CurrentMemory => GC.GetTotalMemory(false);
@@ -165,18 +160,6 @@ public class BaseHookable
 		{
 			_initializationTime = 0;
 		}
-
-#if DEBUG
-		if (HookTimeAverage == null)
-		{
-			HookTimeAverage = new(Community.Runtime.Config.Debugging.PluginTrackingTime);
-		}
-
-		if (MemoryAverage == null)
-		{
-			MemoryAverage = new(Community.Runtime.Config.Debugging.PluginTrackingTime);
-		}
-#endif
 	}
 	public virtual void TrackStart()
 	{
@@ -226,7 +209,7 @@ public class BaseHookable
 
 		HookPool.Clear();
 
-		var methods = Type.GetMethods(flag);
+		var methods = HookableType.GetMethods(flag);
 
 		foreach (var method in methods)
 		{
@@ -248,7 +231,7 @@ public class BaseHookable
 			hooks.Add(CachedHook.Make(method.Name, id, this, method));
 		}
 
-		var methodAttributes = Type.GetMethods(flag | BindingFlags.Public);
+		var methodAttributes = HookableType.GetMethods(flag | BindingFlags.Public);
 
 		foreach (var method in methodAttributes)
 		{

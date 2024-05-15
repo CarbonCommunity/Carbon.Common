@@ -56,7 +56,12 @@ public partial class AdminModule
 	[Conditional("!MINIMAL")]
 	private void OnPlayerDisconnected(BasePlayer player)
 	{
-		if (PlayersTab.BlindedPlayers.Contains(player)) PlayersTab.BlindedPlayers.Remove(player);
+		Tab.OptionChart.Cache.ClearPlayerViewer(player.userID);
+
+		if (PlayersTab.BlindedPlayers.Contains(player))
+		{
+			PlayersTab.BlindedPlayers.Remove(player);
+		}
 
 		StopSpectating(player);
 	}

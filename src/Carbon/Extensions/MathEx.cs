@@ -73,6 +73,14 @@ public static class MathEx
 
 		return newValue;
 	}
+	public static ulong Scale(this ulong oldValue, ulong oldMin, ulong oldMax, ulong newMin, ulong newMax)
+	{
+		var oldRange = oldMax - oldMin;
+		var newRange = newMax - newMin;
+		var newValue = (oldValue - oldMin) * newRange / oldRange + newMin;
+
+		return newValue;
+	}
 
 	public static int RoundUpToNearest(this int value, int nearest)
 	{

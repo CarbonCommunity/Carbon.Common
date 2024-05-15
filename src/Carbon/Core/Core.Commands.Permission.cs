@@ -167,75 +167,111 @@ public partial class CorePlugin : CarbonPlugin
 		void PrintWarn()
 		{
 			arg.ReplyWith($"Syntax: c.show <groups|perms>\n" +
-				$"Syntax: c.show <group|user> <name|id>");
+			              $"Syntax: c.show <group|user|perm> <name|id>");
 		}
 
-		if (!arg.HasArgs(1)) { PrintWarn(); return; }
+		if (!arg.HasArgs(1))
+		{
+			PrintWarn();
+			return;
+		}
 
 		var action = arg.GetString(0);
 
 		switch (action)
 		{
 			case "user":
+			{
+				if (!arg.HasArgs(2))
 				{
-					if (!arg.HasArgs(2)) { PrintWarn(); return; }
-
-					var name = arg.GetString(1);
-					var user = permission.FindUser(name);
-
-					if (user.Value == null)
-					{
-						arg.ReplyWith($"Couldn't find that user.");
-						return;
-					}
-
-					var permissions = permission.GetUserPermissions(user.Key);
-					arg.ReplyWith($"User {user.Value.LastSeenNickname}[{user.Key}] found in {user.Value.Groups.Count:n0} groups:\n  {user.Value.Groups.Select(x => x).ToString(", ", " and ")}\n" +
-						$"and has {permissions.Count():n0} permissions:\n  {permissions.ToString(", ")}");
-					break;
+					PrintWarn();
+					return;
 				}
+
+				var name = arg.GetString(1);
+				var user = permission.FindUser(name);
+
+				if (user.Value == null)
+				{
+					arg.ReplyWith($"Couldn't find that user.");
+					return;
+				}
+
+				var permissions = permission.GetUserPermissions(user.Key);
+				arg.ReplyWith(
+					$"User {user.Value.LastSeenNickname}[{user.Key}] found in {user.Value.Groups.Count:n0} groups:\n  {user.Value.Groups.Select(x => x).ToString(", ", " and ")}\n" +
+					$"and has {permissions.Count():n0} permissions:\n  {permissions.ToString(", ")}");
+				break;
+			}
 			case "group":
+			{
+				if (!arg.HasArgs(2))
 				{
-					if (!arg.HasArgs(2)) { PrintWarn(); return; }
-
-					var name = arg.GetString(1);
-
-					if (!permission.GroupExists(name))
-					{
-						arg.ReplyWith($"Couldn't find that group.");
-						return;
-					}
-
-					var users = permission.GetUsersInGroup(name);
-					var permissions = permission.GetGroupPermissions(name, false);
-					arg.ReplyWith($"Group {name} has {users.Length:n0} users:\n  {users.Select(x => x).ToString(", ")}\n" +
-						$"and has {permissions.Length:n0} permissions:\n  {permissions.Select(x => x).ToString(", ")}");
-					break;
+					PrintWarn();
+					return;
 				}
+
+				var name = arg.GetString(1);
+
+				if (!permission.GroupExists(name))
+				{
+					arg.ReplyWith($"Couldn't find that group.");
+					return;
+				}
+
+				var users = permission.GetUsersInGroup(name);
+				var permissions = permission.GetGroupPermissions(name, false);
+				arg.ReplyWith($"Group {name} has {users.Length:n0} users:\n  {users.Select(x => x).ToString(", ")}\n" +
+				              $"and has {permissions.Length:n0} permissions:\n  {permissions.Select(x => x).ToString(", ")}");
+				break;
+			}
+			case "perm":
+			{
+				if (!arg.HasArgs(2))
+				{
+					PrintWarn();
+					return;
+				}
+
+				var name = arg.GetString(1);
+
+				if (!permission.PermissionExists(name))
+				{
+					arg.ReplyWith($"Couldn't find that permission.");
+					return;
+				}
+
+				var users = permission.GetPermissionUsers(name);
+				var groups = permission.GetPermissionGroups(name);
+				arg.ReplyWith($"Permission {name} is granted to {users.Length:n0} users:\n  {users.Select(x => x).ToString(", ")}\n" +
+				              $"and {groups.Length:n0} groups:\n  {groups.Select(x => x).ToString(", ")}");
+				break;
+			}
 			case "groups":
+			{
+				var groups = permission.GetGroups();
+				if (groups.Count() == 0)
 				{
-					var groups = permission.GetGroups();
-					if (groups.Count() == 0)
-					{
-						arg.ReplyWith($"Couldn't find any group.");
-						return;
-					}
-
-					arg.ReplyWith($"Groups:\n {groups.ToString(", ")}");
-					break;
+					arg.ReplyWith($"Couldn't find any group.");
+					return;
 				}
+
+				arg.ReplyWith($"Groups:\n {groups.ToString(", ")}");
+				break;
+			}
 			case "perms":
+			{
+				var perms = permission.GetPermissions();
+
+				if (!perms.Any())
 				{
-					var perms = permission.GetPermissions();
-					if (perms.Count() == 0)
-					{
-						arg.ReplyWith($"Couldn't find any permission.");
-					}
-
-					arg.ReplyWith($"Permissions:\n {perms.ToString(", ")}");
-
-					break;
+					arg.ReplyWith($"Couldn't find any permission.");
 				}
+
+				arg.ReplyWith($"Permissions:\n {perms.ToString(", ")}");
+
+				break;
+			}
 
 			default:
 				PrintWarn();
@@ -249,31 +285,64 @@ public partial class CorePlugin : CarbonPlugin
 	{
 		void PrintWarn()
 		{
-			arg.ReplyWith($"Syntax: c.usergroup <add|remove> <player> <group>");
-		}
-
-		if (!arg.HasArgs(3))
-		{
-			PrintWarn();
-			return;
+			arg.ReplyWith($"Syntax: c.usergroup <add|remove> <player> <group>\n" +
+			              $"Syntax: c.usergroup <addall|removeall> <group>");
 		}
 
 		var action = arg.GetString(0);
-		var player = arg.GetString(1);
-		var group = arg.GetString(2);
+		var player = string.Empty;
+		var group = string.Empty;
+		KeyValuePair<string, UserData> user = default;
 
-		var user = permission.FindUser(player);
-
-		if (user.Value == null)
+		switch (action)
 		{
-			arg.ReplyWith($"Couldn't find that player.");
-			return;
-		}
+			case "add":
+			case "remove":
+			{
+				if (!arg.HasArgs(3))
+				{
+					PrintWarn();
+					return;
+				}
 
-		if (!permission.GroupExists(group))
-		{
-			arg.ReplyWith($"Group '{group}' could not be found.");
-			return;
+				player = arg.GetString(1);
+				group = arg.GetString(2);
+
+				if (!permission.GroupExists(group))
+				{
+					arg.ReplyWith($"Group '{group}' could not be found.");
+					return;
+				}
+
+				user = permission.FindUser(player);
+
+				if (user.Value == null)
+				{
+					arg.ReplyWith($"Couldn't find that player.");
+					return;
+				}
+
+				break;
+			}
+
+			default:
+			{
+				if (!arg.HasArgs(2))
+				{
+					PrintWarn();
+					return;
+				}
+
+				group = arg.GetString(1);
+
+				if (!permission.GroupExists(group))
+				{
+					arg.ReplyWith($"Group '{group}' could not be found.");
+					return;
+				}
+
+				break;
+			}
 		}
 
 		switch (action)
@@ -299,6 +368,26 @@ public partial class CorePlugin : CarbonPlugin
 				permission.RemoveUserGroup(user.Key, group);
 				arg.ReplyWith($"Removed {user.Value.LastSeenNickname}[{user.Key}] from '{group}' group.");
 				break;
+
+			case "addall":
+			{
+				group = group.ToLower();
+
+				var count = permission.userdata.Count(userDataValue =>
+					permission.GetUserData(userDataValue.Key).Groups.Add(group));
+				arg.ReplyWith($"Added {count:n0} users to '{group}' group.");
+				break;
+			}
+
+			case "removeall":
+			{
+				group = group.ToLower();
+
+				var count = permission.userdata.Count(userDataValue =>
+					permission.GetUserData(userDataValue.Key).Groups.Remove(group));
+				arg.ReplyWith($"Removed {count:n0} users from '{group}' group.");
+				break;
+			}
 
 			default:
 				PrintWarn();

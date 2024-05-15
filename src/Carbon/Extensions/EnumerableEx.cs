@@ -32,30 +32,23 @@ public static class EnumerableEx
 
 		return index;
 	}
+
 	public static int FindIndex<T>(this IEnumerable<T> enumerable, Func<T, bool> predicate)
 	{
 		var index = 0;
 
 		if (predicate == null)
 		{
-			foreach (var iteration in enumerable)
-			{
-				index++;
-			}
+			index += enumerable.Count();
 		}
 		else
 		{
-			foreach (var iteration in enumerable)
-			{
-				if (predicate(iteration))
-				{
-					index++;
-				}
-			}
+			index += enumerable.Count(iteration => predicate(iteration));
 		}
 
 		return index;
 	}
+
 	public static T FindAt<T>(this IEnumerable<T> enumerable, int index)
 	{
 		var currentIndex = 0;
@@ -71,5 +64,20 @@ public static class EnumerableEx
 		}
 
 		return default;
+	}
+
+	public static ulong SumULong<TSource>(this IEnumerable<TSource> source, Func<TSource, ulong> selector)
+	{
+		return source.Select(selector).Aggregate(0UL, (current, value) => current + value);
+	}
+
+	public static long SumLong<TSource>(this IEnumerable<TSource> source, Func<TSource, long> selector)
+	{
+		return source.Select(selector).Aggregate(0L, (current, value) => current + value);
+	}
+
+	public static uint SumUInt<TSource>(this IEnumerable<TSource> source, Func<TSource, uint> selector)
+	{
+		return source.Aggregate<TSource, uint>(0, (current, value) => current + selector(value));
 	}
 }

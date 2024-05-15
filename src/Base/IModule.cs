@@ -23,7 +23,7 @@ public interface IModule : IDisposable
 	void OnPostServerInit(bool initial);
 	void OnServerSaved();
 	void SetEnabled(bool enabled);
-	bool GetEnabled();
+	bool IsEnabled();
 	void OnEnableStatus();
 
 	Dictionary<string, Dictionary<string, string>> GetDefaultPhrases();

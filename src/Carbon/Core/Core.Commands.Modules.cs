@@ -39,7 +39,7 @@ public partial class CorePlugin : CarbonPlugin
 			return;
 		}
 
-		var previousEnabled = module.GetEnabled();
+		var previousEnabled = module.IsEnabled();
 		var newEnabled = arg.GetBool(1);
 
 		if (previousEnabled != newEnabled)
@@ -47,11 +47,11 @@ public partial class CorePlugin : CarbonPlugin
 			module.SetEnabled(newEnabled);
 
 			module.Save();
-			arg.ReplyWith($"{module.Name} marked {(module.GetEnabled() ? "enabled" : "disabled")}.");
+			arg.ReplyWith($"{module.Name} marked {(module.IsEnabled() ? "enabled" : "disabled")}.");
 		}
 		else
 		{
-			arg.ReplyWith($"{module.Name} is already {(module.GetEnabled() ? "enabled" : "disabled")}.");
+			arg.ReplyWith($"{module.Name} is already {(module.IsEnabled() ? "enabled" : "disabled")}.");
 		}
 	}
 
@@ -104,13 +104,13 @@ public partial class CorePlugin : CarbonPlugin
 			return;
 		}
 
-		if (module.GetEnabled()) module.SetEnabled(false);
+		if (module.IsEnabled()) module.SetEnabled(false);
 
 		try
 		{
 			module.Load();
 
-			if (module.GetEnabled()) module.OnEnableStatus();
+			if (module.IsEnabled()) module.OnEnableStatus();
 
 			arg.ReplyWith($"Reloaded '{module.Name}' module config.");
 		}
@@ -147,24 +147,10 @@ public partial class CorePlugin : CarbonPlugin
 				continue;
 			}
 
-			var hookTimeAverageValue =
-#if DEBUG
-				(float)module.HookTimeAverage.CalculateAverage();
-#else
-				0;
-#endif
-			var memoryAverageValue =
-#if DEBUG
-				(float)module.MemoryAverage.CalculateAverage();
-#else
-				0;
-#endif
-			var hookTimeAverage = Mathf.RoundToInt(hookTimeAverageValue) == 0 ? string.Empty : $" (avg {hookTimeAverageValue:0}ms)";
-			var memoryAverage = Mathf.RoundToInt(memoryAverageValue) == 0 ? string.Empty : $" (avg {ByteEx.Format(memoryAverageValue, shortName: true, stringFormat: "{0}{1}").ToLower()})";
-			print.AddRow(string.Empty, hookable.Name, module.GetEnabled(), module.Version,
-				module.TotalHookTime.TotalMilliseconds == 0 ? string.Empty : $"{module.TotalHookTime.TotalMilliseconds:0}ms{hookTimeAverage}",
+			print.AddRow(string.Empty, hookable.Name, module.IsEnabled(), module.Version,
+				module.TotalHookTime.TotalMilliseconds == 0 ? string.Empty : $"{module.TotalHookTime.TotalMilliseconds:0}ms",
 				module.TotalHookFires == 0 ? string.Empty :$"{module.TotalHookFires:n0}",
-				module.TotalMemoryUsed == 0 ? string.Empty : $"{ByteEx.Format(module.TotalMemoryUsed, shortName: true, stringFormat: "{0}{1}").ToLower()}{memoryAverage}",
+				module.TotalMemoryUsed == 0 ? string.Empty : $"{ByteEx.Format(module.TotalMemoryUsed, shortName: true, stringFormat: "{0}{1}").ToLower()}",
 				module.TotalHookLagSpikes == 0 ? string.Empty : $"{module.TotalHookLagSpikes:n0}",
 				$"{TimeEx.Format(module.Uptime)}");
 		}
@@ -258,7 +244,7 @@ public partial class CorePlugin : CarbonPlugin
 			var builder = new StringBuilder();
 
 			builder.AppendLine($"Additional information for {module.Name} v{module.Version}{(module.ForceEnabled ? $" [force enabled]" : string.Empty)}");
-			builder.AppendLine($"  Enabled:                {module.GetEnabled()}");
+			builder.AppendLine($"  Enabled:                {module.IsEnabled()}");
 			builder.AppendLine($"  Enabled (default):      {module.EnabledByDefault}");
 			builder.AppendLine($"  Context:                {module.Context}");
 			builder.AppendLine($"  Uptime:                 {TimeEx.Format(module.Uptime, true).ToLower()}");

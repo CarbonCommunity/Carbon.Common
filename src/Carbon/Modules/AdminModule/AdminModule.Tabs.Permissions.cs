@@ -23,9 +23,9 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 		public static Tab Get()
 		{
-			permission = Community.Runtime.CorePlugin.permission;
+			permission = Community.Runtime.Core.permission;
 
-			var tab = new Tab("permissions", "Permissions", Community.Runtime.CorePlugin, (ap, tab) =>
+			var tab = new Tab("permissions", "Permissions", Community.Runtime.Core, (ap, tab) =>
 			{
 				ap.SetStorage(tab, "toggleall", true);
 				ap.SetStorage(tab, "groupedit", false);
@@ -189,7 +189,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 						var tab = Singleton.GetTab(ap.Player);
 						ap.SetStorage(tab, "playerfilterpl", player);
 						PlayersTab.RefreshPlayers(tab, ap);
-						PlayersTab.ShowInfo(tab, ap, existentPlayer);
+						PlayersTab.ShowInfo(1, tab, ap, existentPlayer);
 					}, ap => Tab.OptionButton.Types.Warned),
 					new Tab.OptionButton(!groupEdit ? $"{(hookableType == HookableTypes.Plugin ? "Modules" : "Groups")}" : "Plugins", (ap2) =>
 					{
@@ -242,7 +242,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				}, (ap) => Tab.OptionButton.Types.Important), new Tab.OptionButton("Edit", ap =>
 				{
 					var temp = Facepunch.Pool.GetList<string>();
-					var groups = Community.Runtime.CorePlugin.permission.GetGroups();
+					var groups = Community.Runtime.Core.permission.GetGroups();
 					temp.Add("None");
 					temp.AddRange(groups);
 					temp.Remove(selectedGroup);
@@ -279,7 +279,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					new Tab.OptionButton("Duplicate Group", ap =>
 					{
 						var temp = Facepunch.Pool.GetList<string>();
-						var groups = Community.Runtime.CorePlugin.permission.GetGroups();
+						var groups = Community.Runtime.Core.permission.GetGroups();
 						temp.Add("None");
 						temp.AddRange(groups);
 
@@ -563,7 +563,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				tab.AddButton(1, "Add Group", ap =>
 				{
 					var temp = Facepunch.Pool.GetList<string>();
-					var groups = Community.Runtime.CorePlugin.permission.GetGroups();
+					var groups = Community.Runtime.Core.permission.GetGroups();
 					temp.Add("None");
 					temp.AddRange(groups);
 

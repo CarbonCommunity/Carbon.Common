@@ -11,14 +11,19 @@ namespace Carbon.Modules;
 
 public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 {
+	readonly int[] _backpacks = new[]
+	{
+		-907422733,
+		2068884361
+	};
+
 	public class PlayersTab
 	{
-		internal static RustPlugin Core = Community.Runtime.CorePlugin;
 		internal static List<BasePlayer> BlindedPlayers = new();
 
 		public static Tab Get()
 		{
-			var players = new Tab("players", "Players", Community.Runtime.CorePlugin, (instance, tab) =>
+			var players = new Tab("players", "Players", Community.Runtime.Core, (instance, tab) =>
 			{
 				tab.ClearColumn(1);
 				RefreshPlayers(tab, instance);
@@ -72,39 +77,54 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			tab.AddButton(0, $"{player.displayName}", _ =>
 			{
 				ap.SetStorage(tab, "playerfilterpl", player);
-				ShowInfo(tab, ap, player);
+				ShowInfo(1, tab, ap, player);
 			}, aap => aap == null || !(aap.GetStorage<BasePlayer>(tab, "playerfilterpl", null) == player) ? Tab.OptionButton.Types.None : Tab.OptionButton.Types.Selected);
 		}
-		public static void ShowInfo(Tab tab, PlayerSession aap, BasePlayer player)
+		public static void ShowInfo(int column, Tab tab, PlayerSession aap, BasePlayer player)
 		{
-			tab.ClearColumn(1);
+			tab.ClearColumn(column);
 
-			tab.AddName(1, $"Player Information", TextAnchor.MiddleLeft);
-			tab.AddInput(1, "Name", _ => player.displayName, (_, args) =>
+			if (column != 1)
+			{
+				tab.AddButton(column, "<", ap =>
+				{
+					RefreshPlayers(tab, ap);
+					ShowInfo(1, tab, ap, player);
+				});
+			}
+
+			tab.AddName(column, $"Player Information", TextAnchor.MiddleLeft);
+			tab.AddInput(column, "Name", _ => player.displayName, (_, args) =>
 			{
 				player.AsIPlayer().Rename(args.ToString(" "));
 			});
-			tab.AddInput(1, "Steam ID", _ => player.UserIDString, null);
-			tab.AddInput(1, "Net ID", _ => $"{player.net?.ID}", null);
+			tab.AddInput(column, "Steam ID", _ => player.UserIDString, null);
+			tab.AddInput(column, "Net ID", _ => $"{player.net?.ID}", null);
 			if (Singleton.HasAccess(aap.Player, "players.see_ips"))
 			{
-				tab.AddInput(1, "IP", _ => $"{player.net?.connection?.ipaddress}", null, hidden: true);
+				tab.AddInput(column, "IP", _ => $"{player.net?.connection?.ipaddress}", null, hidden: true);
 			}
 			try
 			{
 				var position = player.transform.position;
-				tab.AddInput(1, "Position", _ => $"{position} [{PhoneController.PositionToGridCoord(position)}]", null);
+				tab.AddInput(column, "Position", _ => $"{position} [{PhoneController.PositionToGridCoord(position)}]", null);
 			}
 			catch { }
 
+			tab.AddButton(column, "Player Flags", ap =>
+			{
+				ShowInfo(0, tab, ap, player);
+				PlayerFlags(1, tab, player);
+			});
+
 			if (Singleton.HasAccess(aap.Player, "permissions.use"))
 			{
-				tab.AddName(1, $"Permissions", TextAnchor.MiddleLeft);
+				tab.AddName(column, $"Permissions", TextAnchor.MiddleLeft);
 				{
-					tab.AddButton(1, "View Permissions", ap =>
+					tab.AddButton(column, "View Permissions", ap =>
 					{
 						var perms = Singleton.FindTab("permissions");
-						var permission = Community.Runtime.CorePlugin.permission;
+						var permission = Community.Runtime.Core.permission;
 						Singleton.SetTab(ap.Player, "permissions");
 
 						ap.SetStorage(tab, "player", player.UserIDString);
@@ -116,7 +136,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 			if (Singleton.Permissions.UserHasPermission(aap.Player.UserIDString, "carbon.cmod"))
 			{
-				tab.AddButtonArray(1, new Tab.OptionButton("Kick", _ =>
+				tab.AddButtonArray(column, new Tab.OptionButton("Kick", _ =>
 				{
 					Singleton.Modal.Open(aap.Player, $"Kick {player.displayName}", new Dictionary<string, ModalModule.Modal.Field>
 					{
@@ -154,7 +174,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 						player.StartSleeping();
 					}
 
-					ShowInfo(tab, ap, player);
+					ShowInfo(column, tab, ap, player);
 				}), new Tab.OptionButton("Hostility", ap =>
 				{
 					var fields = new Dictionary<string, ModalModule.Modal.Field>
@@ -171,7 +191,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 						player.ClientRPCPlayer(null, player, "SetHostileLength", duration);
 						fields.Clear();
 						fields = null;
-						ShowInfo(tab, aap, player);
+						ShowInfo(column, tab, aap, player);
 						Singleton.Draw(aap.Player);
 					}, () =>
 					{
@@ -180,14 +200,14 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					});
 				}));
 			}
-			else tab.AddText(1, $"You need 'carbon.cmod' permission to kick, ban, sleep or change player hostility",
+			else tab.AddText(column, $"You need 'carbon.cmod' permission to kick, ban, sleep or change player hostility",
 				10, "1 1 1 0.4");
 
-			tab.AddName(1, $"Actions", TextAnchor.MiddleLeft);
+			tab.AddName(column, $"Actions", TextAnchor.MiddleLeft);
 
 			if (Singleton.HasAccess(aap.Player, "entities.tp_entity"))
 			{
-				tab.AddButtonArray(1,
+				tab.AddButtonArray(column,
 					new Tab.OptionButton("TeleportTo", ap => { ap.Player.Teleport(player.transform.position); }),
 					new Tab.OptionButton("Teleport2Me", _ =>
 					{
@@ -195,35 +215,30 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 						{
 							player.Teleport(ap.Player.transform.position);
 						}, null);
-					}));
+					}),
+					new Tab.OptionButton("Teleport2OwnedItem",
+						ap =>
+						{
+							var entities = BaseEntity.Util.FindTargetsOwnedBy(player.userID, string.Empty);
+
+							if (entities.Length > 0)
+							{
+								var randomEntity = entities[RandomEx.GetRandomInteger(0, entities.Length)];
+								ap.Player.Teleport(randomEntity.transform.position);
+							}
+							else
+							{
+								Logger.Warn($" No entities owned by {player} could be found to teleport to.");
+							}
+						}));
 			}
 
 			if (Singleton.HasAccess(aap.Player, "entities.loot_players"))
 			{
-				tab.AddButtonArray(1,
+				tab.AddButtonArray(column,
 					new Tab.OptionButton("Loot", ap =>
 					{
-						EntitiesTab.LastContainerLooter = ap;
-						ap.SetStorage(tab, "lootedent", player);
-						EntitiesTab.SendEntityToPlayer(ap.Player, player);
-
-						Core.timer.In(0.2f, () => Singleton.Close(ap.Player));
-						Core.timer.In(0.5f, () =>
-						{
-							EntitiesTab.SendEntityToPlayer(ap.Player, player);
-
-							ap.Player.inventory.loot.Clear();
-							ap.Player.inventory.loot.PositionChecks = false;
-							ap.Player.inventory.loot.entitySource = RelationshipManager.ServerInstance;
-							ap.Player.inventory.loot.itemSource = null;
-							ap.Player.inventory.loot.AddContainer(player.inventory.containerMain);
-							ap.Player.inventory.loot.AddContainer(player.inventory.containerWear);
-							ap.Player.inventory.loot.AddContainer(player.inventory.containerBelt);
-							ap.Player.inventory.loot.MarkDirty();
-							ap.Player.inventory.loot.SendImmediate();
-
-							ap.Player.ClientRPCPlayer(null, ap.Player, "RPC_OpenLootPanel", "player_corpse");
-						});
+						OpenPlayerContainer(ap, player, tab);
 					}),
 					new Tab.OptionButton("Strip", ap =>
 					{
@@ -238,12 +253,13 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 							player.EndSleeping();
 						}, null);
 					}));
+				tab.AddText(column, "To loot a backpack, drag the backpack item over any hotbar slots while looting a player", 10, "1 1 1 0.4");
 			}
 
 			if (Singleton.HasAccess(aap.Player, "players.inventory_management"))
 			{
-				tab.AddName(1, "Inventory Lock");
-				tab.AddButtonArray(1,
+				tab.AddName(column, "Inventory Lock");
+				tab.AddButtonArray(column,
 					new Tab.OptionButton("Main", _ =>
 						{
 							player.inventory.containerMain.SetLocked(!player.inventory.containerMain.IsLocked());
@@ -269,7 +285,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 			if (Singleton.HasTab("entities"))
 			{
-				tab.AddButton(1, "Select Entity", ap2 =>
+				tab.AddButton(column, "Select Entity", ap2 =>
 				{
 					Singleton.SetTab(ap2.Player, "entities");
 					var tab = Singleton.GetTab(ap2.Player);
@@ -279,13 +295,13 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				});
 			}
 
-			tab.AddInput(1, "PM", null, (ap, args) => { player.ChatMessage($"[{ap.Player.displayName}]: {args.ToString(" ")}"); });
+			tab.AddInput(column, "PM", null, (ap, args) => { player.ChatMessage($"[{ap.Player.displayName}]: {args.ToString(" ")}"); });
 			if (aap.Player != player && aap.Player.spectateFilter != player.UserIDString)
 			{
-				tab.AddButton(1, "Spectate", ap =>
+				tab.AddButton(column, "Spectate", ap =>
 				{
 					StartSpectating(ap.Player, player);
-					ShowInfo(tab, ap, player);
+					ShowInfo(column, tab, ap, player);
 				});
 			}
 
@@ -295,10 +311,10 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				    (aap.Player.UserIDString == player.UserIDString ||
 				     aap.Player.spectateFilter == player.UserIDString))
 				{
-					tab.AddButton(1, "End Spectating", ap =>
+					tab.AddButton(column, "End Spectating", ap =>
 					{
 						StopSpectating(ap.Player);
-						ShowInfo(tab, ap, player);
+						ShowInfo(column, tab, ap, player);
 					}, _ => Tab.OptionButton.Types.Selected);
 				}
 			}
@@ -307,7 +323,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			{
 				if (!BlindedPlayers.Contains(player))
 				{
-					tab.AddButton(1, "Blind Player", _ =>
+					tab.AddButton(column, "Blind Player", _ =>
 					{
 						tab.CreateDialog("Are you sure you want to blind the player?", ap =>
 						{
@@ -318,7 +334,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 								"https://carbonmod.gg/assets/media/cui/bsod.png", "1 1 1 1");
 							cui.Send(container, player);
 							BlindedPlayers.Add(player);
-							ShowInfo(tab, ap, player);
+							ShowInfo(column, tab, ap, player);
 
 							if (ap.Player == player) Core.timer.In(1, () => { Singleton.Close(player); });
 						}, null);
@@ -326,25 +342,25 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				}
 				else
 				{
-					tab.AddButton(1, "Unblind Player", ap =>
+					tab.AddButton(column, "Unblind Player", ap =>
 					{
 						using var cui = new CUI(Singleton.Handler);
 						cui.Destroy("blindingpanel", player);
 						BlindedPlayers.Remove(player);
-						ShowInfo(tab, ap, player);
+						ShowInfo(column, tab, ap, player);
 					}, _ => Tab.OptionButton.Types.Selected);
 				}
 			}
 
-			tab.AddName(1, "Stats");
-			tab.AddName(1, "Combat");
-			tab.AddRange(1, "Health", 0, player.MaxHealth(), _ => player.health, (_, value) => player.SetHealth(value), _ => $"{player.health:0}");
+			tab.AddName(column, "Stats");
+			tab.AddName(column, "Combat");
+			tab.AddRange(column, "Health", 0, player.MaxHealth(), _ => player.health, (_, value) => player.SetHealth(value), _ => $"{player.health:0}");
 
-			tab.AddRange(1, "Thirst", 0, player.metabolism.hydration.max, _ => player.metabolism.hydration.value, (_, value) => player.metabolism.hydration.SetValue(value), _ => $"{player.metabolism.hydration.value:0}");
-			tab.AddRange(1, "Hunger", 0, player.metabolism.calories.max, _ => player.metabolism.calories.value, (_, value) => player.metabolism.calories.SetValue(value), _ => $"{player.metabolism.calories.value:0}");
-			tab.AddRange(1, "Radiation", 0, player.metabolism.radiation_poison.max, _ => player.metabolism.radiation_poison.value, (_, value) => player.metabolism.radiation_poison.SetValue(value), _ => $"{player.metabolism.radiation_poison.value:0}");
-			tab.AddRange(1, "Bleeding", 0, player.metabolism.bleeding.max, _ => player.metabolism.bleeding.value, (_, value) => player.metabolism.bleeding.SetValue(value), _ => $"{player.metabolism.bleeding.value:0}");
-			tab.AddButton(1, "Empower Stats", ap =>
+			tab.AddRange(column, "Thirst", 0, player.metabolism.hydration.max, _ => player.metabolism.hydration.value, (_, value) => player.metabolism.hydration.SetValue(value), _ => $"{player.metabolism.hydration.value:0}");
+			tab.AddRange(column, "Hunger", 0, player.metabolism.calories.max, _ => player.metabolism.calories.value, (_, value) => player.metabolism.calories.SetValue(value), _ => $"{player.metabolism.calories.value:0}");
+			tab.AddRange(column, "Radiation", 0, player.metabolism.radiation_poison.max, _ => player.metabolism.radiation_poison.value, (_, value) => player.metabolism.radiation_poison.SetValue(value), _ => $"{player.metabolism.radiation_poison.value:0}");
+			tab.AddRange(column, "Bleeding", 0, player.metabolism.bleeding.max, _ => player.metabolism.bleeding.value, (_, value) => player.metabolism.bleeding.SetValue(value), _ => $"{player.metabolism.bleeding.value:0}");
+			tab.AddButton(column, "Empower Stats", ap =>
 			{
 				player.SetHealth(player.MaxHealth());
 				player.metabolism.hydration.SetValue(player.metabolism.hydration.max);
@@ -355,12 +371,12 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 			if (Singleton.HasAccess(aap.Player, "players.craft_queue"))
 			{
-				tab.AddName(1, "Crafting");
+				tab.AddName(column, "Crafting");
 
 				var queue = player.inventory.crafting.queue.Where(x => !x.cancelled);
 				foreach (var craft in queue)
 				{
-					tab.AddInputButton(1,
+					tab.AddInputButton(column,
 						$"{craft.blueprint.targetItem.displayName.english} (x{craft.amount}, {TimeEx.Format(craft.endTime - UnityEngine.Time.realtimeSinceStartup)})",
 						0.1f,
 						new Tab.OptionInput(null,
@@ -370,15 +386,48 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 						new Tab.OptionButton("X", TextAnchor.MiddleCenter, ap =>
 						{
 							player.inventory.crafting.CancelTask(craft.taskUID, true);
-							ShowInfo(tab, ap, player);
+							ShowInfo(column, tab, ap, player);
 						}, _ => Tab.OptionButton.Types.Important));
 				}
 
 				if (!queue.Any())
 				{
-					tab.AddText(1, "No crafts.", 8, "1 1 1 0.5");
+					tab.AddText(column, "No crafts.", 8, "1 1 1 0.5");
 				}
 			}
+		}
+		public static void PlayerFlags(int column, Tab tab, BasePlayer player)
+		{
+			tab.ClearColumn(column);
+
+			var counter = 0;
+			var currentButtons = Facepunch.Pool.GetList<Tab.OptionButton>();
+
+			tab.ClearColumn(column);
+
+			tab.AddName(column, "Player Flags", TextAnchor.MiddleLeft);
+			foreach (var flag in Enum.GetNames(typeof(BasePlayer.PlayerFlags)).OrderBy(x => x))
+			{
+				var flagValue = (BasePlayer.PlayerFlags)Enum.Parse(typeof(BasePlayer.PlayerFlags), flag);
+				var hasFlag = player.HasPlayerFlag(flagValue);
+
+				currentButtons.Add(new Tab.OptionButton(flag, ap =>
+				{
+					player.SetPlayerFlag(flagValue, !hasFlag);
+					ShowInfo(0, tab, ap, player);
+					PlayerFlags(column, tab, player);
+				}, ap => hasFlag ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.None));
+				counter++;
+
+				if (counter >= 5)
+				{
+					tab.AddButtonArray(column, currentButtons.ToArray());
+					currentButtons.Clear();
+					counter = 0;
+				}
+			}
+
+			Facepunch.Pool.FreeList(ref currentButtons);
 		}
 	}
 }
