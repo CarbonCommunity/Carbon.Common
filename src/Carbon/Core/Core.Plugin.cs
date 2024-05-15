@@ -54,10 +54,10 @@ public partial class CorePlugin : CarbonPlugin
 
 		ApplyStacktrace();
 
-		Type = GetType();
+		HookableType = GetType();
 		Hooks = new();
 
-		foreach (var method in Type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic))
+		foreach (var method in HookableType.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic))
 		{
 			if (Community.Runtime.HookManager.IsHook(method.Name))
 			{
@@ -121,7 +121,7 @@ public partial class CorePlugin : CarbonPlugin
 	private void OnPlayerDisconnected(BasePlayer player, string reason)
 	{
 		// OnUserDisconnected
-		HookCaller.CallStaticHook(4253366379, player?.AsIPlayer(), reason);
+		HookCaller.CallStaticHook(649612044, player?.AsIPlayer(), reason);
 
 		if (player.IsAdmin && !player.IsOnGround())
 		{

@@ -59,9 +59,9 @@ public partial struct Analytics
 
 		foreach (var plugin in ModLoader.LoadedPackages.SelectMany(package => package.Plugins))
 		{
-			if (plugin.Type.BaseType == typeof(CovalencePlugin)) covalencePluginCount++;
-			else if (plugin.Type.BaseType == typeof(RustPlugin)) rustPluginCount++;
-			else if (plugin.Type.BaseType == typeof(CarbonPlugin)) carbonPluginCount++;
+			if (plugin.HookableType.BaseType == typeof(CovalencePlugin)) covalencePluginCount++;
+			else if (plugin.HookableType.BaseType == typeof(RustPlugin)) rustPluginCount++;
+			else if (plugin.HookableType.BaseType == typeof(CarbonPlugin)) carbonPluginCount++;
 		}
 
 		Singleton.
