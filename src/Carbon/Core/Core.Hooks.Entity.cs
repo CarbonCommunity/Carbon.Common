@@ -18,7 +18,7 @@ public partial class CorePlugin : CarbonPlugin
 		}
 
 		// OnEntitySaved
-		HookCaller.CallStaticHook(3947573992, baseNetworkable, saveInfo);
+		HookCaller.CallStaticHook(825712380, baseNetworkable, saveInfo);
 
 		return null;
 	}

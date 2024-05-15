@@ -25,7 +25,7 @@ public partial class AdminModule
 
 		public static SetupWizard Make()
 		{
-			var tab = new SetupWizard("setupwizard", "Setup Wizard", Community.Runtime.CorePlugin) { IsFullscreen = true };
+			var tab = new SetupWizard("setupwizard", "Setup Wizard", Community.Runtime.Core) { IsFullscreen = true };
 			tab.Override = tab.Draw;
 
 			tab.Pages.Add(new Page("Main", (cui, t, container, panel, ap) =>
@@ -136,7 +136,7 @@ public partial class AdminModule
 
 				Singleton.DataInstance.WizardDisplayed = true;
 				Singleton.GenerateTabs();
-				Community.Runtime.CorePlugin.NextTick(() => Singleton.SetTab(ap.Player, 0));
+				Community.Runtime.Core.NextTick(() => Singleton.SetTab(ap.Player, 0));
 			}));
 
 			return tab;
@@ -184,13 +184,13 @@ public partial class AdminModule
 			InfoTemplate(cui, tab, container, panel, player, title, content, hint);
 
 			cui.CreateProtectedButton(container, panel, "0.3 0.3 0.3 0.5", "1 1 1 1", "OPEN FOLDER".SpacedString(1), 10,
-				xMin: 0.9f, yMin: 0.075f, yMax: 0.125f, OyMin: 60, OyMax: 60, OxMin: 8, OxMax: 8, command: $"wizard.openmodulefolder {module.Type.Name}");
+				xMin: 0.9f, yMin: 0.075f, yMax: 0.125f, OyMin: 60, OyMax: 60, OxMin: 8, OxMax: 8, command: $"wizard.openmodulefolder {module.HookableType.Name}");
 
 			cui.CreateProtectedButton(container, panel, "0.3 0.3 0.3 0.5", "1 1 1 1", "EDIT CONFIG".SpacedString(1), 10,
-				xMin: 0.9f, yMin: 0.075f, yMax: 0.125f, OyMin: 30, OyMax: 30, OxMin: 8, OxMax: 8, command: $"wizard.editmoduleconfig {module.Type.Name}");
+				xMin: 0.9f, yMin: 0.075f, yMax: 0.125f, OyMin: 30, OyMax: 30, OxMin: 8, OxMax: 8, command: $"wizard.editmoduleconfig {module.HookableType.Name}");
 
-			cui.CreateProtectedButton(container, panel, module.GetEnabled() ? "0.4 0.9 0.3 0.5" : "0.1 0.1 0.1 0.5", "1 1 1 1", module.GetEnabled() ? "ENABLED".SpacedString(1) : "DISABLED".SpacedString(1), 10,
-				xMin: 0.9f, yMin: 0.075f, yMax: 0.125f, OxMin: 8, OxMax: 8, command: $"wizard.togglemodule {module.Type.Name}");
+			cui.CreateProtectedButton(container, panel, module.IsEnabled() ? "0.4 0.9 0.3 0.5" : "0.1 0.1 0.1 0.5", "1 1 1 1", module.IsEnabled() ? "ENABLED".SpacedString(1) : "DISABLED".SpacedString(1), 10,
+				xMin: 0.9f, yMin: 0.075f, yMax: 0.125f, OxMin: 8, OxMax: 8, command: $"wizard.togglemodule {module.HookableType.Name}");
 		}
 		internal void InternalFeatureInfoTemplate(CUI cui, Tab tab, CuiElementContainer container, string panel, PlayerSession player, string title, string content, string hint, string feature)
 		{
@@ -286,7 +286,7 @@ public partial class AdminModule
 			ap.SetStorage(tab, "page", 0);
 			Singleton.DataInstance.WizardDisplayed = true;
 			Singleton.GenerateTabs();
-			Community.Runtime.CorePlugin.NextTick(() =>
+			Community.Runtime.Core.NextTick(() =>
 			{
 				Save();
 				Singleton.SetTab(ap.Player, 0);
@@ -297,7 +297,7 @@ public partial class AdminModule
 		{
 			currentPage += value;
 			ap.SetStorage(tab, "page", currentPage);
-			Community.Runtime.CorePlugin.NextFrame(() => Draw(ap.Player));
+			Community.Runtime.Core.NextFrame(() => Draw(ap.Player));
 		}
 
 	}
@@ -308,7 +308,7 @@ public partial class AdminModule
 	{
 		var ap = GetPlayerSession(arg.Player());
 		var module = FindModule(arg.GetString(0));
-		var enabled = module.GetEnabled();
+		var enabled = module.IsEnabled();
 
 		module.SetEnabled(!enabled);
 

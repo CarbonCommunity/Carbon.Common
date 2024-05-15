@@ -1,5 +1,7 @@
 ﻿using Carbon.Base.Interfaces;
+using HarmonyLib;
 using Defines = Carbon.Core.Defines;
+using Harmony = HarmonyLib.Harmony;
 
 /*
  *
@@ -26,7 +28,7 @@ public abstract class BaseModule : BaseHookable
 	public abstract void Save();
 	public abstract void OnUnload();
 	public abstract void Reload();
-	public abstract bool GetEnabled();
+	public abstract bool IsEnabled();
 	public abstract void SetEnabled(bool enable);
 	public abstract void Shutdown();
 
@@ -41,7 +43,7 @@ public abstract class BaseModule : BaseHookable
 	}
 	public static BaseModule FindModule(string name)
 	{
-		return Community.Runtime.ModuleProcessor.Modules.FirstOrDefault(x => x.Type.Name == name) as BaseModule;
+		return Community.Runtime.ModuleProcessor.Modules.FirstOrDefault(x => x.HookableType.Name == name) as BaseModule;
 	}
 }
 
@@ -55,7 +57,7 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 	public DynamicConfigFile Data { get; private set; }
 	public Lang Lang { get; private set; }
 
-	public new virtual Type Type => default;
+	public virtual Type Type => default;
 
 	public D DataInstance { get; private set; }
 	public C ConfigInstance { get; private set; }
@@ -80,7 +82,7 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 	{
 		base.Hooks ??= new();
 		base.Name ??= Name;
-		base.Type ??= Type;
+		base.HookableType ??= Type;
 
 		if (ForceDisabled) return;
 
@@ -300,9 +302,9 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 			}
 		}
 	}
-	public override bool GetEnabled()
+	public override bool IsEnabled()
 	{
-		return !ForceDisabled && ModuleConfiguration != null && ModuleConfiguration.Enabled;
+		return !ForceDisabled && ModuleConfiguration is { Enabled: true };
 	}
 
 	public virtual void OnDisabled(bool initialized)
@@ -317,6 +319,8 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 		if (Hooks.Count > 0) Puts($"Unsubscribed from {Hooks.Count:n0} {Hooks.Count.Plural("hook", "hooks")}.");
 
 		OnUnload();
+
+		DoHarmonyUnpatch();
 	}
 	public virtual void OnEnabled(bool initialized)
 	{
@@ -338,6 +342,8 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 		{
 			OnServerInit(true);
 		}
+
+		DoHarmonyPatch();
 	}
 
 	public void OnEnableStatus()
@@ -363,7 +369,7 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 	{
 		if (ForceDisabled) return;
 
-		if (initial && GetEnabled())
+		if (initial && IsEnabled())
 		{
 			OnEnableStatus();
 		}
@@ -383,6 +389,78 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 
 		Community.Runtime.ModuleProcessor.Uninstall(this);
 	}
+
+	#region Harmony
+
+	public Harmony HarmonyInstance;
+
+	public virtual string HarmonyDomain => $"com.carbon-module.{Name}".Replace(" ", string.Empty).ToLower();
+
+	public virtual bool AutoPatch => false;
+
+	public virtual void DoHarmonyPatch()
+	{
+		if (!AutoPatch)
+		{
+			return;
+		}
+
+		if (HarmonyInstance == null)
+		{
+			HarmonyInstance = new(HarmonyDomain);
+		}
+
+		foreach (var type in Type.GetNestedTypes(BindingFlags.DeclaredOnly | BindingFlags.Public |
+		                                         BindingFlags.NonPublic | BindingFlags.Static))
+		{
+			try
+			{
+				var harmonyMethods = HarmonyInstance.CreateClassProcessor(type)?.Patch();
+
+				if (harmonyMethods == null || harmonyMethods.Count == 0)
+				{
+					continue;
+				}
+
+				foreach (MethodInfo method in harmonyMethods)
+				{
+					Logger.Warn($"[{HarmonyDomain}] Patched '{method.Name}' method. ({type.Name})");
+				}
+			}
+			catch (Exception ex)
+			{
+				Logger.Error($"[{HarmonyDomain}] Failed to patch '{type.Name}'", ex);
+			}
+		}
+	}
+
+	public virtual void DoHarmonyUnpatch()
+	{
+		if (!AutoPatch)
+		{
+			return;
+		}
+
+		try
+		{
+			if (HarmonyInstance != null)
+			{
+				foreach (var method in HarmonyInstance.GetPatchedMethods())
+				{
+					Logger.Warn($"[{HarmonyDomain}] Unpatched '{method.Name}' method. ({method.DeclaringType.Name})");
+				}
+			}
+
+			HarmonyInstance?.UnpatchAll(HarmonyDomain);
+			HarmonyInstance = null;
+		}
+		catch (Exception ex)
+		{
+			Logger.Error($"[{HarmonyDomain}] Failed unpatching for {ToPrettyString()}", ex);
+		}
+	}
+
+	#endregion
 
 	#region Localisation
 
@@ -405,7 +483,7 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 
 	public void NextFrame(Action callback)
 	{
-		Community.Runtime.CorePlugin.NextFrame(callback);
+		Community.Runtime.Core.NextFrame(callback);
 	}
 
 	public class Configuration : IModuleConfig

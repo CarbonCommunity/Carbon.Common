@@ -199,6 +199,14 @@ public class Defines
 
 		return folder;
 	}
+	public static string GetProfilesFolder()
+	{
+		_initializeCommandLine();
+		var folder = Path.GetFullPath(Path.Combine(GetLogsFolder(), "profiler"));
+		Directory.CreateDirectory(folder);
+
+		return folder;
+	}
 	public static string GetLangFolder()
 	{
 		_initializeCommandLine();
@@ -218,7 +226,7 @@ public class Defines
 	public static string GetRustRootFolder()
 	{
 		_initializeCommandLine();
-		var folder = Path.GetFullPath(Path.Combine(Path.Combine(Application.dataPath)));
+		var folder = Path.GetFullPath(Path.Combine(Path.Combine(Application.dataPath, "..")));
 
 		return folder;
 	}

@@ -5,6 +5,7 @@
  *
  */
 
+using Logger = Carbon.Logger;
 using Player = Oxide.Game.Rust.Libraries.Player;
 
 namespace Oxide.Plugins;
@@ -53,7 +54,7 @@ public class RustPlugin : Plugin
 		UnityEngine.Object.DontDestroyOnLoad(persistence.gameObject);
 		covalence = new Covalence();
 
-		Type = GetType();
+		HookableType = GetType();
 	}
 	public override void Dispose()
 	{
@@ -77,14 +78,6 @@ public class RustPlugin : Plugin
 		{
 			return false;
 		}
-
-#if DEBUG
-		timer.Every(1f, () =>
-		{
-			HookTimeAverage?.Calibrate();
-			MemoryAverage?.Calibrate();
-		});
-#endif
 
 		return true;
 	}
@@ -271,6 +264,58 @@ public class RustPlugin : Plugin
 	{
 		return $"{Title} v{Version} by {Author}";
 	}
+
+	#region AutoPatch
+
+	private HarmonyLib.Harmony _harmonyInstanceCache;
+	protected string HarmonyId => $"com.carbon.{Name}";
+	protected HarmonyLib.Harmony HarmonyInstance => _harmonyInstanceCache ??= new HarmonyLib.Harmony(HarmonyId);
+
+	public void IProcessPatches()
+	{
+		foreach (var type in HookableType.GetNestedTypes(BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static))
+		{
+			var attribute = type.GetCustomAttributes(typeof(AutoPatchAttribute), false);
+
+			if (attribute.Length < 1)
+			{
+				continue;
+			}
+
+			try
+			{
+				var harmonyMethods = HarmonyInstance.CreateClassProcessor(type)?.Patch();
+
+				if (harmonyMethods == null || harmonyMethods.Count == 0)
+				{
+					Logger.Warn($"AutoPatch attribute found on '{type.Name}' for {ToPrettyString()} but no HarmonyPatch methods found. Skipping.");
+					continue;
+				}
+
+				foreach (MethodInfo method in harmonyMethods)
+				{
+					Logger.Log($"Automatically Harmony patched '{method.Name}' method for {ToPrettyString()}. ({type.Name})");
+				}
+			}
+			catch (Exception ex)
+			{
+				Logger.Error($"Failed to automatically Harmony patch '{type.Name}' for {ToPrettyString()}", ex);
+			}
+		}
+	}
+	public void IProcessUnpatches()
+	{
+		try
+		{
+			HarmonyInstance?.UnpatchAll(HarmonyId);
+		}
+		catch (Exception ex)
+		{
+			Logger.Error($"Failed auto unpatching {HarmonyId} for {ToPrettyString()}", ex);
+		}
+	}
+
+	#endregion
 
 	#region Printing
 

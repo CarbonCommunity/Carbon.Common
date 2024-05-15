@@ -21,7 +21,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 	{
 		internal static int EntityCount = 0;
 
-		internal static RustPlugin Core = Community.Runtime.CorePlugin;
+		internal static RustPlugin Core = Community.Runtime.Core;
 		internal static AdminModule Admin = GetModule<AdminModule>();
 		internal static PlayerSession LastContainerLooter;
 		internal static string[] BuildingGrades = new string[]
@@ -36,7 +36,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 		public static Tab Get()
 		{
-			var tab = new Tab("entities", "Entities", Community.Runtime.CorePlugin, (ap, tab2) => { tab2.ClearColumn(1); ResetSelection(tab2, ap); DrawEntities(tab2, ap); }, "entities.use");
+			var tab = new Tab("entities", "Entities", Community.Runtime.Core, (ap, tab2) => { tab2.ClearColumn(1); ResetSelection(tab2, ap); DrawEntities(tab2, ap); }, "entities.use");
 			tab.AddColumn(0);
 			tab.AddColumn(1);
 
@@ -122,32 +122,29 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			var filter = ap3.GetStorage(tab, "filter", string.Empty);
 			tab.AddButtonArray(0,
 				new Tab.OptionButton("Players", ap => { ap.SetStorage(tab, "filter", nameof(BasePlayer)); DrawEntities(tab, ap); }, ap => filter == nameof(BasePlayer) ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.None),
-				new Tab.OptionButton("Containers", ap => { ap.SetStorage(tab, "filter", nameof(StorageContainer)); validateFilter = null; DrawEntities(tab, ap); }, ap => filter == nameof(StorageContainer) ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.None),
-				new Tab.OptionButton("Deployables", ap => { ap.SetStorage(tab, "filter", nameof(Deployable)); validateFilter = null; DrawEntities(tab, ap); }, ap => filter == nameof(Deployable) ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.None),
-				new Tab.OptionButton("Collectibles", ap => { ap.SetStorage(tab, "filter", nameof(CollectibleEntity)); validateFilter = null; DrawEntities(tab, ap); }, ap => filter == nameof(CollectibleEntity) ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.None),
-				new Tab.OptionButton("NPCs", ap => { ap.SetStorage(tab, "filter", nameof(NPCPlayer)); validateFilter = null; DrawEntities(tab, ap); }, ap => filter == nameof(NPCPlayer) ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.None),
-				new Tab.OptionButton("I/O", ap => { ap.SetStorage(tab, "filter", nameof(IOEntity)); validateFilter = null; DrawEntities(tab, ap); }, ap => filter == nameof(IOEntity) ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.None));
+				new Tab.OptionButton("Containers", ap => { ap.SetStorage(tab, "filter", nameof(StorageContainer)); ap.ClearStorage(tab, "validatefilter"); DrawEntities(tab, ap); }, ap => filter == nameof(StorageContainer) ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.None),
+				new Tab.OptionButton("Deployables", ap => { ap.SetStorage(tab, "filter", nameof(Deployable)); ap.ClearStorage(tab, "validatefilter"); DrawEntities(tab, ap); }, ap => filter == nameof(Deployable) ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.None),
+				new Tab.OptionButton("Collectibles", ap => { ap.SetStorage(tab, "filter", nameof(CollectibleEntity)); ap.ClearStorage(tab, "validatefilter"); DrawEntities(tab, ap); }, ap => filter == nameof(CollectibleEntity) ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.None),
+				new Tab.OptionButton("NPCs", ap => { ap.SetStorage(tab, "filter", nameof(NPCPlayer)); ap.ClearStorage(tab, "validatefilter"); DrawEntities(tab, ap); }, ap => filter == nameof(NPCPlayer) ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.None),
+				new Tab.OptionButton("I/O", ap => { ap.SetStorage(tab, "filter", nameof(IOEntity)); ap.ClearStorage(tab, "validatefilter"); DrawEntities(tab, ap); }, ap => filter == nameof(IOEntity) ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.None));
 
 			switch (ap3.GetStorage(tab, "filter", string.Empty))
 			{
 				case nameof(BasePlayer):
 					tab.AddButtonArray(0,
-						new Tab.OptionButton("Online", ap => { validateFilter = entity => entity is BasePlayer player && player.IsConnected; DrawEntities(tab, ap); }),
-						new Tab.OptionButton("Offline", ap => { validateFilter = entity => entity is BasePlayer player && !player.IsConnected; DrawEntities(tab, ap); }),
-						new Tab.OptionButton("Dead", ap => { validateFilter = entity => entity is BasePlayer player && player.IsDead(); DrawEntities(tab, ap); }));
+						new Tab.OptionButton("Online", ap => { ap.SetStorage(tab, "filter", nameof(BasePlayer)); ap.SetStorage(tab, "validatefilter", new Func<BaseEntity, bool>(entity => entity is BasePlayer player && player.IsConnected)); DrawEntities(tab, ap); }),
+						new Tab.OptionButton("Offline", ap => { ap.SetStorage(tab, "validatefilter", new Func<BaseEntity, bool>(entity => entity is BasePlayer player && !player.IsConnected)); DrawEntities(tab, ap); }),
+						new Tab.OptionButton("Dead", ap => { ap.SetStorage(tab, "validatefilter", new Func<BaseEntity, bool>(entity => entity is BasePlayer player && player.IsDead())); DrawEntities(tab, ap); }));
 					break;
 			}
 
 			foreach (var entity in pool)
 			{
-				var name = entity.ToString();
-
-				switch (entity)
+				var name = entity switch
 				{
-					case BasePlayer player:
-						name = $"{player.displayName}";
-						break;
-				}
+					BasePlayer player => player.displayName,
+					_ => entity.ToString()
+				};
 
 				tab.AddButton(0, name, ap =>
 				{
@@ -165,7 +162,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				}, ap => selectedEntitites.Contains(entity) ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.None);
 			}
 
-			Facepunch.Pool.FreeList(ref pool);
+			Pool.FreeList(ref pool);
 
 			if (EntityCount == 0)
 			{
@@ -271,7 +268,22 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 										entity.SendNetworkUpdate_Position();
 									}
 								}, null);
-							}));
+							}),
+							new Tab.OptionButton("Teleport2OwnedItem",
+								ap =>
+								{
+									var entities = BaseEntity.Util.FindTargetsOwnedBy(player.userID, string.Empty);
+
+									if (entities.Length > 0)
+									{
+										var randomEntity = entities[RandomEx.GetRandomInteger(0, entities.Length)];
+										ap.Player.Teleport(randomEntity.transform.position);
+									}
+									else
+									{
+										Logger.Warn($" No entities owned by {player} could be found to teleport to.");
+									}
+								}));
 					}
 
 					if (entity is StorageContainer storage)
@@ -647,12 +659,12 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				DrawEntities(tab, ap3);
 			}
 
+			return;
+
 			void DoAll<T>(Action<T> callback) where T : BaseEntity
 			{
-				foreach (var selectedEntity in selectedEntitites)
+				foreach (var selectedEntity in selectedEntitites.Where(selectedEntity => selectedEntity != null))
 				{
-					if (selectedEntity == null) continue;
-
 					callback?.Invoke((T)selectedEntity);
 				}
 			}

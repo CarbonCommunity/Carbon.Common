@@ -2,7 +2,7 @@
 
 public partial struct Localisation
 {
-	internal static CorePlugin _core => Community.Runtime.CorePlugin as CorePlugin;
+	internal static CorePlugin Core => Community.Runtime.Core;
 
 	public static Dictionary<string, string> Phrases = new()
 	{
@@ -11,7 +11,7 @@ public partial struct Localisation
 
 	public static string Get(string key, string playerId)
 	{
-		return _core.lang.GetMessage(key, _core, playerId, Community.Runtime.Config.Language);
+		return Core.lang.GetMessage(key, Core, playerId, Community.Runtime.Config.Language);
 	}
 	public static string Get(string key, string playerId, params object[] format)
 	{

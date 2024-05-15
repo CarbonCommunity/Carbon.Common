@@ -59,9 +59,9 @@ public partial struct Analytics
 
 		foreach (var plugin in ModLoader.LoadedPackages.SelectMany(package => package.Plugins))
 		{
-			if (plugin.Type.BaseType == typeof(CovalencePlugin)) covalencePluginCount++;
-			else if (plugin.Type.BaseType == typeof(RustPlugin)) rustPluginCount++;
-			else if (plugin.Type.BaseType == typeof(CarbonPlugin)) carbonPluginCount++;
+			if (plugin.HookableType.BaseType == typeof(CovalencePlugin)) covalencePluginCount++;
+			else if (plugin.HookableType.BaseType == typeof(RustPlugin)) rustPluginCount++;
+			else if (plugin.HookableType.BaseType == typeof(CarbonPlugin)) carbonPluginCount++;
 		}
 
 		Singleton.
@@ -69,19 +69,6 @@ public partial struct Analytics
 			Include("covalenceplugin", $"{covalencePluginCount:n0}").
 			Include("carbonplugin", $"{carbonPluginCount:n0}").
 			Submit("batch_plugin_types");
-	}
-	public static void o_command_attempt(string command, ConsoleSystem.Option option)
-	{
-		if (!Enabled)
-		{
-			return;
-		}
-
-		Singleton.
-			Include("command", command).
-			Include("from_player", option.Connection?.player != null).
-			Include("from_server", option.FromRcon).
-			Submit("o_command_attempt");
 	}
 	public static void plugin_time_warn(string readableHook, Plugin basePlugin, double afterHookTime, double totalMemory, BaseHookable.CachedHook cachedHook, BaseHookable hookable, bool lagSpike)
 	{
@@ -137,6 +124,77 @@ public partial struct Analytics
 			Include("walkthrough", progress == WizardProgress.Walkthrough).
 			Include("skipped", progress == WizardProgress.Skipped).
 			Submit("admin_module_wizard");
+	}
+	public static void profiler_started(MonoProfiler.ProfilerArgs args, bool timed)
+	{
+		if (!Enabled)
+		{
+			return;
+		}
+
+		Singleton.
+			Include("settings", $"{Community.Runtime.MonoProfilerConfig.TrackCalls}tc " +
+			                    $"{Community.Runtime.MonoProfilerConfig.Assemblies.Count}a " +
+			                    $"{Community.Runtime.MonoProfilerConfig.Plugins.Count}p " +
+			                    $"{Community.Runtime.MonoProfilerConfig.Modules.Count}m " +
+			                    $"{Community.Runtime.MonoProfilerConfig.Extensions.Count}e " +
+			                    $"{Community.Runtime.MonoProfilerConfig.Harmony.Count}h").
+			Include("args", $"{args} {timed}t").
+			Submit("profiler_started");
+	}
+	public static void profiler_ended(MonoProfiler.ProfilerArgs args, double duration, bool timed)
+	{
+		if (!Enabled)
+		{
+			return;
+		}
+
+		Singleton.
+			Include("settings", $"{Community.Runtime.MonoProfilerConfig.TrackCalls}tc " +
+			                    $"{Community.Runtime.MonoProfilerConfig.Assemblies.Count}a " +
+			                    $"{Community.Runtime.MonoProfilerConfig.Plugins.Count}p " +
+			                    $"{Community.Runtime.MonoProfilerConfig.Modules.Count}m " +
+			                    $"{Community.Runtime.MonoProfilerConfig.Extensions.Count}e " +
+			                    $"{Community.Runtime.MonoProfilerConfig.Harmony.Count}h").
+			Include("args", $"{args} {timed}t").
+			Include("duration", $"{TimeEx.Format(duration).ToLower()}").
+			Submit("profiler_started");
+	}
+	public static void profiler_tl_started(MonoProfiler.ProfilerArgs args)
+	{
+		if (!Enabled)
+		{
+			return;
+		}
+
+		Singleton.
+			Include("settings", $"{Community.Runtime.MonoProfilerConfig.TrackCalls}tc " +
+			                    $"{Community.Runtime.MonoProfilerConfig.Assemblies.Count}a " +
+			                    $"{Community.Runtime.MonoProfilerConfig.Plugins.Count}p " +
+			                    $"{Community.Runtime.MonoProfilerConfig.Modules.Count}m " +
+			                    $"{Community.Runtime.MonoProfilerConfig.Extensions.Count}e " +
+			                    $"{Community.Runtime.MonoProfilerConfig.Harmony.Count}h").
+			Include("args", $"{args}").
+			Submit("profiler_tl_started");
+
+	}
+	public static void profiler_tl_ended(MonoProfiler.ProfilerArgs args, double duration, MonoProfiler.TimelineRecording.StatusTypes status)
+	{
+		if (!Enabled)
+		{
+			return;
+		}
+
+		Singleton.
+			Include("settings", $"{Community.Runtime.MonoProfilerConfig.TrackCalls}tc " +
+			                    $"{Community.Runtime.MonoProfilerConfig.Assemblies.Count}a " +
+			                    $"{Community.Runtime.MonoProfilerConfig.Plugins.Count}p " +
+			                    $"{Community.Runtime.MonoProfilerConfig.Modules.Count}m " +
+			                    $"{Community.Runtime.MonoProfilerConfig.Extensions.Count}e " +
+			                    $"{Community.Runtime.MonoProfilerConfig.Harmony.Count}h").
+			Include("args", $"{args}").
+			Include("duration", $"{TimeEx.Format(duration).ToLower()}").
+			Submit("profiler_tl_ended");
 	}
 
 	public enum WizardProgress
