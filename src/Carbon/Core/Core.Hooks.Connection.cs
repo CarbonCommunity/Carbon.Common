@@ -22,10 +22,10 @@ public partial class CorePlugin : CarbonPlugin
 		core.permission.RefreshUser(player);
 
 		// OnPlayerConnected
-		HookCaller.CallStaticHook(3704844088, player);
+		HookCaller.CallStaticHook(2848347654, player);
 
 		// OnUserConnected
-		HookCaller.CallStaticHook(1971459992, player.AsIPlayer());
+		HookCaller.CallStaticHook(1253832323, player.AsIPlayer());
 
 		return null;
 	}
@@ -36,10 +36,10 @@ public partial class CorePlugin : CarbonPlugin
 		var obj = Regex.Replace(connection.ipaddress, global::Oxide.Game.Rust.Libraries.Player.ipPattern, string.Empty);
 
 		// CanClientLogin
-		var canClient = HookCaller.CallStaticHook(351619588, connection);
+		var canClient = HookCaller.CallStaticHook(3081308902, connection);
 
 		// CanUserLogin
-		var canUser = HookCaller.CallStaticHook(459292092, username, text, obj);
+		var canUser = HookCaller.CallStaticHook(1045800646, username, text, obj);
 
 		var obj4 = (canClient == null) ? canUser : canClient;
 		if (obj4 is string || (obj4 is bool obj4Value && !obj4Value))
@@ -51,16 +51,16 @@ public partial class CorePlugin : CarbonPlugin
 		Community.Runtime.CarbonClientManager.OnConnected(connection);
 
 		// OnUserApprove
-		if (HookCaller.CallStaticHook(1855397793, connection) != null)
+		if (HookCaller.CallStaticHook(2666432541, connection) != null)
 			// OnUserApproved
-			return HookCaller.CallStaticHook(2225250284, username, text, obj);
+			return HookCaller.CallStaticHook(1330253375, username, text, obj);
 
 		return null;
 	}
 	internal static object IOnPlayerBanned(Connection connection, AuthResponse status)
 	{
 		// OnPlayerBanned
-		HookCaller.CallStaticHook(2433979267, connection, status.ToString());
+		HookCaller.CallStaticHook(140408349, connection, status.ToString());
 
 		return null;
 	}
@@ -68,17 +68,17 @@ public partial class CorePlugin : CarbonPlugin
 	private void OnPlayerKicked(BasePlayer basePlayer, string reason)
 	{
 		// OnUserKicked
-		HookCaller.CallStaticHook(3026194467, basePlayer.AsIPlayer(), reason);
+		HookCaller.CallStaticHook(3928650942, basePlayer.AsIPlayer(), reason);
 	}
 	private object OnPlayerRespawn(BasePlayer basePlayer)
 	{
 		// OnUserRespawn
-		return HookCaller.CallStaticHook(2545052102, basePlayer.AsIPlayer());
+		return HookCaller.CallStaticHook(3398288406, basePlayer.AsIPlayer());
 	}
 	private void OnPlayerRespawned(BasePlayer basePlayer)
 	{
 		// OnUserRespawned
-		HookCaller.CallStaticHook(3161392945, basePlayer.AsIPlayer());
+		HookCaller.CallStaticHook(960522643, basePlayer.AsIPlayer());
 	}
 	private void OnClientAuth(Connection connection)
 	{

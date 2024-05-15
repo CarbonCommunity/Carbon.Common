@@ -100,7 +100,7 @@ public partial class CorePlugin : CarbonPlugin
 
 		foreach (var hookable in Community.Runtime.ModuleProcessor.Modules)
 		{
-			if (hookable is BaseModule { ForceModded: true } module && module.GetEnabled())
+			if (hookable is BaseModule { ForceModded: true } module && module.IsEnabled())
 			{
 				table.AddRow($"{module.Name} is enabled", "Module", $"c.setmodule \"{module.Name}\" 0");
 			}
@@ -128,7 +128,7 @@ public partial class CorePlugin : CarbonPlugin
 
 		foreach (var hookable in Community.Runtime.ModuleProcessor.Modules)
 		{
-			if (hookable is BaseModule { ForceModded: true } module && module.GetEnabled())
+			if (hookable is BaseModule { ForceModded: true } module && module.IsEnabled())
 			{
 				module.SetEnabled(false);
 				changes++;
