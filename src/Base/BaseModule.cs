@@ -338,11 +338,6 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 			Puts($"Subscribed to {Hooks.Count:n0} {Hooks.Count.Plural("hook", "hooks")}.");
 		}
 
-		if (InitEnd() && initialized)
-		{
-			OnServerInit(true);
-		}
-
 		DoHarmonyPatch();
 	}
 
