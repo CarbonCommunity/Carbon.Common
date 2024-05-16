@@ -28,7 +28,7 @@ public abstract class BaseModule : BaseHookable
 	public abstract void Save();
 	public abstract void OnUnload();
 	public abstract void Reload();
-	public abstract bool GetEnabled();
+	public abstract bool IsEnabled();
 	public abstract void SetEnabled(bool enable);
 	public abstract void Shutdown();
 
@@ -43,7 +43,7 @@ public abstract class BaseModule : BaseHookable
 	}
 	public static BaseModule FindModule(string name)
 	{
-		return Community.Runtime.ModuleProcessor.Modules.FirstOrDefault(x => x.Type.Name == name) as BaseModule;
+		return Community.Runtime.ModuleProcessor.Modules.FirstOrDefault(x => x.HookableType.Name == name) as BaseModule;
 	}
 }
 
@@ -57,7 +57,7 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 	public DynamicConfigFile Data { get; private set; }
 	public Lang Lang { get; private set; }
 
-	public new virtual Type Type => default;
+	public virtual Type Type => default;
 
 	public D DataInstance { get; private set; }
 	public C ConfigInstance { get; private set; }
@@ -82,7 +82,7 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 	{
 		base.Hooks ??= new();
 		base.Name ??= Name;
-		base.Type ??= Type;
+		base.HookableType ??= Type;
 
 		if (ForceDisabled) return;
 
@@ -302,9 +302,9 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 			}
 		}
 	}
-	public override bool GetEnabled()
+	public override bool IsEnabled()
 	{
-		return !ForceDisabled && ModuleConfiguration != null && ModuleConfiguration.Enabled;
+		return !ForceDisabled && ModuleConfiguration is { Enabled: true };
 	}
 
 	public virtual void OnDisabled(bool initialized)
@@ -369,7 +369,7 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 	{
 		if (ForceDisabled) return;
 
-		if (initial && GetEnabled())
+		if (initial && IsEnabled())
 		{
 			OnEnableStatus();
 		}

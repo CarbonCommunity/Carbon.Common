@@ -36,14 +36,23 @@ public partial class CorePlugin : CarbonPlugin
 	}
 
 	[Conditional("!MINIMAL")]
-	internal object ICraftDurationMultiplier()
+	internal object ICraftDurationMultiplier(ItemBlueprint bp, float workbenchLevel, bool isInTutorial)
 	{
-		if (CraftingSpeedMultiplier != -1)
+		if (isInTutorial)
 		{
-			return CraftingSpeedMultiplier;
+			return null;
 		}
 
-		return null;
+		var workbench = workbenchLevel - bp.workbenchLevelRequired;
+
+		return workbench switch
+		{
+			0 when CraftingSpeedMultiplierNoWB != -1 => CraftingSpeedMultiplierNoWB,
+			1 when CraftingSpeedMultiplierWB1 != -1 => CraftingSpeedMultiplierWB1,
+			2 when CraftingSpeedMultiplierWB2 != -1 => CraftingSpeedMultiplierWB2,
+			3 when CraftingSpeedMultiplierWB3 != -1 => CraftingSpeedMultiplierWB3,
+			_ => null
+		};
 	}
 
 	[Conditional("!MINIMAL")]

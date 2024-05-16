@@ -330,6 +330,11 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 	[Conditional("!MINIMAL")]
 	private bool CanAccess(BasePlayer player)
 	{
+		if (player == null)
+		{
+			return false;
+		}
+
 		if (HookCaller.CallStaticHook(3097360729, player) is bool result)
 		{
 			return result;
@@ -1151,6 +1156,10 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		var xMoving = 50;
 		var spacing = -5;
 
+		var loadingOverlay = cui.CreatePanel(container, panel, "0 0 0 0.2", blur: true, id: $"{identifier}_loading");
+		var loadingText = cui.CreateText(container, loadingOverlay, "1 1 1 0.5", "Please wait...", 10, id: $"{identifier}_loadingtxt");
+		var chartImage = cui.CreateImage(container, scroll, 0, Cache.CUI.WhiteColor, xMin: 0.01f, id: $"{identifier}_chart");
+
 		CreateLayerButton("All", System.Drawing.Color.BlanchedAlmond, chart.Chart.Layers.All(x => x.Disabled), !chart.Chart.Layers.All(x => x.LayerSettings.Shadows == 0));
 
 		foreach (var layer in chart.Chart.Layers)
@@ -1165,20 +1174,16 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			var sColor = System.Drawing.Color.FromArgb((int)(pColor.R * 1.5f).Clamp(0, 255), (int)(pColor.G * 1.5f).Clamp(0, 255), (int)(pColor.B * 1.5f).Clamp(0, 255));
 			var rustSColor = $"{sColor.R / 255f} {sColor.G / 255f} {sColor.B / 255f} 1";
 
-			var mainButton = cui.CreateProtectedButton(container, panel, $"{pColor.R / 255f} {pColor.G / 255f} {pColor.B / 255f} {(!mainEnabled ? 0.25 : 0.5)}", !mainEnabled ? "0.8 0.8 0.8 0.8" : rustSColor, $"    {text}", 8,
+			var mainButton = cui.CreateProtectedButton(container, panel, $"{pColor.R / 255f} {pColor.G / 255f} {pColor.B / 255f} {(!mainEnabled ? 0.15 : 0.5)}", rustSColor, $"    {text}", 8,
 				xMin: 0.01f, xMax: 0, yMin: 0.94f, yMax: 1f, OxMin: xMoving + xOffset, OxMax: xMoving + (xOffset += xOffsetWidth + (textLength * 3f)), OyMin: -15, OyMax: -15,
-				command: $"{layerCommand} {layerIndex}");
+				command: $"{layerCommand} {layerIndex} {identifier} {layerCommand}", id: $"{identifier}_layerbtn_{layerIndex}");
 
-			cui.CreateProtectedButton(container, mainButton, $"{pColor.R / 255f} {pColor.G / 255f} {pColor.B / 255f} {(!secondEnabled ? 0.25 : 0.5)}", !secondEnabled ? "0.8 0.8 0.8 0.8" : rustSColor, "\u29bf", 8,
-				xMin: 0, xMax: 0, OxMax: 12.5f, command: $"{layerShadowCommand} {layerIndex}");
+			cui.CreateProtectedButton(container, mainButton, $"{pColor.R / 255f} {pColor.G / 255f} {pColor.B / 255f} {(!secondEnabled ? 0.15 : 0.5)}", rustSColor, "\u29bf", 8,
+				xMin: 0, xMax: 0, OxMax: 12.5f, command: $"{layerShadowCommand} {layerIndex} {identifier} {layerShadowCommand}", id: $"{identifier}_layerbtn2_{layerIndex}");
 
 			xOffset += spacing;
 			layerIndex++;
 		}
-
-		var loadingOverlay = cui.CreatePanel(container, panel, "0 0 0 0.2", blur: true, id: $"{identifier}_loading");
-		var loadingText = cui.CreateText(container, loadingOverlay, "1 1 1 0.5", "Please wait...", 10, id: $"{identifier}_loadingtxt");
-		var chartImage = cui.CreateImage(container, scroll, 0, Cache.CUI.WhiteColor, xMin: 0.01f, id: $"{identifier}_chart");
 
 		cui.CreateText(container, panel, Cache.CUI.WhiteColor, chart.Name, chart.NameSize, xMin: 0.025f, xMax: 0.95f, yMin: 1, yMax: 1, OyMin: 10, OyMax: 17.5f, align: chart.NameAlign, font: Handler.FontTypes.RobotoCondensedBold);
 
@@ -1214,7 +1219,6 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 						break;
 					}
 				}
-
 			});
 		});
 	}
@@ -1264,7 +1268,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			using var cui = new CUI(Handler);
 
 			var container = cui.CreateContainer(PanelId,
-				color: "0 0 0 0.75",
+				color: $"0 0 0 {DataInstance.BackgroundOpacity}",
 				xMin: 0, xMax: 1, yMin: 0, yMax: 1,
 				needsCursor: true, destroyUi: PanelId, parent: ClientPanels.HudMenu);
 
@@ -1281,7 +1285,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				OyMax: 300 * (isMaximized ? MaximizedScale_YMax : 1));
 			var main = cui.CreatePanel(container, shade,
 				color: "0 0 0 0.5",
-				blur: true);
+				blur: DataInstance.BackgroundBlur);
 
 			using (TimeMeasure.New($"{Name}.Main"))
 			{
@@ -1957,6 +1961,17 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				switch (args.ElementAt(0))
 				{
 					case "layer":
+					{
+						var oldIdentifier = args.ElementAt(2);
+						var newIdentifier = string.Empty;
+
+						using var cui = new CUI(Handler);
+						using var pool = cui.UpdatePool();
+
+						var mainEnabled = false;
+						var pColor = System.Drawing.Color.BlanchedAlmond;
+						var text = $"    All";
+
 						if (layerIndex == -1)
 						{
 							var allDisabled = chart.Chart.Layers.All(x => x.Disabled);
@@ -1966,16 +1981,79 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 								chartLayer.Disabled = !allDisabled;
 							}
 
-							chart.GetIdentifier(reset: true);
+							newIdentifier = chart.GetIdentifier(reset: true);
+							return true;
 						}
 						else
 						{
 							var layer = chart.Chart.Layers.ElementAt(layerIndex);
 							layer.ToggleDisabled();
-							chart.GetIdentifier(reset: true);
+
+							newIdentifier = chart.GetIdentifier(reset: true);
+							mainEnabled = !layer.Disabled;
+							pColor = layer.LayerSettings.Color;
+							text = $"    {layer.Name}";
 						}
-						return true;
+
+						var sColor = System.Drawing.Color.FromArgb((int)(pColor.R * 1.5f).Clamp(0, 255), (int)(pColor.G * 1.5f).Clamp(0, 255), (int)(pColor.B * 1.5f).Clamp(0, 255));
+						var rustSColor = $"{sColor.R / 255f} {sColor.G / 255f} {sColor.B / 255f} 1";
+
+						var mainCommand = args.Skip(3).ToString(" ");
+
+						pool.Add(cui.UpdatePanel($"{oldIdentifier}_loading", "0 0 0 0.2", xMin: 0.01f, xMax: 0.99f, yMin: 0.01f, yMax: 0.99f, blur: true));
+						pool.Add(cui.UpdateText($"{oldIdentifier}_loadingtxt", "1 1 1 0.5", "Please wait...", 10, xMin: 0.01f, xMax: 0.99f, yMin: 0.01f, yMax: 0.99f));
+						pool.Add(cui.UpdateImage($"{oldIdentifier}_chart", 0, Cache.CUI.WhiteColor, xMin: 0.01f));
+						pool.Add(cui.UpdateProtectedButton($"{oldIdentifier}_layerbtn_{layerIndex}", $"{pColor.R / 255f} {pColor.G / 255f} {pColor.B / 255f} {(!mainEnabled ? 0.15 : 0.5)}", rustSColor, text, 8,
+							command: $"{mainCommand} {layerIndex} {oldIdentifier} {mainCommand}"));
+						pool.Send(ap.Player);
+
+						Tab.OptionChart.Cache.GetOrProcessCache(newIdentifier, chart.Chart, chartCache =>
+						{
+							using var cui = new CUI(Handler);
+							using var pool = cui.UpdatePool();
+
+							switch (chartCache.Status)
+							{
+								case Tab.OptionChart.ChartCache.StatusTypes.Finalized:
+								{
+									if (!chartCache.HasPlayerReceivedData(ap.Player.userID))
+									{
+										CommunityEntity.ServerInstance.ClientRPC(
+											RpcTarget.Player("CL_ReceiveFilePng", ap.Player), chartCache.Crc,
+											(uint)chartCache.Data.Length, chartCache.Data, 0,
+											(byte)FileStorage.Type.png);
+									}
+
+									pool.Add(cui.UpdatePanel($"{oldIdentifier}_loading", "0 0 0 0", xMax: 0, blur: false));
+									pool.Add(cui.UpdateText($"{oldIdentifier}_loadingtxt", "0 0 0 0", string.Empty, 0));
+									pool.Add(cui.UpdateImage($"{oldIdentifier}_chart", chartCache.Crc, Cache.CUI.WhiteColor));
+									pool.Send(ap.Player);
+									break;
+								}
+
+								default:
+								case Tab.OptionChart.ChartCache.StatusTypes.Failure:
+								{
+									pool.Add(cui.UpdateText($"{oldIdentifier}_loadingtxt", "0.9 0.1 0.1 0.75", "Failed to load chart!", 10));
+									pool.Send(ap.Player);
+									break;
+								}
+							}
+						});
+
+						return false;
+					}
 					case "layershadow":
+					{
+						var oldIdentifier = args.ElementAt(2);
+						var newIdentifier = string.Empty;
+
+						using var cui = new CUI(Handler);
+						using var pool = cui.UpdatePool();
+
+						var secondEnabled = false;
+						var pColor = System.Drawing.Color.BlanchedAlmond;
+
 						if (layerIndex == -1)
 						{
 							var allOff = chart.Chart.Layers.All(x => x.LayerSettings.Shadows == 0);
@@ -1992,7 +2070,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 								}
 							}
 
-							chart.GetIdentifier(reset: true);
+							newIdentifier = chart.GetIdentifier(reset: true);
+							return true;
 						}
 						else
 						{
@@ -2005,9 +2084,58 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 								layer.LayerSettings.Shadows = 0;
 							}
 
-							chart.GetIdentifier(reset: true);
+							newIdentifier = chart.GetIdentifier(reset: true);
+							pColor = layer.LayerSettings.Color;
+							secondEnabled = layer.LayerSettings.Shadows > 0;
 						}
-						return true;
+
+						var sColor = System.Drawing.Color.FromArgb((int)(pColor.R * 1.5f).Clamp(0, 255), (int)(pColor.G * 1.5f).Clamp(0, 255), (int)(pColor.B * 1.5f).Clamp(0, 255));
+						var rustSColor = $"{sColor.R / 255f} {sColor.G / 255f} {sColor.B / 255f} 1";
+
+						var mainCommand = args.Skip(3).ToString(" ");
+
+						pool.Add(cui.UpdatePanel($"{oldIdentifier}_loading", "0 0 0 0.2", xMin: 0.01f, xMax: 0.99f, yMin: 0.01f, yMax: 0.99f, blur: true));
+						pool.Add(cui.UpdateText($"{oldIdentifier}_loadingtxt", "1 1 1 0.5", "Please wait...", 10, xMin: 0.01f, xMax: 0.99f, yMin: 0.01f, yMax: 0.99f));
+						pool.Add(cui.UpdateImage($"{oldIdentifier}_chart", 0, Cache.CUI.WhiteColor, xMin: 0.01f));
+						pool.Add(cui.UpdateProtectedButton($"{oldIdentifier}_layerbtn2_{layerIndex}", $"{pColor.R / 255f} {pColor.G / 255f} {pColor.B / 255f} {(!secondEnabled ? 0.15 : 0.5)}", rustSColor, "\u29bf", 8,
+							command: $"{mainCommand} {layerIndex} {oldIdentifier} {mainCommand}"));
+						pool.Send(ap.Player);
+
+						Tab.OptionChart.Cache.GetOrProcessCache(newIdentifier, chart.Chart, chartCache =>
+						{
+							using var cui = new CUI(Handler);
+							using var pool = cui.UpdatePool();
+
+							switch (chartCache.Status)
+							{
+								case Tab.OptionChart.ChartCache.StatusTypes.Finalized:
+								{
+									if (!chartCache.HasPlayerReceivedData(ap.Player.userID))
+									{
+										CommunityEntity.ServerInstance.ClientRPC(
+											RpcTarget.Player("CL_ReceiveFilePng", ap.Player), chartCache.Crc,
+											(uint)chartCache.Data.Length, chartCache.Data, 0,
+											(byte)FileStorage.Type.png);
+									}
+
+									pool.Add(cui.UpdatePanel($"{oldIdentifier}_loading", "0 0 0 0", xMax: 0, blur: false));
+									pool.Add(cui.UpdateText($"{oldIdentifier}_loadingtxt", "0 0 0 0", string.Empty, 0));
+									pool.Add(cui.UpdateImage($"{oldIdentifier}_chart", chartCache.Crc, Cache.CUI.WhiteColor));
+									pool.Send(ap.Player);
+									break;
+								}
+
+								default:
+								case Tab.OptionChart.ChartCache.StatusTypes.Failure:
+								{
+									pool.Add(cui.UpdateText($"{oldIdentifier}_loadingtxt", "0.9 0.1 0.1 0.75", "Failed to load chart!", 10));
+									pool.Send(ap.Player);
+									break;
+								}
+							}
+						});
+						return false;
+					}
 				}
 				break;
 			}
@@ -2293,6 +2421,8 @@ public class AdminData
 	public bool WizardDisplayed = false;
 	public bool HidePluginIcons = false;
 	public bool Maximize = false;
+	public bool BackgroundBlur = true;
+	public float BackgroundOpacity = 0.75f;
 	public DataColors Colors = new();
 
 	public class DataColors
