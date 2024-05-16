@@ -112,8 +112,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 							var wasEnabled = module.IsEnabled();
 							OsEx.File.Create(moduleConfigFile, jobject.ToString(Formatting.Indented));
 							module.SetEnabled(false);
-							module.Reload();
-
+							module.OnUnload();
+							module.Load();
 							if(wasEnabled) module.SetEnabled(wasEnabled);
 
 							Singleton.SetTab(ap.Player, "modules");
