@@ -138,6 +138,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			Application.logMessageReceived += OnLog;
 			_logRegistration = true;
 		}
+
+		OnEnabled(true);
 	}
 	public override void OnPostServerInit(bool initial)
 	{
