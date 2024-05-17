@@ -47,8 +47,8 @@ public abstract class BaseModule : BaseHookable
 	}
 }
 
-public class EmptyModuleConfig { }
-public class EmptyModuleData { }
+public class EmptyModuleConfig;
+public class EmptyModuleData;
 
 public abstract class CarbonModule<C, D> : BaseModule, IModule
 {
@@ -124,6 +124,7 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 
 		return true;
 	}
+
 	public override void Load()
 	{
 		if (ForceDisabled) return;
@@ -194,10 +195,6 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 
 		if (shouldSave) Save();
 	}
-	public virtual bool PreLoadShouldSave(bool newConfig, bool newData)
-	{
-		return false;
-	}
 	public override void Save()
 	{
 		if (ForceDisabled) return;
@@ -260,6 +257,11 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 		{
 			Logger.Error($"Failed module OnPostServerInit for {Name} [Reload Request]", ex);
 		}
+	}
+
+	public virtual bool PreLoadShouldSave(bool newConfig, bool newData)
+	{
+		return false;
 	}
 
 	public virtual string GetConfigPath()
@@ -326,10 +328,7 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 	{
 		if (ForceDisabled) return;
 
-		if (initialized)
-		{
-			ModLoader.ProcessCommands(Type, this, flags: BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-		}
+		ModLoader.ProcessCommands(Type, this, flags: BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
 
 		SubscribeAll();
 
