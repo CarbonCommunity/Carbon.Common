@@ -122,7 +122,7 @@ public class CarbonPlugin : RustPlugin
 		try
 		{
 			_CARBON_PATCH = new HarmonyLib.Harmony(Domain);
-			_CARBON_PATCH.PatchAll(Type.Assembly);
+			_CARBON_PATCH.PatchAll(HookableType.Assembly);
 			return true;
 		}
 		catch (Exception ex)
