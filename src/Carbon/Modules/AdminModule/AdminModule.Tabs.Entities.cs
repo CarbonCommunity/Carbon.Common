@@ -268,22 +268,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 										entity.SendNetworkUpdate_Position();
 									}
 								}, null);
-							}),
-							new Tab.OptionButton("Teleport2OwnedItem",
-								ap =>
-								{
-									var entities = BaseEntity.Util.FindTargetsOwnedBy(player.userID, string.Empty);
-
-									if (entities.Length > 0)
-									{
-										var randomEntity = entities[RandomEx.GetRandomInteger(0, entities.Length)];
-										ap.Player.Teleport(randomEntity.transform.position);
-									}
-									else
-									{
-										Logger.Warn($" No entities owned by {player} could be found to teleport to.");
-									}
-								}));
+							}));
 					}
 
 					if (entity is StorageContainer storage)

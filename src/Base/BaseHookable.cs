@@ -140,7 +140,7 @@ public class BaseHookable
 
 	public bool HasBuiltHookCache { get; internal set; }
 	public bool HasInitialized { get; internal set; }
-	public Type HookableType { get; internal set; }
+	public Type Type { get; internal set; }
 	public bool InternalCallHookOverriden { get; internal set; } = true;
 
 	#region Tracking
@@ -209,7 +209,7 @@ public class BaseHookable
 
 		HookPool.Clear();
 
-		var methods = HookableType.GetMethods(flag);
+		var methods = Type.GetMethods(flag);
 
 		foreach (var method in methods)
 		{
@@ -231,7 +231,7 @@ public class BaseHookable
 			hooks.Add(CachedHook.Make(method.Name, id, this, method));
 		}
 
-		var methodAttributes = HookableType.GetMethods(flag | BindingFlags.Public);
+		var methodAttributes = Type.GetMethods(flag | BindingFlags.Public);
 
 		foreach (var method in methodAttributes)
 		{

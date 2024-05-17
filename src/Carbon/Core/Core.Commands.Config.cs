@@ -55,10 +55,6 @@ public partial class CorePlugin : CarbonPlugin
 		}
 	}
 
-	[CommandVar("harmonywatchers", "When disabled, you must load/unload Harmony mods manually with `c.harmonyload` or `c.harmonyunload`.")]
-	[AuthLevel(2)]
-	private bool HarmonyWatchers { get { return Community.Runtime.Config.Watchers.HarmonyWatchers; } set { Community.Runtime.Config.Watchers.HarmonyWatchers = value; Community.Runtime.SaveConfig(); } }
-
 	[CommandVar("debug", "The level of debug logging for Carbon. Helpful for very detailed logs in case things break. (Set it to -1 to disable debug logging.)")]
 	[AuthLevel(2)]
 	private int CarbonDebug { get { return Community.Runtime.Config.Logging.LogVerbosity; } set { Community.Runtime.Config.Logging.LogVerbosity = value; Community.Runtime.SaveConfig(); } }
@@ -121,71 +117,7 @@ public partial class CorePlugin : CarbonPlugin
 	}
 #endif
 
-	[ConsoleCommand("assignalias", "Assigns a new command alias. (Eg. c.assignalias myalias c.reload)")]
+	[CommandVar("ocommandchecks", "Prints a reminding warning if RCON/console attempts at calling an o.* command.")]
 	[AuthLevel(2)]
-	private void AssignAlias(ConsoleSystem.Arg arg)
-	{
-		var alias = arg.GetString(0);
-		var command = arg.GetString(1);
-
-		if (string.IsNullOrEmpty(alias))
-		{
-			arg.ReplyWith("Alias cannot be null");
-			return;
-		}
-
-		if (string.IsNullOrEmpty(command))
-		{
-			arg.ReplyWith("Alias command cannot be null");
-			return;
-		}
-
-		if (!Community.Runtime.Config.IsValidAlias(alias, out var reason))
-		{
-			arg.ReplyWith($"Invalid alias detected. Using '{reason}' is prohibited.");
-			return;
-		}
-
-		if (Community.Runtime.Config.Aliases.TryGetValue(alias, out var existentCommand))
-		{
-			arg.ReplyWith($"Overriding alias '{alias}' -> {command}:\n Old: {existentCommand}");
-			Community.Runtime.Config.Aliases[alias] = command;
-			Community.Runtime.SaveConfig();
-			return;
-		}
-
-		Community.Runtime.Config.Aliases[alias] = command;
-		arg.ReplyWith($"Assigned alias '{alias}' -> {command}");
-		Community.Runtime.SaveConfig();
-	}
-
-	[ConsoleCommand("unassignalias", "Unassigns a command alias. (Eg. c.unassignalias myalias)")]
-	[AuthLevel(2)]
-	private void UnassignAlias(ConsoleSystem.Arg arg)
-	{
-		var alias = arg.GetString(0);
-
-		if (string.IsNullOrEmpty(alias))
-		{
-			arg.ReplyWith("Alias cannot be null");
-			return;
-		}
-
-		if (!Community.Runtime.Config.Aliases.ContainsKey(alias))
-		{
-			arg.ReplyWith($"Alias '{alias}' does not exist");
-			return;
-		}
-
-		Community.Runtime.Config.Aliases.Remove(alias);
-		arg.ReplyWith($"Unassigned alias '{alias}'");
-		Community.Runtime.SaveConfig();
-	}
-
-	[ConsoleCommand("aliases", "Prints the full list of aliases and respective redirected commands.")]
-	[AuthLevel(2)]
-	private void Aliases(ConsoleSystem.Arg arg)
-	{
-		arg.ReplyWith($"Found {Community.Runtime.Config.Aliases.Count:n0} {Community.Runtime.Config.Aliases.Count.Plural("alias", "aliases")}:\n{Community.Runtime.Config.Aliases.Select(x => $" {x.Key} -> {x.Value}").ToString("\n")}");
-	}
+	private bool oCommandChecks { get { return Community.Runtime.Config.Misc.oCommandChecks; } set { Community.Runtime.Config.Misc.oCommandChecks = value; Community.Runtime.SaveConfig(); } }
 }

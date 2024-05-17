@@ -109,7 +109,7 @@ namespace Oxide.Game.Rust.Libraries.Covalence
 			}
 
 			// OnUserGroupAdded
-			HookCaller.CallStaticHook(3116013984, Id, group);
+			HookCaller.CallStaticHook(3469176166, Id, group);
 		}
 
 		public void Ban(string reason, TimeSpan duration = default)
@@ -119,12 +119,7 @@ namespace Oxide.Game.Rust.Libraries.Covalence
 				return;
 			}
 
-			if (!ulong.TryParse(Id, out var id))
-			{
-				return;
-			}
-
-			ServerUsers.Set(id, ServerUsers.UserGroup.Banned, ((BasePlayer != null) ? BasePlayer.displayName : null) ?? "Unknown", reason, -1L);
+			ServerUsers.Set(BasePlayer.userID, ServerUsers.UserGroup.Banned, ((BasePlayer != null) ? BasePlayer.displayName : null) ?? "Unknown", reason, -1L);
 			ServerUsers.Save();
 
 			if (IsConnected)
@@ -157,41 +152,21 @@ namespace Oxide.Game.Rust.Libraries.Covalence
 
 		public void Heal(float amount)
 		{
-			if (BasePlayer == null)
-			{
-				return;
-			}
-
 			BasePlayer.Heal(amount);
 		}
 
 		public void Hurt(float amount)
 		{
-			if (BasePlayer == null)
-			{
-				return;
-			}
-
 			BasePlayer.Hurt(amount);
 		}
 
 		public void Kick(string reason)
 		{
-			if (BasePlayer == null)
-			{
-				return;
-			}
-
 			BasePlayer.Kick(reason);
 		}
 
 		public void Kill()
 		{
-			if (BasePlayer == null)
-			{
-				return;
-			}
-
 			BasePlayer.Die(null);
 		}
 
@@ -216,12 +191,6 @@ namespace Oxide.Game.Rust.Libraries.Covalence
 
 		public void Position(out float x, out float y, out float z)
 		{
-			if (BasePlayer == null)
-			{
-				x = y = z = default;
-				return;
-			}
-
 			var vector = BasePlayer.transform.position;
 			x = vector.x;
 			y = vector.y;
@@ -264,18 +233,12 @@ namespace Oxide.Game.Rust.Libraries.Covalence
 				}
 
 				// OnUserGroupRemoved
-				HookCaller.CallStaticHook(1018697706, Id, name);
+				HookCaller.CallStaticHook(2616322405, Id, name);
 			}
 		}
 
 		public void Rename(string name)
 		{
-			if (BasePlayer == null)
-			{
-				perms.UpdateNickname(Id, name);
-				return;
-			}
-
 			name = (string.IsNullOrEmpty(name.Trim()) ? BasePlayer.displayName : name);
 			SingletonComponent<ServerMgr>.Instance.persistance.SetPlayerName(BasePlayer.userID, name);
 			BasePlayer.net.connection.username = name;
@@ -285,7 +248,6 @@ namespace Oxide.Game.Rust.Libraries.Covalence
 			var iPlayer = BasePlayer.AsIPlayer();
 			iPlayer.Name = name;
 			perms.UpdateNickname(BasePlayer.UserIDString, name);
-
 			var position = BasePlayer.transform.position;
 			Teleport(position.x, position.y, position.z);
 		}
@@ -321,38 +283,37 @@ namespace Oxide.Game.Rust.Libraries.Covalence
 				userData.Perms.Clear();
 				return;
 			}
-
-			if (!userData.Perms.Remove(permission))
+			else
 			{
+				if (!userData.Perms.Remove(permission))
+				{
+					return;
+				}
+
+				// OnUserPermissionRevoked
+				HookCaller.CallStaticHook(1216290467, Id, permission);
 				return;
 			}
-
-			// OnUserPermissionRevoked
-			HookCaller.CallStaticHook(1879829838, Id, permission);
 		}
 
 		public void Teleport(float x, float y, float z)
 		{
-			if (BasePlayer == null)
+			if (BasePlayer.IsAlive() && !BasePlayer.IsSpectating())
 			{
-				return;
-			}
+				try
+				{
+					var position = new Vector3(x, y, z);
 
-			if (!BasePlayer.IsAlive() || BasePlayer.IsSpectating()) return;
-
-			try
-			{
-				var position = new Vector3(x, y, z);
-
-				BasePlayer.EnsureDismounted();
-				BasePlayer.SetParent(null, true, true);
-				BasePlayer.SetServerFall(true);
-				BasePlayer.MovePosition(position);
-				BasePlayer.ClientRPC(RpcTarget.Player("ForcePositionTo", BasePlayer), position);
-			}
-			finally
-			{
-				BasePlayer.SetServerFall(false);
+					BasePlayer.EnsureDismounted();
+					BasePlayer.SetParent(null, true, true);
+					BasePlayer.SetServerFall(true);
+					BasePlayer.MovePosition(position);
+					BasePlayer.ClientRPC(RpcTarget.Player("ForcePositionTo", BasePlayer), position);
+				}
+				finally
+				{
+					BasePlayer.SetServerFall(false);
+				}
 			}
 		}
 
@@ -367,8 +328,7 @@ namespace Oxide.Game.Rust.Libraries.Covalence
 			{
 				return;
 			}
-
-			ServerUsers.Remove(ulong.Parse(Id));
+			ServerUsers.Remove(BasePlayer.userID);
 			ServerUsers.Save();
 		}
 	}

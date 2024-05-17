@@ -7,14 +7,13 @@
 
 using API.Commands;
 using ConVar;
-using Command = API.Commands.Command;
 
 namespace Carbon.Core;
 #pragma warning disable IDE0051
 
 public partial class CorePlugin : CarbonPlugin
 {
-	public static object IOnPlayerCommand(BasePlayer player, string message, Command.Prefix prefix)
+	public static object IOnPlayerCommand(BasePlayer player, string message)
 	{
 		if (Community.Runtime == null) return Cache.True;
 
@@ -27,18 +26,19 @@ public partial class CorePlugin : CarbonPlugin
 				return Cache.False;
 			}
 
-			using var split = TemporaryArray<string>.New(fullString.Split(ConsoleArgEx.CommandSpacing, StringSplitOptions.RemoveEmptyEntries));
-			var command = split.Get(0).Trim();
+			var split = fullString.Split(ConsoleArgEx.CommandSpacing, StringSplitOptions.RemoveEmptyEntries);
+			var command = split[0].Trim();
 			var args = split.Length > 1 ? Facepunch.Extend.StringExtensions.SplitQuotesStrings(fullString[(command.Length + 1)..]) : _emptyStringArray;
+			Array.Clear(split, 0, split.Length);
 
 			// OnUserCommand
-			if (HookCaller.CallStaticHook(2198880635, player, command, args) != null)
+			if (HookCaller.CallStaticHook(1077563450, player, command, args) != null)
 			{
 				return Cache.False;
 			}
 
 			// OnUserCommand
-			if (HookCaller.CallStaticHook(2198880635, player.AsIPlayer(), command, args) != null)
+			if (HookCaller.CallStaticHook(2623980812, player.AsIPlayer(), command, args) != null)
 			{
 				return Cache.False;
 			}
@@ -58,17 +58,7 @@ public partial class CorePlugin : CarbonPlugin
 				return Cache.False;
 			}
 
-			if (player.Connection.authLevel >= prefix.SuggestionAuthLevel && Suggestions.Lookup(command, Community.Runtime.CommandManager.Chat.Select(x => x.Name), minimumConfidence: 5) is var result && result.Any())
-			{
-				player.ChatMessage($"<color=orange>Unknown command:</color> {message}\n<size=12s>Suggesting: {result.Select(x => $"{prefix.Value}{x.Result}").ToString(", ", " or ")}</size>");
-			}
-			else
-			{
-				player.ChatMessage($"<color=orange>Unknown command:</color> {message}");
-			}
-
-			// OnPlayerCommand
-			if (HookCaller.CallStaticHook(2915735597, player, command, args) != null)
+			if (HookCaller.CallStaticHook(554444971, player, command, args) != null)
 			{
 				return Cache.False;
 			}
@@ -82,7 +72,12 @@ public partial class CorePlugin : CarbonPlugin
 		if (arg != null && arg.cmd != null && arg.Player() != null && arg.cmd.FullName == "chat.say") return null;
 
 		// OnServerCommand
-		return HookCaller.CallStaticHook(2535152661, arg) != null ? Cache.True : null;
+		if (HookCaller.CallStaticHook(3282920085, arg) != null)
+		{
+			return Cache.True;
+		}
+
+		return null;
 	}
 	public static object IOnPlayerChat(ulong playerId, string playerName, string message, Chat.ChatChannel channel, BasePlayer basePlayer)
 	{
@@ -93,16 +88,21 @@ public partial class CorePlugin : CarbonPlugin
 		if (basePlayer == null || !basePlayer.IsConnected)
 		{
 			// OnPlayerOfflineChat
-			return HookCaller.CallStaticHook(4068177051, playerId, playerName, message, channel);
+			return HookCaller.CallStaticHook(3391949391, playerId, playerName, message, channel);
 		}
 
 		// OnPlayerChat
-		var hook1 = HookCaller.CallStaticHook(2032160890, basePlayer, message, channel);
+		var hook1 = HookCaller.CallStaticHook(735197859, basePlayer, message, channel);
 
 		// OnUserChat
-		var hook2 = HookCaller.CallStaticHook(2894159933, basePlayer.AsIPlayer(), message);
+		var hook2 = HookCaller.CallStaticHook(2410402155, basePlayer.AsIPlayer(), message);
 
-		return hook1 ?? hook2;
+		if (hook1 != null)
+		{
+			return hook1;
+		}
+
+		return hook2;
 	}
 
 	internal static object IOnRconInitialize()
@@ -120,7 +120,7 @@ public partial class CorePlugin : CarbonPlugin
 				value = "1";
 			}
 
-			var key = @switch.Key[1..];
+			var key = @switch.Key.Substring(1);
 			var options = ConsoleSystem.Option.Unrestricted;
 			options.PrintOutput = false;
 

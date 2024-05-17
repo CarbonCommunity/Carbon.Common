@@ -28,7 +28,7 @@ public abstract class BaseModule : BaseHookable
 	public abstract void Save();
 	public abstract void OnUnload();
 	public abstract void Reload();
-	public abstract bool IsEnabled();
+	public abstract bool GetEnabled();
 	public abstract void SetEnabled(bool enable);
 	public abstract void Shutdown();
 
@@ -43,7 +43,7 @@ public abstract class BaseModule : BaseHookable
 	}
 	public static BaseModule FindModule(string name)
 	{
-		return Community.Runtime.ModuleProcessor.Modules.FirstOrDefault(x => x.HookableType.Name == name) as BaseModule;
+		return Community.Runtime.ModuleProcessor.Modules.FirstOrDefault(x => x.Type.Name == name) as BaseModule;
 	}
 }
 
@@ -57,7 +57,7 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 	public DynamicConfigFile Data { get; private set; }
 	public Lang Lang { get; private set; }
 
-	public virtual Type Type => default;
+	public new virtual Type Type => default;
 
 	public D DataInstance { get; private set; }
 	public C ConfigInstance { get; private set; }
@@ -82,7 +82,7 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 	{
 		base.Hooks ??= new();
 		base.Name ??= Name;
-		base.HookableType ??= Type;
+		base.Type ??= Type;
 
 		if (ForceDisabled) return;
 
@@ -302,9 +302,9 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 			}
 		}
 	}
-	public override bool IsEnabled()
+	public override bool GetEnabled()
 	{
-		return !ForceDisabled && ModuleConfiguration is { Enabled: true };
+		return !ForceDisabled && ModuleConfiguration != null && ModuleConfiguration.Enabled;
 	}
 
 	public virtual void OnDisabled(bool initialized)
@@ -338,6 +338,11 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 			Puts($"Subscribed to {Hooks.Count:n0} {Hooks.Count.Plural("hook", "hooks")}.");
 		}
 
+		if (InitEnd() && initialized)
+		{
+			OnServerInit(true);
+		}
+
 		DoHarmonyPatch();
 	}
 
@@ -362,6 +367,12 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 
 	public override void OnServerInit(bool initial)
 	{
+		if (ForceDisabled) return;
+
+		if (initial && GetEnabled())
+		{
+			OnEnableStatus();
+		}
 	}
 	public override void OnPostServerInit(bool initial)
 	{
@@ -413,7 +424,7 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 
 				foreach (MethodInfo method in harmonyMethods)
 				{
-					Logger.Warn($"[{HarmonyDomain}] Patched '{method.Name}' method. ({type.Name})");
+					Logger.Warn($"[{HarmonyDomain}] Patched '{type.Name}.{method.Name}' method.");
 				}
 			}
 			catch (Exception ex)
@@ -436,7 +447,7 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 			{
 				foreach (var method in HarmonyInstance.GetPatchedMethods())
 				{
-					Logger.Warn($"[{HarmonyDomain}] Unpatched '{method.Name}' method. ({method.DeclaringType.Name})");
+					Logger.Warn($"[{HarmonyDomain}] Unpatched '{method.DeclaringType.Name}.{method.Name}' method");
 				}
 			}
 

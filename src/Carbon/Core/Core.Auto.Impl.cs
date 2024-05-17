@@ -36,23 +36,14 @@ public partial class CorePlugin : CarbonPlugin
 	}
 
 	[Conditional("!MINIMAL")]
-	internal object ICraftDurationMultiplier(ItemBlueprint bp, float workbenchLevel, bool isInTutorial)
+	internal object ICraftDurationMultiplier()
 	{
-		if (isInTutorial)
+		if (CraftingSpeedMultiplier != -1)
 		{
-			return null;
+			return CraftingSpeedMultiplier;
 		}
 
-		var workbench = workbenchLevel - bp.workbenchLevelRequired;
-
-		return workbench switch
-		{
-			0 when CraftingSpeedMultiplierNoWB != -1 => CraftingSpeedMultiplierNoWB,
-			1 when CraftingSpeedMultiplierWB1 != -1 => CraftingSpeedMultiplierWB1,
-			2 when CraftingSpeedMultiplierWB2 != -1 => CraftingSpeedMultiplierWB2,
-			3 when CraftingSpeedMultiplierWB3 != -1 => CraftingSpeedMultiplierWB3,
-			_ => null
-		};
+		return null;
 	}
 
 	[Conditional("!MINIMAL")]
@@ -104,11 +95,6 @@ public partial class CorePlugin : CarbonPlugin
 	[Conditional("!MINIMAL")]
 	internal object IOvenSmeltSpeedMultiplier(BaseOven oven)
 	{
-		if (OvenBlacklistCache == null)
-		{
-			return null;
-		}
-
 		if (Enumerable.Contains(OvenBlacklistCache, oven.ShortPrefabName) ||
 		    Enumerable.Contains(OvenBlacklistCache, oven.GetType().Name))
 		{

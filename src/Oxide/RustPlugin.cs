@@ -54,7 +54,7 @@ public class RustPlugin : Plugin
 		UnityEngine.Object.DontDestroyOnLoad(persistence.gameObject);
 		covalence = new Covalence();
 
-		HookableType = GetType();
+		Type = GetType();
 	}
 	public override void Dispose()
 	{
@@ -273,7 +273,7 @@ public class RustPlugin : Plugin
 
 	public void IProcessPatches()
 	{
-		foreach (var type in HookableType.GetNestedTypes(BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static))
+		foreach (var type in Type.GetNestedTypes(BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static))
 		{
 			var attribute = type.GetCustomAttributes(typeof(AutoPatchAttribute), false);
 

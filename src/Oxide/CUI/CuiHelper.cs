@@ -64,7 +64,7 @@ public static class CuiHelper
 		}
 
 		// CanUseUI
-		if (HookCaller.CallStaticHook(1307002116, player, json) != null) return false;
+		if (HookCaller.CallStaticHook(1318053248, player, json) != null) return false;
 
 		CommunityEntity.ServerInstance.ClientRPC(RpcTarget.Player("AddUI", player), json);
 		return true;
@@ -80,7 +80,7 @@ public static class CuiHelper
 		var json = ToJson(elements);
 
 		// CanUseUI
-		if (HookCaller.CallStaticHook(1307002116, player, json) != null) return false;
+		if (HookCaller.CallStaticHook(1318053248, player, json) != null) return false;
 
 		if (elements != null && elements.Count > 0)
 		{
@@ -101,7 +101,7 @@ public static class CuiHelper
 			if (panelList.Contains(name)) panelList.Remove(name);
 
 			// OnDestroyUI
-			HookCaller.CallStaticHook(503981600, player, name);
+			HookCaller.CallStaticHook(2982238573, player, name);
 			CommunityEntity.ServerInstance.ClientRPC(RpcTarget.Player("DestroyUI", player), name);
 			return true;
 		}

@@ -118,10 +118,14 @@ public class Timers : Library
 				action?.Invoke();
 				timer.TimesTriggered++;
 
-				if (times == 0 || timer.TimesTriggered < times) return;
-				if (Persistence == null) return;
-				Persistence.CancelInvoke(timer.Callback);
-				Persistence.CancelInvokeFixedTime(timer.Callback);
+				if (times != 0 && timer.TimesTriggered >= times)
+				{
+					if (Persistence != null)
+					{
+						Persistence.CancelInvoke(timer.Callback);
+						Persistence.CancelInvokeFixedTime(timer.Callback);
+					}
+				}
 			}
 			catch (Exception ex)
 			{
@@ -160,7 +164,7 @@ public class Timers : Library
 	}
 }
 
-public class Timer : Library
+public class Timer : Library, IDisposable
 {
 	public Plugin Plugin { get; set; }
 
@@ -200,7 +204,7 @@ public class Timer : Library
 
 		if (Repetitions == 1)
 		{
-			Callback = () =>
+			Callback = new Action(() =>
 			{
 				try
 				{
@@ -216,13 +220,13 @@ public class Timer : Library
 				}
 
 				Destroy();
-			};
+			});
 
 			Persistence.Invoke(Callback, delay);
 		}
 		else
 		{
-			Callback = () =>
+			Callback = new Action(() =>
 			{
 				try
 				{
@@ -243,7 +247,7 @@ public class Timer : Library
 
 					Destroy();
 				}
-			};
+			});
 
 			Persistence.InvokeRepeating(Callback, delay, delay);
 		}

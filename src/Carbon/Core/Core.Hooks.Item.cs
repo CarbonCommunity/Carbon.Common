@@ -18,7 +18,7 @@ public partial class CorePlugin : CarbonPlugin
 		args[1] = amount;
 
 		// OnLoseCondition
-		HookCaller.CallStaticHook(2025192851, args: args);
+		HookCaller.CallStaticHook(3503014187, args: args);
 		amount = (float)args[1];
 
 		HookCaller.Caller.ReturnBuffer(args);

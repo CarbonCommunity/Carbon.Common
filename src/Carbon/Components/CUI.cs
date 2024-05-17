@@ -818,8 +818,10 @@ public readonly struct CUI : IDisposable
 						Logger.Warn($"You're trying to update element '{pair.Element.Name}' (of parent '{pair.Element.Parent}') which doesn't allow updates. Ignoring.");
 						return;
 					}
-
-					Add(pair.Element);
+					else
+					{
+						Add(pair.Element);
+					}
 				}
 			}
 			public void Add(Pair<string, CuiElement, CuiElement> pair)
@@ -831,19 +833,17 @@ public readonly struct CUI : IDisposable
 						Logger.Warn($"You're trying to update element '{pair.Element1.Name}' (of parent '{pair.Element1.Parent}') which doesn't allow updates. Ignoring.");
 						return;
 					}
-
-					Add(pair.Element1);
+					else Add(pair.Element1);
 				}
 
 				if (pair.Element2 != null)
 				{
 					if (!pair.Element2.Update)
 					{
-						// Logger.Warn($"You're trying to update element '{pair.Element2.Name}' (of parent '{pair.Element2.Parent}') which doesn't allow updates. Ignoring.");
+						Logger.Warn($"You're trying to update element '{pair.Element2.Name}' (of parent '{pair.Element2.Parent}') which doesn't allow updates. Ignoring.");
 						return;
 					}
-
-					Add(pair.Element2);
+					else Add(pair.Element2);
 				}
 			}
 

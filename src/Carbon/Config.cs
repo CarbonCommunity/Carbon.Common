@@ -1,5 +1,4 @@
 ﻿using API.Logger;
-using Command = API.Commands.Command;
 
 /*
  *
@@ -14,8 +13,7 @@ namespace Carbon.Core;
 public class Config
 {
 	public bool IsModded { get; set; } = true;
-	public List<Command.Prefix> Prefixes { get; set; } = new();
-	public Dictionary<string, string> Aliases { get; set; }
+	public List<string> CommandPrefixes { get; set; }
 	public bool Rcon { get; set; } = true;
 	public string Language { get; set; } = "en";
 	public string WebRequestIp { get; set; }
@@ -27,31 +25,6 @@ public class Config
 	public CompilerConfig Compiler { get; set; } = new();
 	public ProfilerConfig Profiler { get; set; } = new();
 	public MiscConfig Misc { get; set; } = new();
-
-	internal readonly string[] _invalidAliases =
-	[
-		"c.",
-		"carbon."
-	];
-
-	public bool IsValidAlias(string input, out string reason)
-	{
-		reason = default;
-
-		if (input.Contains(" "))
-		{
-			return false;
-		}
-
-		foreach (var alias in _invalidAliases)
-		{
-			if (!input.StartsWith(alias, StringComparison.OrdinalIgnoreCase)) continue;
-			reason = alias;
-			return false;
-		}
-
-		return true;
-	}
 
 	public class CompilerConfig
 	{
@@ -69,7 +42,6 @@ public class Config
 		public bool ScriptWatchers { get; set; } = true;
 		public bool ZipScriptWatchers { get; set; } = true;
 		public SearchOption ScriptWatcherOption { get; set; } = SearchOption.TopDirectoryOnly;
-		public bool HarmonyWatchers { get; set; } = true;
 	}
 
 	public class PermissionsConfig
@@ -98,11 +70,12 @@ public class Config
 		public Severity LogSeverity { get; set; } = Severity.Notice;
 		public int LogFileMode { get; set; } = 2;
 		public int LogVerbosity { get; set; } = 0;
-		public bool CommandSuggestions { get; set; } = true;
 	}
 
 	public class MiscConfig
 	{
+		public bool oCommandChecks { get; set; } = true;
+
 #if WIN
 		public bool ShowConsoleInfo { get; set; } = true;
 #endif

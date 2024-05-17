@@ -312,7 +312,7 @@ namespace Oxide.Core.Plugins
 		{
 			try
 			{
-				foreach (var member in HookableType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static))
+				foreach (var member in Type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static))
 				{
 					if (member.IsLiteral) continue;
 

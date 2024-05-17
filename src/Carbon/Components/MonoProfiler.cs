@@ -750,10 +750,10 @@ public static unsafe partial class MonoProfiler
 	}
 
 	[DllImport("CarbonNative")]
-	private static extern void profiler_register_callbacks(ProfilerCallbacks* callbacks);
+	private static extern ulong profiler_register_callbacks(ProfilerCallbacks* callbacks);
 
 	[DllImport("CarbonNative")]
-	private static extern void register_profiler_assembly(ModuleHandle handle);
+	private static extern ulong register_profiler_assembly(ModuleHandle handle);
 
 	[DllImport("CarbonNative")]
 	private static extern bool profiler_is_enabled();

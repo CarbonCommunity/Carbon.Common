@@ -179,7 +179,7 @@ public static class HookCaller
 
 			try
 			{
-				if (hookable is IModule modules && !modules.IsEnabled()) continue;
+				if (hookable is IModule modules && !modules.GetEnabled()) continue;
 
 				var methodResult = Caller.CallHook(hookable, hookId, flags: flag, args: args);
 
@@ -1538,7 +1538,6 @@ public static class HookCaller
 					if (parameter.Default == null && !parameter.Modifiers.Any(y => y.IsKind(SyntaxKind.OutKeyword)) && parameter.Type is not NullableTypeSyntax && !(parameter.Type is ITypeSymbol symbol && symbol.IsValueType))
 					{
 						var type = parameter.Type.ToString().Replace("global::", string.Empty);
-
 						varText += $"var narg{parameterIndex}_{i} = length > {parameterIndex} ? args[{parameterIndex}] is {type} or null : true;\nvar arg{parameterIndex}_{i} = length > {parameterIndex} && narg{parameterIndex}_{i} ? ({type})(args[{parameterIndex}] ?? ({type})default) : ({type})default;\n";
 						parameterText += !IsUnmanagedType(parameter.Type) ? $"narg{parameterIndex}_{i} && " : $"(narg{parameterIndex}_{i} || args[{parameterIndex}] == null) && ";
 					}
@@ -1637,7 +1636,7 @@ partial class {@class.Identifier.ValueText}
 		string path;
 
 #if DEBUG
-		if (isPartial)
+		if (isPartial && Debugger.IsAttached)
 		{
 			path = Path.Combine(Defines.GetScriptDebugFolder(), $"{Path.GetFileNameWithoutExtension(fileName)}.Internal.cs");
 			output = CSharpSyntaxTree.ParseText(source, options, path, Encoding.UTF8).GetCompilationUnitRoot().NormalizeWhitespace();

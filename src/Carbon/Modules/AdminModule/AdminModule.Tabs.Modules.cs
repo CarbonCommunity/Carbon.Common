@@ -52,16 +52,16 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 									Draw(ap);
 									DrawModuleSettings(tab, module, ap);
 								}, type: ap => ap.GetStorage<BaseModule>(tab, "selectedmodule") == module ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.None),
-								new Tab.OptionButton($"{(module.ForceEnabled ? "Always Enabled" : module.IsEnabled() ? "Enabled" : "Disabled")}", ap =>
+								new Tab.OptionButton($"{(module.ForceEnabled ? "Always Enabled" : module.GetEnabled() ? "Enabled" : "Disabled")}", ap =>
 								{
 									if (module.ForceEnabled) return;
 
-									module.SetEnabled(!module.IsEnabled());
+									module.SetEnabled(!module.GetEnabled());
 									module.Save();
 									ap.SetStorage(tab, "selectedmodule", module);
 									Draw(ap);
 									DrawModuleSettings(tab, module, ap);
-								}, type: ap => module.ForceEnabled ? Tab.OptionButton.Types.Warned : module.IsEnabled() ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.None));
+								}, type: ap => module.ForceEnabled ? Tab.OptionButton.Types.Warned : module.GetEnabled() ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.None));
 						}
 					}
 				}
@@ -89,7 +89,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 			if (!module.ForceEnabled)
 			{
-				tab.AddToggle(1, "Enabled", ap2 => { module.SetEnabled(!module.IsEnabled()); module.Save(); DrawModuleSettings(tab, module, ap); }, ap2 => module.IsEnabled());
+				tab.AddToggle(1, "Enabled", ap2 => { module.SetEnabled(!module.GetEnabled()); module.Save(); DrawModuleSettings(tab, module, ap); }, ap2 => module.GetEnabled());
 			}
 
 			tab.AddButtonArray(1,
@@ -109,11 +109,11 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 						},
 						(ap, jobject) =>
 						{
-							var wasEnabled = module.IsEnabled();
+							var wasEnabled = module.GetEnabled();
 							OsEx.File.Create(moduleConfigFile, jobject.ToString(Formatting.Indented));
 							module.SetEnabled(false);
-							module.OnUnload();
-							module.Load();
+							module.Reload();
+
 							if(wasEnabled) module.SetEnabled(wasEnabled);
 
 							Singleton.SetTab(ap.Player, "modules");

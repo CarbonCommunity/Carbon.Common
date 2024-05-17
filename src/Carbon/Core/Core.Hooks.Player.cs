@@ -20,7 +20,7 @@ public partial class CorePlugin : CarbonPlugin
 		}
 
 		// OnEntityTakeDamage
-		if (HookCaller.CallStaticHook(952055589, basePlayer, hitInfo) != null)
+		if (HookCaller.CallStaticHook(2713007450, basePlayer, hitInfo) != null)
 		{
 			return Cache.True;
 		}
@@ -43,7 +43,7 @@ public partial class CorePlugin : CarbonPlugin
 		if (!_isPlayerTakingDamage)
 		{
 			// OnEntityTakeDamage
-			return HookCaller.CallStaticHook(952055589, basePlayer, hitInfo);
+			return HookCaller.CallStaticHook(2713007450, basePlayer, hitInfo);
 		}
 
 		return null;
@@ -53,7 +53,7 @@ public partial class CorePlugin : CarbonPlugin
 		if (entity is not BasePlayer)
 		{
 			// OnEntityTakeDamage
-			return HookCaller.CallStaticHook(952055589, entity, hitInfo);
+			return HookCaller.CallStaticHook(2713007450, entity, hitInfo);
 		}
 
 		return null;
@@ -61,7 +61,7 @@ public partial class CorePlugin : CarbonPlugin
 	internal static object ICanPickupEntity(BasePlayer basePlayer, DoorCloser entity)
 	{
 		// CanPickupEntity
-		if (HookCaller.CallStaticHook(861710679, basePlayer, entity) is bool result)
+		if (HookCaller.CallStaticHook(385185486, basePlayer, entity) is bool result)
 		{
 			return result;
 		}
@@ -79,8 +79,8 @@ public partial class CorePlugin : CarbonPlugin
 				if (connection.player is BasePlayer player)
 				{
 					// OnPlayerLanguageChanged
-					HookCaller.CallStaticHook(1945313578, player, val);
-					HookCaller.CallStaticHook(1945313578, player.AsIPlayer(), val);
+					HookCaller.CallStaticHook(1960580409, player, val);
+					HookCaller.CallStaticHook(1960580409, player.AsIPlayer(), val);
 				}
 				break;
 		}

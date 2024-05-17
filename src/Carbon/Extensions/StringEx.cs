@@ -560,7 +560,7 @@ public static class StringEx
 		return trimEnd ? result.TrimEnd() : result;
 	}
 
-	public static IEnumerable<string> SplitEnumerable(this string input, char separator)
+	public static IEnumerable<string> ToSplitEnumerable(this string input, char separator)
 	{
 		if (string.IsNullOrEmpty(input))
 		{
