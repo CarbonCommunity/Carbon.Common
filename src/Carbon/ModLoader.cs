@@ -252,7 +252,7 @@ public static class ModLoader
 			Analytics.plugin_constructor_failure(plugin);
 
 			// OnConstructorFail
-			HookCaller.CallStaticHook(937285752, plugin, ex);
+			HookCaller.CallStaticHook(2684549964, plugin, ex);
 
 			Logger.Error($"Failed executing constructor for {plugin.ToPrettyString()}. This is fatal! Unloading plugin.", ex);
 			return false;
@@ -320,7 +320,7 @@ public static class ModLoader
 		if (!premature)
 		{
 			// OnPluginUnloaded
-			HookCaller.CallStaticHook(3843290135, plugin);
+			HookCaller.CallStaticHook(1250294368, plugin);
 		}
 
 		plugin.Dispose();
