@@ -117,6 +117,8 @@ public class BaseHookable
 		}
 	}
 
+	public virtual bool ManualSubscriptions => false;
+
 	[JsonProperty]
 	public string Name { get; set; }
 

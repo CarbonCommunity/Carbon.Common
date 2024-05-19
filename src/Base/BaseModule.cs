@@ -21,6 +21,8 @@ public abstract class BaseModule : BaseHookable
 	public virtual bool ForceEnabled => false;
 	public virtual bool ForceDisabled => false;
 
+	public virtual bool ManualCommands => false;
+
 	public abstract void OnServerInit(bool initial);
 	public abstract void OnPostServerInit(bool initial);
 	public abstract void OnServerSaved();
@@ -328,13 +330,19 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 	{
 		if (ForceDisabled) return;
 
-		ModLoader.ProcessCommands(Type, this, flags: BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-
-		SubscribeAll();
-
-		if (Hooks.Count > 0)
+		if (!ManualCommands)
 		{
-			Puts($"Subscribed to {Hooks.Count:n0} {Hooks.Count.Plural("hook", "hooks")}.");
+			ModLoader.ProcessCommands(Type, this, flags: BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+		}
+
+		if (!ManualSubscriptions)
+		{
+			SubscribeAll();
+
+			if (Hooks.Count > 0)
+			{
+				Puts($"Subscribed to {Hooks.Count:n0} {Hooks.Count.Plural("hook", "hooks")}.");
+			}
 		}
 
 		DoHarmonyPatch();
