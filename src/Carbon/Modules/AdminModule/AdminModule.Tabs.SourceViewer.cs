@@ -83,6 +83,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				verticalScroll.Size = 2;
 				horizontalScroll.Size = 2;
 				horizontalScroll.AutoHide = false;
+				horizontalScroll.Invert = true;
 
 				cui.CreateText(container, scrollview, "0.3 0.7 0.9 0.5",
 					string.Join("\n", temp), size,
