@@ -21,11 +21,11 @@ public class BaseHookable
 	public HookCachePool HookPool = new();
 	public List<uint> IgnoredHooks = new();
 
-	public class HookCachePool : Dictionary<uint, List<CachedHook>>
+	public class HookCachePool : Dictionary<uint, CachedHookInstance>
 	{
 		public void Reset()
 		{
-			foreach (var hook in Values.SelectMany(value => value))
+			foreach (var hook in Values.SelectMany(value => value.Hooks))
 			{
 				hook.Reset();
 			}
@@ -33,13 +33,24 @@ public class BaseHookable
 
 		public void EnableDebugging(bool wants)
 		{
-			foreach (var hook in Values.SelectMany(value => value))
+			foreach (var hook in Values.SelectMany(value => value.Hooks))
 			{
 				hook.EnableDebugging(wants);
 			}
 		}
 	}
 
+	public struct CachedHookInstance
+	{
+		public CachedHook PrimaryHook;
+		public List<CachedHook> Hooks;
+
+		public bool IsValid() => Hooks != null && Hooks.Any();
+		public void RefreshPrimary()
+		{
+			PrimaryHook = Hooks.OrderByDescending(x => x.Parameters.Length).FirstOrDefault();
+		}
+	}
 	public class CachedHook
 	{
 		public string Name;
@@ -116,6 +127,8 @@ public class BaseHookable
 			return hook;
 		}
 	}
+
+	public virtual bool ManualSubscriptions => false;
 
 	[JsonProperty]
 	public string Name { get; set; }
@@ -223,12 +236,17 @@ public class BaseHookable
 				}
 			}
 
-			if (!HookPool.TryGetValue(id, out var hooks))
+			CachedHookInstance instance = default;
+
+			if (!HookPool.TryGetValue(id, out instance))
 			{
-				HookPool.Add(id, hooks = new());
+				instance.Hooks = new(10);
+
+				HookPool.Add(id, instance);
 			}
 
-			hooks.Add(CachedHook.Make(method.Name, id, this, method));
+			instance.Hooks.Add(CachedHook.Make(method.Name, id, this, method));
+			instance.RefreshPrimary();
 		}
 
 		var methodAttributes = HookableType.GetMethods(flag | BindingFlags.Public);
@@ -241,17 +259,20 @@ public class BaseHookable
 
 			var id = HookStringPool.GetOrAdd(string.IsNullOrEmpty(methodAttribute.Name) ? method.Name : methodAttribute.Name);
 
-			if (!HookPool.TryGetValue(id, out var hooks))
+			CachedHookInstance instance = default;
+
+			if (!HookPool.TryGetValue(id, out instance))
 			{
-				HookPool.Add(id, hooks = new());
+				HookPool.Add(id, instance);
 			}
 
-			if(hooks.Any(x => x.Method == method))
+			if(instance.Hooks.Any(x => x.Method == method))
 			{
 				continue;
 			}
 
-			hooks.Add(CachedHook.Make(method.Name, id, this, method));
+			instance.Hooks.Add(CachedHook.Make(method.Name, id, this, method));
+			instance.RefreshPrimary();
 		}
 
 		HasBuiltHookCache = true;

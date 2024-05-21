@@ -51,6 +51,8 @@ namespace Oxide.Core.Plugins
 
 		public string Filename => FileName;
 
+		public virtual bool ManualCommands => false;
+
 		public override void TrackStart()
 		{
 			if (IsCorePlugin) return;
@@ -89,9 +91,9 @@ namespace Oxide.Core.Plugins
 			}
 			Carbon.Logger.Debug(Name, "Assigned plugin references");
 
-			if (Hooks != null)
+			if (Hooks != null && !ManualSubscriptions)
 			{
-				string requester = FileName is not default(string) ? FileName : $"{this}";
+				string requester = FileName ?? $"{this}";
 				using (TimeMeasure.New($"Processing Hooks on '{ToPrettyString()}'"))
 				{
 					foreach (var hook in Hooks)

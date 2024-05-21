@@ -287,7 +287,10 @@ public static class ModLoader
 		plugin.IProcessPatches();
 		plugin.ILoad();
 
-		ProcessCommands(type, plugin);
+		if (!plugin.ManualCommands)
+		{
+			ProcessCommands(type, plugin);
+		}
 
 		Interface.Oxide.RootPluginManager.AddPlugin(plugin);
 
