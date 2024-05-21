@@ -259,17 +259,20 @@ public class BaseHookable
 
 			var id = HookStringPool.GetOrAdd(string.IsNullOrEmpty(methodAttribute.Name) ? method.Name : methodAttribute.Name);
 
-			if (!HookPool.TryGetValue(id, out var hooks))
+			CachedHookInstance instance = default;
+
+			if (!HookPool.TryGetValue(id, out instance))
 			{
-				HookPool.Add(id, hooks = new());
+				HookPool.Add(id, instance);
 			}
 
-			if(hooks.Hooks.Any(x => x.Method == method))
+			if(instance.Hooks.Any(x => x.Method == method))
 			{
 				continue;
 			}
 
-			hooks.Hooks.Add(CachedHook.Make(method.Name, id, this, method));
+			instance.Hooks.Add(CachedHook.Make(method.Name, id, this, method));
+			instance.RefreshPrimary();
 		}
 
 		HasBuiltHookCache = true;
