@@ -21,6 +21,8 @@ public abstract class BaseModule : BaseHookable
 	public virtual bool ForceEnabled => false;
 	public virtual bool ForceDisabled => false;
 
+	public virtual bool ManualCommands => false;
+
 	public abstract void OnServerInit(bool initial);
 	public abstract void OnPostServerInit(bool initial);
 	public abstract void OnServerSaved();
@@ -47,8 +49,8 @@ public abstract class BaseModule : BaseHookable
 	}
 }
 
-public class EmptyModuleConfig { }
-public class EmptyModuleData { }
+public class EmptyModuleConfig;
+public class EmptyModuleData;
 
 public abstract class CarbonModule<C, D> : BaseModule, IModule
 {
@@ -124,6 +126,7 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 
 		return true;
 	}
+
 	public override void Load()
 	{
 		if (ForceDisabled) return;
@@ -194,10 +197,6 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 
 		if (shouldSave) Save();
 	}
-	public virtual bool PreLoadShouldSave(bool newConfig, bool newData)
-	{
-		return false;
-	}
 	public override void Save()
 	{
 		if (ForceDisabled) return;
@@ -260,6 +259,11 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 		{
 			Logger.Error($"Failed module OnPostServerInit for {Name} [Reload Request]", ex);
 		}
+	}
+
+	public virtual bool PreLoadShouldSave(bool newConfig, bool newData)
+	{
+		return false;
 	}
 
 	public virtual string GetConfigPath()
@@ -326,21 +330,19 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 	{
 		if (ForceDisabled) return;
 
-		if (initialized)
+		if (!ManualCommands)
 		{
 			ModLoader.ProcessCommands(Type, this, flags: BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
 		}
 
-		SubscribeAll();
-
-		if (Hooks.Count > 0)
+		if (!ManualSubscriptions)
 		{
-			Puts($"Subscribed to {Hooks.Count:n0} {Hooks.Count.Plural("hook", "hooks")}.");
-		}
+			SubscribeAll();
 
-		if (InitEnd() && initialized)
-		{
-			OnServerInit(true);
+			if (Hooks.Count > 0)
+			{
+				Puts($"Subscribed to {Hooks.Count:n0} {Hooks.Count.Plural("hook", "hooks")}.");
+			}
 		}
 
 		DoHarmonyPatch();
@@ -367,12 +369,6 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 
 	public override void OnServerInit(bool initial)
 	{
-		if (ForceDisabled) return;
-
-		if (initial && IsEnabled())
-		{
-			OnEnableStatus();
-		}
 	}
 	public override void OnPostServerInit(bool initial)
 	{

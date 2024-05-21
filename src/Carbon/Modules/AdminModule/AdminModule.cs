@@ -47,15 +47,18 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 	internal const float TooltipOffset = 15;
 	internal const int RangeCuts = 50;
-	internal readonly string[] EmptyElement = new string[] { string.Empty };
+	internal readonly string[] EmptyElement =
+	[
+		string.Empty
+	];
 
 	internal List<Tab> Tabs = new();
 
 	const string PanelId = "carbonmodularui";
 	const string CursorPanelId = "carbonmodularuicur";
 	const string SpectatePanelId = "carbonmodularuispectate";
-	readonly string[] AdminPermissions = new[]
-	{
+	readonly string[] AdminPermissions =
+	[
 		"wizard",
 		"config.use",
 		"carbon.use",
@@ -87,7 +90,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		"profiler.use",
 		"profiler.startstop",
 		"profiler.sourceviewer"
-	};
+	];
 
 	internal bool _logRegistration;
 
@@ -138,6 +141,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			Application.logMessageReceived += OnLog;
 			_logRegistration = true;
 		}
+
+		OnEnabled(true);
 	}
 	public override void OnPostServerInit(bool initial)
 	{
@@ -186,7 +191,6 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			Permissions.RegisterPermission($"adminmodule.{perm}", this);
 		}
 	}
-
 	public override void OnDisabled(bool initialized)
 	{
 		if (initialized)
@@ -202,6 +206,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 		base.OnDisabled(initialized);
 	}
+
 	public override void Load()
 	{
 		base.Load();

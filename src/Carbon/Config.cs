@@ -20,6 +20,7 @@ public class Config
 	public string Language { get; set; } = "en";
 	public string WebRequestIp { get; set; }
 
+	public SelfUpdatingConfig SelfUpdating { get; set; } = new();
 	public WatchersConfig Watchers { get; set; } = new();
 	public PermissionsConfig Permissions { get; set; } = new();
 	public DebuggingConfig Debugging { get; set; } = new();
@@ -51,6 +52,11 @@ public class Config
 		}
 
 		return true;
+	}
+
+	public class SelfUpdatingConfig
+	{
+		public bool Enabled { get; set; } = true;
 	}
 
 	public class CompilerConfig
