@@ -43,6 +43,12 @@ public partial class CorePlugin : CarbonPlugin
 				return Cache.False;
 			}
 
+			// OnPlayerCommand
+			if (HookCaller.CallStaticHook(2915735597, player, command, args) != null)
+			{
+				return Cache.False;
+			}
+
 			if (Community.Runtime.CommandManager.Contains(Community.Runtime.CommandManager.Chat, command, out var cmd))
 			{
 				var commandArgs = Facepunch.Pool.Get<PlayerArgs>();
@@ -65,12 +71,6 @@ public partial class CorePlugin : CarbonPlugin
 			else
 			{
 				player.ChatMessage($"<color=orange>Unknown command:</color> {message}");
-			}
-
-			// OnPlayerCommand
-			if (HookCaller.CallStaticHook(2915735597, player, command, args) != null)
-			{
-				return Cache.False;
 			}
 		}
 		catch (Exception ex) { Logger.Error($"Failed IOnPlayerCommand.", ex); }
