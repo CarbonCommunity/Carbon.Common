@@ -11,7 +11,7 @@ namespace Oxide.Core
 {
 	public class Interface
 	{
-		public static OxideMod Oxide { get; set; } = new OxideMod();
+		public static OxideMod Oxide { get; set; } = new();
 		public static OxideMod uMod => Oxide;
 
 		public static void Initialize()

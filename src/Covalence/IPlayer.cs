@@ -20,7 +20,7 @@ public interface IPlayer
 	float Health { get; set; }
 	float MaxHealth { get; set; }
 	int Ping { get; }
-	object Object { get; set; }
+	object Object { get; }
 	string Address { get; }
 	string Id { get; }
 	string Name { get; set; }

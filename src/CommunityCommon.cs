@@ -239,6 +239,12 @@ public class Community
 			needsSave = true;
 		}
 
+		if (string.IsNullOrEmpty(Config.Permissions.AdminDefaultGroup))
+			Config.Permissions.AdminDefaultGroup = "admin";
+
+		if (string.IsNullOrEmpty(Config.Permissions.PlayerDefaultGroup))
+			Config.Permissions.PlayerDefaultGroup = "default";
+
 		if (!Config.Compiler.ConditionalCompilationSymbols.Contains("CARBON"))
 			Config.Compiler.ConditionalCompilationSymbols.Add("CARBON");
 

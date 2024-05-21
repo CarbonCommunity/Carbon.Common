@@ -60,20 +60,13 @@ public class OxideMod
 		DataFileSystem = new DataFileSystem(DataDirectory);
 		RootPluginManager = new PluginManager();
 
-		switch (Community.Runtime.Config.Permissions.PermissionSerialization)
+		Permission = Community.Runtime.Config.Permissions.PermissionSerialization switch
 		{
-			case Permission.SerializationMode.Storeless:
-				Permission = new PermissionStoreless();
-				break;
-
-			case Permission.SerializationMode.Protobuf:
-				Permission = new Permission();
-				break;
-
-			case Permission.SerializationMode.SQL:
-				Permission = new PermissionSql();
-				break;
-		}
+			Permission.SerializationMode.Storeless => new PermissionStoreless(),
+			Permission.SerializationMode.Protobuf => new Permission(),
+			Permission.SerializationMode.SQL => new PermissionSql(),
+			_ => Permission
+		};
 
 		_extensions.Add(new Extension { Name = "Rust", Author = "Carbon Community LTD", Branch = "none", Filename = "Carbon.dll", Version = new VersionNumber(1, 0, 0) });
 
