@@ -329,8 +329,8 @@ public partial class AdminModule
 					#endif
 
 					tab.AddName(1, Singleton.GetPhrase("permissions", ap.Player.UserIDString), TextAnchor.MiddleLeft);
-					tab.AddInput(1, Singleton.GetPhrase("playerdefgroup", ap.Player.UserIDString), ap => Config.Permissions.PlayerDefaultGroup, (ap, args) => { Config.Permissions.PlayerDefaultGroup = args.ToString(string.Empty); Community.Runtime.SaveConfig(); });
-					tab.AddInput(1, Singleton.GetPhrase("admindefgroup", ap.Player.UserIDString), ap => Config.Permissions.AdminDefaultGroup, (ap, args) => { Config.Permissions.AdminDefaultGroup = args.ToString(string.Empty); Community.Runtime.SaveConfig(); });
+					tab.AddInput(1, Singleton.GetPhrase("playerdefgroup", ap.Player.UserIDString), ap => Config.Permissions.PlayerDefaultGroup, (ap, args) => { Config.Permissions.PlayerDefaultGroup = args.ToString(string.Empty); if(string.IsNullOrEmpty(Config.Permissions.PlayerDefaultGroup)) Config.Permissions.PlayerDefaultGroup = "default"; Community.Runtime.SaveConfig(); });
+					tab.AddInput(1, Singleton.GetPhrase("admindefgroup", ap.Player.UserIDString), ap => Config.Permissions.AdminDefaultGroup, (ap, args) => { Config.Permissions.AdminDefaultGroup = args.ToString(string.Empty); if(string.IsNullOrEmpty(Config.Permissions.AdminDefaultGroup)) Config.Permissions.AdminDefaultGroup = "admin"; Community.Runtime.SaveConfig(); });
 
 					tab.AddName(1, Singleton.GetPhrase("conditionals", ap.Player.UserIDString), TextAnchor.MiddleLeft);
 
