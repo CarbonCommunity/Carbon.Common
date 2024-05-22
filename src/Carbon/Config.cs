@@ -20,13 +20,14 @@ public class Config
 	public string Language { get; set; } = "en";
 	public string WebRequestIp { get; set; }
 
-	public SelfUpdatingConfig SelfUpdating { get; set; } = new();
 	public WatchersConfig Watchers { get; set; } = new();
 	public PermissionsConfig Permissions { get; set; } = new();
+	public AnalyticsConfig Analytics { get; set; } = new();
+	public SelfUpdatingConfig SelfUpdating { get; set; } = new();
 	public DebuggingConfig Debugging { get; set; } = new();
 	public LoggingConfig Logging { get; set; } = new();
-	public CompilerConfig Compiler { get; set; } = new();
 	public ProfilerConfig Profiler { get; set; } = new();
+	public CompilerConfig Compiler { get; set; } = new();
 	public MiscConfig Misc { get; set; } = new();
 
 	internal readonly string[] _invalidAliases =
@@ -105,6 +106,11 @@ public class Config
 		public int LogFileMode { get; set; } = 2;
 		public int LogVerbosity { get; set; } = 0;
 		public bool CommandSuggestions { get; set; } = true;
+	}
+
+	public class AnalyticsConfig
+	{
+		public bool Enabled { get; set; } = true;
 	}
 
 	public class MiscConfig

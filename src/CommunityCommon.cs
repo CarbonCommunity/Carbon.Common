@@ -219,7 +219,7 @@ public class Community
 
 	#region Config
 
-	public void LoadConfig()
+	public void LoadConfig(bool postProcess = true)
 	{
 		var needsSave = false;
 
@@ -233,81 +233,92 @@ public class Community
 			Config = JsonConvert.DeserializeObject<Config>(OsEx.File.ReadText(Defines.GetConfigFile()));
 		}
 
-		if (Config.Compiler.ConditionalCompilationSymbols == null)
+		if (postProcess)
 		{
-			Config.Compiler.ConditionalCompilationSymbols = new();
-			needsSave = true;
-		}
-
-		if (string.IsNullOrEmpty(Config.Permissions.AdminDefaultGroup))
-			Config.Permissions.AdminDefaultGroup = "admin";
-
-		if (string.IsNullOrEmpty(Config.Permissions.PlayerDefaultGroup))
-			Config.Permissions.PlayerDefaultGroup = "default";
-
-		if (!Config.Compiler.ConditionalCompilationSymbols.Contains("CARBON"))
-			Config.Compiler.ConditionalCompilationSymbols.Add("CARBON");
-
-		if (!Config.Compiler.ConditionalCompilationSymbols.Contains("RUST"))
-			Config.Compiler.ConditionalCompilationSymbols.Add("RUST");
-
-		Config.Compiler.ConditionalCompilationSymbols = Config.Compiler.ConditionalCompilationSymbols.Distinct().ToList();
-
-		if (Config.Prefixes == null)
-		{
-			Config.Prefixes = new();
-			needsSave = true;
-		}
-
-		if (Config.Aliases == null)
-		{
-			Config.Aliases = new();
-			needsSave = true;
-		}
-		else
-		{
-			var invalidAliases = Pool.GetList<string>();
-			invalidAliases.AddRange(from alias in Config.Aliases
-				where !Config.IsValidAlias(alias.Key, out _) select alias.Key);
-
-			foreach (var invalidAlias in invalidAliases)
+			if (Config.Compiler.ConditionalCompilationSymbols == null)
 			{
-				Config.Aliases.Remove(invalidAlias);
-				Logger.Warn($" Removed invalid alias: {invalidAlias}");
-			}
-
-			if (invalidAliases.Count > 0)
-			{
+				Config.Compiler.ConditionalCompilationSymbols = new();
 				needsSave = true;
 			}
 
-			Pool.FreeList(ref invalidAliases);
-		}
+			if (string.IsNullOrEmpty(Config.Permissions.AdminDefaultGroup))
+				Config.Permissions.AdminDefaultGroup = "admin";
 
-		if (Config.Prefixes.Count == 0)
-		{
-			Config.Prefixes.Add(new()
+			if (string.IsNullOrEmpty(Config.Permissions.PlayerDefaultGroup))
+				Config.Permissions.PlayerDefaultGroup = "default";
+
+			if (!Config.Compiler.ConditionalCompilationSymbols.Contains("CARBON"))
+				Config.Compiler.ConditionalCompilationSymbols.Add("CARBON");
+
+			if (!Config.Compiler.ConditionalCompilationSymbols.Contains("RUST"))
+				Config.Compiler.ConditionalCompilationSymbols.Add("RUST");
+
+			Config.Compiler.ConditionalCompilationSymbols =
+				Config.Compiler.ConditionalCompilationSymbols.Distinct().ToList();
+
+			if (Config.Prefixes == null)
 			{
-				Value = "/",
-				PrintToChat = false,
-				PrintToConsole = false,
-				SuggestionAuthLevel = 2
-			});
+				Config.Prefixes = new();
+				needsSave = true;
+			}
+
+			if (Config.Aliases == null)
+			{
+				Config.Aliases = new();
+				needsSave = true;
+			}
+			else
+			{
+				var invalidAliases = Pool.GetList<string>();
+				invalidAliases.AddRange(from alias in Config.Aliases
+					where !Config.IsValidAlias(alias.Key, out _)
+					select alias.Key);
+
+				foreach (var invalidAlias in invalidAliases)
+				{
+					Config.Aliases.Remove(invalidAlias);
+					Logger.Warn($" Removed invalid alias: {invalidAlias}");
+				}
+
+				if (invalidAliases.Count > 0)
+				{
+					needsSave = true;
+				}
+
+				Pool.FreeList(ref invalidAliases);
+			}
+
+			if (Config.Prefixes.Count == 0)
+			{
+				Config.Prefixes.Add(new()
+				{
+					Value = "/", PrintToChat = false, PrintToConsole = false, SuggestionAuthLevel = 2
+				});
+			}
+
+			if (Config.Aliases.Count == 0)
+			{
+				Config.Aliases["carbon"] = "c.version";
+				Config.Aliases["harmony.load"] = "c.harmonyload";
+				Config.Aliases["harmony.unload"] = "c.harmonyunload";
+			}
+
+			// Mandatory for across the board access
+			API.Commands.Command.Prefixes = Config.Prefixes;
+
+			Logger.CoreLog.SplitSize = (int)(Config.Logging.LogSplitSize * 1000000f);
+
+			if (needsSave) SaveConfig();
 		}
 
-		if (Config.Aliases.Count == 0)
+		if (Config.Analytics.Enabled)
 		{
-			Config.Aliases["carbon"] = "c.version";
-			Config.Aliases["harmony.load"] = "c.harmonyload";
-			Config.Aliases["harmony.unload"] = "c.harmonyunload";
+			Logger.Warn($"Carbon Analytics are ON. They're entirely anonymous and help us to further improve.");
 		}
-
-		// Mandatory for across the board access
-		API.Commands.Command.Prefixes = Config.Prefixes;
-
-		Logger.CoreLog.SplitSize = (int)(Community.Runtime.Config.Logging.LogSplitSize * 1000000f);
-
-		if (needsSave) SaveConfig();
+		else
+		{
+			Logger.Error($"Carbon Analytics are OFF.");
+		}
 	}
 
 	public void LoadClientConfig()
