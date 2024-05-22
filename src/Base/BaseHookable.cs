@@ -240,7 +240,7 @@ public class BaseHookable
 
 			if (!HookPool.TryGetValue(id, out instance))
 			{
-				instance.Hooks = new(10);
+				instance.Hooks = new(5);
 
 				HookPool.Add(id, instance);
 			}
@@ -263,6 +263,8 @@ public class BaseHookable
 
 			if (!HookPool.TryGetValue(id, out instance))
 			{
+				instance.Hooks = new(5);
+
 				HookPool.Add(id, instance);
 			}
 
