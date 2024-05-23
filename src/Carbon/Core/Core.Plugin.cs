@@ -179,22 +179,11 @@ public partial class CorePlugin : CarbonPlugin
 
 	public static void ApplyStacktrace()
 	{
-		if (Community.Runtime.Config.Debugging.UnityStacktrace)
-		{
-			Application.SetStackTraceLogType(LogType.Log, _defaultLogTrace);
-			Application.SetStackTraceLogType(LogType.Warning, _defaultWarningTrace);
-			Application.SetStackTraceLogType(LogType.Error, _defaultErrorTrace);
-			Application.SetStackTraceLogType(LogType.Assert, _defaultAssertTrace);
-			Application.SetStackTraceLogType(LogType.Exception, _defaultExceptionTrace);
-		}
-		else
-		{
-			Application.SetStackTraceLogType(LogType.Log, StackTraceLogType.None);
-			Application.SetStackTraceLogType(LogType.Warning, StackTraceLogType.None);
-			Application.SetStackTraceLogType(LogType.Error, StackTraceLogType.None);
-			Application.SetStackTraceLogType(LogType.Assert, StackTraceLogType.None);
-			Application.SetStackTraceLogType(LogType.Exception, StackTraceLogType.None);
-		}
+		Application.SetStackTraceLogType(LogType.Log, _defaultLogTrace);
+		Application.SetStackTraceLogType(LogType.Warning, _defaultWarningTrace);
+		Application.SetStackTraceLogType(LogType.Error, _defaultErrorTrace);
+		Application.SetStackTraceLogType(LogType.Assert, _defaultAssertTrace);
+		Application.SetStackTraceLogType(LogType.Exception, _defaultExceptionTrace);
 	}
 
 	protected override void LoadDefaultMessages()
