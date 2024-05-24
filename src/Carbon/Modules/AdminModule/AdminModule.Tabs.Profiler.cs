@@ -205,7 +205,7 @@ public partial class AdminModule
 				var color = Color32.Lerp(calmColor, intenseColor, percentage);
 
 				var button = string.IsNullOrEmpty(command) ?
-					cui.CreatePanel(container, parent, "0.15 0.15 0.15 0.7", Cache.CUI.BlankColor,
+					cui.CreatePanel(container, parent, "0.15 0.15 0.15 0.7",
 						xMin: 0.01f, xMax: 0.99f).Id :
 					cui.CreateProtectedButton(container, parent, "0.15 0.15 0.15 0.7", Cache.CUI.BlankColor,
 					string.Empty, 0, xMin: 0.01f, xMax: 0.99f, command: command).Id;
