@@ -101,7 +101,23 @@ public partial class CorePlugin : CarbonPlugin
 		{
 			CommandLine.ExecuteCommands("+carbon.onserverinit", "cfg/server.cfg", lines);
 			Array.Clear(lines, 0, lines.Length);
-			lines = null;
+		}
+
+		foreach (var player in BasePlayer.allPlayerList)
+		{
+			try
+			{
+				if (player.IsNpc)
+				{
+					continue;
+				}
+
+				player.AsIPlayer();
+			}
+			catch (Exception ex)
+			{
+				Logger.Error($"Failed getting IPlayer object for {player.displayName}[{player.UserIDString}]", ex);
+			}
 		}
 	}
 	private void OnServerSave()
