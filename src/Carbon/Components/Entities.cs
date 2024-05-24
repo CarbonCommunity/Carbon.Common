@@ -152,7 +152,7 @@ public class Entities : IDisposable
 		}
 
 		map.Remove(entity);
-		UnityEx.DestroyEntityCache(entity);
+		UnityEx.InternalEntityDestroy(entity);
 	}
 
 	public struct Map<T> : IDisposable
