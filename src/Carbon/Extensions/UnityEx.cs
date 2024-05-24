@@ -43,6 +43,25 @@ public static class UnityEx
 		return ComponentCache.Remove<T>(go);
 	}
 
+	public static bool DestroyCache(this GameObject go)
+	{
+		if (go == null)
+		{
+			return false;
+		}
+
+		if (!ComponentCache.TryGetValue(go, out var monos))
+		{
+			return false;
+		}
+
+		monos.Clear();
+		ComponentCache.Remove(go);
+
+		GameObject.Destroy(go);
+		return true;
+	}
+
 	public class ComponentCacheBank : Dictionary<GameObject, List<MonoBehaviour>>
 	{
 		public T Add<T>(GameObject go) where T : MonoBehaviour
