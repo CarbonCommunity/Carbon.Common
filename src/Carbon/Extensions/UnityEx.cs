@@ -5,8 +5,6 @@
  *
  */
 
-using Facepunch;
-
 namespace Carbon.Extensions;
 
 public static class UnityEx
@@ -60,6 +58,24 @@ public static class UnityEx
 
 		GameObject.Destroy(go);
 		return true;
+	}
+
+	internal static void DestroyEntityCache(BaseEntity entity)
+	{
+		if (entity == null)
+		{
+			return;
+		}
+
+		var go = entity.gameObject;
+
+		if (!ComponentCache.TryGetValue(go, out var monos))
+		{
+			return;
+		}
+
+		monos.Clear();
+		ComponentCache.Remove(go);
 	}
 
 	public class ComponentCacheBank : Dictionary<GameObject, List<MonoBehaviour>>
