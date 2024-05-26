@@ -462,11 +462,13 @@ public static class ModLoader
 
 			if (ps != null && ps.Length > 0)
 			{
+				var perm = Interface.Oxide.Permission;
+
 				foreach (var permission in ps)
 				{
-					if (hookable is RustPlugin plugin && !plugin.permission.PermissionExists(permission, hookable))
+					if (!perm.PermissionExists(permission, hookable))
 					{
-						plugin.permission.RegisterPermission(permission, hookable);
+						perm.RegisterPermission(permission, hookable);
 					}
 				}
 			}
