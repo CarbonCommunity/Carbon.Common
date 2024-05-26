@@ -88,7 +88,7 @@ public partial class CorePlugin : CarbonPlugin
 						unloaded.AddRow(string.Empty, Path.GetFileName(unloadedPlugin));
 					}
 
-					using var failed = new StringTable("*", $"Failed Plugins ({ModLoader.FailedCompilations.Count(x => x.Value.IsValid()):n0})", "Line", "Column", "Stacktrace");
+					using var failed = new StringTable("*", $"Failed Plugins ({ModLoader.FailedCompilations.Count(x => x.Value.IsValid()):n0})", "Line", "Stacktrace");
 
 					foreach (var compilation in ModLoader.FailedCompilations.Values)
 					{
@@ -115,8 +115,7 @@ public partial class CorePlugin : CarbonPlugin
 							table.AddRow(
 								string.Empty,
 								initial ? Path.GetFileName(compilation.File) : string.Empty,
-								isAboveSize || initial ? $"{trace.Line}" : string.Empty,
-								isAboveSize || initial ? $"{trace.Column}" : string.Empty,
+								isAboveSize || initial ? $"{trace.Line}:{trace.Column}" : string.Empty,
 								$"{trace.Message.Substring(skip, size.Clamp(0, trace.Message.Length - skip))}{(isAboveSize ? "..." : string.Empty)}");
 
 							if (isAboveSize)

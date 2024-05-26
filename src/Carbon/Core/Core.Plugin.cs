@@ -101,7 +101,23 @@ public partial class CorePlugin : CarbonPlugin
 		{
 			CommandLine.ExecuteCommands("+carbon.onserverinit", "cfg/server.cfg", lines);
 			Array.Clear(lines, 0, lines.Length);
-			lines = null;
+		}
+
+		foreach (var player in BasePlayer.allPlayerList)
+		{
+			try
+			{
+				if (player.IsNpc)
+				{
+					continue;
+				}
+
+				player.AsIPlayer();
+			}
+			catch (Exception ex)
+			{
+				Logger.Error($"Failed getting IPlayer object for {player.displayName}[{player.UserIDString}]", ex);
+			}
 		}
 	}
 	private void OnServerSave()
@@ -179,22 +195,11 @@ public partial class CorePlugin : CarbonPlugin
 
 	public static void ApplyStacktrace()
 	{
-		if (Community.Runtime.Config.Debugging.UnityStacktrace)
-		{
-			Application.SetStackTraceLogType(LogType.Log, _defaultLogTrace);
-			Application.SetStackTraceLogType(LogType.Warning, _defaultWarningTrace);
-			Application.SetStackTraceLogType(LogType.Error, _defaultErrorTrace);
-			Application.SetStackTraceLogType(LogType.Assert, _defaultAssertTrace);
-			Application.SetStackTraceLogType(LogType.Exception, _defaultExceptionTrace);
-		}
-		else
-		{
-			Application.SetStackTraceLogType(LogType.Log, StackTraceLogType.None);
-			Application.SetStackTraceLogType(LogType.Warning, StackTraceLogType.None);
-			Application.SetStackTraceLogType(LogType.Error, StackTraceLogType.None);
-			Application.SetStackTraceLogType(LogType.Assert, StackTraceLogType.None);
-			Application.SetStackTraceLogType(LogType.Exception, StackTraceLogType.None);
-		}
+		Application.SetStackTraceLogType(LogType.Log, _defaultLogTrace);
+		Application.SetStackTraceLogType(LogType.Warning, _defaultWarningTrace);
+		Application.SetStackTraceLogType(LogType.Error, _defaultErrorTrace);
+		Application.SetStackTraceLogType(LogType.Assert, _defaultAssertTrace);
+		Application.SetStackTraceLogType(LogType.Exception, _defaultExceptionTrace);
 	}
 
 	protected override void LoadDefaultMessages()

@@ -90,12 +90,6 @@ public class Config
 	public class DebuggingConfig
 	{
 		public string ScriptDebuggingOrigin = string.Empty;
-		public bool UnityStacktrace { get; set; } =
-#if DEBUG
-			true;
-#else
-			true; // Set false when we're out of development
-#endif
 		public int HookLagSpikeThreshold = 1000;
 	}
 

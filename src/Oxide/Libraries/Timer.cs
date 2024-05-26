@@ -57,10 +57,8 @@ public class Timers : Library
 			}
 			catch (Exception ex)
 			{
-				if (Plugin is RustPlugin rustPlugin)
-				{
-					rustPlugin.LogError($"Timer {time}s has failed:", ex);
-				}
+				Logger.Error($"Timer of {time}s has failed in '{Plugin.ToPrettyString()}' [callback]", ex);
+				timer.Destroy();
 			}
 		});
 
@@ -92,13 +90,8 @@ public class Timers : Library
 			}
 			catch (Exception ex)
 			{
-				if (Plugin is RustPlugin rustPlugin)
-				{
-					rustPlugin.LogError($"Timer {time}s has failed:", ex);
-				}
-
+				Logger.Error($"Timer of {time}s has failed in '{Plugin.ToPrettyString()}' [callback]", ex);
 				timer.Destroy();
-				Pool.Free(ref timer);
 			}
 		});
 
@@ -125,13 +118,8 @@ public class Timers : Library
 			}
 			catch (Exception ex)
 			{
-				if (Plugin is RustPlugin rustPlugin)
-				{
-					rustPlugin.LogError($"Timer {time}s has failed:", ex);
-				}
-
+				Logger.Error($"Timer of {time}s has failed in '{Plugin.ToPrettyString()}' [callback]", ex);
 				timer.Destroy();
-				Pool.Free(ref timer);
 			}
 		});
 
@@ -209,10 +197,7 @@ public class Timer : Library
 				}
 				catch (Exception ex)
 				{
-					if (Plugin is RustPlugin rustPlugin)
-					{
-						rustPlugin.LogError($"Timer {delay}s has failed:", ex);
-					}
+					Logger.Error($"Timer of {delay}s has failed in '{Plugin.ToPrettyString()}' [callback]", ex);
 				}
 
 				Destroy();
@@ -236,11 +221,7 @@ public class Timer : Library
 				}
 				catch (Exception ex)
 				{
-					if (Plugin is RustPlugin rustPlugin)
-					{
-						rustPlugin.LogError($"Timer {delay}s has failed:", ex);
-					}
-
+					Logger.Error($"Timer of {delay}s has failed in '{Plugin.ToPrettyString()}' [callback]", ex);
 					Destroy();
 				}
 			};
