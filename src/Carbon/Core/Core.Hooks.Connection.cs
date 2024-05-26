@@ -33,7 +33,7 @@ public partial class CorePlugin : CarbonPlugin
 	{
 		var username = connection.username;
 		var text = connection.userid.ToString();
-		var obj = Regex.Replace(connection.ipaddress, global::Oxide.Game.Rust.Libraries.Player.ipPattern, string.Empty);
+		var obj = Regex.Replace(connection.ipaddress, Player.ipPattern, string.Empty);
 
 		// CanClientLogin
 		var canClient = HookCaller.CallStaticHook(3081308902, connection);

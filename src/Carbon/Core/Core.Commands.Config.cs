@@ -66,20 +66,7 @@ public partial class CorePlugin : CarbonPlugin
 	[CommandVar("logfiletype", "The mode for writing the log to file. (0=disabled, 1=saves updates every 5 seconds, 2=saves immediately)")]
 	[AuthLevel(2)]
 	private int LogFileType { get { return Community.Runtime.Config.Logging.LogFileMode; } set { Community.Runtime.Config.Logging.LogFileMode = Mathf.Clamp(value, 0, 2); Community.Runtime.SaveConfig(); } }
-
-	[CommandVar("unitystacktrace", "Enables a big chunk of detail of Unity's default stacktrace. Recommended to be disabled as a lot of it is internal and unnecessary for the average user.")]
-	[AuthLevel(2)]
-	private bool UnityStacktrace
-	{
-		get { return Community.Runtime.Config.Debugging.UnityStacktrace; }
-		set
-		{
-			Community.Runtime.Config.Debugging.UnityStacktrace = value;
-			Community.Runtime.SaveConfig();
-			ApplyStacktrace();
-		}
-	}
-
+	
 	[CommandVar("language", "Server language used by the Language API.")]
 	[AuthLevel(2)]
 	private string Language { get { return Community.Runtime.Config.Language; } set { Community.Runtime.Config.Language = value; Community.Runtime.SaveConfig(); } }
