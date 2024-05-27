@@ -171,12 +171,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					return;
 				}
 
-				ap.SelectedTab = Tabs.FirstOrDefault(x => HasAccess(player, x.Access));
-
 				var tab = GetTab(player);
 				tab?.OnChange?.Invoke(ap, tab);
-
-				ap.Clear();
 
 				DrawCursorLocker(player);
 				Draw(player);
