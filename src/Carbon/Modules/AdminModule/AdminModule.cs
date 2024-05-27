@@ -171,6 +171,12 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					return;
 				}
 
+				if (ap.SelectedTab == null)
+				{
+					ap.SelectedTab = Tabs.FirstOrDefault(x => HasAccess(player, x.Access));
+					ap.Clear();
+				}
+
 				var tab = GetTab(player);
 				tab?.OnChange?.Invoke(ap, tab);
 

@@ -72,17 +72,21 @@ public partial class AdminModule
 				tab.AddInput(0, Singleton.GetPhrase("hostname", ap.Player.UserIDString),
 					ap => $"{ConVar.Server.hostname}", (ap2, args) =>
 					{
+						var str = args.ToString(" ");
+
 						tab.CreateDialog("Are you sure you want to update the host name?", ap =>
 						{
-							ConVar.Server.hostname = args.ToString(" ");
+							ConVar.Server.hostname = str;
 						});
 					});
 				tab.AddInput(0, Singleton.GetPhrase("maxplayers", ap.Player.UserIDString),
 					ap => $"{ConVar.Server.maxplayers}", (ap2, args) =>
 					{
+						var val = args.ToString(" ").ToInt();
+
 						tab.CreateDialog("Are you sure you want to update the maximum players that can join the server?", ap =>
 						{
-							ConVar.Server.maxplayers = args.ToString(" ").ToInt();
+							ConVar.Server.maxplayers = val;
 						});
 					});
 				tab.AddInput(0, Singleton.GetPhrase("level", ap.Player.UserIDString), ap => $"{ConVar.Server.level}",
