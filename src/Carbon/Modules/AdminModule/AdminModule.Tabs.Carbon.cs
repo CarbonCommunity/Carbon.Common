@@ -70,7 +70,21 @@ public partial class AdminModule
 			if (Singleton.HasAccess(ap.Player, "carbon.server_settings"))
 			{
 				tab.AddInput(0, Singleton.GetPhrase("hostname", ap.Player.UserIDString),
-					ap => $"{ConVar.Server.hostname}", (ap2, args) => { ConVar.Server.hostname = args.ToString(" "); });
+					ap => $"{ConVar.Server.hostname}", (ap2, args) =>
+					{
+						tab.CreateDialog("Are you sure you want to update the host name?", ap =>
+						{
+							ConVar.Server.hostname = args.ToString(" ");
+						});
+					});
+				tab.AddInput(0, Singleton.GetPhrase("maxplayers", ap.Player.UserIDString),
+					ap => $"{ConVar.Server.maxplayers}", (ap2, args) =>
+					{
+						tab.CreateDialog("Are you sure you want to update the maximum players that can join the server?", ap =>
+						{
+							ConVar.Server.maxplayers = args.ToString(" ").ToInt();
+						});
+					});
 				tab.AddInput(0, Singleton.GetPhrase("level", ap.Player.UserIDString), ap => $"{ConVar.Server.level}",
 					null);
 			}

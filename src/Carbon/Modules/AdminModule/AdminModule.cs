@@ -287,7 +287,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				["quickactions_confirmdialog_help"] = "Show a dialog which asks you to confirm before executing sensitive command(s).",
 				["quickactions_add"] = "Add",
 				["quickactions_edit"] = "Edit",
-				["quickactions_stopedit"] = "Stop Editing"
+				["quickactions_stopedit"] = "Stop Editing",
+				["maxplayers"] = "Maximum Players"
 			}
 		};
 	}
@@ -297,7 +298,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 	{
 		try
 		{
-			if (_logQueue.Count >= 7) _logQueue.RemoveAt(0);
+			if (_logQueue.Count >= 6) _logQueue.RemoveAt(0);
 
 			var log = condition.Split('\n');
 			var result = log[0];
