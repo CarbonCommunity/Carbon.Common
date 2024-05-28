@@ -517,11 +517,11 @@ public partial class AdminModule
 							{
 								cui.CreateText(container, parent, "1 1 1 0.5",
 									"All values with <b>(*)</b> indicate that they're a multiplier value \nrelative to Rust's native value the configuration is defined for.",
-									8, xMax: 0.5f);
+									8, align: TextAnchor.MiddleRight, xMax: 0.48f);
 
 								cui.CreateText(container, parent, "1 1 1 0.5",
-									"<color=orange>Orange variables</color> indicate will enforce the server to modded\nonce the value is not <b>-1</b>.",
-									8, xMin: 0.5f);
+									"<color=orange>Orange variables</color> indicate will enforce the server\nto modded once the value is not <b>-1</b>.",
+									8, align: TextAnchor.MiddleLeft, xMin: 0.52f);
 							});
 
 							foreach (var cache in CarbonAuto.AutoCache.OrderBy(x => x.Value.Variable.DisplayName).Where(x =>
