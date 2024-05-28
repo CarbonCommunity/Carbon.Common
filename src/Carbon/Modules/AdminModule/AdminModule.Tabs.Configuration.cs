@@ -513,26 +513,37 @@ public partial class AdminModule
 									}, ap => OptionButton.Types.Important));
 							}
 
-							foreach (var cache in CarbonAuto.AutoCache.Where(x =>
+							tab.AddWidget(1, 1, (playerSession, cui, container, parent) =>
+							{
+								cui.CreateText(container, parent, "1 1 1 0.5",
+									"All values with <b>(*)</b> indicate that they're a multiplier value \nrelative to Rust's native value the configuration is defined for.",
+									8, xMax: 0.5f);
+
+								cui.CreateText(container, parent, "1 1 1 0.5",
+									"<color=orange>Orange variables</color> indicate will enforce the server to modded\nonce the value is not <b>-1</b>.",
+									8, xMin: 0.5f);
+							});
+
+							foreach (var cache in CarbonAuto.AutoCache.OrderBy(x => x.Value.Variable.DisplayName).Where(x =>
 								         string.IsNullOrEmpty(carbonAutoSearch) || x.Key.Contains(carbonAutoSearch)))
 							{
 								var type = cache.Value.GetVarType();
 								if (type == typeof(string))
 								{
-									tab.AddInput(1, cache.Value.Variable.DisplayName, ap => cache.Value.GetValue()?.ToString(), 0, false,
+									tab.AddInput(1, cache.Value.Variable.ForceModded ? $"<color=orange>{cache.Value.Variable.DisplayName}</color>" : cache.Value.Variable.DisplayName, ap => cache.Value.GetValue()?.ToString(), 0, false,
 										(ap, args) => cache.Value.SetValue(args.ToString(" ")),
 										tooltip: $"{cache.Value.Variable.Help} ({cache.Key})");
 								}
 								else if (type == typeof(bool))
 								{
-									tab.AddToggle(1, cache.Value.Variable.DisplayName,
+									tab.AddToggle(1, cache.Value.Variable.ForceModded ? $"<color=orange>{cache.Value.Variable.DisplayName}</color>" : cache.Value.Variable.DisplayName,
 										ap => cache.Value.SetValue(!(bool)cache.Value.GetValue()),
 										ap => (bool)cache.Value.GetValue(),
 										tooltip: $"{cache.Value.Variable.Help} ({cache.Key})");
 								}
 								else if (type == typeof(float))
 								{
-									tab.AddInputButton(1, cache.Value.Variable.DisplayName, 0.2f,
+									tab.AddInputButton(1, cache.Value.Variable.ForceModded ? $"<color=orange>{cache.Value.Variable.DisplayName}</color>" : cache.Value.Variable.DisplayName, 0.2f,
 										new OptionInput(string.Empty, ap => $"{cache.Value.GetValue()}", 0,
 											false,
 											(ap, args) => cache.Value.SetValue(args.ToString(" ").ToFloat())),
@@ -542,7 +553,7 @@ public partial class AdminModule
 								}
 								else if (type == typeof(int))
 								{
-									tab.AddInputButton(1, cache.Value.Variable.DisplayName, 0.2f,
+									tab.AddInputButton(1, cache.Value.Variable.ForceModded ? $"<color=orange>{cache.Value.Variable.DisplayName}</color>" : cache.Value.Variable.DisplayName, 0.2f,
 										new OptionInput(string.Empty, ap => $"{cache.Value.GetValue()}", 0,
 											false, (ap, args) => cache.Value.SetValue(args.ToString(" ").ToInt())),
 										new OptionButton($"<size=8>-1</size>",
@@ -551,7 +562,7 @@ public partial class AdminModule
 								}
 								else if (type == typeof(long))
 								{
-									tab.AddInputButton(1, cache.Value.Variable.DisplayName, 0.2f,
+									tab.AddInputButton(1, cache.Value.Variable.ForceModded ? $"<color=orange>{cache.Value.Variable.DisplayName}</color>" : cache.Value.Variable.DisplayName, 0.2f,
 										new OptionInput(string.Empty, ap => $"{cache.Value.GetValue()}", 0,
 											false, (ap, args) => cache.Value.SetValue(args.ToString(" ").ToLong())),
 										new OptionButton($"<size=8>-1</size>",
@@ -560,7 +571,7 @@ public partial class AdminModule
 								}
 								else
 								{
-									tab.AddText(1, $"{cache.Value.Variable.DisplayName} ({type})", 10, "1 1 1 1");
+									tab.AddText(1, $"{(cache.Value.Variable.ForceModded ? $"<color=orange>{cache.Value.Variable.DisplayName}</color>" : cache.Value.Variable.DisplayName)} ({type})", 10, "1 1 1 1");
 								}
 							}
 							break;
