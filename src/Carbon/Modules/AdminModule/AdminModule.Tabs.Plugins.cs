@@ -366,7 +366,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 				if (plugin.NoImage() || Singleton.DataInstance.HidePluginIcons)
 				{
-					cui.CreateImage(container, card, vendor.Logo, "0.2 0.2 0.2 0.4", xMin: 0.2f, xMax: 0.8f, yMin: 0.2f + vendor.LogoRatio, yMax: 0.8f - vendor.LogoRatio);
+					cui.CreatePanel(container, card, "0.2 0.2 0.2 0.5");
+					cui.CreateImage(container, card, vendor.Logo, "0.2 0.2 0.2 0.85", xMin: 0.2f, xMax: 0.8f, yMin: 0.2f + vendor.LogoRatio, yMax: 0.8f - vendor.LogoRatio);
 				}
 				else
 				{
