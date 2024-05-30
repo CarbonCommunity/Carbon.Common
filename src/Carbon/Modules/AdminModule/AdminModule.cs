@@ -343,7 +343,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			return false;
 		}
 
-		if (HookCaller.CallStaticHook(3097360729, player) is bool result)
+		// CanAccessAdminModule
+		if (HookCaller.CallStaticHook(3266674522, player) is bool result)
 		{
 			return result;
 		}
