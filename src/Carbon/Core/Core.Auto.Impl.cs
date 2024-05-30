@@ -21,17 +21,17 @@ public partial class CorePlugin : CarbonPlugin
 
 		//if (recycler.IsSafezoneRecycler())
 		{
-			if (SafezoneRecycleTick != -1)
+			if (SafezoneRecycleTickMultiplier != -1)
 			{
-				return SafezoneRecycleTick;
+				return SafezoneRecycleTickMultiplier;
 			}
 
 			return null;
 		}
 
-		if (RecycleTick != -1)
+		if (RecycleTickMultiplier != -1)
 		{
-			return RecycleTick;
+			return RecycleTickMultiplier;
 		}
 
 		return null;
@@ -76,9 +76,9 @@ public partial class CorePlugin : CarbonPlugin
 	[Conditional("!MINIMAL")]
 	internal object IVendingBuyDuration()
 	{
-		if (VendingMachineBuyDuration != -1)
+		if (VendingMachineBuyDurationMultiplier != -1)
 		{
-			return VendingMachineBuyDuration;
+			return VendingMachineBuyDurationMultiplier;
 		}
 
 		return null;
@@ -87,19 +87,19 @@ public partial class CorePlugin : CarbonPlugin
 	[Conditional("!MINIMAL")]
 	internal void IOnExcavatorInit(ExcavatorArm arm)
 	{
-		if (ExcavatorResourceTickRate != -1)
+		if (ExcavatorResourceTickRateMultiplier != -1)
 		{
-			arm.resourceProductionTickRate = ExcavatorResourceTickRate;
+			arm.resourceProductionTickRate *= ExcavatorResourceTickRateMultiplier;
 		}
 
-		if (ExcavatorTimeForFullResources != -1)
+		if (ExcavatorTimeForFullResourcesMultiplier != -1)
 		{
-			arm.timeForFullResources = ExcavatorTimeForFullResources;
+			arm.timeForFullResources *= ExcavatorTimeForFullResourcesMultiplier;
 		}
 
-		if (ExcavatorBeltSpeedMax != -1)
+		if (ExcavatorBeltSpeedMaxMultiplier != -1)
 		{
-			arm.beltSpeedMax = ExcavatorBeltSpeedMax;
+			arm.beltSpeedMax *= ExcavatorBeltSpeedMaxMultiplier;
 		}
 	}
 
@@ -129,16 +129,11 @@ public partial class CorePlugin : CarbonPlugin
 
 		return null;
 	}
-
-[Conditional("!MINIMAL")]
-	private void OnItemResearch(ResearchTable table, Item targetItem, BasePlayer player)
-	{
-		if (ResearchDuration != -1)
-		{
-			table.researchDuration = ResearchDuration;
-		}
-	}
+	
+	[Conditional("!MINIMAL")]
+	private void IResearchDuration() { }
 
 	#endregion
+
 #endif
 }
