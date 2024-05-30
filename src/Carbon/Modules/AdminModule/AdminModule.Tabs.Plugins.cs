@@ -366,7 +366,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 				if (plugin.NoImage() || Singleton.DataInstance.HidePluginIcons)
 				{
-					cui.CreateImage(container, card, vendor.Logo, "0.2 0.2 0.2 0.4", xMin: 0.2f, xMax: 0.8f, yMin: 0.2f + vendor.LogoRatio, yMax: 0.8f - vendor.LogoRatio);
+					cui.CreatePanel(container, card, "0.2 0.2 0.2 0.5");
+					cui.CreateImage(container, card, vendor.Logo, "0.2 0.2 0.2 0.85", xMin: 0.2f, xMax: 0.8f, yMin: 0.2f + vendor.LogoRatio, yMax: 0.8f - vendor.LogoRatio);
 				}
 				else
 				{
@@ -937,6 +938,12 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			{
 				Community.Runtime.Core.webrequest.Enqueue(ListEndpoint, null, (error, data) =>
 				{
+					if (error != 200)
+					{
+						Logger.Log($"[{Type}] Failed fetching vendor. Error code {error}!");
+						return;
+					}
+
 					FetchedPlugins.Clear();
 					var plugins = Community.Runtime.Core.plugins.GetAll();
 
@@ -944,6 +951,12 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 					Community.Runtime.Core.webrequest.Enqueue(List2Endpoint, null, (error, data) =>
 					{
+						if (error != 200)
+						{
+							Logger.Error($"[{Type}] Failed parsing data for vendor. Error code {error}!");
+							return;
+						}
+
 						ParseData(data, true, true);
 
 						VersionCheck();
@@ -1165,6 +1178,12 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 					core.webrequest.Enqueue(url, null, (error, source) =>
 					{
+						if (error != 200)
+						{
+							Logger.Error($"[{Type}] Failed downloading item '{plugin.Name} by {plugin.Author}'. Error code {error}!");
+							return;
+						}
+
 						plugin.IsBusy = false;
 
 						if (!source.StartsWith("<!DOCTYPE html>"))
@@ -1440,6 +1459,12 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 				Community.Runtime.Core.webrequest.Enqueue(ListEndpoint.Replace("[ID]", "0"), null, (error, data) =>
 				{
+					if(error != 200)
+					{
+						Logger.Error($"[{Type}] Failed fetching vendor. Error code {error}!");
+						return;
+					}
+
 					var list = JObject.Parse(data);
 
 					var totalPages = list["last_page"]?.ToString().ToInt();
@@ -1474,6 +1499,12 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 				Community.Runtime.Core.webrequest.Enqueue(url, null, (error, source) =>
 				{
+					if (error != 200)
+					{
+						Logger.Error($"[{Type}] Failed downloading item '{plugin.Name} by {plugin.Author}'. Error code {error}!");
+						return;
+					}
+
 					Singleton.Puts($"Downloaded {plugin.Name}");
 					OsEx.File.Create(path, source);
 
@@ -1499,6 +1530,12 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 				Community.Runtime.Core.webrequest.Enqueue(PluginLookupEndpoint.Replace("[ID]", plugin.Name.ToLower().Trim()), null, (error, data) =>
 				{
+					if (error != 200)
+					{
+						Logger.Error($"[{Type}] Failed fetching item metadata for '{plugin.Name} by {plugin.Author}'. Error code {error}!");
+						return;
+					}
+
 					var list = JObject.Parse(data);
 					var description = list["description_md"]?.ToString();
 
@@ -1542,6 +1579,12 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 				Community.Runtime.Core.webrequest.Enqueue(ListEndpoint.Replace("[ID]", $"{page}"), null, (error, data) =>
 				{
+					if (error != 200)
+					{
+						Logger.Error($"[{Type}] Failed fetching page for vendor. Error code {error}!");
+						return;
+					}
+
 					var list = JObject.Parse(data);
 					var file = list["data"];
 					foreach (var plugin in file)
