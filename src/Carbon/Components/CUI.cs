@@ -23,10 +23,15 @@ public readonly struct CUI : IDisposable
 
 	public enum ClientPanels
 	{
+		Overall,
 		Overlay,
+		OverlayNonScaled,
 		Hud,
 		HudMenu,
 		Under,
+		UnderNonScaled,
+
+		// C4C-Only
 		LoadingBG,
 		LoadingFG
 	}
@@ -34,9 +39,12 @@ public readonly struct CUI : IDisposable
 	{
 		return panel switch
 		{
+			ClientPanels.Overall => "Overall",
+			ClientPanels.OverlayNonScaled => "OverlayNonScaled",
 			ClientPanels.Hud => "Hud",
 			ClientPanels.HudMenu => "Hud.Menu",
 			ClientPanels.Under => "Under",
+			ClientPanels.UnderNonScaled => "UnderNonScaled",
 			ClientPanels.LoadingBG => "Loading.BG",
 			ClientPanels.LoadingFG => "Loading.FG",
 			_ => "Overlay",

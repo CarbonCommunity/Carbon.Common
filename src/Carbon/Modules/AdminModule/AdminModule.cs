@@ -171,12 +171,14 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					return;
 				}
 
-				ap.SelectedTab = Tabs.FirstOrDefault(x => HasAccess(player, x.Access));
+				if (ap.SelectedTab == null)
+				{
+					ap.SelectedTab = Tabs.FirstOrDefault(x => HasAccess(player, x.Access));
+					ap.Clear();
+				}
 
 				var tab = GetTab(player);
 				tab?.OnChange?.Invoke(ap, tab);
-
-				ap.Clear();
 
 				DrawCursorLocker(player);
 				Draw(player);
@@ -287,7 +289,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				["quickactions_confirmdialog_help"] = "Show a dialog which asks you to confirm before executing sensitive command(s).",
 				["quickactions_add"] = "Add",
 				["quickactions_edit"] = "Edit",
-				["quickactions_stopedit"] = "Stop Editing"
+				["quickactions_stopedit"] = "Stop Editing",
+				["maxplayers"] = "Maximum Players"
 			}
 		};
 	}
@@ -297,7 +300,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 	{
 		try
 		{
-			if (_logQueue.Count >= 7) _logQueue.RemoveAt(0);
+			if (_logQueue.Count >= 6) _logQueue.RemoveAt(0);
 
 			var log = condition.Split('\n');
 			var result = log[0];
@@ -340,7 +343,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			return false;
 		}
 
-		if (HookCaller.CallStaticHook(3097360729, player) is bool result)
+		// CanAccessAdminModule
+		if (HookCaller.CallStaticHook(3266674522, player) is bool result)
 		{
 			return result;
 		}

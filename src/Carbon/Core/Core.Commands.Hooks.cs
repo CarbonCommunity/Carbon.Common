@@ -280,13 +280,6 @@ public partial class CorePlugin : CarbonPlugin
 		}
 	}
 
-	[ConsoleCommand("fetchhooks", "It looks up for the latest available hooks for your current protocol, downloads them, then patches them accordingly at runtime.")]
-	[AuthLevel(2)]
-	private void FetchHooks(ConsoleSystem.Arg arg)
-	{
-		Community.Runtime.HookManager.Fetch();
-	}
-
 #if DEBUG
 	private uint _debuggedHook;
 	private Timer _debuggedTimer;
