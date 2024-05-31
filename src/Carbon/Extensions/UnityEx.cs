@@ -14,14 +14,39 @@ public static class UnityEx
 		return go == null ? default : ComponentCacheBank.Instance.Add<T>(go);
 	}
 
+	public static MonoBehaviour AddComponentCache(this GameObject go, Type type)
+	{
+		return go == null ? default : ComponentCacheBank.Instance.Add(go, type);
+	}
+
 	public static T GetComponentCache<T>(this GameObject go) where T : MonoBehaviour
 	{
 		return go == null ? default : ComponentCacheBank.Instance.Get<T>(go);
 	}
 
+	public static MonoBehaviour GetComponentCache(this GameObject go, Type type)
+	{
+		return go == null ? default : ComponentCacheBank.Instance.Get(go, type);
+	}
+
 	public static bool RemoveComponentCache<T>(this GameObject go) where T : MonoBehaviour
 	{
 		return go == null ? default : ComponentCacheBank.Instance.Remove<T>(go);
+	}
+
+	public static bool RemoveComponentCache<T>(this GameObject go, Type type)
+	{
+		return go == null ? default : ComponentCacheBank.Instance.Remove(go, type);
+	}
+
+	public static T TryGetOrAddComponentCache<T>(this GameObject go) where T : MonoBehaviour
+	{
+		return go.GetComponentCache<T>() ?? go.AddComponentCache<T>();
+	}
+
+	public static MonoBehaviour TryGetOrAddComponentCache(this GameObject go, Type type)
+	{
+		return go.GetComponentCache(type) ?? go.AddComponentCache(type);
 	}
 
 	public static bool DestroyCache(this GameObject go)
@@ -57,6 +82,20 @@ public static class UnityEx
 			return mono;
 		}
 
+		public MonoBehaviour Add(GameObject go, Type type)
+		{
+			if (!this.TryGetValue(go, out var monos))
+			{
+				this[go] = monos = new();
+			}
+
+			var mono = (MonoBehaviour)go.AddComponent(type);
+
+			monos.Add(mono);
+
+			return mono;
+		}
+
 		public T Get<T>(GameObject go) where T : MonoBehaviour
 		{
 			if (!this.TryGetValue(go, out var monos))
@@ -81,6 +120,30 @@ public static class UnityEx
 			return existent as T;
 		}
 
+		public MonoBehaviour Get(GameObject go, Type type)
+		{
+			if (!this.TryGetValue(go, out var monos))
+			{
+				this[go] = monos = new();
+			}
+
+			var existent = monos.FirstOrDefault(x => x.GetType() == type);
+
+			if (existent != null)
+			{
+				return existent;
+			}
+
+			if (!go.TryGetComponent(out existent))
+			{
+				return default;
+			}
+
+			monos.Add(existent);
+
+			return existent;
+		}
+
 		public bool Remove<T>(GameObject go, bool destroy = true) where T : MonoBehaviour
 		{
 			if (!this.TryGetValue(go, out var monos))
@@ -91,6 +154,31 @@ public static class UnityEx
 			var removed = monos.RemoveAll(x =>
 			{
 				if (x is not T)
+				{
+					return false;
+				}
+
+				if (destroy)
+				{
+					GameObject.DestroyImmediate(x);
+				}
+
+				return true;
+			});
+
+			return removed > 0 && base.Remove(go);
+		}
+
+		public bool Remove(GameObject go, Type type, bool destroy = true)
+		{
+			if (!this.TryGetValue(go, out var monos))
+			{
+				return false;
+			}
+
+			var removed = monos.RemoveAll(x =>
+			{
+				if (x.GetType() != type)
 				{
 					return false;
 				}
