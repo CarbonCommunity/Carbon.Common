@@ -39,14 +39,14 @@ public static class UnityEx
 		return go == null ? default : ComponentCacheBank.Instance.Remove(go, type);
 	}
 
-	public static T TryGetOrAddComponentCache<T>(this GameObject go) where T : MonoBehaviour
+	public static bool TryGetOrAddComponentCache<T>(this GameObject go, out T component) where T : MonoBehaviour
 	{
-		return go.GetComponentCache<T>() ?? go.AddComponentCache<T>();
+		return (component = go.GetComponentCache<T>() ?? go.AddComponentCache<T>()) != null;
 	}
 
-	public static MonoBehaviour TryGetOrAddComponentCache(this GameObject go, Type type)
+	public static bool TryGetOrAddComponentCache(this GameObject go, Type type, out MonoBehaviour component)
 	{
-		return go.GetComponentCache(type) ?? go.AddComponentCache(type);
+		return (component = go.GetComponentCache(type) ?? go.AddComponentCache(type)) != null;
 	}
 
 	public static bool DestroyCache(this GameObject go)
