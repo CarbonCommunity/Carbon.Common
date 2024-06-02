@@ -20,20 +20,21 @@ public partial class CorePlugin : CarbonPlugin
 		if (!arg.HasArgs(2)) return;
 
 		var moduleName = arg.GetString(0);
-		var hookable = Community.Runtime.ModuleProcessor.Modules.FirstOrDefault(x => x.Name.Equals(moduleName, StringComparison.OrdinalIgnoreCase) || x.Name.Contains(moduleName, CompareOptions.OrdinalIgnoreCase));
-		var module = hookable?.To<BaseModule>();
+		var module = BaseModule.FindModule(moduleName);
 
 		if (module == null)
 		{
 			arg.ReplyWith($"Couldn't find that module. Try 'c.modules' to print them all.");
 			return;
 		}
-		else if (module.ForceEnabled)
+
+		if (module.ForceEnabled)
 		{
 			arg.ReplyWith($"That module is forcefully enabled, you may not change its status.");
 			return;
 		}
-		else if (module.ForceDisabled)
+
+		if (module.ForceDisabled)
 		{
 			arg.ReplyWith($"That module is forcefully disabled, you may not change its status.");
 			return;
@@ -55,9 +56,9 @@ public partial class CorePlugin : CarbonPlugin
 		}
 	}
 
-	[ConsoleCommand("saveallmodules", "Saves the configs and data files of all available modules.")]
+	[ConsoleCommand("savemodules", "Saves the configs and data files of all available modules.")]
 	[AuthLevel(2)]
-	private void SaveAllModules(ConsoleSystem.Arg arg)
+	private void SaveModules(ConsoleSystem.Arg arg)
 	{
 		foreach (var hookable in Community.Runtime.ModuleProcessor.Modules)
 		{
@@ -67,15 +68,14 @@ public partial class CorePlugin : CarbonPlugin
 		arg.ReplyWith($"Saved {Community.Runtime.ModuleProcessor.Modules.Count:n0} module configs and data files.");
 	}
 
-	[ConsoleCommand("savemodulecfg", "Saves Carbon module config & data file.")]
+	[ConsoleCommand("savemodule", "Saves Carbon module config & data file.")]
 	[AuthLevel(2)]
-	private void SaveModuleConfig(ConsoleSystem.Arg arg)
+	private void SaveModule(ConsoleSystem.Arg arg)
 	{
 		if (!arg.HasArgs(1)) return;
 
 		var moduleName = arg.GetString(0);
-		var hookable = Community.Runtime.ModuleProcessor.Modules.FirstOrDefault(x => x.Name.Equals(moduleName, StringComparison.OrdinalIgnoreCase) || x.Name.Contains(moduleName, CompareOptions.OrdinalIgnoreCase));
-		var module = hookable?.To<IModule>();
+		var module = BaseModule.FindModule(moduleName);
 
 		if (module == null)
 		{
@@ -88,15 +88,26 @@ public partial class CorePlugin : CarbonPlugin
 		arg.ReplyWith($"Saved '{module.Name}' module config & data file.");
 	}
 
-	[ConsoleCommand("loadmodulecfg", "Loads Carbon module config & data file.")]
+	[ConsoleCommand("loadmodules", "Loads the configs and data files of all available modules.")]
 	[AuthLevel(2)]
-	private void LoadModuleConfig(ConsoleSystem.Arg arg)
+	private void LoadModules(ConsoleSystem.Arg arg)
+	{
+		foreach (var hookable in Community.Runtime.ModuleProcessor.Modules)
+		{
+			hookable.To<IModule>().Load();
+		}
+
+		arg.ReplyWith($"Loaded {Community.Runtime.ModuleProcessor.Modules.Count:n0} module configs and data files.");
+	}
+
+	[ConsoleCommand("loadmodule", "Loads Carbon module config & data file.")]
+	[AuthLevel(2)]
+	private void LoadModule(ConsoleSystem.Arg arg)
 	{
 		if (!arg.HasArgs(1)) return;
 
 		var moduleName = arg.GetString(0);
-		var hookable = Community.Runtime.ModuleProcessor.Modules.FirstOrDefault(x => x.Name.Equals(moduleName, StringComparison.OrdinalIgnoreCase) || x.Name.Contains(moduleName, CompareOptions.OrdinalIgnoreCase));
-		var module = hookable?.To<IModule>();
+		var module = BaseModule.FindModule(moduleName) as IModule;
 
 		if (module == null)
 		{
@@ -127,7 +138,7 @@ public partial class CorePlugin : CarbonPlugin
 		var mode = arg.GetString(0);
 		var flip = arg.GetString(0).Equals("-asc") || arg.GetString(1).Equals("-asc");
 
-		using var print = new StringTable(string.Empty, "Name", "Enabled", "Version", "Time", "Fires", "Memory", "Lag", "Uptime");
+		using var print = new StringTable( "Name", "Enabled", "Version", "Time", "Fires", "Memory", "Lag", "Uptime");
 
 		IEnumerable<BaseHookable> array = mode switch
 		{
@@ -139,15 +150,26 @@ public partial class CorePlugin : CarbonPlugin
 			_ => (flip ? Community.Runtime.ModuleProcessor.Modules.AsEnumerable().Reverse() : Community.Runtime.ModuleProcessor.Modules.AsEnumerable())
 		};
 
+		print.AddRow("Native", string.Empty, string.Empty,
+			string.Empty,
+			string.Empty,
+			string.Empty,
+			string.Empty,
+			string.Empty);
+
 		foreach (var hookable in array)
 		{
 			if (hookable is not BaseModule module)
 			{
-				Logger.Warn($" Not a module {hookable.GetType()}");
 				continue;
 			}
 
-			print.AddRow(string.Empty, hookable.Name, module.IsEnabled(), module.Version,
+			if (!string.IsNullOrEmpty(module.Context))
+			{
+				continue;
+			}
+
+			print.AddRow($" {hookable.Name}", module.IsEnabled(), module.Version,
 				module.TotalHookTime.TotalMilliseconds == 0 ? string.Empty : $"{module.TotalHookTime.TotalMilliseconds:0}ms",
 				module.TotalHookFires == 0 ? string.Empty :$"{module.TotalHookFires:n0}",
 				module.TotalMemoryUsed == 0 ? string.Empty : $"{ByteEx.Format(module.TotalMemoryUsed, shortName: true, stringFormat: "{0}{1}").ToLower()}",
@@ -155,23 +177,42 @@ public partial class CorePlugin : CarbonPlugin
 				$"{TimeEx.Format(module.Uptime)}");
 		}
 
-		arg.ReplyWith(print.Write(StringTable.FormatTypes.None));
-	}
-
-	[ConsoleCommand("modulesmanaged", "Prints a list of all currently loaded extensions.")]
-	[AuthLevel(2)]
-	private void ModulesManaged(ConsoleSystem.Arg arg)
-	{
-		using var body = new StringTable("#", "Module", "Type");
-		var count = 1;
-
 		foreach (var mod in Community.Runtime.AssemblyEx.Modules.Loaded)
 		{
-			body.AddRow($"{count:n0}", Path.GetFileNameWithoutExtension(mod.Value.Key), mod.Key.FullName);
-			count++;
+			print.AddRow(Path.GetFileNameWithoutExtension(mod.Value.Key), string.Empty, string.Empty,
+				string.Empty,
+				string.Empty,
+				string.Empty,
+				string.Empty,
+				string.Empty);
+
+			foreach (var hookable in array)
+			{
+				if (hookable is not BaseModule module)
+				{
+					continue;
+				}
+
+				if (string.IsNullOrEmpty(module.Context))
+				{
+					continue;
+				}
+
+				if (!module.Context.Equals(mod.Value.Key, StringComparison.InvariantCultureIgnoreCase))
+				{
+					continue;
+				}
+
+				print.AddRow($" {hookable.Name}", module.IsEnabled(), module.Version,
+					module.TotalHookTime.TotalMilliseconds == 0 ? string.Empty : $"{module.TotalHookTime.TotalMilliseconds:0}ms",
+					module.TotalHookFires == 0 ? string.Empty :$"{module.TotalHookFires:n0}",
+					module.TotalMemoryUsed == 0 ? string.Empty : $"{ByteEx.Format(module.TotalMemoryUsed, shortName: true, stringFormat: "{0}{1}").ToLower()}",
+					module.TotalHookLagSpikes == 0 ? string.Empty : $"{module.TotalHookLagSpikes:n0}",
+					$"{TimeEx.Format(module.Uptime)}");
+			}
 		}
 
-		arg.ReplyWith(body.Write(StringTable.FormatTypes.None));
+		arg.ReplyWith(print.Write(StringTable.FormatTypes.None));
 	}
 
 	[ConsoleCommand("moduleinfo", "Prints advanced information about a currently loaded module. From hooks, hook times, hook memory usage and other things.")]
@@ -187,7 +228,7 @@ public partial class CorePlugin : CarbonPlugin
 		var name = arg.GetString(0);
 		var mode = arg.GetString(1);
 		var flip = arg.GetString(2).Equals("-asc");
-		var module = Community.Runtime.ModuleProcessor.Modules.FirstOrDefault(x => x.Name.Equals(name, StringComparison.OrdinalIgnoreCase) || x.Name.Contains(name, CompareOptions.OrdinalIgnoreCase)) as BaseModule;
+		var module = BaseModule.FindModule(name);
 
 		if (module == null)
 		{
@@ -262,8 +303,20 @@ public partial class CorePlugin : CarbonPlugin
 	[AuthLevel(2)]
 	private void ReloadModules(ConsoleSystem.Arg arg)
 	{
-		arg.ReplyWith("Command temporarily disabled.");
-		// Community.Runtime.AssemblyEx.Modules.Watcher.TriggerAll(WatcherChangeTypes.Changed);
+		var entrypointName = arg.GetString(0);
+
+		var entry = Community.Runtime.AssemblyEx.Modules.Loaded.FirstOrDefault(x =>
+			Path.GetFileNameWithoutExtension(x.Value.Key)
+				.Equals(entrypointName, StringComparison.InvariantCultureIgnoreCase));
+
+		if (entry.Key == null)
+		{
+			Logger.Warn($"Couldn't find entrypoint with that name: '{entrypointName}'");
+			return;
+		}
+
+		Community.Runtime.AssemblyEx.Modules.Unload(entry.Value.Key, "Core.ReloadModules");
+		Community.Runtime.AssemblyEx.Modules.Load(entry.Value.Key, "Core.ReloadModules");
 	}
 
 	[ConsoleCommand("reloadmodule", "Reloads a currently loaded module assembly entirely.")]
@@ -272,8 +325,7 @@ public partial class CorePlugin : CarbonPlugin
 	{
 		if (!arg.HasArgs(1)) return;
 
-		var hookable = Community.Runtime.ModuleProcessor.Modules.FirstOrDefault(x => x.Name.Equals(arg.GetString(0)) || x.Name.Contains(arg.GetString(0), CompareOptions.OrdinalIgnoreCase));
-		var module = hookable?.To<IModule>();
+		var module = BaseModule.FindModule(arg.GetString(0));
 
 		if (module == null)
 		{
