@@ -107,9 +107,8 @@ public partial class CorePlugin : CarbonPlugin
 		if (!arg.HasArgs(1)) return;
 
 		var moduleName = arg.GetString(0);
-		var module = BaseModule.FindModule(moduleName) as IModule;
 
-		if (module == null)
+		if (BaseModule.FindModule(moduleName) is not IModule module)
 		{
 			arg.ReplyWith($"Couldn't find that module.");
 			return;
