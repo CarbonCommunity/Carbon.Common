@@ -257,7 +257,7 @@ public class RustPlugin : Plugin
 	}
 	public void ILoadDefaultMessages()
 	{
-		CallHook("LoadDefaultMessages");
+		LoadDefaultMessages();
 	}
 
 	public override string ToPrettyString()
