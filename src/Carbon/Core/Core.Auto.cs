@@ -109,6 +109,10 @@ public partial class CorePlugin : CarbonPlugin
 	[AuthLevel(2)]
 	public float OvenBlacklistTemperatureMultiplier = -1;
 
+	[CarbonAutoModdedVar("custommapname", "Custom Map Name", help: "The map name displayed in the Rust server browser.")]
+	[AuthLevel(2)]
+	public string CustomMapName = "-1";
+
 	#endregion
 
 	#region Vanilla
