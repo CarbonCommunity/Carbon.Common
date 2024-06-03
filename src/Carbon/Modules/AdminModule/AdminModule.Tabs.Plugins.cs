@@ -1719,7 +1719,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					LogoEnumerable = new[] { Logo };
 				}
 
-				foreach (var package in ModLoader.LoadedPackages)
+				foreach (var package in ModLoader.Packages)
 				{
 					foreach (var plugin in package.Plugins)
 					{

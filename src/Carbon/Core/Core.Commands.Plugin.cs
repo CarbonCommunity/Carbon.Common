@@ -29,7 +29,7 @@ public partial class CorePlugin : CarbonPlugin
 			case "--json":
 				arg.ReplyWith(new
 				{
-					Plugins = ModLoader.LoadedPackages,
+					Plugins = ModLoader.Packages,
 					Unloaded = Community.Runtime.ScriptProcessor.IgnoreList,
 					Failed = ModLoader.FailedCompilations.Values.Where(x => x.IsValid())
 				});
@@ -40,7 +40,7 @@ public partial class CorePlugin : CarbonPlugin
 					using var body = new StringTable("#", "Package", "Author", "Version", "Hook Time", "Hook Fires", "Hook Memory", "Hook Lag", "Compile Time", "Uptime");
 					var count = 1;
 
-					foreach (var mod in ModLoader.LoadedPackages)
+					foreach (var mod in ModLoader.Packages)
 					{
 						body.AddRow($"{count:n0}",
 							$"{mod.Name}{(mod.Plugins.Count >= 1 ? $" ({mod.Plugins.Count:n0})" : string.Empty)}",
@@ -165,7 +165,7 @@ public partial class CorePlugin : CarbonPlugin
 				var pluginFound = false;
 				var pluginPrecompiled = false;
 
-				foreach (var mod in ModLoader.LoadedPackages)
+				foreach (var mod in ModLoader.Packages)
 				{
 					var plugins = Facepunch.Pool.GetList<RustPlugin>();
 					plugins.AddRange(mod.Plugins);
@@ -348,7 +348,7 @@ public partial class CorePlugin : CarbonPlugin
 					var pluginFound = false;
 					var pluginPrecompiled = false;
 
-					foreach (var mod in ModLoader.LoadedPackages)
+					foreach (var mod in ModLoader.Packages)
 					{
 						var plugins = Facepunch.Pool.GetList<RustPlugin>();
 						plugins.AddRange(mod.Plugins);
@@ -402,7 +402,7 @@ public partial class CorePlugin : CarbonPlugin
 		var name = arg.GetString(0).ToLower();
 		var mode = arg.GetString(1);
 		var flip = arg.GetString(2).Equals("-asc");
-		var plugin = ModLoader.LoadedPackages.SelectMany(x => x.Plugins).FirstOrDefault(x => x.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase) || x.Name.Contains(name, CompareOptions.OrdinalIgnoreCase));
+		var plugin = ModLoader.Packages.SelectMany(x => x.Plugins).FirstOrDefault(x => x.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase) || x.Name.Contains(name, CompareOptions.OrdinalIgnoreCase));
 		var count = 1;
 
 		if (plugin == null)
@@ -503,7 +503,7 @@ public partial class CorePlugin : CarbonPlugin
 		}
 
 		var name = arg.GetString(0).ToLower();
-		var plugin = ModLoader.LoadedPackages.SelectMany(x => x.Plugins).FirstOrDefault(x => x.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase) || x.Name.Contains(name, CompareOptions.OrdinalIgnoreCase));
+		var plugin = ModLoader.Packages.SelectMany(x => x.Plugins).FirstOrDefault(x => x.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase) || x.Name.Contains(name, CompareOptions.OrdinalIgnoreCase));
 
 		if (plugin == null)
 		{
@@ -571,7 +571,7 @@ public partial class CorePlugin : CarbonPlugin
 			case "*":
 				{
 
-					foreach (var package in ModLoader.LoadedPackages)
+					foreach (var package in ModLoader.Packages)
 					{
 						foreach (var plugin in package.Plugins)
 						{
@@ -588,7 +588,7 @@ public partial class CorePlugin : CarbonPlugin
 				{
 					var pluginFound = false;
 
-					foreach (var mod in ModLoader.LoadedPackages)
+					foreach (var mod in ModLoader.Packages)
 					{
 						var plugins = Facepunch.Pool.GetList<RustPlugin>();
 						plugins.AddRange(mod.Plugins);
@@ -664,7 +664,7 @@ public partial class CorePlugin : CarbonPlugin
 					var pluginFound = false;
 					var pluginPrecompiled = false;
 
-					foreach (var mod in ModLoader.LoadedPackages)
+					foreach (var mod in ModLoader.Packages)
 					{
 						var plugins = Facepunch.Pool.GetList<RustPlugin>();
 						plugins.AddRange(mod.Plugins);
@@ -676,11 +676,6 @@ public partial class CorePlugin : CarbonPlugin
 							if (plugin.IsPrecompiled)
 							{
 								pluginPrecompiled = true;
-							}
-							else
-							{
-								plugin.ProcessorProcess?.Dispose();
-								mod.Plugins.Remove(plugin);
 							}
 						}
 
@@ -694,7 +689,8 @@ public partial class CorePlugin : CarbonPlugin
 
 						return;
 					}
-					else if (pluginPrecompiled)
+
+					if (pluginPrecompiled)
 					{
 						Logger.Warn($"Plugin {path.Key} is a precompiled plugin which can only be unloaded/uninstalled programmatically.");
 						return;

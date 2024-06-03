@@ -14,7 +14,7 @@ namespace Carbon.Core;
 public static class ModLoader
 {
 	public static bool IsBatchComplete { get; set; }
-	public static List<ModPackage> LoadedPackages = new();
+	public static ModPackages Packages = new();
 	public static Dictionary<string, FailedCompilation> FailedCompilations = new();
 
 	internal static Dictionary<string, Type> TypeDictionaryCache { get; } = new();
@@ -45,18 +45,18 @@ public static class ModLoader
 	}
 	public static void RegisterPackage(ModPackage package)
 	{
-		if (!LoadedPackages.Contains(package))
+		if (!Packages.Contains(package))
 		{
-			LoadedPackages.Add(package);
+			Packages.Add(package);
 		}
 	}
 	public static ModPackage GetPackage(string name)
 	{
-		return LoadedPackages.FirstOrDefault(mod => mod.Name.StartsWith(name, StringComparison.OrdinalIgnoreCase));
+		return Packages.FirstOrDefault(mod => mod.Name.StartsWith(name, StringComparison.OrdinalIgnoreCase));
 	}
 	public static RustPlugin FindPlugin(string name)
 	{
-		return LoadedPackages.SelectMany(package => package.Plugins).FirstOrDefault(plugin => plugin.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+		return Packages.SelectMany(package => package.Plugins).FirstOrDefault(plugin => plugin.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
 	}
 
 	static ModLoader()
@@ -151,7 +151,7 @@ public static class ModLoader
 		ClearAllRequirees();
 
 		var list = Facepunch.Pool.GetList<ModPackage>();
-		list.AddRange(LoadedPackages);
+		list.AddRange(Packages);
 
 		foreach (var mod in list)
 		{
@@ -649,7 +649,7 @@ public static class ModLoader
 			var counter = 0;
 			var plugins = Facepunch.Pool.GetList<RustPlugin>();
 
-			foreach (var mod in LoadedPackages)
+			foreach (var mod in Packages)
 			{
 				foreach (var plugin in mod.Plugins)
 				{
@@ -683,6 +683,29 @@ public static class ModLoader
 			}
 
 			Community.Runtime.Events.Trigger(CarbonEvent.AllPluginsLoaded, EventArgs.Empty);
+		}
+	}
+
+	public class ModPackages : List<ModPackage>
+	{
+		public ModPackage FindPackage(string name)
+		{
+			return this.FirstOrDefault(x => x.Name.Equals(name, StringComparison.InvariantCulture));
+		}
+
+		public RustPlugin FindPlugin(string name)
+		{
+			foreach (var package in this)
+			{
+				var plugin = package.Plugins.FirstOrDefault(x => x.Name.Equals(name, StringComparison.InvariantCulture));
+
+				if (plugin != null)
+				{
+					return plugin;
+				}
+			}
+
+			return default;
 		}
 	}
 

@@ -403,7 +403,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 						GenerateHookables(tab, ap, permission, player, selectedGroup, hookableType);
 					}, SortTypeNames);
 
-					var plugins = hookableType == HookableTypes.Plugin ? ModLoader.LoadedPackages.SelectMany(x => x.Plugins).Where(x =>
+					var plugins = hookableType == HookableTypes.Plugin ? ModLoader.Packages.SelectMany(x => x.Plugins).Where(x =>
 					{
 						if (x.permission.permset.TryGetValue(x, out var perms))
 						{

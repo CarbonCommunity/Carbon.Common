@@ -85,7 +85,7 @@ public class RustPlugin : Plugin
 
 	public static T Singleton<T>()
 	{
-		foreach (var mod in ModLoader.LoadedPackages)
+		foreach (var mod in ModLoader.Packages)
 		{
 			foreach (var plugin in mod.Plugins)
 			{
