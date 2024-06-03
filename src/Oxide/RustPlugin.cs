@@ -60,7 +60,8 @@ public class RustPlugin : Plugin
 	{
 		permission.UnregisterPermissions(this);
 
-		timer.Clear();
+		timer?.Clear();
+		timer = null;
 
 		if (persistence != null)
 		{
