@@ -99,7 +99,7 @@ public class CuiButtonComponent : ICuiComponent, ICuiColor
 	public string Material { get; set; }
 
 	[DefaultValue("1 1 1 1")]
-	[JsonProperty("color", NullValueHandling = NullValueHandling.Ignore, DefaultValueHandling = DefaultValueHandling.Ignore)]
+	[JsonProperty("color", NullValueHandling = NullValueHandling.Ignore)]
 	public string Color { get; set; } = "1 1 1 1";
 
 	[DefaultValue(Image.Type.Simple)]
@@ -230,7 +230,7 @@ public class CuiImageComponent : ICuiComponent, ICuiColor
 	public string Material { get; set; }
 
 	[DefaultValue("1 1 1 1")]
-	[JsonProperty("color", NullValueHandling = NullValueHandling.Ignore, DefaultValueHandling = DefaultValueHandling.Ignore)]
+	[JsonProperty("color", NullValueHandling = NullValueHandling.Ignore)]
 	public string Color { get; set; } = "1 1 1 1";
 
 	[JsonConverter(typeof(StringEnumConverter))]
@@ -270,7 +270,7 @@ public class CuiInputFieldComponent : ICuiComponent, ICuiColor
 	public TextAnchor Align { get; set; }
 
 	[DefaultValue("1 1 1 1")]
-	[JsonProperty("color", NullValueHandling = NullValueHandling.Ignore, DefaultValueHandling = DefaultValueHandling.Ignore)]
+	[JsonProperty("color", NullValueHandling = NullValueHandling.Ignore)]
 	public string Color { get; set; } = "1 1 1 1";
 
 	[DefaultValue(100)]
@@ -318,7 +318,7 @@ public class CuiOutlineComponent : ICuiComponent, ICuiColor
 	public string Type => "UnityEngine.UI.Outline";
 
 	[DefaultValue("1 1 1 1")]
-	[JsonProperty("color", NullValueHandling = NullValueHandling.Ignore, DefaultValueHandling = DefaultValueHandling.Ignore)]
+	[JsonProperty("color", NullValueHandling = NullValueHandling.Ignore)]
 	public string Color { get; set; } = "1 1 1 1";
 
 	[DefaultValue("1.0 -1.0")]
@@ -337,7 +337,7 @@ public class CuiRawImageComponent : ICuiComponent, ICuiColor
 	public string Sprite { get; set; } = "assets/content/textures/generic/fulltransparent.tga";
 
 	[DefaultValue("1 1 1 1")]
-	[JsonProperty("color", NullValueHandling = NullValueHandling.Ignore, DefaultValueHandling = DefaultValueHandling.Ignore)]
+	[JsonProperty("color", NullValueHandling = NullValueHandling.Ignore)]
 	public string Color { get; set; } = "1 1 1 1";
 
 	[JsonProperty("material", NullValueHandling = NullValueHandling.Ignore, DefaultValueHandling = DefaultValueHandling.Ignore)]
@@ -415,7 +415,7 @@ public class CuiTextComponent : ICuiComponent, ICuiColor
 	public TextAnchor Align { get; set; }
 
 	[DefaultValue("1 1 1 1")]
-	[JsonProperty("color", NullValueHandling = NullValueHandling.Ignore, DefaultValueHandling = DefaultValueHandling.Ignore)]
+	[JsonProperty("color", NullValueHandling = NullValueHandling.Ignore)]
 	public string Color { get; set; } = "1 1 1 1";
 
 	[JsonProperty("fadeIn", NullValueHandling = NullValueHandling.Ignore, DefaultValueHandling = DefaultValueHandling.Ignore)]

@@ -66,11 +66,18 @@ public partial class CorePlugin : CarbonPlugin
 
 			if (player.Connection.authLevel >= prefix.SuggestionAuthLevel && Suggestions.Lookup(command, Community.Runtime.CommandManager.Chat.Select(x => x.Name), minimumConfidence: 5) is var result && result.Any())
 			{
-				player.ChatMessage($"<color=orange>Unknown command:</color> {message}\n<size=12s>Suggesting: {result.Select(x => $"{prefix.Value}{x.Result}").ToString(", ", " or ")}</size>");
+				var core = Community.Runtime.Core;
+				var phrase = core.lang.GetMessage("unknown_chat_cmd_2", core, player.UserIDString);
+				var sep1 = core.lang.GetMessage("unknown_chat_cmd_separator_1", core, player.UserIDString);
+				var sep2 = core.lang.GetMessage("unknown_chat_cmd_separator_2", core, player.UserIDString);
+
+				player.ChatMessage(string.Format(phrase, message, result.Select(x => $"{prefix.Value}{x.Result}").ToString(sep1, sep2)));
 			}
 			else
 			{
-				player.ChatMessage($"<color=orange>Unknown command:</color> {message}");
+				var core = Community.Runtime.Core;
+				var phrase = core.lang.GetMessage("unknown_chat_cmd_1", core, player.UserIDString);
+				player.ChatMessage(string.Format(phrase, message));
 			}
 		}
 		catch (Exception ex) { Logger.Error($"Failed IOnPlayerCommand.", ex); }
