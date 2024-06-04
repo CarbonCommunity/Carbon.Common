@@ -270,10 +270,10 @@ namespace Oxide.Core.Plugins
 				using (TimeMeasure.New($"IUnload.UnloadRequirees on '{ToPrettyString()}'"))
 				{
 					var mods = Pool.GetList<ModLoader.ModPackage>();
-					mods.AddRange(ModLoader.LoadedPackages);
+					mods.AddRange(ModLoader.Packages);
 					var plugins = Pool.GetList<Plugin>();
 
-					foreach (var mod in ModLoader.LoadedPackages)
+					foreach (var mod in ModLoader.Packages)
 					{
 						plugins.Clear();
 						plugins.AddRange(mod.Plugins);
@@ -335,7 +335,7 @@ namespace Oxide.Core.Plugins
 		{
 			var list = Pool.GetList<RustPlugin>();
 
-			foreach (var package in ModLoader.LoadedPackages)
+			foreach (var package in ModLoader.Packages)
 			{
 				foreach (var plugin in package.Plugins)
 				{

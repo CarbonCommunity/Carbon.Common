@@ -113,6 +113,8 @@ public partial class CorePlugin : CarbonPlugin
 
 	#region Vanilla
 
+	private string _customMapName = "-1";
+
 	[CarbonAutoVar("defaultserverchatname", "Server Chat Name", help: "Default server chat name.")]
 	[AuthLevel(2)]
 	public string DefaultServerChatName = "-1";
@@ -124,6 +126,10 @@ public partial class CorePlugin : CarbonPlugin
 	[CarbonAutoVar("defaultserverchatid", "Server Icon ID", help: "Default server chat icon SteamID.")]
 	[AuthLevel(2)]
 	public long DefaultServerChatId = -1;
+
+	[CarbonAutoVar("custommapname", "Custom Map Name", help: "The map name displayed in the Rust server browser. Shouldn't be longer than 64 characters.")]
+	[AuthLevel(2)]
+	public string CustomMapName { get { return _customMapName; } set { _customMapName = Carbon.Extensions.StringEx.Truncate(value, 64); } }
 
 	#endregion
 #endif
