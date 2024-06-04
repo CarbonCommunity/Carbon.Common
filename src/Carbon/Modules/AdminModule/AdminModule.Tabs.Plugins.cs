@@ -2317,18 +2317,20 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 	[AuthLevel(2)]
 	private void DownloadPlugin(Arg args)
 	{
-		var vendor = PluginsTab.GetVendor(args.Args[0] == "codefling" ? PluginsTab.VendorTypes.Codefling : PluginsTab.VendorTypes.uMod);
+		var vendor = PluginsTab.GetVendor(args.GetString(0) == "codefling" ? PluginsTab.VendorTypes.Codefling : PluginsTab.VendorTypes.uMod);
 		if (vendor == null)
 		{
 			Singleton.PutsWarn($"Couldn't find that vendor.");
 			return;
 		}
-		var plugin = vendor.FetchedPlugins.FirstOrDefault(x => x.Name.ToLower().Trim().Contains(args.Args[1].ToLower().Trim()));
+
+		var plugin = vendor.FetchedPlugins.FirstOrDefault(x => x.Name.Equals(args.GetString(1), StringComparison.InvariantCultureIgnoreCase));
 		if (plugin == null)
 		{
 			Singleton.PutsWarn($"Cannot find that plugin.");
 			return;
 		}
+
 		vendor.Download(plugin.Id, () => { Singleton.PutsWarn($"Couldn't download {plugin.Name}."); });
 	}
 

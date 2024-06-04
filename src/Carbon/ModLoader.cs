@@ -697,7 +697,7 @@ public static class ModLoader
 		{
 			foreach (var package in this)
 			{
-				var plugin = package.Plugins.FirstOrDefault(x => x.Name.Equals(name, StringComparison.InvariantCulture));
+				var plugin = package.FindPlugin(name);
 
 				if (plugin != null)
 				{
@@ -742,6 +742,15 @@ public static class ModLoader
 
 			Plugins.Remove(plugin);
 			return this;
+		}
+		public RustPlugin FindPlugin(string name)
+		{
+			if(Plugins == null)
+			{
+				return default;
+			}
+
+			return Plugins.FirstOrDefault(x => x.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase));
 		}
 
 		public static ModPackage Get(string name, bool isCoreMod, string file = null)
