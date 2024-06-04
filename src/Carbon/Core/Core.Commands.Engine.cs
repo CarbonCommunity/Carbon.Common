@@ -143,4 +143,8 @@ public partial class CorePlugin : CarbonPlugin
 
 		arg.ReplyWith($"Applied {changes:n0} {changes.Plural("change", "changes")} to ensure that the server is no longer modded and fit for the Community tab.");
 	}
+
+	[CommandVar("lang", "Current server language for Carbon and plugins loaded.")]
+	[AuthLevel(2)]
+	private string Lang { get { return lang.GetServerLanguage(); } set { lang.SetServerLanguage(value); } }
 }

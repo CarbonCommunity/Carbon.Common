@@ -36,7 +36,7 @@ public class PluginManager
 	{
 		if (name == "RustCore") return Community.Runtime.Core;
 
-		return Community.Runtime.Plugins.Plugins.FirstOrDefault(x => x.Name == name);
+		return Community.Runtime.Plugins.FindPlugin(name);
 	}
 	public IEnumerable<Plugin> GetPlugins()
 	{
