@@ -195,7 +195,7 @@ public partial class CorePlugin : CarbonPlugin
 		{
 			var plugins = PoolEx.GetDictionary<BaseHookable, CachedHookInstance>();
 			{
-				foreach (var package in ModLoader.LoadedPackages)
+				foreach (var package in ModLoader.Packages)
 				{
 					foreach (var plugin in package.Plugins)
 					{
@@ -280,13 +280,6 @@ public partial class CorePlugin : CarbonPlugin
 		}
 	}
 
-	[ConsoleCommand("fetchhooks", "It looks up for the latest available hooks for your current protocol, downloads them, then patches them accordingly at runtime.")]
-	[AuthLevel(2)]
-	private void FetchHooks(ConsoleSystem.Arg arg)
-	{
-		Community.Runtime.HookManager.Fetch();
-	}
-
 #if DEBUG
 	private uint _debuggedHook;
 	private Timer _debuggedTimer;
@@ -330,7 +323,7 @@ public partial class CorePlugin : CarbonPlugin
 
 		static void LoopHookableProcess(uint hookId, bool alreadyDebugging, ref int hooksFound)
 		{
-			foreach (var package in ModLoader.LoadedPackages)
+			foreach (var package in ModLoader.Packages)
 			{
 				foreach (var plugin in package.Plugins)
 				{
@@ -380,7 +373,7 @@ public partial class CorePlugin : CarbonPlugin
 	[AuthLevel(2)]
 	private void DebugAllHooks(ConsoleSystem.Arg arg)
 	{
-		foreach (var package in ModLoader.LoadedPackages)
+		foreach (var package in ModLoader.Packages)
 		{
 			foreach (var plugin in package.Plugins)
 			{

@@ -21,6 +21,15 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			Module
 		}
 
+		public enum SortTypes
+		{
+			Loaded,
+			Name,
+			Version
+		}
+
+		public static string[] SortTypeNames = Enum.GetNames(typeof(SortTypes));
+
 		public static Tab Get()
 		{
 			permission = Community.Runtime.Core.permission;
@@ -376,7 +385,25 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 						GenerateHookables(tab, ap, permission, player, selectedGroup, hookableType);
 					});
 
-					var plugins = hookableType == HookableTypes.Plugin ? ModLoader.LoadedPackages.SelectMany(x => x.Plugins).Where(x =>
+					var sort = (SortTypes)ap.GetStorage(tab, "sorttype", 0);
+					var sortFlip = ap.GetStorage(tab, "sortflip", false);
+
+					tab.AddDropdown(2, "Sorting", ap => (int)sort, (session, index) =>
+					{
+						if ((int)sort != index)
+						{
+							ap.SetStorage(tab, "sortflip", false);
+							ap.SetStorage(tab, "sorttype", index);
+						}
+						else
+						{
+							ap.SetStorage(tab, "sortflip", !sortFlip);
+						}
+
+						GenerateHookables(tab, ap, permission, player, selectedGroup, hookableType);
+					}, SortTypeNames);
+
+					var plugins = hookableType == HookableTypes.Plugin ? ModLoader.Packages.SelectMany(x => x.Plugins).Where(x =>
 					{
 						if (x.permission.permset.TryGetValue(x, out var perms))
 						{
@@ -402,6 +429,22 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 						return false;
 					});
+
+					switch (sort)
+					{
+						case SortTypes.Name:
+							plugins = plugins.OrderBy(x => x.Name);
+							break;
+
+						case SortTypes.Version:
+							plugins = plugins.OrderBy(x => x.Version.ToString());
+							break;
+					}
+
+					if (sortFlip)
+					{
+						plugins = plugins.Reverse();
+					}
 
 					foreach (var plugin in plugins)
 					{

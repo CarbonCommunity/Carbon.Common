@@ -15,6 +15,15 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 {
 	public class ModulesTab
 	{
+		public enum SortTypes
+		{
+			Loaded,
+			Name,
+			Enabled
+		}
+
+		public static string[] SortTypeNames = Enum.GetNames(typeof(SortTypes));
+
 		public static Tab Get()
 		{
 			var tab = (Tab)null;
@@ -31,6 +40,24 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					Draw(ap);
 				});
 
+				var sort = (SortTypes)ap.GetStorage(tab, "sorttype", 0);
+				var sortFlip = ap.GetStorage(tab, "sortflip", false);
+
+				tab.AddDropdown(0, "Sorting", ap => (int)sort, (ap, index) =>
+				{
+					if ((int)sort != index)
+					{
+						ap.SetStorage(tab, "sortflip", false);
+						ap.SetStorage(tab, "sorttype", index);
+					}
+					else
+					{
+						ap.SetStorage(tab, "sortflip", !sortFlip);
+					}
+
+					Draw(ap);
+				}, SortTypeNames);
+
 				tab.AddName(0, "Core Modules");
 				Generate(x => x.ForceEnabled && (ap.HasStorage(tab, "search") && !string.IsNullOrEmpty(searchInput) ? x.Name.ToLower().Contains(searchInput) : true));
 
@@ -39,7 +66,19 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 				void Generate(Func<BaseModule, bool> condition)
 				{
-					foreach (var hookable in Community.Runtime.ModuleProcessor.Modules)
+					IEnumerable<BaseHookable> modules = sort switch
+					{
+						SortTypes.Name =>  Community.Runtime.ModuleProcessor.Modules.OrderBy(x => x.Name),
+						SortTypes.Enabled =>  Community.Runtime.ModuleProcessor.Modules.OrderByDescending(x => x is BaseModule module && module.IsEnabled()),
+						_ => Community.Runtime.ModuleProcessor.Modules
+					};
+
+					if (sortFlip)
+					{
+						modules = modules.Reverse();
+					}
+
+					foreach (var hookable in modules)
 					{
 						if (hookable is BaseModule module)
 						{
