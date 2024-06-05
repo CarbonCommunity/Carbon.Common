@@ -32,14 +32,14 @@
 	  </PackageReference>
 	  <PackageReference Update="Roslynator.CSharp" Version="4.9.0" />
 	</ItemGroup>
-	
+
 	<Choose>
 		<When Condition="Exists('$(SolutionDir).tmp\.gitbranch')">
 			<PropertyGroup>
 				<GitCommitBranch>$([System.IO.File]::ReadAllText('$(SolutionDir).tmp\.gitbranch').Trim())</GitCommitBranch>
 				<GitCommitHashLong>$([System.IO.File]::ReadAllText('$(SolutionDir).tmp\.gitchl').Replace("--long", "").Trim())</GitCommitHashLong>
 				<GitCommitHashShort>$([System.IO.File]::ReadAllText('$(SolutionDir).tmp\.gitchs').Trim())</GitCommitHashShort>
-				<GitCommitUrl>$([System.IO.File]::ReadAllText('$(SolutionDir).tmp\.giturl').Trim())/commit/$(GitCommitHashLong.Trim())</GitCommitUrl>
+				<GitCommitUrl>$([System.IO.File]::ReadAllText('$(SolutionDir).tmp\.giturl').Trim().Replace('.git', ''))/commit/$(GitCommitHashLong.Trim())</GitCommitUrl>
 				<GitCommitAuthor>$([System.IO.File]::ReadAllText('$(SolutionDir).tmp\.gitauthor').Trim())</GitCommitAuthor>
 				<GitCommitComment>$([System.IO.File]::ReadAllText('$(SolutionDir).tmp\.gitcomment').Replace('"', '""').Trim())</GitCommitComment>
 				<GitCommitTag>$([System.IO.File]::ReadAllText('$(SolutionDir).tmp\.gittag').Trim())</GitCommitTag>
@@ -53,7 +53,7 @@
 					.Replace('[GIT_AUTHOR]', '$(GitCommitAuthor)')
 					.Replace('[GIT_COMMENT]', '$(GitCommitComment)')
 					.Replace('[GIT_DATE]', '$(GitCommitDate)')
-					.Replace('[GIT_URL]', '$(GitCommitUrl)').Replace('.git', '')
+					.Replace('[GIT_URL]', '$(GitCommitUrl)')
 					.Replace('[GIT_TAG]', '$(GitCommitTag)')
 					.Replace('[GIT_ASSET_CHANGES]', '$(GitCommitChanges)')
 					.Replace('[GIT_HASH_SHORT]', '$(GitCommitHashShort)')
