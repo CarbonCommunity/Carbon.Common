@@ -193,9 +193,9 @@ public partial class CorePlugin : CarbonPlugin
 
 		output.AppendLine($"Information for {hookName}[{hookId}]");
 		{
-			var plugins = PoolEx.GetDictionary<BaseHookable, List<CachedHook>>();
+			var plugins = PoolEx.GetDictionary<BaseHookable, CachedHookInstance>();
 			{
-				foreach (var package in ModLoader.LoadedPackages)
+				foreach (var package in ModLoader.Packages)
 				{
 					foreach (var plugin in package.Plugins)
 					{
@@ -214,17 +214,17 @@ public partial class CorePlugin : CarbonPlugin
 
 			foreach (var plugin in plugins)
 			{
-				var hook = plugin.Value.FirstOrDefault();
+				var hook = plugin.Value.PrimaryHook;
 				table.AddRow(string.Empty,
 					$"{plugin.Key.Name}",
 					hook.HookTime.TotalMilliseconds == 0 ? string.Empty : $"{hook.HookTime.TotalMilliseconds:0}ms",
 					hook.TimesFired == 0 ? string.Empty : $"{hook.TimesFired:n0}",
 					hook.MemoryUsage == 0 ? string.Empty : ByteEx.Format(hook.MemoryUsage, stringFormat: byteFormat).ToLower(),
 					hook.LagSpikes == 0 ? string.Empty : $"{hook.LagSpikes:n0}",
-					$"{plugin.Value.Count(x => x.IsAsync):n0} / {plugin.Value.Count:n0}");
+					$"{plugin.Value.Hooks.Count(x => x.IsAsync):n0} / {plugin.Value.Hooks.Count:n0}");
 			}
 
-			var modules = PoolEx.GetDictionary<BaseHookable, List<CachedHook>>();
+			var modules = PoolEx.GetDictionary<BaseHookable, CachedHookInstance>();
 			{
 				foreach (var module in Community.Runtime.ModuleProcessor.Modules)
 				{
@@ -243,24 +243,24 @@ public partial class CorePlugin : CarbonPlugin
 
 			foreach (var module in modules)
 			{
-				var hook = module.Value.FirstOrDefault();
+				var hook = module.Value.Hooks.FirstOrDefault();
 				table.AddRow(string.Empty,
 					$"{module.Key.Name}",
 					hook.HookTime.TotalMilliseconds == 0 ? string.Empty : $"{hook.HookTime.TotalMilliseconds:0}ms",
 					hook.TimesFired == 0 ? string.Empty : $"{hook.TimesFired:n0}",
 					hook.MemoryUsage == 0 ? string.Empty : ByteEx.Format(hook.MemoryUsage, stringFormat: byteFormat).ToLower(),
 					hook.LagSpikes == 0 ? string.Empty : $"{hook.LagSpikes:n0}",
-					$"{module.Value.Count(x => x.IsAsync):n0} / {module.Value.Count:n0}");
+					$"{module.Value.Hooks.Count(x => x.IsAsync):n0} / {module.Value.Hooks.Count:n0}");
 			}
 
-			var totalTime = plugins.Sum(x => x.Value.Sum(y => y.HookTime.TotalMilliseconds)) +
-			                modules.Sum(x => x.Value.Sum(y => y.HookTime.TotalMilliseconds));
-			var totalFires = plugins.Sum(x => x.Value.Sum(y => y.TimesFired)) +
-			                 modules.Sum(x => x.Value.Sum(y => y.TimesFired));
-			var totalMemory = plugins.Sum(x => x.Value.Sum(y => y.MemoryUsage)) +
-			                  modules.Sum(x => x.Value.Sum(y => y.MemoryUsage));
-			var totalLag = plugins.Sum(x => x.Value.Sum(y => y.LagSpikes)) +
-			               modules.Sum(x => x.Value.Sum(y => y.LagSpikes));
+			var totalTime = plugins.Sum(x => x.Value.Hooks.Sum(y => y.HookTime.TotalMilliseconds)) +
+			                modules.Sum(x => x.Value.Hooks.Sum(y => y.HookTime.TotalMilliseconds));
+			var totalFires = plugins.Sum(x => x.Value.Hooks.Sum(y => y.TimesFired)) +
+			                 modules.Sum(x => x.Value.Hooks.Sum(y => y.TimesFired));
+			var totalMemory = plugins.Sum(x => x.Value.Hooks.Sum(y => y.MemoryUsage)) +
+			                  modules.Sum(x => x.Value.Hooks.Sum(y => y.MemoryUsage));
+			var totalLag = plugins.Sum(x => x.Value.Hooks.Sum(y => y.LagSpikes)) +
+			               modules.Sum(x => x.Value.Hooks.Sum(y => y.LagSpikes));
 
 			table.AddRow(string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
 			table.AddRow(string.Empty, "Total",
@@ -278,13 +278,6 @@ public partial class CorePlugin : CarbonPlugin
 			PoolEx.FreeDictionary(ref plugins);
 			PoolEx.FreeDictionary(ref modules);
 		}
-	}
-
-	[ConsoleCommand("fetchhooks", "It looks up for the latest available hooks for your current protocol, downloads them, then patches them accordingly at runtime.")]
-	[AuthLevel(2)]
-	private void FetchHooks(ConsoleSystem.Arg arg)
-	{
-		Community.Runtime.HookManager.Fetch();
 	}
 
 #if DEBUG
@@ -330,7 +323,7 @@ public partial class CorePlugin : CarbonPlugin
 
 		static void LoopHookableProcess(uint hookId, bool alreadyDebugging, ref int hooksFound)
 		{
-			foreach (var package in ModLoader.LoadedPackages)
+			foreach (var package in ModLoader.Packages)
 			{
 				foreach (var plugin in package.Plugins)
 				{
@@ -351,7 +344,7 @@ public partial class CorePlugin : CarbonPlugin
 					continue;
 				}
 
-				foreach (var hook in cache.Value)
+				foreach (var hook in cache.Value.Hooks)
 				{
 					hooksFound++;
 					hook.EnableDebugging(!alreadyDebugging);
@@ -380,7 +373,7 @@ public partial class CorePlugin : CarbonPlugin
 	[AuthLevel(2)]
 	private void DebugAllHooks(ConsoleSystem.Arg arg)
 	{
-		foreach (var package in ModLoader.LoadedPackages)
+		foreach (var package in ModLoader.Packages)
 		{
 			foreach (var plugin in package.Plugins)
 			{

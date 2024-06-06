@@ -21,6 +21,8 @@ public abstract class BaseModule : BaseHookable
 	public virtual bool ForceEnabled => false;
 	public virtual bool ForceDisabled => false;
 
+	public virtual bool ManualCommands => false;
+
 	public abstract void OnServerInit(bool initial);
 	public abstract void OnPostServerInit(bool initial);
 	public abstract void OnServerSaved();
@@ -43,7 +45,7 @@ public abstract class BaseModule : BaseHookable
 	}
 	public static BaseModule FindModule(string name)
 	{
-		return Community.Runtime.ModuleProcessor.Modules.FirstOrDefault(x => x.HookableType.Name == name) as BaseModule;
+		return Community.Runtime.ModuleProcessor.Modules.FirstOrDefault(x => x.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase) || x.Name.Contains(name, CompareOptions.OrdinalIgnoreCase)) as BaseModule;
 	}
 }
 
@@ -312,29 +314,26 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 	public virtual void OnDisabled(bool initialized)
 	{
 		if (ForceDisabled) return;
-
-		if (initialized) ModLoader.RemoveCommands(this);
-
-		UnsubscribeAll();
-		Permissions.UnregisterPermissions(this);
-
-		if (Hooks.Count > 0) Puts($"Unsubscribed from {Hooks.Count:n0} {Hooks.Count.Plural("hook", "hooks")}.");
-
+		
 		OnUnload();
-
-		DoHarmonyUnpatch();
 	}
 	public virtual void OnEnabled(bool initialized)
 	{
 		if (ForceDisabled) return;
 
-		ModLoader.ProcessCommands(Type, this, flags: BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-
-		SubscribeAll();
-
-		if (Hooks.Count > 0)
+		if (!ManualCommands)
 		{
-			Puts($"Subscribed to {Hooks.Count:n0} {Hooks.Count.Plural("hook", "hooks")}.");
+			ModLoader.ProcessCommands(Type, this, flags: BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+		}
+
+		if (!ManualSubscriptions)
+		{
+			SubscribeAll();
+
+			if (Hooks.Count > 0)
+			{
+				Puts($"Subscribed to {Hooks.Count:n0} {Hooks.Count.Plural("hook", "hooks")}.");
+			}
 		}
 
 		DoHarmonyPatch();
@@ -368,7 +367,14 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 	}
 	public override void OnUnload()
 	{
+		ModLoader.RemoveCommands(this);
 
+		UnsubscribeAll();
+		Permissions.UnregisterPermissions(this);
+
+		if (Hooks.Count > 0) Puts($"Unsubscribed from {Hooks.Count:n0} {Hooks.Count.Plural("hook", "hooks")}.");
+
+		DoHarmonyUnpatch();
 	}
 	public override void Shutdown()
 	{

@@ -86,38 +86,20 @@ public static class HookCaller
 
 	public static IEnumerable<BaseHookable.CachedHook> GetAllFor(uint hook)
 	{
-		foreach (var package in ModLoader.LoadedPackages)
+		foreach (var cacheHook in from package in ModLoader.Packages
+		         from plugin in package.Plugins
+		         from cache in plugin.HookPool where cache.Key == hook
+		         from cacheHook in cache.Value.Hooks select cacheHook)
 		{
-			foreach (var plugin in package.Plugins)
-			{
-				foreach (var cache in plugin.HookPool)
-				{
-					if (cache.Key != hook)
-					{
-						continue;
-					}
-
-					foreach (var cacheHook in cache.Value)
-					{
-						yield return cacheHook;
-					}
-				}
-			}
+			yield return cacheHook;
 		}
 
-		foreach (var module in Community.Runtime.ModuleProcessor.Modules)
+		foreach (var cacheHook in
+		         from module in Community.Runtime.ModuleProcessor.Modules
+		         from cache in module.HookPool where cache.Key == hook
+		         from cacheHook in cache.Value.Hooks select cacheHook)
 		{
-			foreach (var cache in module.HookPool)
-			{
-				if (cache.Key != hook)
-				{
-					continue;
-				}
-
-				foreach (var cacheHook in cache.Value)
-				{
-					yield return cacheHook;
-				}			}
+			yield return cacheHook;
 		}
 	}
 
@@ -196,9 +178,9 @@ public static class HookCaller
 			}
 		}
 
-		for (int i = 0; i < ModLoader.LoadedPackages.Count; i++)
+		for (int i = 0; i < ModLoader.Packages.Count; i++)
 		{
-			var package = ModLoader.LoadedPackages[i];
+			var package = ModLoader.Packages[i];
 
 			for(int o = 0; o < package.Plugins.Count; o++)
 			{

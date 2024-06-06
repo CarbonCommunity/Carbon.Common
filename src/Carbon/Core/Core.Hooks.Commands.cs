@@ -43,6 +43,12 @@ public partial class CorePlugin : CarbonPlugin
 				return Cache.False;
 			}
 
+			// OnPlayerCommand
+			if (HookCaller.CallStaticHook(2915735597, player, command, args) != null)
+			{
+				return Cache.False;
+			}
+
 			if (Community.Runtime.CommandManager.Contains(Community.Runtime.CommandManager.Chat, command, out var cmd))
 			{
 				var commandArgs = Facepunch.Pool.Get<PlayerArgs>();
@@ -60,17 +66,18 @@ public partial class CorePlugin : CarbonPlugin
 
 			if (player.Connection.authLevel >= prefix.SuggestionAuthLevel && Suggestions.Lookup(command, Community.Runtime.CommandManager.Chat.Select(x => x.Name), minimumConfidence: 5) is var result && result.Any())
 			{
-				player.ChatMessage($"<color=orange>Unknown command:</color> {message}\n<size=12s>Suggesting: {result.Select(x => $"{prefix.Value}{x.Result}").ToString(", ", " or ")}</size>");
+				var core = Community.Runtime.Core;
+				var phrase = core.lang.GetMessage("unknown_chat_cmd_2", core, player.UserIDString);
+				var sep1 = core.lang.GetMessage("unknown_chat_cmd_separator_1", core, player.UserIDString);
+				var sep2 = core.lang.GetMessage("unknown_chat_cmd_separator_2", core, player.UserIDString);
+
+				player.ChatMessage(string.Format(phrase, message, result.Select(x => $"{prefix.Value}{x.Result}").ToString(sep1, sep2)));
 			}
 			else
 			{
-				player.ChatMessage($"<color=orange>Unknown command:</color> {message}");
-			}
-
-			// OnPlayerCommand
-			if (HookCaller.CallStaticHook(2915735597, player, command, args) != null)
-			{
-				return Cache.False;
+				var core = Community.Runtime.Core;
+				var phrase = core.lang.GetMessage("unknown_chat_cmd_1", core, player.UserIDString);
+				player.ChatMessage(string.Format(phrase, message));
 			}
 		}
 		catch (Exception ex) { Logger.Error($"Failed IOnPlayerCommand.", ex); }

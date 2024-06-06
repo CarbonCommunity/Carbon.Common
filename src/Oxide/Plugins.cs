@@ -29,7 +29,7 @@ public class Plugins : Library
 	{
 		name = name.Replace(" ", "");
 
-		foreach (var mod in ModLoader.LoadedPackages)
+		foreach (var mod in ModLoader.Packages)
 		{
 			foreach (var plugin in mod.Plugins)
 			{
@@ -43,7 +43,7 @@ public class Plugins : Library
 	public Plugin[] GetAll()
 	{
 		var list = Pool.GetList<Plugin>();
-		foreach (var mod in ModLoader.LoadedPackages)
+		foreach (var mod in ModLoader.Packages)
 		{
 			list.AddRange(mod.Plugins);
 		}

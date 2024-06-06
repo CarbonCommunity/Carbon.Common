@@ -59,6 +59,14 @@ public partial class CorePlugin : CarbonPlugin
 	[AuthLevel(2)]
 	private bool HarmonyWatchers { get { return Community.Runtime.Config.Watchers.HarmonyWatchers; } set { Community.Runtime.Config.Watchers.HarmonyWatchers = value; Community.Runtime.SaveConfig(); } }
 
+	[CommandVar("modulewatchers", "When disabled, modules only get loaded when the server boots.")]
+	[AuthLevel(2)]
+	private bool ModuleWatchers { get { return Community.Runtime.Config.Watchers.ModuleWatchers; } set { Community.Runtime.Config.Watchers.ModuleWatchers = value; Community.Runtime.SaveConfig(); } }
+
+	[CommandVar("extensionwatchers", "When disabled, extensions only get loaded when the server boots.")]
+	[AuthLevel(2)]
+	private bool ExtensionWatchers { get { return Community.Runtime.Config.Watchers.ExtensionWatchers; } set { Community.Runtime.Config.Watchers.ExtensionWatchers = value; Community.Runtime.SaveConfig(); } }
+
 	[CommandVar("debug", "The level of debug logging for Carbon. Helpful for very detailed logs in case things break. (Set it to -1 to disable debug logging.)")]
 	[AuthLevel(2)]
 	private int CarbonDebug { get { return Community.Runtime.Config.Logging.LogVerbosity; } set { Community.Runtime.Config.Logging.LogVerbosity = value; Community.Runtime.SaveConfig(); } }
@@ -66,19 +74,6 @@ public partial class CorePlugin : CarbonPlugin
 	[CommandVar("logfiletype", "The mode for writing the log to file. (0=disabled, 1=saves updates every 5 seconds, 2=saves immediately)")]
 	[AuthLevel(2)]
 	private int LogFileType { get { return Community.Runtime.Config.Logging.LogFileMode; } set { Community.Runtime.Config.Logging.LogFileMode = Mathf.Clamp(value, 0, 2); Community.Runtime.SaveConfig(); } }
-
-	[CommandVar("unitystacktrace", "Enables a big chunk of detail of Unity's default stacktrace. Recommended to be disabled as a lot of it is internal and unnecessary for the average user.")]
-	[AuthLevel(2)]
-	private bool UnityStacktrace
-	{
-		get { return Community.Runtime.Config.Debugging.UnityStacktrace; }
-		set
-		{
-			Community.Runtime.Config.Debugging.UnityStacktrace = value;
-			Community.Runtime.SaveConfig();
-			ApplyStacktrace();
-		}
-	}
 
 	[CommandVar("language", "Server language used by the Language API.")]
 	[AuthLevel(2)]

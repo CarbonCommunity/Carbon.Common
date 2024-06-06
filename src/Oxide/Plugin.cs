@@ -51,6 +51,8 @@ namespace Oxide.Core.Plugins
 
 		public string Filename => FileName;
 
+		public virtual bool ManualCommands => false;
+
 		public override void TrackStart()
 		{
 			if (IsCorePlugin) return;
@@ -89,9 +91,9 @@ namespace Oxide.Core.Plugins
 			}
 			Carbon.Logger.Debug(Name, "Assigned plugin references");
 
-			if (Hooks != null)
+			if (Hooks != null && !ManualSubscriptions)
 			{
-				string requester = FileName is not default(string) ? FileName : $"{this}";
+				string requester = FileName ?? $"{this}";
 				using (TimeMeasure.New($"Processing Hooks on '{ToPrettyString()}'"))
 				{
 					foreach (var hook in Hooks)
@@ -268,10 +270,10 @@ namespace Oxide.Core.Plugins
 				using (TimeMeasure.New($"IUnload.UnloadRequirees on '{ToPrettyString()}'"))
 				{
 					var mods = Pool.GetList<ModLoader.ModPackage>();
-					mods.AddRange(ModLoader.LoadedPackages);
+					mods.AddRange(ModLoader.Packages);
 					var plugins = Pool.GetList<Plugin>();
 
-					foreach (var mod in ModLoader.LoadedPackages)
+					foreach (var mod in ModLoader.Packages)
 					{
 						plugins.Clear();
 						plugins.AddRange(mod.Plugins);
@@ -281,6 +283,7 @@ namespace Oxide.Core.Plugins
 							switch (plugin.Processor)
 							{
 								case IScriptProcessor script:
+								{
 									Logger.Warn($" [{Name}] Unloading '{plugin.ToPrettyString()}' because parent '{ToPrettyString()}' has been unloaded.");
 									ModLoader.AddPendingRequiree(this, plugin);
 
@@ -292,6 +295,7 @@ namespace Oxide.Core.Plugins
 									}
 
 									break;
+								}
 							}
 						}
 					}
@@ -331,7 +335,7 @@ namespace Oxide.Core.Plugins
 		{
 			var list = Pool.GetList<RustPlugin>();
 
-			foreach (var package in ModLoader.LoadedPackages)
+			foreach (var package in ModLoader.Packages)
 			{
 				foreach (var plugin in package.Plugins)
 				{

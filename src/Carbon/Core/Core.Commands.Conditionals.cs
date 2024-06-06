@@ -26,7 +26,7 @@ public partial class CorePlugin : CarbonPlugin
 			arg.ReplyWith($"Conditional '{value}' already exists.");
 		}
 
-		foreach (var mod in ModLoader.LoadedPackages)
+		foreach (var mod in ModLoader.Packages)
 		{
 			var plugins = Facepunch.Pool.GetList<RustPlugin>();
 			plugins.AddRange(mod.Plugins);
@@ -62,7 +62,7 @@ public partial class CorePlugin : CarbonPlugin
 			arg.ReplyWith($"Conditional '{value}' does not exist.");
 		}
 
-		foreach (var mod in ModLoader.LoadedPackages)
+		foreach (var mod in ModLoader.Packages)
 		{
 			var plugins = Facepunch.Pool.GetList<RustPlugin>();
 			plugins.AddRange(mod.Plugins);

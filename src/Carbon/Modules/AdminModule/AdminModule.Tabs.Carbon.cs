@@ -70,7 +70,25 @@ public partial class AdminModule
 			if (Singleton.HasAccess(ap.Player, "carbon.server_settings"))
 			{
 				tab.AddInput(0, Singleton.GetPhrase("hostname", ap.Player.UserIDString),
-					ap => $"{ConVar.Server.hostname}", (ap2, args) => { ConVar.Server.hostname = args.ToString(" "); });
+					ap => $"{ConVar.Server.hostname}", (ap2, args) =>
+					{
+						var str = args.ToString(" ");
+
+						tab.CreateDialog("Are you sure you want to update the host name?", ap =>
+						{
+							ConVar.Server.hostname = str;
+						});
+					});
+				tab.AddInput(0, Singleton.GetPhrase("maxplayers", ap.Player.UserIDString),
+					ap => $"{ConVar.Server.maxplayers}", (ap2, args) =>
+					{
+						var val = args.ToString(" ").ToInt();
+
+						tab.CreateDialog("Are you sure you want to update the maximum players that can join the server?", ap =>
+						{
+							ConVar.Server.maxplayers = val;
+						});
+					});
 				tab.AddInput(0, Singleton.GetPhrase("level", ap.Player.UserIDString), ap => $"{ConVar.Server.level}",
 					null);
 			}
@@ -329,8 +347,8 @@ public partial class AdminModule
 					#endif
 
 					tab.AddName(1, Singleton.GetPhrase("permissions", ap.Player.UserIDString), TextAnchor.MiddleLeft);
-					tab.AddInput(1, Singleton.GetPhrase("playerdefgroup", ap.Player.UserIDString), ap => Config.Permissions.PlayerDefaultGroup, (ap, args) => { Config.Permissions.PlayerDefaultGroup = args.ToString(string.Empty); Community.Runtime.SaveConfig(); });
-					tab.AddInput(1, Singleton.GetPhrase("admindefgroup", ap.Player.UserIDString), ap => Config.Permissions.AdminDefaultGroup, (ap, args) => { Config.Permissions.AdminDefaultGroup = args.ToString(string.Empty); Community.Runtime.SaveConfig(); });
+					tab.AddInput(1, Singleton.GetPhrase("playerdefgroup", ap.Player.UserIDString), ap => Config.Permissions.PlayerDefaultGroup, (ap, args) => { Config.Permissions.PlayerDefaultGroup = args.ToString(string.Empty); if(string.IsNullOrEmpty(Config.Permissions.PlayerDefaultGroup)) Config.Permissions.PlayerDefaultGroup = "default"; Community.Runtime.SaveConfig(); });
+					tab.AddInput(1, Singleton.GetPhrase("admindefgroup", ap.Player.UserIDString), ap => Config.Permissions.AdminDefaultGroup, (ap, args) => { Config.Permissions.AdminDefaultGroup = args.ToString(string.Empty); if(string.IsNullOrEmpty(Config.Permissions.AdminDefaultGroup)) Config.Permissions.AdminDefaultGroup = "admin"; Community.Runtime.SaveConfig(); });
 
 					tab.AddName(1, Singleton.GetPhrase("conditionals", ap.Player.UserIDString), TextAnchor.MiddleLeft);
 

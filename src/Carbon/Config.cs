@@ -22,10 +22,12 @@ public class Config
 
 	public WatchersConfig Watchers { get; set; } = new();
 	public PermissionsConfig Permissions { get; set; } = new();
+	public AnalyticsConfig Analytics { get; set; } = new();
+	public SelfUpdatingConfig SelfUpdating { get; set; } = new();
 	public DebuggingConfig Debugging { get; set; } = new();
 	public LoggingConfig Logging { get; set; } = new();
-	public CompilerConfig Compiler { get; set; } = new();
 	public ProfilerConfig Profiler { get; set; } = new();
+	public CompilerConfig Compiler { get; set; } = new();
 	public MiscConfig Misc { get; set; } = new();
 
 	internal readonly string[] _invalidAliases =
@@ -53,6 +55,11 @@ public class Config
 		return true;
 	}
 
+	public class SelfUpdatingConfig
+	{
+		public bool Enabled { get; set; } = true;
+	}
+
 	public class CompilerConfig
 	{
 		public bool UnloadOnFailure { get; set; } = false;
@@ -70,6 +77,8 @@ public class Config
 		public bool ZipScriptWatchers { get; set; } = true;
 		public SearchOption ScriptWatcherOption { get; set; } = SearchOption.TopDirectoryOnly;
 		public bool HarmonyWatchers { get; set; } = true;
+		public bool ModuleWatchers { get; set; } = true;
+		public bool ExtensionWatchers { get; set; } = true;
 	}
 
 	public class PermissionsConfig
@@ -83,12 +92,6 @@ public class Config
 	public class DebuggingConfig
 	{
 		public string ScriptDebuggingOrigin = string.Empty;
-		public bool UnityStacktrace { get; set; } =
-#if DEBUG
-			true;
-#else
-			true; // Set false when we're out of development
-#endif
 		public int HookLagSpikeThreshold = 1000;
 	}
 
@@ -99,6 +102,11 @@ public class Config
 		public int LogFileMode { get; set; } = 2;
 		public int LogVerbosity { get; set; } = 0;
 		public bool CommandSuggestions { get; set; } = true;
+	}
+
+	public class AnalyticsConfig
+	{
+		public bool Enabled { get; set; } = true;
 	}
 
 	public class MiscConfig

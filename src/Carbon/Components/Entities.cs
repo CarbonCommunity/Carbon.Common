@@ -152,6 +152,7 @@ public class Entities : IDisposable
 		}
 
 		map.Remove(entity);
+		ComponentCacheBankNonGeneric.OnEntityDestruct(entity);
 	}
 
 	public struct Map<T> : IDisposable

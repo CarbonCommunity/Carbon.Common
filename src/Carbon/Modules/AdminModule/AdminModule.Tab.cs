@@ -315,7 +315,7 @@ public partial class AdminModule
 			return AddRow(column, option);
 		}
 
-		public void CreateDialog(string title, Action<PlayerSession> onConfirm, Action<PlayerSession> onDecline)
+		public void CreateDialog(string title, Action<PlayerSession> onConfirm, Action<PlayerSession> onDecline = null)
 		{
 			Dialog = new TabDialog(title, onConfirm, onDecline);
 		}
