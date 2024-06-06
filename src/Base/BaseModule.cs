@@ -323,8 +323,6 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 		if (Hooks.Count > 0) Puts($"Unsubscribed from {Hooks.Count:n0} {Hooks.Count.Plural("hook", "hooks")}.");
 
 		OnUnload();
-
-		DoHarmonyUnpatch();
 	}
 	public virtual void OnEnabled(bool initialized)
 	{
@@ -376,7 +374,7 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 	}
 	public override void OnUnload()
 	{
-
+		DoHarmonyUnpatch();
 	}
 	public override void Shutdown()
 	{
