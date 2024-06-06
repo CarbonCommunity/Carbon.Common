@@ -314,17 +314,8 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 	public virtual void OnDisabled(bool initialized)
 	{
 		if (ForceDisabled) return;
-
-		if (initialized) ModLoader.RemoveCommands(this);
-
-		UnsubscribeAll();
-		Permissions.UnregisterPermissions(this);
-
-		if (Hooks.Count > 0) Puts($"Unsubscribed from {Hooks.Count:n0} {Hooks.Count.Plural("hook", "hooks")}.");
-
+		
 		OnUnload();
-
-		DoHarmonyUnpatch();
 	}
 	public virtual void OnEnabled(bool initialized)
 	{
@@ -376,7 +367,14 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 	}
 	public override void OnUnload()
 	{
+		ModLoader.RemoveCommands(this);
 
+		UnsubscribeAll();
+		Permissions.UnregisterPermissions(this);
+
+		if (Hooks.Count > 0) Puts($"Unsubscribed from {Hooks.Count:n0} {Hooks.Count.Plural("hook", "hooks")}.");
+
+		DoHarmonyUnpatch();
 	}
 	public override void Shutdown()
 	{
