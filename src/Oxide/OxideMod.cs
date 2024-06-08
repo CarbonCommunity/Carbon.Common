@@ -50,7 +50,7 @@ public class OxideMod
 		if (RootDirectory.StartsWith(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)))
 			RootDirectory = AppDomain.CurrentDomain.BaseDirectory;
 
-		JsonConvert.DefaultSettings = () => new JsonSerializerSettings { Culture = CultureInfo.InvariantCulture };
+		JsonConvert.DefaultSettings = () => new JsonSerializerSettings { Culture = CultureInfo.InvariantCulture, ReferenceLoopHandling = ReferenceLoopHandling.Ignore };
 
 		ConfigDirectory = Defines.GetConfigsFolder();
 		DataDirectory = Defines.GetDataFolder();
