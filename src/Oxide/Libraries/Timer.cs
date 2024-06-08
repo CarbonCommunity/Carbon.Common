@@ -237,7 +237,6 @@ public class Timer : Library
 		if (Persistence != null)
 		{
 			Persistence.CancelInvoke(Callback);
-			Persistence.CancelInvokeFixedTime(Callback);
 		}
 
 		if (Callback != null)
