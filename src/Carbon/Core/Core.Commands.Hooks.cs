@@ -199,12 +199,9 @@ public partial class CorePlugin : CarbonPlugin
 				{
 					foreach (var plugin in package.Plugins)
 					{
-						foreach (var hookCache in plugin.HookPool)
+						foreach (var hookCache in plugin.HookPool.Where(hookCache => hookCache.Key == hookId))
 						{
-							if (hookCache.Key == hookId)
-							{
-								plugins.Add(plugin, hookCache.Value);
-							}
+							plugins.Add(plugin, hookCache.Value);
 						}
 					}
 				}
@@ -228,13 +225,10 @@ public partial class CorePlugin : CarbonPlugin
 			{
 				foreach (var module in Community.Runtime.ModuleProcessor.Modules)
 				{
-					foreach (var hookCache in module.HookPool)
+					foreach (var hookCache in module.HookPool.Where(hookCache => hookCache.Key == hookId))
 					{
-						if (hookCache.Key == hookId)
-						{
-							modules.Add(module, hookCache.Value);
-							break;
-						}
+						modules.Add(module, hookCache.Value);
+						break;
 					}
 				}
 			}
@@ -323,13 +317,11 @@ public partial class CorePlugin : CarbonPlugin
 
 		static void LoopHookableProcess(uint hookId, bool alreadyDebugging, ref int hooksFound)
 		{
-			foreach (var package in ModLoader.Packages)
+			foreach (var plugin in ModLoader.Packages.SelectMany(package => package.Plugins))
 			{
-				foreach (var plugin in package.Plugins)
-				{
-					ProcessHookable(plugin, hookId, alreadyDebugging, ref hooksFound);
-				}
+				ProcessHookable(plugin, hookId, alreadyDebugging, ref hooksFound);
 			}
+
 			foreach (var module in Community.Runtime.ModuleProcessor.Modules)
 			{
 				ProcessHookable(module, hookId, alreadyDebugging, ref hooksFound);
@@ -337,18 +329,12 @@ public partial class CorePlugin : CarbonPlugin
 		}
 		static void ProcessHookable(BaseHookable hookable, uint hookId, bool alreadyDebugging, ref int hooksFound)
 		{
-			foreach (var cache in hookable.HookPool)
+			foreach (var hook in hookable.HookPool
+				         .Where(cache => cache.Key == hookId)
+				         .SelectMany(cache => cache.Value.Hooks))
 			{
-				if (cache.Key != hookId)
-				{
-					continue;
-				}
-
-				foreach (var hook in cache.Value.Hooks)
-				{
-					hooksFound++;
-					hook.EnableDebugging(!alreadyDebugging);
-				}
+				hooksFound++;
+				hook.EnableDebugging(!alreadyDebugging);
 			}
 		}
 
@@ -373,12 +359,9 @@ public partial class CorePlugin : CarbonPlugin
 	[AuthLevel(2)]
 	private void DebugAllHooks(ConsoleSystem.Arg arg)
 	{
-		foreach (var package in ModLoader.Packages)
+		foreach (var plugin in ModLoader.Packages.SelectMany(package => package.Plugins))
 		{
-			foreach (var plugin in package.Plugins)
-			{
-				plugin.HookPool.EnableDebugging(!EnforceHookDebugging);
-			}
+			plugin.HookPool.EnableDebugging(!EnforceHookDebugging);
 		}
 		foreach (var module in Community.Runtime.ModuleProcessor.Modules)
 		{
@@ -388,6 +371,14 @@ public partial class CorePlugin : CarbonPlugin
 		EnforceHookDebugging = true;
 
 		arg.ReplyWith($"{(EnforceHookDebugging ? "Enabled" : "Disabled")} debugging across all hooks in plugins and modules (as well as future hooks that will be processed).");
+	}
+
+	[Conditional("DEBUG")]
+	[ConsoleCommand("firehook", "For debugging purposes, it executes a hook manually. If the hook have arguments, it'll most likely throw plugin/module errors, but we probably want those.")]
+	[AuthLevel(2)]
+	private void FireHook(ConsoleSystem.Arg arg)
+	{
+		HookCaller.CallStaticHook(HookStringPool.GetOrAdd(arg.GetString(0)));
 	}
 	#endif
 }

@@ -78,6 +78,25 @@ public partial class AdminModule
 		}
 
 		return null;
+		if (!Singleton.HasAccess(owner, "entities.loot_players")) return null;
+		OpenContainer(GetPlayerSession(owner), item.contents, null);
+		return ItemContainer.CanAcceptResult.CannotAccept;
+	}
+
+	[Conditional("!MINIMAL")]
+	private object IValidDismountPosition(BaseMountable mountable, BasePlayer player) => null;
+
+	[Conditional("!MINIMAL")]
+	private object IModBackpack(BaseMountable mountable, BasePlayer player) => null;
+
+	public static bool AcceptOnBackpack(Item backpack)
+	{
+		if (EntitiesTab.LastContainerLooter == null || EntitiesTab.LastContainerLooter.Player?.inventory?.loot?.containers[0] != backpack.contents)
+		{
+			return false;
+		}
+
+		return true;
 	}
 #endif
 }
