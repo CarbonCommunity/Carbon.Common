@@ -7,6 +7,7 @@
 
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
+using Newtonsoft.Json;
 using Oxide.Core.Extensions;
 using Oxide.Core.Logging;
 using Oxide.Plugins;
@@ -48,6 +49,8 @@ public class OxideMod
 		RootDirectory = Environment.CurrentDirectory;
 		if (RootDirectory.StartsWith(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)))
 			RootDirectory = AppDomain.CurrentDomain.BaseDirectory;
+
+		JsonConvert.DefaultSettings = () => new JsonSerializerSettings { Culture = CultureInfo.InvariantCulture, ReferenceLoopHandling = ReferenceLoopHandling.Ignore };
 
 		ConfigDirectory = Defines.GetConfigsFolder();
 		DataDirectory = Defines.GetDataFolder();

@@ -40,7 +40,7 @@ public class BaseHookable
 		}
 	}
 
-	public struct CachedHookInstance
+	public class CachedHookInstance
 	{
 		public CachedHook PrimaryHook;
 		public List<CachedHook> Hooks;
@@ -236,10 +236,9 @@ public class BaseHookable
 				}
 			}
 
-			CachedHookInstance instance = default;
-
-			if (!HookPool.TryGetValue(id, out instance))
+			if (!HookPool.TryGetValue(id, out var instance))
 			{
+				instance = new();
 				instance.Hooks = new(5);
 
 				HookPool.Add(id, instance);
@@ -259,10 +258,9 @@ public class BaseHookable
 
 			var id = HookStringPool.GetOrAdd(string.IsNullOrEmpty(methodAttribute.Name) ? method.Name : methodAttribute.Name);
 
-			CachedHookInstance instance = default;
-
-			if (!HookPool.TryGetValue(id, out instance))
+			if (!HookPool.TryGetValue(id, out var instance))
 			{
+				instance = new();
 				instance.Hooks = new(5);
 
 				HookPool.Add(id, instance);
