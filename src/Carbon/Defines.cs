@@ -186,7 +186,7 @@ public class Defines
 	public static string GetManagedFolder()
 	{
 		_initializeCommandLine();
-		var folder = Path.Combine($"{GetRootFolder()}", "managed");
+		var folder = Path.Combine(GetRootFolder(), "managed");
 		Directory.CreateDirectory(folder);
 
 		return folder;

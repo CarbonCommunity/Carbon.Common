@@ -704,6 +704,8 @@ public partial class AdminModule
 
 		player.GiveItem(resultItem);
 
+		Puts($" {player.Connection} created {item.displayName}[{item.shortname}] x {resultItem.amount}{(isBlueprint ? "[bp]" : string.Empty)}");
+
 		session.ClearStorage(null, "itemtabitem");
 
 		Draw(session.Player);

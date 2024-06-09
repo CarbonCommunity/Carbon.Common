@@ -71,7 +71,7 @@ public partial class AdminModule
 				tab.ModuleInfoTemplate(cui, t, container, panel, ap,
 					"Gather Manager Module",
 					"The module allows you to modify the processing modifiers of Quarries, Excavators, Pickup and Gather amounts, globally set or item-specific. This module comes with a variety of useful tools, including custom recycler speed.",
-					"", FindModule("GatherManagerModule"));
+					"", FindModule("GatherManager"));
 			}));
 			tab.Pages.Add(new Page("Stack Manager", (cui, t, container, panel, ap) =>
 			{
@@ -80,26 +80,26 @@ public partial class AdminModule
 					"High performance will allow to set custom item stacks based on:\n" +
 					"\n• Item name" +
 					"\n• Item category" +
-					"\n• Blacklisted items (useful when using categories)", "", FindModule("StackManagerModule"));
+					"\n• Blacklisted items (useful when using categories)", "", FindModule("StackManager"));
 			}));
 			tab.Pages.Add(new Page("Vanish", (cui, t, container, panel, ap) =>
 			{
 				tab.ModuleInfoTemplate(cui, t, container, panel, ap,
 					"Vanish Module",
-					"A very lightweight auth-level based system allowing you to become invisible, with various settings in the config file.", "", FindModule("VanishModule"));
+					"A very lightweight auth-level based system allowing you to become invisible, with various settings in the config file.", "", FindModule("Vanish"));
 			}));
 			tab.Pages.Add(new Page("Moderation Tools", (cui, t, container, panel, ap) =>
 			{
 				tab.ModuleInfoTemplate(cui, t, container, panel, ap,
 					"Moderation Tools Module",
 					"This module is a bundle of very helpful and often usable moderation tools that can grant the ability to players with regular authority level to use noclip and god-mode and nothing else (use the 'carbon.admin' permission to allow the use of the '/cadmin' command).\n" +
-					"There's also a permission ('carbon.cmod') that allows players to kick, ban or mute players with defined reasons.", "", FindModule("ModerationToolsModule"));
+					"There's also a permission ('carbon.cmod') that allows players to kick, ban or mute players with defined reasons.", "", FindModule("ModerationTools"));
 			}));
 			tab.Pages.Add(new Page("Optimisations", (cui, t, container, panel, ap) =>
 			{
 				tab.ModuleInfoTemplate(cui, t, container, panel, ap,
 					"Optimisations Module",
-					"A Carbon built-in version of the Circular Network Distance from Codefling.", "", FindModule("OptimisationsModule"));
+					"A Carbon built-in version of the Circular Network Distance from Codefling.", "", FindModule("Optimisations"));
 
 			}));
 			tab.Pages.Add(new Page("Plugin Browser", (cui, t, container, panel, ap) =>
@@ -127,9 +127,9 @@ public partial class AdminModule
 				tab.ModuleInfoTemplate(cui, t, container, panel, ap,
 					"Whitelist Module",
 					"A very basic system that only grants players access to a server based on the 'whitelist.bypass' permission or 'whitelisted' group.", "",
-					FindModule("WhitelistModule"));
+					FindModule("Whitelist"));
 			}));
-
+			
 			tab.Pages.Add(new Page("Finalize", (cui, t, container, panel, ap) =>
 			{
 				Analytics.admin_module_wizard(Analytics.WizardProgress.Walkthrough);
@@ -233,16 +233,13 @@ public partial class AdminModule
 
 		internal static string Header(string value, int level)
 		{
-			switch (level)
+			return level switch
 			{
-				case 1: return $"<size=20>{value}</size>";
-				case 2: return $"<size=17>{value}</size>";
-				case 3: return $"<size=14>{value}</size>";
-				default:
-					break;
-			}
-
-			return value;
+				1 => $"<size=20>{value}</size>",
+				2 => $"<size=17>{value}</size>",
+				3 => $"<size=14>{value}</size>",
+				_ => value
+			};
 		}
 
 		internal bool IsFeatureEnabled(string feature)
@@ -299,7 +296,6 @@ public partial class AdminModule
 			ap.SetStorage(tab, "page", currentPage);
 			Community.Runtime.Core.NextFrame(() => Draw(ap.Player));
 		}
-
 	}
 
 	[Conditional("!MINIMAL")]

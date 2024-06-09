@@ -23,12 +23,9 @@ public partial class CorePlugin : CarbonPlugin
 	[AuthLevel(2)]
 	private void ResetHooks(ConsoleSystem.Arg arg)
 	{
-		foreach (var package in ModLoader.Packages)
+		foreach (var plugin in ModLoader.Packages.SelectMany(package => package.Plugins))
 		{
-			foreach (var plugin in package.Plugins)
-			{
-				plugin.HookPool.Reset();
-			}
+			plugin.HookPool.Reset();
 		}
 
 		foreach (var module in Community.Runtime.ModuleProcessor.Modules)
