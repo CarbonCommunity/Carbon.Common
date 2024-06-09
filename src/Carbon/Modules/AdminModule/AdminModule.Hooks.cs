@@ -77,7 +77,6 @@ public partial class AdminModule
 				break;
 		}
 
-		return null;
 		if (!Singleton.HasAccess(owner, "entities.loot_players")) return null;
 		OpenContainer(GetPlayerSession(owner), item.contents, null);
 		return ItemContainer.CanAcceptResult.CannotAccept;
