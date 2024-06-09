@@ -1,5 +1,4 @@
 ﻿using Newtonsoft.Json;
-using Logger = Carbon.Logger;
 
 /*
  *
@@ -96,36 +95,34 @@ public class Lang : Library
 	}
 	private void SaveMessageFile(string plugin, string lang = "en")
 	{
-		if (!Phrases.TryGetValue(lang, out var messages)) return;
+		if (Phrases.TryGetValue(lang, out var messages))
+		{
+			var folder = Path.Combine(Defines.GetLangFolder(), lang);
+			OsEx.Folder.Create(folder);
 
-		var folder = Path.Combine(Defines.GetLangFolder(), lang);
-		OsEx.Folder.Create(folder);
-
-		OsEx.File.Create(Path.Combine(folder, $"{plugin}.json"), JsonConvert.SerializeObject(messages, Formatting.Indented));
+			OsEx.File.Create(Path.Combine(folder, $"{plugin}.json"), JsonConvert.SerializeObject(messages, Formatting.Indented)); ;
+		}
 	}
 
 	public void RegisterMessages(Dictionary<string, string> newPhrases, BaseHookable plugin, string lang = "en")
 	{
 		if (!Phrases.TryGetValue(lang, out var phrases))
 		{
-			Phrases.Add(lang, newPhrases);
-			SaveMessageFile(plugin.Name, lang);
+			Phrases.Add(lang, phrases = newPhrases);
 		}
-		else
-		{
-			var newPhrasesAvailable = false;
 
-			foreach (var phrase in newPhrases.Where(phrase => !phrases.ContainsKey(phrase.Key)))
+		var save = false;
+
+		foreach (var phrase in newPhrases)
+		{
+			if (!phrases.TryGetValue(phrase.Key, out var value))
 			{
 				phrases.Add(phrase.Key, phrase.Value);
-				newPhrasesAvailable = true;
-			}
-
-			if (newPhrasesAvailable)
-			{
-				SaveMessageFile(plugin.Name, lang);
+				save = true;
 			}
 		}
+
+		if (newPhrases == phrases || save) SaveMessageFile(plugin.Name, lang);
 	}
 
 	public string GetMessage(string key, BaseHookable hookable, string player = null, string lang = null)
@@ -136,16 +133,19 @@ public class Lang : Library
 		{
 			return phrase;
 		}
-
-		if (hookable is RustPlugin rustPlugin) rustPlugin.ILoadDefaultMessages();
-
-		messages = GetMessageFile(hookable.Name, lang);
-
-		Phrases.Add(lang, messages);
-
-		if (messages.TryGetValue(key, out phrase))
+		else
 		{
-			return phrase;
+			try
+			{
+				if (hookable is RustPlugin rustPlugin) rustPlugin.ILoadDefaultMessages();
+				messages = GetMessageFile(hookable.Name, lang);
+
+				if (messages.TryGetValue(key, out phrase))
+				{
+					return phrase;
+				}
+			}
+			catch { }
 		}
 
 		return lang == "en" ? key : GetMessage(key, hookable, player, "en");
