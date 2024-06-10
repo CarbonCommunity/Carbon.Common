@@ -34,7 +34,6 @@ public class CarbonPlugin : RustPlugin
 
 		return true;
 	}
-
 	public override void IUnload()
 	{
 		UnapplyPatch();

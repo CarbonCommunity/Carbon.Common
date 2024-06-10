@@ -39,4 +39,11 @@ public partial class CorePlugin : CarbonPlugin
 
 		Community.Runtime.Core.persistence.StartCoroutine(Integrations.RunQueue(delay));
 	}
+
+	[ConsoleCommand("test.clear", "Clears all Test Beds that are currently queued up.")]
+	[AuthLevel(2)]
+	private void TestClear(ConsoleSystem.Arg arg)
+	{
+		Integrations.ClearQueue();
+	}
 }
