@@ -129,7 +129,7 @@ public partial class AdminModule
 					"A very basic system that only grants players access to a server based on the 'whitelist.bypass' permission or 'whitelisted' group.", "",
 					FindModule("Whitelist"));
 			}));
-			
+
 			tab.Pages.Add(new Page("Finalize", (cui, t, container, panel, ap) =>
 			{
 				Analytics.admin_module_wizard(Analytics.WizardProgress.Walkthrough);
@@ -184,13 +184,13 @@ public partial class AdminModule
 			InfoTemplate(cui, tab, container, panel, player, title, content, hint);
 
 			cui.CreateProtectedButton(container, panel, "0.3 0.3 0.3 0.5", "1 1 1 1", "OPEN FOLDER".SpacedString(1), 10,
-				xMin: 0.9f, yMin: 0.075f, yMax: 0.125f, OyMin: 60, OyMax: 60, OxMin: 8, OxMax: 8, command: $"wizard.openmodulefolder {module.HookableType.Name}");
+				xMin: 0.9f, yMin: 0.075f, yMax: 0.125f, OyMin: 60, OyMax: 60, OxMin: 8, OxMax: 8, command: $"wizard.openmodulefolder {module.Name}");
 
 			cui.CreateProtectedButton(container, panel, "0.3 0.3 0.3 0.5", "1 1 1 1", "EDIT CONFIG".SpacedString(1), 10,
-				xMin: 0.9f, yMin: 0.075f, yMax: 0.125f, OyMin: 30, OyMax: 30, OxMin: 8, OxMax: 8, command: $"wizard.editmoduleconfig {module.HookableType.Name}");
+				xMin: 0.9f, yMin: 0.075f, yMax: 0.125f, OyMin: 30, OyMax: 30, OxMin: 8, OxMax: 8, command: $"wizard.editmoduleconfig {module.Name}");
 
 			cui.CreateProtectedButton(container, panel, module.IsEnabled() ? "0.4 0.9 0.3 0.5" : "0.1 0.1 0.1 0.5", "1 1 1 1", module.IsEnabled() ? "ENABLED".SpacedString(1) : "DISABLED".SpacedString(1), 10,
-				xMin: 0.9f, yMin: 0.075f, yMax: 0.125f, OxMin: 8, OxMax: 8, command: $"wizard.togglemodule {module.HookableType.Name}");
+				xMin: 0.9f, yMin: 0.075f, yMax: 0.125f, OxMin: 8, OxMax: 8, command: $"wizard.togglemodule {module.Name}");
 		}
 		internal void InternalFeatureInfoTemplate(CUI cui, Tab tab, CuiElementContainer container, string panel, PlayerSession player, string title, string content, string hint, string feature)
 		{
