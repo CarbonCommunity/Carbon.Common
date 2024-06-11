@@ -61,10 +61,7 @@ public static class ModLoader
 
 	static ModLoader()
 	{
-		Community.Runtime.Events.Subscribe(
-			CarbonEvent.OnServerInitialized,
-			x => OnPluginProcessFinished()
-		);
+		Community.Runtime.Events.Subscribe(CarbonEvent.OnServerInitialized, _ => OnPluginProcessFinished());
 	}
 
 	public static List<string> GetRequirees(Plugin initial)
