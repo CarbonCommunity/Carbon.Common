@@ -33,6 +33,10 @@
 	  <PackageReference Update="Roslynator.CSharp" Version="4.9.0" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <ProjectReference Include="..\Carbon.Test\Carbon.Test.csproj" />
+	</ItemGroup>
+
 	<Choose>
 		<When Condition="Exists('$(SolutionDir).tmp\.gitbranch')">
 			<PropertyGroup>

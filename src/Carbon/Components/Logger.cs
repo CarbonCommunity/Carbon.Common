@@ -149,19 +149,6 @@ public sealed class Logger : ILogger
 		CoreLog = null;
 	}
 
-#if DEBUG
-	internal static string _getFileNameEx(string input)
-	{
-		// For some reason Path.GetFileName() is not working with
-		// [CallerFilePath]. Trying to be OS agnostic..
-		string[] arr = input.Split((input.Contains("/") ? '/' : '\\'));
-		string ret = arr[arr.Length - 1];
-
-		Array.Clear(arr, 0, arr.Length);
-		return ret;
-	}
-#endif
-
 	/// <summary>
 	/// Outputs to the game's console a message with severity level 'DEBUG'.
 	/// </summary>
@@ -223,19 +210,19 @@ public sealed class Logger : ILogger
 		switch (severity)
 		{
 			case Severity.Error:
-				Logger.Error(message, exception);
+				Error(message, exception);
 				break;
 
 			case Severity.Warning:
-				Logger.Warn(message);
+				Warn(message);
 				break;
 
 			case Severity.Debug:
-				Logger.Debug(message);
+				Debug(message);
 				break;
 
 			default:
-				Logger.Log(message);
+				Log(message);
 				break;
 		}
 	}

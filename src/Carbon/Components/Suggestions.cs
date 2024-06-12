@@ -97,32 +97,35 @@ public class Suggestions
 	 */
 	internal static int Compute(string s, string t)
 	{
-		int n = s.Length;
-		int m = t.Length;
-		int[,] d = Buffer.Get(n + 1, m + 1);
-
-		if (n == 0)
+		using (TimeMeasure.New("Suggestions.Compute"))
 		{
-			return m;
-		}
+			int n = s.Length;
+			int m = t.Length;
+			int[,] d = Buffer.Get(n + 1, m + 1);
 
-		if (m == 0)
-		{
-			return n;
-		}
-
-		for (int x = 0; x <= n; d[x, 0] = x++) ;
-		for (int y = 0; y <= m; d[0, y] = y++) ;
-
-		for (int x = 1; x <= n; x++)
-		{
-			for (int y = 1; y <= m; y++)
+			if (n == 0)
 			{
-				int cost = (t[y - 1] == s[x - 1]) ? 0 : 1;
-				d[x, y] = Math.Min(Math.Min(d[x - 1, y] + 1, d[x, y - 1] + 1), d[x - 1, y - 1] + cost);
+				return m;
 			}
-		}
 
-		return d[n, m];
+			if (m == 0)
+			{
+				return n;
+			}
+
+			for (int x = 0; x <= n; d[x, 0] = x++) ;
+			for (int y = 0; y <= m; d[0, y] = y++) ;
+
+			for (int x = 1; x <= n; x++)
+			{
+				for (int y = 1; y <= m; y++)
+				{
+					int cost = (t[y - 1] == s[x - 1]) ? 0 : 1;
+					d[x, y] = Math.Min(Math.Min(d[x - 1, y] + 1, d[x, y - 1] + 1), d[x - 1, y - 1] + cost);
+				}
+			}
+
+			return d[n, m];
+		}
 	}
 }
