@@ -65,23 +65,7 @@ public partial class AdminModule
 
 		StopSpectating(player);
 	}
-
-	[Conditional("!MINIMAL")]
-	private object IValidDismountPosition(BaseMountable mountable, BasePlayer player)
-	{
-		switch (mountable.skinID)
-		{
-			case 69696:
-				return true;
-			default:
-				break;
-		}
-
-		if (!Singleton.HasAccess(owner, "entities.loot_players")) return null;
-		OpenContainer(GetPlayerSession(owner), item.contents, null);
-		return ItemContainer.CanAcceptResult.CannotAccept;
-	}
-
+	
 	[Conditional("!MINIMAL")]
 	private object IValidDismountPosition(BaseMountable mountable, BasePlayer player) => null;
 
