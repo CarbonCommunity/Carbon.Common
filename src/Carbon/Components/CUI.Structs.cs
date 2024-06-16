@@ -11,7 +11,7 @@ namespace Carbon.Components;
 
 public readonly partial struct CUI
 {
-	public struct Position
+	public struct Transform
 	{
 		public float XMin;
 		public float XMax;
@@ -23,54 +23,54 @@ public readonly partial struct CUI
 		public float OyMin;
 		public float OyMax;
 
-		public string AnchorMin => $"{XMin} {YMin}";
-		public string AnchorMax => $"{XMax} {YMax}";
-		public string OffsetMin => $"{OxMin} {OyMin}";
-		public string OffsetMax => $"{OxMax} {OyMax}";
+		public readonly string AnchorMin => $"{XMin} {YMin}";
+		public readonly string AnchorMax => $"{XMax} {YMax}";
+		public readonly string OffsetMin => $"{OxMin} {OyMin}";
+		public readonly string OffsetMax => $"{OxMax} {OyMax}";
 
-		public Position WithXMin(float value)
+		public Transform WithXMin(float value)
 		{
 			XMin = value;
 			return this;
 		}
-		public Position WithXMax(float value)
+		public Transform WithXMax(float value)
 		{
 			XMax = value;
 			return this;
 		}
-		public Position WithYMin(float value)
+		public Transform WithYMin(float value)
 		{
 			YMin = value;
 			return this;
 		}
-		public Position WithYMax(float value)
+		public Transform WithYMax(float value)
 		{
 			YMax = value;
 			return this;
 		}
 
-		public Position WithXMinOffset(float value)
+		public Transform WithXMinOffset(float value)
 		{
 			OxMin = value;
 			return this;
 		}
-		public Position WithXMaxOffset(float value)
+		public Transform WithXMaxOffset(float value)
 		{
 			OxMax = value;
 			return this;
 		}
-		public Position WithYMinOffset(float value)
+		public Transform WithYMinOffset(float value)
 		{
 			OyMin = value;
 			return this;
 		}
-		public Position WithYMaxOffset(float value)
+		public Transform WithYMaxOffset(float value)
 		{
 			OyMax = value;
 			return this;
 		}
 
-		public Position WithAnchor(float xMin, float xMax, float yMin, float yMax)
+		public Transform WithAnchor(float xMin, float xMax, float yMin, float yMax)
 		{
 			XMin = xMin;
 			XMax = xMax;
@@ -78,7 +78,7 @@ public readonly partial struct CUI
 			YMax = yMax;
 			return this;
 		}
-		public Position WithAnchor(float xMin, float xMax, float yMin, float yMax, float oxMin, float oxMax, float oyMin, float oyMax)
+		public Transform WithAnchor(float xMin, float xMax, float yMin, float yMax, float oxMin, float oxMax, float oyMin, float oyMax)
 		{
 			XMin = xMin;
 			XMax = xMax;
@@ -91,28 +91,28 @@ public readonly partial struct CUI
 			return this;
 		}
 
-		public static Position Default
+		public static Transform Default
 		{
 			get
 			{
-				Position result = default;
+				Transform result = default;
 				result.XMax = 1;
 				result.YMax = 1;
 				return result;
 			}
 		}
-		public static Position CreateAnchor(float xMin, float xMax, float yMin, float yMax, float oxMin = 0, float oxMax = 0, float oyMin = 0, float oyMax = 0)
+		public static Transform CreateAnchor(float xMin, float xMax, float yMin, float yMax, float oxMin = 0, float oxMax = 0, float oyMin = 0, float oyMax = 0)
 		{
-			Position position = default;
-			position.XMin = xMin;
-			position.XMax = xMax;
-			position.YMin = yMin;
-			position.YMax = yMax;
-			position.OxMin = oxMin;
-			position.OxMax = oxMax;
-			position.OyMin = oyMin;
-			position.OyMax = oyMax;
-			return position;
+			Transform transform = default;
+			transform.XMin = xMin;
+			transform.XMax = xMax;
+			transform.YMin = yMin;
+			transform.YMax = yMax;
+			transform.OxMin = oxMin;
+			transform.OxMax = oxMax;
+			transform.OyMin = oyMin;
+			transform.OyMax = oyMax;
+			return transform;
 		}
 	}
 
