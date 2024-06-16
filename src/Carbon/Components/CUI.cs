@@ -63,79 +63,72 @@ public readonly partial struct CUI : IDisposable
     #endregion
 
     #region Methods
-    public CuiElementContainer CreateContainer(string panel, string color = "0 0 0 0", float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, ClientPanels parent = ClientPanels.OverlayNonScaled, string destroyUi = null)
+    public CuiElementContainer CreateContainer(string panel, Position position, Render render, Needs needs, ClientPanels parent = ClientPanels.OverlayNonScaled, string destroyUi = null)
     {
-        return CreateContainerParent(panel, color, xMin, xMax, yMin, yMax, OxMin, OxMax, OyMin, OyMax, fadeIn, fadeOut, needsCursor, needsKeyboard, GetClientPanel(parent), destroyUi);
+        return CreateContainerParent(panel, position, render, needs, GetClientPanel(parent), destroyUi);
     }
-    public CuiElementContainer CreateContainerParent(string panel, string color = "0 0 0 0", float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string parentName = "OverlayNonScaled", string destroyUi = null)
+    public CuiElementContainer CreateContainerParent(string panel, Position position, Render render, Needs needs, string parentName = "OverlayNonScaled", string destroyUi = null)
 	{
 		var container = Manager.TakeFromPoolContainer();
 		container.Name = panel;
 
 		var element = Manager.TakeFromPool(panel, parentName);
-		element.FadeOut = fadeOut;
+		element.FadeOut = render.FadeOut;
 		element.DestroyUi = destroyUi;
 
-		if (!string.IsNullOrEmpty(color) && color != "0 0 0 0")
+		if (!string.IsNullOrEmpty(render.Color) && render.Color != "0 0 0 0")
 		{
 			var image = Manager.TakeFromPoolImage();
-			image.Color = color;
-			image.FadeIn = fadeIn;
+			image.Color = render.Color;
+			image.FadeIn = render.FadeIn;
 			element.Components.Add(image);
 		}
 
 		var rect = Manager.TakeFromPoolRect();
-		rect.AnchorMin = $"{xMin} {yMin}";
-		rect.AnchorMax = $"{xMax} {yMax}";
-		rect.OffsetMin = $"{OxMin} {OyMin}";
-		rect.OffsetMax = $"{OxMax} {OyMax}";
+		rect.AnchorMin = position.AnchorMin;
+		rect.AnchorMax = position.AnchorMax;
+		rect.OffsetMin = position.OffsetMin;
+		rect.OffsetMax = position.OffsetMax;
 		element.Components.Add(rect);
 
-		if (needsCursor) element.Components.Add(Handler.CachedNeedsCursor);
-		if (needsKeyboard) element.Components.Add(Handler.CachedNeedsKeyboard);
+		if (needs.Cursor) element.Components.Add(Handler.CachedNeedsCursor);
+		if (needs.Keyboard) element.Components.Add(Handler.CachedNeedsKeyboard);
 
 		container.Add(element);
 		container.Add(Manager.TakeFromPool(Manager.AppendId(), parentName));
 		return container;
 	}
-	public Pair<CuiElement> CreatePanel(CuiElementContainer container, string parent, string color, string material = null, float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, bool blur = false, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string outlineColor = null, string outlineDistance = null, bool outlineUseGraphicAlpha = false, string id = null, string destroyUi = null, bool update = false)
+	public Pair<CuiImageComponent> CreatePanel(CuiElementContainer container, string parent, Position position, Render render, Needs needs, Outline outline, string id = null, string destroyUi = null, bool update = false)
 	{
-		return Manager.Panel(container, parent, color, material, xMin, xMax, yMin, yMax, OxMin, OxMax, OyMin, OyMax, blur, fadeIn, fadeOut, needsCursor, needsKeyboard, outlineColor, outlineDistance, outlineUseGraphicAlpha, id, destroyUi, update);
+		return Manager.Panel(container, parent, position, render, needs, outline, id, destroyUi, update);
 	}
-	public Pair<CuiElement> CreateText(CuiElementContainer container, string parent, string color, string text, int size, float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, TextAnchor align = TextAnchor.MiddleCenter, Handler.FontTypes font = Handler.FontTypes.RobotoCondensedRegular, VerticalWrapMode verticalOverflow = VerticalWrapMode.Overflow, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string outlineColor = null, string outlineDistance = null, bool outlineUseGraphicAlpha = false, string id = null, string destroyUi = null, bool update = false)
+	public Pair<CuiTextComponent> CreateText(CuiElementContainer container, string parent, Position position, Render render, Needs needs, Outline outline, string text, int size, TextAnchor align = TextAnchor.MiddleCenter, Handler.FontTypes font = Handler.FontTypes.RobotoCondensedRegular, VerticalWrapMode verticalOverflow = VerticalWrapMode.Overflow, string id = null, string destroyUi = null, bool update = false)
 	{
-		return Manager.Text(container, parent, color, text, size, xMin, xMax, yMin, yMax, OxMin, OxMax, OyMin, OyMax, align, font, verticalOverflow, fadeIn, fadeOut, needsCursor, needsKeyboard, outlineColor, outlineDistance, outlineUseGraphicAlpha, id, destroyUi, update);
+		return Manager.Text(container, parent, position, render, needs, outline, text, size, align, font, verticalOverflow, id, destroyUi, update);
 	}
-	public Pair<CuiElement, CuiElement> CreateButton(CuiElementContainer container, string parent, string color, string textColor, string text, int size, string material = null, float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, string command = null, TextAnchor align = TextAnchor.MiddleCenter, Handler.FontTypes font = Handler.FontTypes.RobotoCondensedRegular, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string outlineColor = null, string outlineDistance = null, bool outlineUseGraphicAlpha = false, string id = null, string destroyUi = null, bool update = false)
+	public Pair<CuiButtonComponent, CuiElement, CuiTextComponent, CuiRectTransformComponent> CreateButton(CuiElementContainer container, string parent, Position position, Render render, Needs needs, Outline outline, string textColor, string text, int size, string command = null, TextAnchor align = TextAnchor.MiddleCenter, Handler.FontTypes font = Handler.FontTypes.RobotoCondensedRegular, string id = null, string destroyUi = null, bool update = false)
 	{
-		return Manager.Button(container, parent, color, textColor, text, size, material, xMin, xMax, yMin, yMax, OxMin, OxMax, OyMin, OyMax, command, align, font, false, fadeIn, fadeOut, needsCursor, needsKeyboard, outlineColor, outlineDistance, outlineUseGraphicAlpha, id, destroyUi, update);
+		return Manager.Button(container, parent, position, render, needs, outline, textColor, text, size, command, align, font, false, id, destroyUi, update);
 	}
-	public Pair<CuiElement, CuiElement> CreateProtectedButton(CuiElementContainer container, string parent, string color, string textColor, string text, int size, string material = null, float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, string command = null, TextAnchor align = TextAnchor.MiddleCenter, Handler.FontTypes font = Handler.FontTypes.RobotoCondensedRegular, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string outlineColor = null, string outlineDistance = null, bool outlineUseGraphicAlpha = false, string id = null, string destroyUi = null, bool update = false)
+	public Pair<CuiButtonComponent, CuiElement, CuiTextComponent, CuiRectTransformComponent> CreateProtectedButton(CuiElementContainer container, string parent, Position position, Render render, Needs needs, Outline outline, string textColor, string text, int size, string command = null, TextAnchor align = TextAnchor.MiddleCenter, Handler.FontTypes font = Handler.FontTypes.RobotoCondensedRegular, string id = null, string destroyUi = null, bool update = false)
 	{
-		return Manager.Button(container, parent, color, textColor, text, size, material, xMin, xMax, yMin, yMax, OxMin, OxMax, OyMin, OyMax, command, align, font, true, fadeIn, fadeOut, needsCursor, needsKeyboard, outlineColor, outlineDistance, outlineUseGraphicAlpha, id, destroyUi, update);
+		return Manager.Button(container, parent, position, render, needs, outline, textColor, text, size, command, align, font, true, id, destroyUi, update);
 	}
-	public Pair<CuiElement> CreateInputField(CuiElementContainer container, string parent, string color, string text, int size, int characterLimit, bool readOnly, float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, string command = null, TextAnchor align = TextAnchor.MiddleCenter, Handler.FontTypes font = Handler.FontTypes.RobotoCondensedRegular, bool autoFocus = false, bool hudMenuInput = false, InputField.LineType lineType = InputField.LineType.SingleLine, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string id = null, string destroyUi = null, bool update = false)
+	public Pair<CuiInputFieldComponent> CreateInputField(CuiElementContainer container, string parent, Position position, Render render, Needs needs, Outline outline, string text, int size, int characterLimit, bool readOnly, string command = null, TextAnchor align = TextAnchor.MiddleCenter, Handler.FontTypes font = Handler.FontTypes.RobotoCondensedRegular, bool autoFocus = false, bool hudMenuInput = false, InputField.LineType lineType = InputField.LineType.SingleLine, float fadeIn = 0f, string id = null, string destroyUi = null, bool update = false)
 	{
-		return Manager.InputField(container, parent, color, text, size, characterLimit, readOnly, xMin, xMax, yMin, yMax, OxMin, OxMax, OyMin, OyMax, command, align, font, false, autoFocus, hudMenuInput, lineType, fadeIn, fadeOut, needsCursor, needsKeyboard, id, destroyUi, update);
+		return Manager.InputField(container, parent, position, render, needs, outline, text, size, characterLimit, readOnly, command, align, font, false, autoFocus, hudMenuInput, lineType, id, destroyUi, update);
 	}
-	public Pair<CuiElement> CreateProtectedInputField(CuiElementContainer container, string parent, string color, string text, int size, int characterLimit, bool readOnly, float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, string command = null, TextAnchor align = TextAnchor.MiddleCenter, Handler.FontTypes font = Handler.FontTypes.RobotoCondensedRegular, bool autoFocus = false, bool hudMenuInput = false, InputField.LineType lineType = InputField.LineType.SingleLine, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string id = null, string destroyUi = null, bool update = false)
+	public Pair<CuiInputFieldComponent> CreateProtectedInputField(CuiElementContainer container, string parent, Position position, Render render, Needs needs, Outline outline, string text, int size, int characterLimit, bool readOnly, string command = null, TextAnchor align = TextAnchor.MiddleCenter, Handler.FontTypes font = Handler.FontTypes.RobotoCondensedRegular, bool autoFocus = false, bool hudMenuInput = false, InputField.LineType lineType = InputField.LineType.SingleLine, float fadeIn = 0f, string id = null, string destroyUi = null, bool update = false)
 	{
-		return Manager.InputField(container, parent, color, text, size, characterLimit, readOnly, xMin, xMax, yMin, yMax, OxMin, OxMax, OyMin, OyMax, command, align, font, true, autoFocus, hudMenuInput, lineType, fadeIn, fadeOut, needsCursor, needsKeyboard, id, destroyUi, update);
+		return Manager.InputField(container, parent, position, render, needs, outline, text, size, characterLimit, readOnly, command, align, font, true, autoFocus, hudMenuInput, lineType, id, destroyUi, update);
 	}
-	public Pair<CuiElement> CreateImage(CuiElementContainer container, string parent, uint png, string color, string material = null, float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string outlineColor = null, string outlineDistance = null, bool outlineUseGraphicAlpha = false, string id = null, string destroyUi = null, bool update = false)
+	public Pair<CuiRawImageComponent> CreateImage(CuiElementContainer container, string parent, Position position, Render render, Needs needs, Outline outline, uint png, string id = null, string destroyUi = null, bool update = false)
 	{
-		return Manager.Image(container, parent, png.ToString(), null, color, material, xMin, xMax, yMin, yMax, OxMin, OxMax, OyMin, OyMax, fadeIn, fadeOut, needsCursor, needsKeyboard, outlineColor, outlineDistance, outlineUseGraphicAlpha, id, destroyUi, update);
+		return Manager.Image(container, parent, position, render, needs, outline, png.ToString(), default, id, destroyUi, update);
 	}
-	public Pair<CuiElement> CreateImage(CuiElementContainer container, string parent, string url, string color, string material = null, float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string outlineColor = null, string outlineDistance = null, bool outlineUseGraphicAlpha = false, string id = null, string destroyUi = null, bool update = false)
+	public Pair<CuiRawImageComponent> CreateImage(CuiElementContainer container, string parent, Position position, Render render, Needs needs, Outline outline, string url, string id = null, string destroyUi = null, bool update = false)
 	{
-		if (!HasImage(url))
-		{
-			return Manager.Panel(container, parent, color, material, xMin, xMax, yMin, yMax, OxMin, OxMax, OyMin, OyMax,
-				false, fadeIn, fadeOut, needsCursor, needsKeyboard, outlineColor, outlineDistance,
-				outlineUseGraphicAlpha, id, destroyUi, update);
-		}
-
-		return Manager.Image(container, parent, GetImage(url), null, color, material, xMin, xMax, yMin, yMax, OxMin, OxMax, OyMin, OyMax, fadeIn, fadeOut, needsCursor, needsKeyboard, outlineColor, outlineDistance, outlineUseGraphicAlpha, id, destroyUi, update);
+		return Manager.Image(container, parent, position, render, needs, outline, GetImage(url), null, id, destroyUi, update);
 	}
 	public Pair<CuiElement> CreateImage(CuiElementContainer container, string parent, string url, float scale, string color, string material = null, float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string outlineColor = null, string outlineDistance = null, bool outlineUseGraphicAlpha = false, string id = null, string destroyUi = null, bool update = false)
 	{

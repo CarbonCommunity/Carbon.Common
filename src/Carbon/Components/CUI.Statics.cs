@@ -13,74 +13,11 @@ namespace Carbon.Components;
 
 public static class CUIStatics
 {
-	internal static string ProcessColor(string color)
+	public static readonly uint AddUiString = StringPool.Get("AddUi");
+
+	public static string ProcessColor(string color)
 	{
 		return color.StartsWith("#") ? CUI.HexToRustColor(color) : color;
-	}
-
-	public static CUI.Pair<string, CuiElement> UpdatePanel(this CUI cui, string id, string color, string material = null, float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, bool blur = false, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string outlineColor = null, string outlineDistance = null, bool outlineUseGraphicAlpha = false, string destroyUi = null)
-	{
-		return cui.CreatePanel(null, null, color, material, xMin, xMax, yMin, yMax, OxMin, OxMax, OyMin, OyMax, blur, fadeIn, fadeOut, needsCursor, needsKeyboard, outlineColor, outlineDistance, outlineUseGraphicAlpha, id, destroyUi, true);
-	}
-	public static CUI.Pair<CuiElement> UpdateText(this CUI cui, string id, string color, string text, int size, float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, TextAnchor align = TextAnchor.MiddleCenter, CUI.Handler.FontTypes font = CUI.Handler.FontTypes.RobotoCondensedRegular, VerticalWrapMode verticalOverflow = VerticalWrapMode.Overflow, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string outlineColor = null, string outlineDistance = null, bool outlineUseGraphicAlpha = false, string destroyUi = null)
-	{
-		return cui.CreateText(null, null, color, text, size, xMin, xMax, yMin, yMax, OxMin, OxMax, OyMin, OyMax, align, font, verticalOverflow, fadeIn, fadeOut, needsCursor, needsKeyboard, outlineColor, outlineDistance, outlineUseGraphicAlpha, id, destroyUi, true);
-	}
-	public static CUI.Pair<CuiElement, CuiElement> UpdateButton(this CUI cui, string id, string color, string textColor, string text, int size, string material = null, float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, string command = null, TextAnchor align = TextAnchor.MiddleCenter, CUI.Handler.FontTypes font = CUI.Handler.FontTypes.RobotoCondensedRegular, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string outlineColor = null, string outlineDistance = null, bool outlineUseGraphicAlpha = false, string destroyUi = null)
-	{
-		return cui.CreateButton(null, null, color, textColor, text, size, material, xMin, xMax, yMin, yMax, OxMin, OxMax, OyMin, OyMax, command, align, font, fadeIn, fadeOut, needsCursor, needsKeyboard, outlineColor, outlineDistance, outlineUseGraphicAlpha, id, destroyUi, true);
-	}
-	public static CUI.Pair<CuiElement, CuiElement> UpdateProtectedButton(this CUI cui, string id, string color, string textColor, string text, int size, string material = null, float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, string command = null, TextAnchor align = TextAnchor.MiddleCenter, CUI.Handler.FontTypes font = CUI.Handler.FontTypes.RobotoCondensedRegular, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string outlineColor = null, string outlineDistance = null, bool outlineUseGraphicAlpha = false, string destroyUi = null)
-	{
-		return cui.CreateProtectedButton(null, null, color, textColor, text, size, material, xMin, xMax, yMin, yMax, OxMin, OxMax, OyMin, OyMax, command, align, font, fadeIn, fadeOut, needsCursor, needsKeyboard, outlineColor, outlineDistance, outlineUseGraphicAlpha, id, destroyUi, true);
-	}
-	public static CUI.Pair<CuiElement> UpdateInputField(this CUI cui, string id, string color, string text, int size, int characterLimit, bool readOnly, float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, string command = null, TextAnchor align = TextAnchor.MiddleCenter, CUI.Handler.FontTypes font = CUI.Handler.FontTypes.RobotoCondensedRegular, bool autoFocus = false, bool hudMenuInput = false, InputField.LineType lineType = UnityEngine.UI.InputField.LineType.SingleLine, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string destroyUi = null)
-	{
-		return cui.CreateInputField(null, null, color, text, size, characterLimit, readOnly, xMin, xMax, yMin, yMax, OxMin, OxMax, OyMin, OyMax, command, align, font, autoFocus, hudMenuInput, lineType, fadeIn, fadeOut, needsCursor, needsKeyboard, id, destroyUi, true);
-	}
-	public static CUI.Pair<CuiElement> UpdateProtectedInputField(this CUI cui, string id, string color, string text, int size, int characterLimit, bool readOnly, float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, string command = null, TextAnchor align = TextAnchor.MiddleCenter, CUI.Handler.FontTypes font = CUI.Handler.FontTypes.RobotoCondensedRegular, bool autoFocus = false, bool hudMenuInput = false, InputField.LineType lineType = UnityEngine.UI.InputField.LineType.SingleLine, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string destroyUi = null)
-	{
-		return cui.CreateProtectedInputField(null, null, color, text, size, characterLimit, readOnly, xMin, xMax, yMin, yMax, OxMin, OxMax, OyMin, OyMax, command, align, font, autoFocus, hudMenuInput, lineType, fadeIn, fadeOut, needsCursor, needsKeyboard, id, destroyUi, true);
-	}
-	public static CUI.Pair<CuiElement> UpdateImage(this CUI cui, string id, uint png, string color, string material = null, float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string outlineColor = null, string outlineDistance = null, bool outlineUseGraphicAlpha = false, string destroyUi = null)
-	{
-		return cui.CreateImage(null, null, png, color, material, xMin, xMax, yMin, yMax, OxMin, OxMax, OyMin, OyMax, fadeIn, fadeOut, needsCursor, needsKeyboard, outlineColor, outlineDistance, outlineUseGraphicAlpha, id, destroyUi, true);
-	}
-	public static CUI.Pair<CuiElement> UpdateImage(this CUI cui, string id, string url, string color, string material = null, float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string outlineColor = null, string outlineDistance = null, bool outlineUseGraphicAlpha = false, string destroyUi = null)
-	{
-		return cui.CreateImage(null, null, url, color, material, xMin, xMax, yMin, yMax, OxMin, OxMax, OyMin, OyMax, fadeIn, fadeOut, needsCursor, needsKeyboard, outlineColor, outlineDistance, outlineUseGraphicAlpha, id, destroyUi, true);
-	}
-	public static CUI.Pair<CuiElement> UpdateImage(this CUI cui, string id, string url, float scale, string color, string material = null, float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string outlineColor = null, string outlineDistance = null, bool outlineUseGraphicAlpha = false, string destroyUi = null)
-	{
-		return cui.CreateImage(null, null, url, scale, color, material, xMin, xMax, yMin, yMax, OxMin, OxMax, OyMin, OyMax, fadeIn, fadeOut, needsCursor, needsKeyboard, outlineColor, outlineDistance, outlineUseGraphicAlpha, id, destroyUi, true);
-	}
-	public static CUI.Pair<CuiElement> UpdateSimpleImage(this CUI cui, string id, string png, string sprite, string color, string material = null, float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string outlineColor = null, string outlineDistance = null, bool outlineUseGraphicAlpha = false, string destroyUi = null)
-	{
-		return cui.CreateSimpleImage(null, null, png, sprite, color, material, xMin, xMax, yMin, yMax, OxMin, OxMax, OyMin, OyMax, fadeIn, fadeOut, needsCursor, needsKeyboard, outlineColor, outlineDistance, outlineUseGraphicAlpha, id, destroyUi, true);
-	}
-	public static CUI.Pair<CuiElement> UpdateSprite(this CUI cui, string id, string sprite, string color, string material = null, float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string outlineColor = null, string outlineDistance = null, bool outlineUseGraphicAlpha = false, string destroyUi = null)
-	{
-		return cui.CreateSprite(null, null, sprite, color, material, xMin, xMax, yMin, yMax, OxMin, OxMax, OyMin, OyMax, fadeIn, fadeOut, needsCursor, needsKeyboard, outlineColor, outlineDistance, outlineUseGraphicAlpha, id, destroyUi, true);
-	}
-	public static CUI.Pair<CuiElement> UpdateItemImage(this CUI cui, string id, int itemID, ulong skinID, string color, string material = null, float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string outlineColor = null, string outlineDistance = null, bool outlineUseGraphicAlpha = false, string destroyUi = null)
-	{
-		return cui.CreateItemImage(null, null, itemID, skinID, color, material, xMin, xMax, yMin, yMax, OxMin, OxMax, OyMin, OyMax, fadeIn, fadeOut, needsCursor, needsKeyboard, outlineColor, outlineDistance, outlineUseGraphicAlpha, id, destroyUi, true);
-	}
-	public static CUI.Pair<CuiElement> UpdateQRCodeImage(this CUI cui, string id, string text, string brandUrl, string brandColor, string brandBgColor, int pixels, bool transparent, bool quietZones, string color, float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string outlineColor = null, string outlineDistance = null, bool outlineUseGraphicAlpha = false, string destroyUi = null)
-	{
-		return cui.CreateQRCodeImage(null, null, text, brandUrl, brandColor, brandBgColor, pixels, transparent, quietZones, color, xMin, xMax, yMin, yMax, OxMin, OxMax, OyMin, OyMax, fadeIn, fadeOut, needsCursor, needsKeyboard, outlineColor, outlineDistance, outlineUseGraphicAlpha, id, destroyUi, true);
-	}
-	public static CUI.Pair<CuiElement> UpdateClientImage(this CUI cui, string id, string url, string color, string material = null, float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string outlineColor = null, string outlineDistance = null, bool outlineUseGraphicAlpha = false, string destroyUi = null)
-	{
-		return cui.CreateClientImage(null, null, url, color, material, xMin, xMax, yMin, yMax, OxMin, OxMax, OyMin, OyMax, fadeIn, fadeOut, needsCursor, needsKeyboard, outlineColor, outlineDistance, outlineUseGraphicAlpha, id, destroyUi, true);
-	}
-	public static CUI.Pair<CuiElement> UpdateCountdown(this CUI cui, string id, int startTime, int endTime, int step, string command, float fadeIn = 0f, float fadeOut = 0f, string destroyUi = null)
-	{
-		return cui.CreateCountdown(null, null, startTime, endTime, step, command, fadeIn, fadeOut, id, destroyUi, true);
-	}
-	public static CUI.Pair<CuiElement> UpdateScrollView(this CUI cui, string id, bool vertical, bool horizontal, ScrollRect.MovementType movementType, float elasticity, bool inertia, float decelerationRate, float scrollSensitivity, string maskSoftness, out CuiRectTransform contentTransformComponent, out CuiScrollbar horizontalScrollBar, out CuiScrollbar verticalScrollBar, float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string destroyUi = null)
-	{
-		return cui.CreateScrollView(null, null, vertical, horizontal, movementType, elasticity, inertia, decelerationRate, scrollSensitivity, maskSoftness, out contentTransformComponent, out horizontalScrollBar, out verticalScrollBar, xMin, xMax, yMin, yMax, OxMin, OxMax, OyMin, OyMax, fadeIn, fadeOut, needsCursor, needsKeyboard, id, destroyUi, true);
 	}
 
 	public static CUI.Pair<CuiImageComponent> Panel(this CUI.Handler cui, CuiElementContainer container, string parent, CUI.Position position, CUI.Render render, CUI.Needs needs, CUI.Outline outline, string id = null, string destroyUi = null, bool update = false)
@@ -123,7 +60,7 @@ public static class CUIStatics
 		if (!update) container?.Add(element);
 		return new CUI.Pair<CuiImageComponent>(id, element, image, rect, outlineComp);
 	}
-	public static CUI.Pair<CuiTextComponent> Text(this CUI.Handler cui, CuiElementContainer container, string parent, string color, string text, int size, TextAnchor align, CUI.Handler.FontTypes font, VerticalWrapMode verticalOverflow,CUI.Position position, CUI.Render render, CUI.Needs needs, CUI.Outline outline, string id = null, string destroyUi = null, bool update = false)
+	public static CUI.Pair<CuiTextComponent> Text(this CUI.Handler cui, CuiElementContainer container, string parent, CUI.Position position, CUI.Render render, CUI.Needs needs, CUI.Outline outline, string text, int size, TextAnchor align, CUI.Handler.FontTypes font, VerticalWrapMode verticalOverflow, string id = null, string destroyUi = null, bool update = false)
 	{
 		id ??= cui.AppendId();
 
@@ -135,7 +72,7 @@ public static class CUIStatics
 		label.FontSize = size;
 		label.Align = align;
 		label.Font = cui.GetFont(font);
-		label.Color = ProcessColor(color);
+		label.Color = ProcessColor(render.Color);
 		label.FadeIn = render.FadeIn;
 		label.VerticalOverflow = verticalOverflow;
 		element.Components.Add(label);
@@ -162,7 +99,7 @@ public static class CUIStatics
 		if (!update) container?.Add(element);
 		return new CUI.Pair<CuiTextComponent>(id, element, label, rect, outlineComp);
 	}
-	public static CUI.Pair<CuiButtonComponent, CuiElement, CuiTextComponent, CuiRectTransformComponent> Button(this CUI.Handler cui, CuiElementContainer container, string parent, string textColor, string text, int size, string command, TextAnchor align, CUI.Handler.FontTypes font, bool @protected, CUI.Position position, CUI.Render render, CUI.Needs needs, CUI.Outline outline, string id = null, string destroyUi = null, bool update = false)
+	public static CUI.Pair<CuiButtonComponent, CuiElement, CuiTextComponent, CuiRectTransformComponent> Button(this CUI.Handler cui, CuiElementContainer container, string parent, CUI.Position position, CUI.Render render, CUI.Needs needs, CUI.Outline outline, string textColor, string text, int size, string command, TextAnchor align, CUI.Handler.FontTypes font, bool @protected, string id = null, string destroyUi = null, bool update = false)
 	{
 		id ??= cui.AppendId();
 
@@ -228,13 +165,14 @@ public static class CUIStatics
 
 		return new CUI.Pair<CuiButtonComponent, CuiElement, CuiTextComponent, CuiRectTransformComponent>(id, element, button, textElement, textComp, textRectComp, rect, outlineComp);
 	}
-	public static CUI.Pair<CuiElement> InputField(this CUI.Handler cui, CuiElementContainer container, string parent, string color, string text, int size, int characterLimit, bool readOnly, float xMin, float xMax, float yMin, float yMax, float OxMin, float OxMax, float OyMin, float OyMax, string command, TextAnchor align, CUI.Handler.FontTypes font, bool @protected, bool autoFocus = false, bool hudMenuInput = false, InputField.LineType lineType = UnityEngine.UI.InputField.LineType.SingleLine, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string id = null, string destroyUi = null, bool update = false)
+	public static CUI.Pair<CuiInputFieldComponent> InputField(this CUI.Handler cui, CuiElementContainer container, string parent, CUI.Position position, CUI.Render render, CUI.Needs needs, CUI.Outline outline, string text, int size, int characterLimit, bool readOnly, string command, TextAnchor align, CUI.Handler.FontTypes font, bool @protected, bool autoFocus = false, bool hudMenuInput = false, InputField.LineType lineType = UnityEngine.UI.InputField.LineType.SingleLine, string id = null, string destroyUi = null, bool update = false)
 	{
-		if (id == null) id = cui.AppendId();
-		var element = cui.TakeFromPool(id, parent, fadeOut, destroyUi, update);
+		id ??= cui.AppendId();
+
+		var element = cui.TakeFromPool(id, parent, render.FadeOut, destroyUi, update);
 
 		var inputField = cui.TakeFromPoolInputField();
-		inputField.Color = ProcessColor(color);
+		inputField.Color = ProcessColor(render.Color);
 		inputField.Text = string.IsNullOrEmpty(text) ? string.Empty : text;
 		inputField.FontSize = size;
 		inputField.Font = cui.GetFont(font);
@@ -247,193 +185,207 @@ public static class CUIStatics
 		inputField.HudMenuInput = hudMenuInput;
 		element.Components.Add(inputField);
 
-		if (needsCursor) element.Components.Add(cui.TakeFromPoolNeedsCursor());
-		if (needsKeyboard && !inputField.ReadOnly) element.Components.Add(cui.TakeFromPoolNeedsKeyboard());
+		if (needs.Cursor) element.Components.Add(CUI.Handler.CachedNeedsCursor);
+		if (needs.Keyboard && !inputField.ReadOnly) element.Components.Add(CUI.Handler.CachedNeedsKeyboard);
 
-		if (!update || (update && (xMin != 0 || xMax != 1 || yMin != 0 || yMax != 1)))
-		{
-			var rect = cui.TakeFromPoolRect();
-			rect.AnchorMin = $"{xMin} {yMin}";
-			rect.AnchorMax = $"{xMax} {yMax}";
-			rect.OffsetMin = $"{OxMin} {OyMin}";
-			rect.OffsetMax = $"{OxMax} {OyMax}";
-			element.Components.Add(rect);
-		}
+		var rect = cui.TakeFromPoolRect();
+		rect.AnchorMin = position.AnchorMin;
+		rect.AnchorMax = position.AnchorMax;
+		rect.OffsetMin = position.OffsetMin;
+		rect.OffsetMax = position.OffsetMax;
+		element.Components.Add(rect);
 
 		if (!update) container?.Add(element);
-		return new CUI.Pair<string, CuiElement>(id, element);
+		return new CUI.Pair<CuiInputFieldComponent>(id, element, inputField, rect);
 	}
-	public static CUI.Pair<CuiElement> Image(this CUI.Handler cui, CuiElementContainer container, string parent, string png, string url, string color, string material, float xMin, float xMax, float yMin, float yMax, float OxMin, float OxMax, float OyMin, float OyMax, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string outlineColor = null, string outlineDistance = null, bool outlineUseGraphicAlpha = false, string id = null, string destroyUi = null, bool update = false)
+	public static CUI.Pair<CuiRawImageComponent> Image(this CUI.Handler cui, CuiElementContainer container, string parent, CUI.Position position, CUI.Render render, CUI.Needs needs, CUI.Outline outline, string png, string url, string id = null, string destroyUi = null, bool update = false)
 	{
-		if (id == null) id = cui.AppendId();
-		var element = cui.TakeFromPool(id, parent, fadeOut, destroyUi, update);
+		id ??= cui.AppendId();
+
+		var element = cui.TakeFromPool(id, parent, render.FadeOut, destroyUi, update);
+		var outlineComp = (CuiOutlineComponent)default;
 
 		var rawImage = cui.TakeFromPoolRawImage();
 		rawImage.Png = png;
 		rawImage.Url = url;
-		rawImage.FadeIn = fadeIn;
-		rawImage.Color = ProcessColor(color);
-		if (material != null) rawImage.Material = material;
-		element.Components.Add(rawImage);
+		rawImage.FadeIn = render.FadeIn;
+		rawImage.Color = ProcessColor(render.Color);
 
-		if (!update || (update && (xMin != 0 || xMax != 1 || yMin != 0 || yMax != 1)))
+		if (render.HasMaterial)
 		{
-			var rect = cui.TakeFromPoolRect();
-			rect.AnchorMin = $"{xMin} {yMin}";
-			rect.AnchorMax = $"{xMax} {yMax}";
-			rect.OffsetMin = $"{OxMin} {OyMin}";
-			rect.OffsetMax = $"{OxMax} {OyMax}";
-			element.Components.Add(rect);
+			rawImage.Material = render.Material;
 		}
 
-		if (needsCursor) element.Components.Add(cui.TakeFromPoolNeedsCursor());
-		if (needsKeyboard) element.Components.Add(cui.TakeFromPoolNeedsKeyboard());
+		element.Components.Add(rawImage);
 
-		if (outlineColor != null)
+		var rect = cui.TakeFromPoolRect();
+		rect.AnchorMin = position.AnchorMin;
+		rect.AnchorMax = position.AnchorMax;
+		rect.OffsetMin = position.OffsetMin;
+		rect.OffsetMax = position.OffsetMax;
+		element.Components.Add(rect);
+
+		if (needs.Cursor) element.Components.Add(CUI.Handler.CachedNeedsCursor);
+		if (needs.Keyboard) element.Components.Add(CUI.Handler.CachedNeedsKeyboard);
+
+		if (outline.Valid)
 		{
-			var outline = cui.TakeFromPoolOutline();
-			outline.Color = ProcessColor(outlineColor);
-			outline.Distance = outlineDistance;
-			outline.UseGraphicAlpha = outlineUseGraphicAlpha;
-			element.Components.Add(outline);
+			outlineComp = cui.TakeFromPoolOutline();
+			outlineComp.Color = ProcessColor(outline.Color);
+			outlineComp.Distance = outline.Distance;
+			outlineComp.UseGraphicAlpha = outline.UseGraphicAlpha;
+			element.Components.Add(outlineComp);
 		}
 
 		if (!update) container?.Add(element);
-		return new CUI.Pair<string, CuiElement>(id, element);
+		return new CUI.Pair<CuiRawImageComponent>(id, element, rawImage, rect, outlineComp);
 	}
-	public static CUI.Pair<CuiElement> SimpleImage(this CUI.Handler cui, CuiElementContainer container, string parent, string png, string sprite, string color, string material, float xMin, float xMax, float yMin, float yMax, float OxMin, float OxMax, float OyMin, float OyMax, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string outlineColor = null, string outlineDistance = null, bool outlineUseGraphicAlpha = false, string id = null, string destroyUi = null, bool update = false)
+	public static CUI.Pair<CuiImageComponent> SimpleImage(this CUI.Handler cui, CuiElementContainer container, string parent, CUI.Position position, CUI.Render render, CUI.Needs needs, CUI.Outline outline, string png, string sprite, string id = null, string destroyUi = null, bool update = false)
 	{
-		if (id == null) id = cui.AppendId();
-		var element = cui.TakeFromPool(id, parent, fadeOut, destroyUi, update);
+		id ??= cui.AppendId();
+
+		var element = cui.TakeFromPool(id, parent, render.FadeOut, destroyUi, update);
+		var outlineComp = (CuiOutlineComponent)default;
 
 		var simpleImage = cui.TakeFromPoolImage();
 		simpleImage.Png = png;
 		simpleImage.Sprite = sprite;
-		simpleImage.FadeIn = fadeIn;
-		simpleImage.Color = ProcessColor(color);
-		if (material != null) simpleImage.Material = material;
-		element.Components.Add(simpleImage);
+		simpleImage.FadeIn = render.FadeIn;
+		simpleImage.Color = ProcessColor(render.Color);
 
-		if (!update || (update && (xMin != 0 || xMax != 1 || yMin != 0 || yMax != 1)))
+		if (render.HasMaterial)
 		{
-			var rect = cui.TakeFromPoolRect();
-			rect.AnchorMin = $"{xMin} {yMin}";
-			rect.AnchorMax = $"{xMax} {yMax}";
-			rect.OffsetMin = $"{OxMin} {OyMin}";
-			rect.OffsetMax = $"{OxMax} {OyMax}";
-			element.Components.Add(rect);
+			simpleImage.Material = render.Material;
 		}
 
-		if (needsCursor) element.Components.Add(cui.TakeFromPoolNeedsCursor());
-		if (needsKeyboard) element.Components.Add(cui.TakeFromPoolNeedsKeyboard());
+		element.Components.Add(simpleImage);
 
-		if (outlineColor != null)
+		var rect = cui.TakeFromPoolRect();
+		rect.AnchorMin = position.AnchorMin;
+		rect.AnchorMax = position.AnchorMax;
+		rect.OffsetMin = position.OffsetMin;
+		rect.OffsetMax = position.OffsetMax;
+		element.Components.Add(rect);
+
+		if (needs.Cursor) element.Components.Add(CUI.Handler.CachedNeedsCursor);
+		if (needs.Keyboard) element.Components.Add(CUI.Handler.CachedNeedsKeyboard);
+
+		if (outline.Valid)
 		{
-			var outline = cui.TakeFromPoolOutline();
-			outline.Color = ProcessColor(outlineColor);
-			outline.Distance = outlineDistance;
-			outline.UseGraphicAlpha = outlineUseGraphicAlpha;
-			element.Components.Add(outline);
+			outlineComp = cui.TakeFromPoolOutline();
+			outlineComp.Color = ProcessColor(outline.Color);
+			outlineComp.Distance = outline.Distance;
+			outlineComp.UseGraphicAlpha = outline.UseGraphicAlpha;
+			element.Components.Add(outlineComp);
 		}
 
 		if (!update) container?.Add(element);
-		return new CUI.Pair<string, CuiElement>(id, element);
+		return new CUI.Pair<CuiImageComponent>(id, element, simpleImage, rect, outlineComp);
 	}
-	public static CUI.Pair<CuiElement> Sprite(this CUI.Handler cui, CuiElementContainer container, string parent, string sprite, string color, string material, float xMin, float xMax, float yMin, float yMax, float OxMin, float OxMax, float OyMin, float OyMax, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string outlineColor = null, string outlineDistance = null, bool outlineUseGraphicAlpha = false, string id = null, string destroyUi = null, bool update = false)
+	public static CUI.Pair<CuiRawImageComponent> Sprite(this CUI.Handler cui, CuiElementContainer container, string parent, CUI.Position position, CUI.Render render, CUI.Needs needs, CUI.Outline outline, string sprite, string id = null, string destroyUi = null, bool update = false)
 	{
-		if (id == null) id = cui.AppendId();
-		var element = cui.TakeFromPool(id, parent, fadeOut, destroyUi, update);
+		id ??= cui.AppendId();
+
+		var element = cui.TakeFromPool(id, parent, render.FadeOut, destroyUi, update);
+		var outlineComp = (CuiOutlineComponent)default;
 
 		var rawImage = cui.TakeFromPoolRawImage();
 		rawImage.Sprite = sprite;
-		rawImage.FadeIn = fadeIn;
-		rawImage.Color = ProcessColor(color);
-		if (material != null) rawImage.Material = material;
-		element.Components.Add(rawImage);
+		rawImage.FadeIn = render.FadeIn;
+		rawImage.Color = ProcessColor(render.Color);
 
-		if (!update || (update && (xMin != 0 || xMax != 1 || yMin != 0 || yMax != 1)))
+		if (render.HasMaterial)
 		{
-			var rect = cui.TakeFromPoolRect();
-			rect.AnchorMin = $"{xMin} {yMin}";
-			rect.AnchorMax = $"{xMax} {yMax}";
-			rect.OffsetMin = $"{OxMin} {OyMin}";
-			rect.OffsetMax = $"{OxMax} {OyMax}";
-			element.Components.Add(rect);
+			rawImage.Material = render.Material;
 		}
 
-		if (needsCursor) element.Components.Add(cui.TakeFromPoolNeedsCursor());
-		if (needsKeyboard) element.Components.Add(cui.TakeFromPoolNeedsKeyboard());
+		element.Components.Add(rawImage);
 
-		if (outlineColor != null)
+		var rect = cui.TakeFromPoolRect();
+		rect.AnchorMin = position.AnchorMin;
+		rect.AnchorMax = position.AnchorMax;
+		rect.OffsetMin = position.OffsetMin;
+		rect.OffsetMax = position.OffsetMax;
+		element.Components.Add(rect);
+
+		if (needs.Cursor) element.Components.Add(CUI.Handler.CachedNeedsCursor);
+		if (needs.Keyboard) element.Components.Add(CUI.Handler.CachedNeedsKeyboard);
+
+		if (outline.Valid)
 		{
-			var outline = cui.TakeFromPoolOutline();
-			outline.Color = ProcessColor(outlineColor);
-			outline.Distance = outlineDistance;
-			outline.UseGraphicAlpha = outlineUseGraphicAlpha;
-			element.Components.Add(outline);
+			outlineComp = cui.TakeFromPoolOutline();
+			outlineComp.Color = ProcessColor(outline.Color);
+			outlineComp.Distance = outline.Distance;
+			outlineComp.UseGraphicAlpha = outline.UseGraphicAlpha;
+			element.Components.Add(outlineComp);
 		}
 
 		if (!update) container?.Add(element);
-		return new CUI.Pair<string, CuiElement>(id, element);
+		return new CUI.Pair<CuiRawImageComponent>(id, element, rawImage, rect, outlineComp);
 	}
-	public static CUI.Pair<CuiElement> ItemImage(this CUI.Handler cui, CuiElementContainer container, string parent, int itemID, ulong skinID, string color, string material, float xMin, float xMax, float yMin, float yMax, float OxMin, float OxMax, float OyMin, float OyMax, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string outlineColor = null, string outlineDistance = null, bool outlineUseGraphicAlpha = false, string id = null, string destroyUi = null, bool update = false)
+	public static CUI.Pair<CuiImageComponent> ItemImage(this CUI.Handler cui, CuiElementContainer container, string parent, CUI.Position position, CUI.Render render, CUI.Needs needs, CUI.Outline outline, int itemID, ulong skinID, string id = null, string destroyUi = null, bool update = false)
 	{
-		if (id == null) id = cui.AppendId();
-		var element = cui.TakeFromPool(id, parent, fadeOut, destroyUi, update);
+		id ??= cui.AppendId();
 
-		var rawImage = cui.TakeFromPoolImage();
-		rawImage.ItemId = itemID;
-		rawImage.SkinId = skinID;
-		rawImage.FadeIn = fadeIn;
-		rawImage.Color = ProcessColor(color);
-		if (material != null) rawImage.Material = material;
-		element.Components.Add(rawImage);
+		var element = cui.TakeFromPool(id, parent, render.FadeOut, destroyUi, update);
+		var outlineComp = (CuiOutlineComponent)default;
 
-		if (!update || (update && (xMin != 0 || xMax != 1 || yMin != 0 || yMax != 1)))
+		var image = cui.TakeFromPoolImage();
+		image.ItemId = itemID;
+		image.SkinId = skinID;
+		image.FadeIn = render.FadeIn;
+		image.Color = ProcessColor(render.Color);
+
+		if (render.HasMaterial)
 		{
-			var rect = cui.TakeFromPoolRect();
-			rect.AnchorMin = $"{xMin} {yMin}";
-			rect.AnchorMax = $"{xMax} {yMax}";
-			rect.OffsetMin = $"{OxMin} {OyMin}";
-			rect.OffsetMax = $"{OxMax} {OyMax}";
-			element.Components.Add(rect);
+			image.Material = render.Material;
 		}
 
-		if (needsCursor) element.Components.Add(cui.TakeFromPoolNeedsCursor());
-		if (needsKeyboard) element.Components.Add(cui.TakeFromPoolNeedsKeyboard());
+		element.Components.Add(image);
 
-		if (outlineColor != null)
+		var rect = cui.TakeFromPoolRect();
+		rect.AnchorMin = position.AnchorMin;
+		rect.AnchorMax = position.AnchorMax;
+		rect.OffsetMin = position.OffsetMin;
+		rect.OffsetMax = position.OffsetMax;
+		element.Components.Add(rect);
+
+		if (needs.Cursor) element.Components.Add(CUI.Handler.CachedNeedsCursor);
+		if (needs.Keyboard) element.Components.Add(CUI.Handler.CachedNeedsKeyboard);
+
+		if (outline.Valid)
 		{
-			var outline = cui.TakeFromPoolOutline();
-			outline.Color = ProcessColor(outlineColor);
-			outline.Distance = outlineDistance;
-			outline.UseGraphicAlpha = outlineUseGraphicAlpha;
-			element.Components.Add(outline);
+			outlineComp = cui.TakeFromPoolOutline();
+			outlineComp.Color = ProcessColor(outline.Color);
+			outlineComp.Distance = outline.Distance;
+			outlineComp.UseGraphicAlpha = outline.UseGraphicAlpha;
+			element.Components.Add(outlineComp);
 		}
 
 		if (!update) container?.Add(element);
-		return new CUI.Pair<string, CuiElement>(id, element);
+		return new CUI.Pair<CuiImageComponent>(id, element, image, rect, outlineComp);
 	}
-	public static CUI.Pair<CuiElement> Countdown(this CUI.Handler cui, CuiElementContainer container, string parent, int startTime, int endTime, int step, string command, float fadeIn = 0f, float fadeOut = 0f, string id = null, string destroyUi = null, bool update = false)
+	public static CUI.Pair<CuiCountdownComponent> Countdown(this CUI.Handler cui, CuiElementContainer container, string parent, CUI.Render render, int startTime, int endTime, int step, string command, string id = null, string destroyUi = null, bool update = false)
 	{
-		if (id == null) id = cui.AppendId();
-		var element = cui.TakeFromPool(id, parent, fadeOut, destroyUi, update);
+		id ??= cui.AppendId();
+
+		var element = cui.TakeFromPool(id, parent, render.FadeOut, destroyUi, update);
 
 		var countdown = cui.TakeFromPoolCountdown();
 		countdown.StartTime = startTime;
 		countdown.EndTime = endTime;
 		countdown.Step = step;
 		countdown.Command = command;
-		countdown.FadeIn = fadeIn;
+		countdown.FadeIn = render.FadeIn;
 		element.Components.Add(countdown);
 
 		if (!update) container?.Add(element);
-		return new CUI.Pair<string, CuiElement>(id, element);
+		return new CUI.Pair<CuiCountdownComponent>(id, element, countdown);
 	}
-	public static CUI.Pair<CuiElement> ScrollView(this CUI.Handler cui, CuiElementContainer container, string parent, bool vertical, bool horizontal, ScrollRect.MovementType movementType, float elasticity, bool inertia, float decelerationRate, float scrollSensitivity, string maskSoftness, out CuiRectTransform contentTransformComponent, out CuiScrollbar horizontalScrollBar, out CuiScrollbar verticalScrollBar, float xMin, float xMax, float yMin, float yMax, float OxMin, float OxMax, float OyMin, float OyMax, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string id = null, string destroyUi = null, bool update = false)
+	public static CUI.Pair<CuiScrollViewComponent> ScrollView(this CUI.Handler cui, CuiElementContainer container, string parent, CUI.Position position, CUI.Render render, CUI.Needs needs, CUI.Outline outline, bool vertical, bool horizontal, ScrollRect.MovementType movementType, float elasticity, bool inertia, float decelerationRate, float scrollSensitivity, string maskSoftness, out CuiRectTransform contentTransformComponent, out CuiScrollbar horizontalScrollBar, out CuiScrollbar verticalScrollBar, string id = null, string destroyUi = null, bool update = false)
 	{
 		if (id == null) id = cui.AppendId();
-		var element = cui.TakeFromPool(id, parent, fadeOut, destroyUi, update);
+		var element = cui.TakeFromPool(id, parent, render.FadeOut, destroyUi, update);
 
 		var scrollview = cui.TakeFromPoolScrollView();
 		scrollview.Vertical = vertical;
@@ -450,24 +402,19 @@ public static class CUIStatics
 
 		element.Components.Add(scrollview);
 
-		if (!update || (update && (xMin != 0 || xMax != 1 || yMin != 0 || yMax != 1)))
-		{
-			var rect = cui.TakeFromPoolRect();
-			rect.AnchorMin = $"{xMin} {yMin}";
-			rect.AnchorMax = $"{xMax} {yMax}";
-			rect.OffsetMin = $"{OxMin} {OyMin}";
-			rect.OffsetMax = $"{OxMax} {OyMax}";
-			element.Components.Add(rect);
-		}
+		var rect = cui.TakeFromPoolRect();
+		rect.AnchorMin = position.AnchorMin;
+		rect.AnchorMax = position.AnchorMax;
+		rect.OffsetMin = position.OffsetMin;
+		rect.OffsetMax = position.OffsetMax;
+		element.Components.Add(rect);
 
-		if (needsCursor) element.Components.Add(cui.TakeFromPoolNeedsCursor());
-		if (needsKeyboard) element.Components.Add(cui.TakeFromPoolNeedsKeyboard());
+		if (needs.Cursor) element.Components.Add(CUI.Handler.CachedNeedsCursor);
+		if (needs.Keyboard) element.Components.Add(CUI.Handler.CachedNeedsKeyboard);
 
 		if (!update) container?.Add(element);
-		return new CUI.Pair<string, CuiElement>(id, element);
+		return new CUI.Pair<CuiScrollViewComponent>(id, element, scrollview, rect);
 	}
-
-	public static readonly uint AddUiString = StringPool.Get("AddUi");
 
 	public static void Send(this CuiElementContainer container, BasePlayer player)
 	{
