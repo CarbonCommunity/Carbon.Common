@@ -63,12 +63,12 @@ public readonly partial struct CUI : IDisposable
     #endregion
 
     #region Methods
-    
-    public CuiElementContainer CreateContainer(string panel, Transform transform, Render render, Needs needs, ClientPanels parent = ClientPanels.OverlayNonScaled, string destroyUi = null)
+
+    public CuiElementContainer CreateContainer(string panel, Transform transform, Render render = default, Needs needs = default, ClientPanels parent = ClientPanels.OverlayNonScaled, string destroyUi = null)
     {
         return CreateContainerParent(panel, transform, render, needs, GetClientPanel(parent), destroyUi);
     }
-    public CuiElementContainer CreateContainerParent(string panel, Transform transform, Render render, Needs needs, string parentName = "OverlayNonScaled", string destroyUi = null)
+    public CuiElementContainer CreateContainerParent(string panel, Transform transform, Render render = default, Needs needs = default, string parentName = "OverlayNonScaled", string destroyUi = null)
 	{
 		var container = Manager.TakeFromPoolContainer();
 		container.Name = panel;
@@ -99,57 +99,58 @@ public readonly partial struct CUI : IDisposable
 		container.Add(Manager.TakeFromPool(Manager.AppendId(), parentName));
 		return container;
 	}
-	public Pair<CuiImageComponent> CreatePanel(CuiElementContainer container, string parent, Transform transform, Render render, Needs needs, Outline outline, string id = null, string destroyUi = null, bool update = false)
+
+	public Pair<CuiImageComponent> CreatePanel(CuiElementContainer container, string parent, Transform transform, Render render = default, Needs needs = default, Outline outline = default, string id = null, string destroyUi = null, bool update = false)
 	{
 		return Manager.Panel(container, parent, transform, render, needs, outline, id, destroyUi, update);
 	}
-	public Pair<CuiTextComponent> CreateText(CuiElementContainer container, string parent, Transform transform, Render render, Needs needs, Outline outline, string text, int size, TextAnchor align = TextAnchor.MiddleCenter, Handler.FontTypes font = Handler.FontTypes.RobotoCondensedRegular, VerticalWrapMode verticalOverflow = VerticalWrapMode.Overflow, string id = null, string destroyUi = null, bool update = false)
+	public Pair<CuiTextComponent> CreateText(CuiElementContainer container, string parent, Transform transform, string text, int size, Render render = default, Needs needs = default, Outline outline = default, TextAnchor align = TextAnchor.MiddleCenter, Handler.FontTypes font = Handler.FontTypes.RobotoCondensedRegular, VerticalWrapMode verticalOverflow = VerticalWrapMode.Overflow, string id = null, string destroyUi = null, bool update = false)
 	{
 		return Manager.Text(container, parent, transform, render, needs, outline, text, size, align, font, verticalOverflow, id, destroyUi, update);
 	}
-	public Pair<CuiButtonComponent, CuiElement, CuiTextComponent, CuiRectTransformComponent> CreateButton(CuiElementContainer container, string parent, Transform transform, Render render, Needs needs, Outline outline, string textColor, string text, int size, string command = null, TextAnchor align = TextAnchor.MiddleCenter, Handler.FontTypes font = Handler.FontTypes.RobotoCondensedRegular, string id = null, string destroyUi = null, bool update = false)
+	public Pair<CuiButtonComponent, CuiElement, CuiTextComponent, CuiRectTransformComponent> CreateButton(CuiElementContainer container, string parent, Transform transform, string textColor, string text, int size, Render render = default, Needs needs = default, Outline outline = default, string command = null, TextAnchor align = TextAnchor.MiddleCenter, Handler.FontTypes font = Handler.FontTypes.RobotoCondensedRegular, string id = null, string destroyUi = null, bool update = false)
 	{
 		return Manager.Button(container, parent, transform, render, needs, outline, textColor, text, size, command, align, font, false, id, destroyUi, update);
 	}
-	public Pair<CuiButtonComponent, CuiElement, CuiTextComponent, CuiRectTransformComponent> CreateProtectedButton(CuiElementContainer container, string parent, Transform transform, Render render, Needs needs, Outline outline, string textColor, string text, int size, string command = null, TextAnchor align = TextAnchor.MiddleCenter, Handler.FontTypes font = Handler.FontTypes.RobotoCondensedRegular, string id = null, string destroyUi = null, bool update = false)
+	public Pair<CuiButtonComponent, CuiElement, CuiTextComponent, CuiRectTransformComponent> CreateProtectedButton(CuiElementContainer container, string parent, Transform transform, string textColor, string text, int size, Render render = default, Needs needs = default, Outline outline = default, string command = null, TextAnchor align = TextAnchor.MiddleCenter, Handler.FontTypes font = Handler.FontTypes.RobotoCondensedRegular, string id = null, string destroyUi = null, bool update = false)
 	{
 		return Manager.Button(container, parent, transform, render, needs, outline, textColor, text, size, command, align, font, true, id, destroyUi, update);
 	}
-	public Pair<CuiInputFieldComponent> CreateInputField(CuiElementContainer container, string parent, Transform transform, Render render, Needs needs, Outline outline, string text, int size, int characterLimit, bool readOnly, string command = null, TextAnchor align = TextAnchor.MiddleCenter, Handler.FontTypes font = Handler.FontTypes.RobotoCondensedRegular, bool autoFocus = false, bool hudMenuInput = false, InputField.LineType lineType = InputField.LineType.SingleLine, float fadeIn = 0f, string id = null, string destroyUi = null, bool update = false)
+	public Pair<CuiInputFieldComponent> CreateInputField(CuiElementContainer container, string parent, Transform transform, string text, int size, int characterLimit, bool readOnly, Render render = default, Needs needs = default, Outline outline = default, string command = null, TextAnchor align = TextAnchor.MiddleCenter, Handler.FontTypes font = Handler.FontTypes.RobotoCondensedRegular, bool autoFocus = false, bool hudMenuInput = false, InputField.LineType lineType = InputField.LineType.SingleLine, float fadeIn = 0f, string id = null, string destroyUi = null, bool update = false)
 	{
 		return Manager.InputField(container, parent, transform, render, needs, outline, text, size, characterLimit, readOnly, command, align, font, false, autoFocus, hudMenuInput, lineType, id, destroyUi, update);
 	}
-	public Pair<CuiInputFieldComponent> CreateProtectedInputField(CuiElementContainer container, string parent, Transform transform, Render render, Needs needs, Outline outline, string text, int size, int characterLimit, bool readOnly, string command = null, TextAnchor align = TextAnchor.MiddleCenter, Handler.FontTypes font = Handler.FontTypes.RobotoCondensedRegular, bool autoFocus = false, bool hudMenuInput = false, InputField.LineType lineType = InputField.LineType.SingleLine, float fadeIn = 0f, string id = null, string destroyUi = null, bool update = false)
+	public Pair<CuiInputFieldComponent> CreateProtectedInputField(CuiElementContainer container, string parent, Transform transform, string text, int size, int characterLimit, bool readOnly, Render render = default, Needs needs = default, Outline outline = default, string command = null, TextAnchor align = TextAnchor.MiddleCenter, Handler.FontTypes font = Handler.FontTypes.RobotoCondensedRegular, bool autoFocus = false, bool hudMenuInput = false, InputField.LineType lineType = InputField.LineType.SingleLine, string id = null, string destroyUi = null, bool update = false)
 	{
 		return Manager.InputField(container, parent, transform, render, needs, outline, text, size, characterLimit, readOnly, command, align, font, true, autoFocus, hudMenuInput, lineType, id, destroyUi, update);
 	}
-	public Pair<CuiRawImageComponent> CreateImage(CuiElementContainer container, string parent, Transform transform, Render render, Needs needs, Outline outline, uint png, string id = null, string destroyUi = null, bool update = false)
+	public Pair<CuiRawImageComponent> CreateImage(CuiElementContainer container, string parent, Transform transform, uint png, Render render = default, Needs needs = default, Outline outline = default, string id = null, string destroyUi = null, bool update = false)
 	{
 		return Manager.Image(container, parent, transform, render, needs, outline, png.ToString(), default, id, destroyUi, update);
 	}
-	public Pair<CuiRawImageComponent> CreateImage(CuiElementContainer container, string parent, Transform transform, Render render, Needs needs, Outline outline, string url, string id = null, string destroyUi = null, bool update = false)
+	public Pair<CuiRawImageComponent> CreateImage(CuiElementContainer container, string parent, Transform transform, string url, Render render = default, Needs needs = default, Outline outline = default, string id = null, string destroyUi = null, bool update = false)
 	{
 		return Manager.Image(container, parent, transform, render, needs, outline, GetImage(url), null, id, destroyUi, update);
 	}
-	public Pair<CuiRawImageComponent> CreateImage(CuiElementContainer container, string parent, Transform transform, Render render, Needs needs, Outline outline, string url, float scale, string id = null, string destroyUi = null, bool update = false)
+	public Pair<CuiRawImageComponent> CreateImage(CuiElementContainer container, string parent, Transform transform, string url, float scale, Render render = default, Needs needs = default, Outline outline = default, string id = null, string destroyUi = null, bool update = false)
 	{
 		return Manager.Image(container, parent, transform, render, needs, outline, GetImage(url, scale), null, id, destroyUi, update);
 	}
-	public Pair<CuiImageComponent> CreateSimpleImage(CuiElementContainer container, string parent, Transform transform, Render render, Needs needs, Outline outline, string png, string sprite, string color, string material = null, float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string outlineColor = null, string outlineDistance = null, bool outlineUseGraphicAlpha = false, string id = null, string destroyUi = null, bool update = false)
+	public Pair<CuiImageComponent> CreateSimpleImage(CuiElementContainer container, string parent, Transform transform, string png, string sprite, Render render = default, Needs needs = default, Outline outline = default, string id = null, string destroyUi = null, bool update = false)
 	{
 		return Manager.SimpleImage(container, parent, transform, render, needs, outline, png, sprite, id, destroyUi, update);
 	}
-	public Pair<CuiRawImageComponent> CreateSprite(CuiElementContainer container, string parent, Transform transform, Render render, Needs needs, Outline outline, string sprite, string id = null, string destroyUi = null, bool update = false)
+	public Pair<CuiRawImageComponent> CreateSprite(CuiElementContainer container, string parent, Transform transform, string sprite, Render render = default, Needs needs = default, Outline outline = default, string id = null, string destroyUi = null, bool update = false)
 	{
 		return Manager.Sprite(container, parent, transform, render, needs, outline, sprite, id, destroyUi, update);
 	}
-	public Pair<CuiImageComponent> CreateItemImage(CuiElementContainer container, string parent, Transform transform, Render render, Needs needs, Outline outline, int itemID, ulong skinID, string id = null, string destroyUi = null, bool update = false)
+	public Pair<CuiImageComponent> CreateItemImage(CuiElementContainer container, string parent, Transform transform, int itemID, ulong skinID, Render render = default, Needs needs = default, Outline outline = default, string id = null, string destroyUi = null, bool update = false)
 	{
 		return Manager.ItemImage(container, parent, transform, render, needs, outline, itemID, skinID, id, destroyUi, update);
 	}
-	public Pair<Pair<CuiRawImageComponent>, Pair<CuiImageComponent>, Pair<CuiRawImageComponent>> CreateQRCodeImage(CuiElementContainer container, string parent, Transform transform, Render render, Needs needs, Outline outline, string text, string brandUrl, string brandColor, string brandBgColor, int pixels, bool transparent, bool quietZones, string id = null, string destroyUi = null, bool update = false)
+	public Pair<Pair<CuiRawImageComponent>, Pair<CuiImageComponent>, Pair<CuiRawImageComponent>> CreateQRCodeImage(CuiElementContainer container, string parent, Transform transform, string text, string brandUrl, string brandColor, string brandBgColor, int pixels, bool transparent, bool quietZones, Render render = default, Needs needs = default, Outline outline = default, string id = null, string destroyUi = null, bool update = false)
 	{
-		var qr = CreateImage(container, parent, transform, render, needs, outline, ImageDatabase.GetQRCode(text, pixels, transparent, quietZones, true), id, destroyUi, update);
+		var qr = CreateImage(container, parent, transform, ImageDatabase.GetQRCode(text, pixels, transparent, quietZones, true), render, needs, outline, id, destroyUi, update);
 
 		if (string.IsNullOrEmpty(brandUrl))
 		{
@@ -157,10 +158,10 @@ public readonly partial struct CUI : IDisposable
 		}
 
 		var panel = CreatePanel(container, qr, Transform.CreateAnchor(0.4f, 0.6f, 0.4f, 0.6f), Render.Default.WithColor(brandBgColor), Needs.Default, Outline.Default);
-		var brandLogo = CreateImage(container, panel, Transform.CreateAnchor(0.15f, 0.85f, 0.15f, 0.85f), Render.Default.WithColor(brandColor), default, default, url: brandUrl);
+		var brandLogo = CreateImage(container, panel, Transform.CreateAnchor(0.15f, 0.85f, 0.15f, 0.85f), brandUrl, Render.Default.WithColor(brandColor));
 		return new Pair<Pair<CuiRawImageComponent>, Pair<CuiImageComponent>, Pair<CuiRawImageComponent>>(id, null, qr, panel, brandLogo);
 	}
-	public Pair<CuiRawImageComponent> CreateClientImage(CuiElementContainer container, string parent, Transform transform, Render render, Needs needs, Outline outline, string url, string id = null, string destroyUi = null, bool update = false)
+	public Pair<CuiRawImageComponent> CreateClientImage(CuiElementContainer container, string parent, Transform transform, string url, Render render = default, Needs needs = default, Outline outline = default, string id = null, string destroyUi = null, bool update = false)
 	{
 		return Manager.Image(container, parent, transform, render, needs, outline, null, url, id, destroyUi, update);
 	}
@@ -168,7 +169,7 @@ public readonly partial struct CUI : IDisposable
 	{
 		return Manager.Countdown(container, parent, render, startTime, endTime, step, command, id, destroyUi, update);
 	}
-	public Pair<CuiScrollViewComponent> CreateScrollView(CuiElementContainer container, string parent, Transform transform, Render render, Needs needs, Outline outline, bool vertical, bool horizontal, ScrollRect.MovementType movementType, float elasticity, bool inertia, float decelerationRate, float scrollSensitivity, string maskSoftness, out CuiRectTransform contentTransformComponent, out CuiScrollbar horizontalScrollBar, out CuiScrollbar verticalScrollBar, string id = null, string destroyUi = null, bool update = false)
+	public Pair<CuiScrollViewComponent> CreateScrollView(CuiElementContainer container, string parent, Transform transform, bool vertical, bool horizontal, ScrollRect.MovementType movementType, float elasticity, bool inertia, float decelerationRate, float scrollSensitivity, string maskSoftness, out CuiRectTransform contentTransformComponent, out CuiScrollbar horizontalScrollBar, out CuiScrollbar verticalScrollBar, Render render = default, Needs needs = default, Outline outline = default, string id = null, string destroyUi = null, bool update = false)
 	{
 		return Manager.ScrollView(container, parent, transform, render, needs, outline, vertical, horizontal, movementType, elasticity, inertia, decelerationRate, scrollSensitivity, maskSoftness, out contentTransformComponent, out horizontalScrollBar, out verticalScrollBar, id, destroyUi, update);
 	}

@@ -48,28 +48,6 @@ public readonly partial struct CUI
 			YMax = value;
 			return this;
 		}
-
-		public Transform WithXMinOffset(float value)
-		{
-			OxMin = value;
-			return this;
-		}
-		public Transform WithXMaxOffset(float value)
-		{
-			OxMax = value;
-			return this;
-		}
-		public Transform WithYMinOffset(float value)
-		{
-			OyMin = value;
-			return this;
-		}
-		public Transform WithYMaxOffset(float value)
-		{
-			OyMax = value;
-			return this;
-		}
-
 		public Transform WithAnchor(float xMin, float xMax, float yMin, float yMax)
 		{
 			XMin = xMin;
@@ -91,6 +69,35 @@ public readonly partial struct CUI
 			return this;
 		}
 
+		public Transform WithXMinOffset(float value)
+		{
+			OxMin = value;
+			return this;
+		}
+		public Transform WithXMaxOffset(float value)
+		{
+			OxMax = value;
+			return this;
+		}
+		public Transform WithYMinOffset(float value)
+		{
+			OyMin = value;
+			return this;
+		}
+		public Transform WithYMaxOffset(float value)
+		{
+			OyMax = value;
+			return this;
+		}
+		public Transform WithOffset(float oxMin, float oxMax, float oyMin, float oyMax)
+		{
+			OxMin = oxMin;
+			OxMax = oxMax;
+			OyMin = oyMin;
+			OyMax = oyMax;
+			return this;
+		}
+
 		public static Transform Default
 		{
 			get
@@ -101,6 +108,24 @@ public readonly partial struct CUI
 				return result;
 			}
 		}
+		public static Transform Full => Default;
+		public static Transform HalfCut
+		{
+			get
+			{
+				Transform result = default;
+				result.XMin = result.XMax = result.YMin = result.YMax = 0.5f;
+				return result;
+			}
+		}
+		public static Transform Pixel
+		{
+			get
+			{
+				return default;
+			}
+		}
+
 		public static Transform CreateAnchor(float xMin, float xMax, float yMin, float yMax, float oxMin = 0, float oxMax = 0, float oyMin = 0, float oyMax = 0)
 		{
 			Transform transform = default;
@@ -122,7 +147,6 @@ public readonly partial struct CUI
 
 		public string Color;
 		public string Material;
-		public bool Blur;
 		public float FadeIn;
 		public float FadeOut;
 
@@ -143,7 +167,11 @@ public readonly partial struct CUI
 			Material = BlurMaterial;
 			return this;
 		}
-		public Render WithFade(float fadeIn, float fadeOut)
+		public Render WithBlur(bool wants)
+		{
+			return wants ? WithBlur() : this;
+		}
+		public Render WithFade(float fadeIn = 0, float fadeOut = 0)
 		{
 			FadeIn = fadeIn;
 			FadeOut = fadeOut;
@@ -157,9 +185,44 @@ public readonly partial struct CUI
 				Render result = default;
 				result.Color = Cache.CUI.WhiteColor;
 				result.Material = string.Empty;
-				result.Blur = false;
 				result.FadeIn = 0;
 				result.FadeOut = 0;
+				return result;
+			}
+		}
+		public static Render White
+		{
+			get
+			{
+				Render result = default;
+				result.Color = Cache.CUI.WhiteColor;
+				return result;
+			}
+		}
+		public static Render Black
+		{
+			get
+			{
+				Render result = default;
+				result.Color = Cache.CUI.BlackColor;
+				return result;
+			}
+		}
+		public static Render Blank
+		{
+			get
+			{
+				Render result = default;
+				result.Color = Cache.CUI.BlankColor;
+				return result;
+			}
+		}
+		public static Render Red
+		{
+			get
+			{
+				Render result = default;
+				result.Color = "1 0 0 1";
 				return result;
 			}
 		}
@@ -225,6 +288,24 @@ public readonly partial struct CUI
 				Needs result = default;
 				result.Cursor = false;
 				result.Keyboard = false;
+				return result;
+			}
+		}
+		public static Needs CreateCursor
+		{
+			get
+			{
+				Needs result = default;
+				result.Cursor = true;
+				return result;
+			}
+		}
+		public static Needs CreateKeyboard
+		{
+			get
+			{
+				Needs result = default;
+				result.Keyboard = true;
 				return result;
 			}
 		}

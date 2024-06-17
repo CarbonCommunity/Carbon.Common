@@ -1,12 +1,6 @@
-﻿using API.Commands;
-using Carbon.Components.Graphics;
-using ConVar;
-using HarmonyLib;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json;
 using Oxide.Game.Rust.Cui;
 using UnityEngine.UI;
-using static Carbon.Components.CUI;
 using static ConsoleSystem;
 using Color = UnityEngine.Color;
 using StringEx = Carbon.Extensions.StringEx;
@@ -1277,24 +1271,24 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			using var cui = new CUI(Handler);
 
 			var container = cui.CreateContainer(PanelId,
-				color: $"0 0 0 {DataInstance.BackgroundOpacity}",
-				xMin: 0, xMax: 1, yMin: 0, yMax: 1,
-				needsCursor: true, destroyUi: PanelId, parent: ClientPanels.HudMenu);
+				CUI.Transform.Full,
+				CUI.Render.Default.WithColor($"0 0 0 {DataInstance.BackgroundOpacity}"),
+				CUI.Needs.Default.WithCursor(), destroyUi: PanelId, parent: CUI.ClientPanels.HudMenu);
 
-			cui.CreateImage(container, PanelId, "fade", Cache.CUI.WhiteColor);
+			cui.CreateImage(container, PanelId, CUI.Transform.Full, "fade", CUI.Render.White);
 
 			var isMaximized = DataInstance.Maximize;
 
-			var shade = cui.CreatePanel(container, parent: PanelId, id: $"{PanelId}color",
-				color: "0 0 0 0.6",
-				xMin: 0.5f, xMax: 0.5f, yMin: 0.5f, yMax: 0.5f,
-				OxMin: -475 * (isMaximized ? MaximizedScale_XMin : 1),
-				OxMax: 475 * (isMaximized ? MaximizedScale_XMax : 1),
-				OyMin: -300 * (isMaximized ? MaximizedScale_YMin : 1),
-				OyMax: 300 * (isMaximized ? MaximizedScale_YMax : 1));
+			var shade = cui.CreatePanel(container, parent: PanelId,
+				CUI.Transform.HalfCut.WithOffset(
+					-475 * (isMaximized ? MaximizedScale_XMin : 1),
+					475 * (isMaximized ? MaximizedScale_XMax : 1),
+					-300 * (isMaximized ? MaximizedScale_YMin : 1),
+					300 * (isMaximized ? MaximizedScale_YMax : 1)),
+				CUI.Render.Default.WithColor("0 0 0 0.6"),
+				id: $"{PanelId}color");
 			var main = cui.CreatePanel(container, shade,
-				color: "0 0 0 0.5",
-				blur: DataInstance.BackgroundBlur);
+				CUI.Transform.Full, CUI.Render.Default.WithColor("0 0 0 0.5").WithBlur(DataInstance.BackgroundBlur));
 
 			using (TimeMeasure.New($"{Name}.Main"))
 			{
@@ -1303,9 +1297,9 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					#region Title
 
 					cui.CreateText(container, parent: main,
-						color: "1 1 1 0.8",
-						text: "<b>Admin Settings</b>", 18,
-						xMin: 0.0175f, yMin: 0.8f, xMax: 1f, yMax: 0.97f,
+						CUI.Transform.CreateAnchor(xMin: 0.0175f, yMin: 0.8f, xMax: 1f, yMax: 0.97f),
+						"<b>Admin Settings</b>", 18,
+						CUI.Render.Default.WithColor("1 1 1 0.8"),
 						align: TextAnchor.UpperLeft,
 						font: Handler.FontTypes.RobotoCondensedBold);
 
@@ -1314,9 +1308,9 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					#region Tabs
 					try
 					{
-						var tabButtons = cui.CreatePanel(container, parent: main, id: null,
-							color: "0 0 0 0.6",
-							xMin: 0.01f, xMax: 0.99f, yMin: 0.875f, yMax: 0.92f);
+						var tabButtons = cui.CreatePanel(container, main,
+							CUI.Transform.CreateAnchor(xMin: 0.01f, xMax: 0.99f, yMin: 0.875f, yMax: 0.92f),
+							CUI.Render.Default.WithColor("0 0 0 0.6"));
 
 						TabButton(cui, container, tabButtons, "<", PanelId + ".changetab down", 0.03f, 0);
 						TabButton(cui, container, tabButtons, ">", PanelId + ".changetab up", 0.03f, 0.97f);
@@ -1344,10 +1338,12 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				using (TimeMeasure.New($"{Name}.Panels/Overrides"))
 				{
 					var panels = cui.CreatePanel(container, main,
-						color: Cache.CUI.BlankColor,
-						xMin: 0.01f, xMax: 0.99f, yMin: 0.02f, yMax: tab != null && tab.IsFullscreen ? 0.98f : 0.86f);
+						CUI.Transform.CreateAnchor(xMin: 0.01f, xMax: 0.99f, yMin: 0.02f, yMax: tab != null && tab.IsFullscreen ? 0.98f : 0.86f),
+						CUI.Render.Default.WithColor(Cache.CUI.BlankColor));
 
-					cui.CreateImage(container, panels, "fade", Cache.CUI.WhiteColor);
+					cui.CreateImage(container, panels,
+						CUI.Transform.Full, "fade",
+						CUI.Render.White);
 
 					if (tab != null)
 					{
@@ -1364,10 +1360,11 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 							for (int i = tab.Columns.Count; i-- > 0;)
 							{
 								var rows = tab.Columns[i];
-								var panel = cui.CreatePanel(container, panels, color: "0 0 0 0.5",
-									xMin: panelIndex, xMax: panelIndex + panelWidth - spacing, yMin: 0, yMax: 1, id: $"sub{i}");
+								var panel = cui.CreatePanel(container, panels,
+									CUI.Transform.CreateAnchor(xMin: panelIndex, xMax: panelIndex + panelWidth - spacing, yMin: 0, yMax: 1),
+									CUI.Render.Default.WithColor("0 0 0 0.5"), id: $"sub{i}");
 
-								cui.CreateImage(container, panel, "fade", Cache.CUI.WhiteColor);
+								cui.CreateImage(container, panel, CUI.Transform.Full, "fade", CUI.Render.White);
 
 								#region Rows
 
@@ -1383,8 +1380,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 								if (rowPageCount == 0)
 								{
-									cui.CreateText(container, panel,
-										color: "1 1 1 0.35", text: GetPhrase("nocontent", player.UserIDString), 8, align: TextAnchor.MiddleCenter);
+									cui.CreateText(container, panel, CUI.Transform.Full,
+										text: GetPhrase("nocontent", player.UserIDString), 8, CUI.Render.Default.WithColor("1 1 1 0.35"), align: TextAnchor.MiddleCenter);
 								}
 
 								if (columnPage.TotalPages > 0)
@@ -1484,14 +1481,13 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 										if (!row.CurrentlyHidden) return;
 
 										var blur = cui.CreatePanel(container, parent: panel,
-											color: "0 0 0 0.4",
-											xMin: xMin, xMax: 0.985f, yMin: rowIndex, yMax: rowIndex + rowHeight,
-											blur: true);
+											CUI.Transform.CreateAnchor(xMin: xMin, xMax: 0.985f, yMin: rowIndex, yMax: rowIndex + rowHeight),
+											CUI.Render.Default.WithColor("0 0 0 0.4").WithBlur());
 
-										cui.CreateImage(container, blur, "fade", Cache.CUI.WhiteColor);
+										cui.CreateImage(container, blur, CUI.Transform.Full, "fade", CUI.Render.White);
 
 										cui.CreateProtectedButton(container, blur,
-											color: Cache.CUI.BlankColor, textColor: "1 1 1 0.5", text: "REVEAL".SpacedString(1), 8, command: PanelId + $".callaction {i} {actualI}");
+											CUI.Transform.Full, textColor: "1 1 1 0.5", text: "REVEAL".SpacedString(1), 8, CUI.Render.Default.WithColor(Cache.CUI.BlankColor), command: PanelId + $".callaction {i} {actualI}");
 									}
 
 									void HandleInputHighlight(float xMin, float xMax = 0.985f, string command = null)
@@ -1499,8 +1495,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 										if (row == ap.Input) return;
 
 										cui.CreateProtectedButton(container, panel,
-											color: Cache.CUI.BlankColor, Cache.CUI.BlankColor, string.Empty, 0,
-											xMin: xMin, xMax: xMax, yMin: rowIndex, yMax: rowIndex + rowHeight,
+											CUI.Transform.CreateAnchor(xMin: xMin, xMax: xMax, yMin: rowIndex, yMax: rowIndex + rowHeight),
+											Cache.CUI.BlankColor, string.Empty, 0, CUI.Render.Default.WithColor(Cache.CUI.BlankColor),
 											command: PanelId + $".callaction {i} {actualI} {command}");
 									}
 
@@ -1532,25 +1528,25 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 						if (tab.Dialog != null)
 						{
-							var dialog = cui.CreatePanel(container, panels, "0.15 0.15 0.15 0.2", blur: true);
-							cui.CreatePanel(container, dialog, "0 0 0 0.9");
+							var dialog = cui.CreatePanel(container, panels, CUI.Transform.Full, CUI.Render.Default.WithBlur());
+							cui.CreatePanel(container, dialog, CUI.Transform.Full, CUI.Render.Default.WithColor("0 0 0 0.9"));
 
-							cui.CreateText(container, dialog,
-								"1 1 1 1", tab.Dialog.Title, 20, yMin: 0.1f);
+							cui.CreateText(container, dialog, CUI.Transform.Full.WithYMin(0.1f),
+								tab.Dialog.Title, 20, CUI.Render.White);
 
-							cui.CreateText(container, dialog,
-								"1 1 1 0.4", "Confirm action".ToUpper().SpacedString(3), 10, yMin: 0.2f);
+							cui.CreateText(container, dialog, CUI.Transform.Full.WithYMin(0.2f),
+								"Confirm action".ToUpper().SpacedString(3), 10, CUI.Render.Default.WithColor("1 1 1 0.4"));
 
-							cui.CreateProtectedButton(container, dialog, "0.9 0.4 0.3 0.8", "1 1 1 0.7", "DECLINE".SpacedString(1), 10,
-								xMin: 0.4f, xMax: 0.49f, yMin: 0.425f, yMax: 0.475f, command: $"{PanelId}.dialogaction decline");
+							cui.CreateProtectedButton(container, dialog, CUI.Transform.CreateAnchor(xMin: 0.4f, xMax: 0.49f, yMin: 0.425f, yMax: 0.475f), "1 1 1 0.7", "DECLINE".SpacedString(1), 10,
+								CUI.Render.Default.WithColor("0.9 0.4 0.3 0.8"), command: $"{PanelId}.dialogaction decline");
 
-							cui.CreateProtectedButton(container, dialog, "0.4 0.9 0.3 0.8", "1 1 1 0.7", "CONFIRM".SpacedString(1), 10,
-								xMin: 0.51f, xMax: 0.6f, yMin: 0.425f, yMax: 0.475f, command: $"{PanelId}.dialogaction confirm");
+							cui.CreateProtectedButton(container, dialog, CUI.Transform.CreateAnchor(xMin: 0.51f, xMax: 0.6f, yMin: 0.425f, yMax: 0.475f), "1 1 1 0.7", "CONFIRM".SpacedString(1), 10,
+								CUI.Render.Default.WithColor("0.4 0.9 0.3 0.8"), command: $"{PanelId}.dialogaction confirm");
 						}
 					}
 					else
 					{
-						cui.CreateText(container, panels, "1 1 1 0.4", "No tab selected.", 9);
+						cui.CreateText(container, panels, CUI.Transform.Full, "No tab selected", 9, CUI.Render.Default.WithColor("1 1 1 0.4"));
 					}
 				}
 			}
@@ -1564,78 +1560,62 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				var shift = tab == null || tab.IsFullscreen ? 15 : 0;
 
 				var maximizeButton = cui.CreateProtectedButton(container, main,
-					color: "#d1cd56",
+					CUI.Transform.CreateAnchor(xMin: 0.9675f, xMax: 0.99f, yMin: 0.955f, yMax: 0.99f, oxMin: -25 * 3, oxMax: -25 * 3, oyMin: shift, oyMax: shift),
 					textColor: Cache.CUI.BlankColor,
 					text: string.Empty, 0,
-					xMin: 0.9675f, xMax: 0.99f, yMin: 0.955f, yMax: 0.99f,
-					OxMin: -25 * 3, OxMax: -25 * 3,
-					OyMin: shift, OyMax: shift,
+					CUI.Render.Default.WithColor("#d1cd56"),
 					command: PanelId + ".maximize");
 				{
-					cui.CreateImage(container, maximizeButton, DataInstance.Maximize ? "minimize" : "maximize", "#fffed4",
-						xMin: 0.15f, xMax: 0.85f,
-						yMin: 0.15f, yMax: 0.85f);
-
-					cui.CreateImage(container, maximizeButton, "fade", Cache.CUI.WhiteColor);
+					cui.CreateImage(container, maximizeButton, CUI.Transform.CreateAnchor(xMin: 0.15f, xMax: 0.85f, yMin: 0.15f, yMax: 0.85f), DataInstance.Maximize ? "minimize" : "maximize", CUI.Render.Default.WithColor("#fffed4"));
+					cui.CreateImage(container, maximizeButton, CUI.Transform.Full, "fade", CUI.Render.White);
 				}
 
 				var canAccessProfiler = HasAccess(ap.Player, "profiler.use");
 				var profilerButton = cui.CreateProtectedButton(container, main,
-					color: !canAccessProfiler ? "0.3 0.3 0.3 0.7" : "#6651c2",
+					CUI.Transform.CreateAnchor(xMin: 0.9675f, xMax: 0.99f, yMin: 0.955f, yMax: 0.99f, oxMin: -25 * 2, oxMax: -25 * 2, oyMin: shift, oyMax: shift),
 					textColor: Cache.CUI.BlankColor,
 					text: string.Empty, 0,
-					xMin: 0.9675f, xMax: 0.99f, yMin: 0.955f, yMax: 0.99f,
-					OxMin: -25 * 2, OxMax: -25 * 2,
-					OyMin: shift, OyMax: shift,
+					CUI.Render.Default.WithColor( !canAccessProfiler ? "0.3 0.3 0.3 0.7" : "#6651c2"),
 					command: canAccessProfiler ? PanelId + ".profiler" : string.Empty);
 				{
-					cui.CreateImage(container, profilerButton, "graph", "#af9ff5",
-						xMin: 0.15f, xMax: 0.85f,
-						yMin: 0.15f, yMax: 0.85f);
+					cui.CreateImage(container, profilerButton, CUI.Transform.CreateAnchor(xMin: 0.15f, xMax: 0.85f, yMin: 0.15f, yMax: 0.85f), "graph", CUI.Render.Default.WithColor("#af9ff5"));
 
-					cui.CreateImage(container, profilerButton, "fade", Cache.CUI.WhiteColor);
+					cui.CreateImage(container, profilerButton, CUI.Transform.Full, "fade", CUI.Render.White);
 
 					if (ap.SelectedTab != null && ap.SelectedTab.Id == "profiler")
 					{
-						cui.CreatePanel(container, profilerButton, "1 0 0 1", yMax: 0.1f);
+						cui.CreatePanel(container, profilerButton, CUI.Transform.Full.WithYMax(0.1f), CUI.Render.Default.WithColor("1 0 0 1"));
 					}
 				}
 
 				var canAccessConfig = HasAccess(ap.Player, "config.use");
 				var configButton = cui.CreateProtectedButton(container, main,
-					color: canAccessConfig ? "0.2 0.6 0.2 0.9" : "0.3 0.3 0.3 0.7",
+					CUI.Transform.CreateAnchor(xMin: 0.9675f, xMax: 0.99f, yMin: 0.955f, yMax: 0.99f, oxMin: -25, oxMax: -25, oyMin: shift, oyMax: shift),
 					textColor: Cache.CUI.BlankColor,
 					text: string.Empty, 0,
-					xMin: 0.9675f, xMax: 0.99f, yMin: 0.955f, yMax: 0.99f,
-					OxMin: -25, OxMax: -25,
-					OyMin: shift, OyMax: shift,
+					CUI.Render.Default.WithColor(canAccessConfig ? "0.2 0.6 0.2 0.9" : "0.3 0.3 0.3 0.7"),
 					command: canAccessConfig ? PanelId + ".config" : string.Empty);
 				{
-					cui.CreateImage(container, configButton, "gear", "0.5 1 0.5 1",
-						xMin: 0.15f, xMax: 0.85f,
-						yMin: 0.15f, yMax: 0.85f);
+					cui.CreateImage(container, configButton, CUI.Transform.CreateAnchor(xMin: 0.15f, xMax: 0.85f, yMin: 0.15f, yMax: 0.85f), "gear", CUI.Render.Default.WithColor("0.5 1 0.5 1"));
 
-					cui.CreateImage(container, configButton, "fade", Cache.CUI.WhiteColor);
+					cui.CreateImage(container, configButton, CUI.Transform.Full, "fade", CUI.Render.White);
 
 					if (ap.SelectedTab != null && ap.SelectedTab.Id == "configuration")
 					{
-						cui.CreatePanel(container, configButton, "1 0 0 1", yMax: 0.1f);
+						cui.CreatePanel(container, configButton, CUI.Transform.Full.WithYMax(0.1f), CUI.Render.Red);
 					}
 				}
 
 				var closeButton = cui.CreateProtectedButton(container, main,
-					color: "0.6 0.2 0.2 0.9",
+					CUI.Transform.CreateAnchor(xMin: 0.9675f, xMax: 0.99f, yMin: 0.955f, yMax: 0.99f, oyMin: shift, oyMax: shift),
 					textColor: Cache.CUI.BlankColor,
 					text: string.Empty, 0,
-					xMin: 0.9675f, xMax: 0.99f, yMin: 0.955f, yMax: 0.99f,
-					OyMin: shift, OyMax: shift,
+					CUI.Render.Default.WithColor("0.6 0.2 0.2 0.9"),
 					command: PanelId + ".close");
 				{
-					cui.CreateImage(container, closeButton, "close", "1 0.5 0.5 1",
-						xMin: 0.2f, xMax: 0.8f,
-						yMin: 0.2f, yMax: 0.8f);
+					cui.CreateImage(container, closeButton, CUI.Transform.CreateAnchor(xMin: 0.2f, xMax: 0.8f, yMin: 0.2f, yMax: 0.8f), "close", CUI.Render.Default.WithColor("1 0.5 0.5 1"));
 
-					cui.CreateImage(container, closeButton, "fade", Cache.CUI.WhiteColor);
+					cui.CreateImage(container, closeButton, CUI.Transform.Full, "fade", CUI.Render.White);
 				}
 			}
 
@@ -1659,10 +1639,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		using var cui = new CUI(Handler);
 
 		var container = cui.CreateContainer(CursorPanelId,
-			color: Cache.CUI.BlankColor,
-			xMin: 0, xMax: 0, yMin: 0, yMax: 0,
-			fadeIn: 0.005f,
-			needsCursor: true, destroyUi: CursorPanelId);
+			CUI.Transform.Pixel, CUI.Render.Blank.WithFade(0.005f),
+			CUI.Needs.CreateCursor, destroyUi: CursorPanelId);
 
 		cui.Send(container, player);
 	}
