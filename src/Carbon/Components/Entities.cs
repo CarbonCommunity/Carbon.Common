@@ -127,6 +127,54 @@ public class Entities : IDisposable
 
 		return map;
 	}
+	public static Map<BaseEntity> GetAllFiltered(Func<BaseEntity, bool> filter, bool inherited = false)
+	{
+		if (filter == null)
+		{
+			return default;
+		}
+
+		var map = new Map<BaseEntity>
+		{
+			Pool = Facepunch.Pool.GetList<BaseEntity>()
+		};
+
+		if (inherited)
+		{
+			foreach (var entry in Mapping)
+			{
+				if (typeof(BaseEntity).IsAssignableFrom(entry.Key))
+				{
+					foreach (var entity in entry.Value)
+					{
+						var ent = entity as BaseEntity;
+
+						if (!filter(ent))
+						{
+							continue;
+						}
+
+						map.Pool.Add(ent);
+					}
+				}
+			}
+		}
+		else
+		{
+			if (Mapping.TryGetValue(typeof(BaseEntity), out var mapping))
+			{
+				foreach (var entity in mapping)
+				{
+					if (entity is BaseEntity result && filter(result))
+					{
+						map.Pool.Add(result);
+					}
+				}
+			}
+		}
+
+		return map;
+	}
 	public static T GetOne<T>(bool inherited = false)
 	{
 		using (var map = Get<T>(inherited))
@@ -187,6 +235,11 @@ public class Entities : IDisposable
 
 		public void Dispose()
 		{
+			if (Pool == null)
+			{
+				return;
+			}
+
 #if DEBUG
 			Logger.Debug($"Cleaned {typeof(T).Name}", 2);
 #endif
