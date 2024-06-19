@@ -105,27 +105,30 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			var validateFilter = ap3.GetStorage<Func<BaseEntity, bool>>(tab, "validatefilter");
 			var maximumRange = (int)World.Size;
 			var range = ap3.GetStorage(tab, "range", maximumRange);
-			var map = string.IsNullOrEmpty(usedFilter) && validateFilter == null ? default : Entities.GetAllFiltered(entity =>
+
+			var map = Entities.GetAllFiltered(entity =>
 			{
-				if (entity == null || entity.transform == null)
-				{
-					return false;
-				}
+					if (entity == null || entity.transform == null)
+					{
+						return false;
+					}
 
-				if (validateFilter != null && !validateFilter(entity))
-				{
-					return false;
-				}
+					if (validateFilter != null && !validateFilter(entity))
+					{
+						return false;
+					}
 
-				if (range != -1 && (ap3 != null && ap3.Player != null && Vector3.Distance(ap3.Player.transform.position, entity.transform.position) > range))
-				{
-					return false;
-				}
+					if (range != -1 && (ap3.Player != null &&
+					                    Vector3.Distance(ap3.Player.transform.position, entity.transform.position) >
+					                    range))
+					{
+						return false;
+					}
 
-				return entity.name.Contains(usedFilter, CompareOptions.OrdinalIgnoreCase)
-				    || entity.GetType().Name.Contains(usedFilter, CompareOptions.OrdinalIgnoreCase)
-					|| entity.OwnerID.ToString().Equals(usedFilter, StringComparison.OrdinalIgnoreCase)
-				    || entity.skinID.ToString().Equals(usedFilter, StringComparison.OrdinalIgnoreCase);
+					return entity.name.Contains(usedFilter, CompareOptions.OrdinalIgnoreCase)
+					       || entity.GetType().Name.Contains(usedFilter, CompareOptions.OrdinalIgnoreCase)
+					       || entity.OwnerID.ToString().Equals(usedFilter, StringComparison.OrdinalIgnoreCase)
+					       || entity.skinID.ToString().Equals(usedFilter, StringComparison.OrdinalIgnoreCase);
 			}, true);
 			EntityCount = string.IsNullOrEmpty(usedFilter) ? 0 : map.Pool.Count;
 
@@ -134,12 +137,12 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 			var filter = ap3.GetStorage(tab, "filter", string.Empty);
 			tab.AddButtonArray(0,
-				new Tab.OptionButton("Players", ap => { ap.SetStorage(tab, "filter", nameof(BasePlayer)); DrawEntities(tab, ap); }, ap => filter == nameof(BasePlayer) ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.None),
-				new Tab.OptionButton("Containers", ap => { ap.SetStorage(tab, "filter", nameof(StorageContainer)); ap.ClearStorage(tab, "validatefilter"); DrawEntities(tab, ap); }, ap => filter == nameof(StorageContainer) ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.None),
-				new Tab.OptionButton("Deployables", ap => { ap.SetStorage(tab, "filter", nameof(Deployable)); ap.ClearStorage(tab, "validatefilter"); DrawEntities(tab, ap); }, ap => filter == nameof(Deployable) ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.None),
-				new Tab.OptionButton("Collectibles", ap => { ap.SetStorage(tab, "filter", nameof(CollectibleEntity)); ap.ClearStorage(tab, "validatefilter"); DrawEntities(tab, ap); }, ap => filter == nameof(CollectibleEntity) ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.None),
-				new Tab.OptionButton("NPCs", ap => { ap.SetStorage(tab, "filter", nameof(NPCPlayer)); ap.ClearStorage(tab, "validatefilter"); DrawEntities(tab, ap); }, ap => filter == nameof(NPCPlayer) ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.None),
-				new Tab.OptionButton("I/O", ap => { ap.SetStorage(tab, "filter", nameof(IOEntity)); ap.ClearStorage(tab, "validatefilter"); DrawEntities(tab, ap); }, ap => filter == nameof(IOEntity) ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.None));
+				new Tab.OptionButton("Players", ap => { ap.SetStorage(tab, "filter", nameof(BasePlayer)); DrawEntities(tab, ap); }, _ => filter == nameof(BasePlayer) ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.None),
+				new Tab.OptionButton("Containers", ap => { ap.SetStorage(tab, "filter", nameof(StorageContainer)); ap.ClearStorage(tab, "validatefilter"); DrawEntities(tab, ap); }, _ => filter == nameof(StorageContainer) ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.None),
+				new Tab.OptionButton("Deployables", ap => { ap.SetStorage(tab, "filter", nameof(Deployable)); ap.ClearStorage(tab, "validatefilter"); DrawEntities(tab, ap); }, _ => filter == nameof(Deployable) ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.None),
+				new Tab.OptionButton("Collectibles", ap => { ap.SetStorage(tab, "filter", nameof(CollectibleEntity)); ap.ClearStorage(tab, "validatefilter"); DrawEntities(tab, ap); }, _ => filter == nameof(CollectibleEntity) ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.None),
+				new Tab.OptionButton("NPCs", ap => { ap.SetStorage(tab, "filter", nameof(NPCPlayer)); ap.ClearStorage(tab, "validatefilter"); DrawEntities(tab, ap); }, _ => filter == nameof(NPCPlayer) ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.None),
+				new Tab.OptionButton("I/O", ap => { ap.SetStorage(tab, "filter", nameof(IOEntity)); ap.ClearStorage(tab, "validatefilter"); DrawEntities(tab, ap); }, _ => filter == nameof(IOEntity) ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.None));
 
 			switch (ap3.GetStorage(tab, "filter", string.Empty))
 			{
@@ -221,6 +224,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 									selectedEntitites = ap3.SetStorage(tab, "selectedentities", new List<BaseEntity>());
 								}
 
+								selectedEntitites.Clear();
+
 								DrawEntities(tab, ap);
 								tab.ClearColumn(column);
 							});
@@ -237,6 +242,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 								{
 									selectedEntitites = ap3.SetStorage(tab, "selectedentities", new List<BaseEntity>());
 								}
+
+								selectedEntitites.Clear();
 
 								DrawEntities(tab, ap);
 								tab.ClearColumn(column);

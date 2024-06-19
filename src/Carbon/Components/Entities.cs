@@ -29,7 +29,8 @@ public class Entities : IDisposable
 			{
 				foreach (var type in Mapping)
 				{
-					type.Value.AddRange(BaseNetworkable.serverEntities.Where(x => x.GetType() == type.Key).Select(x => x as BaseEntity));
+					type.Value.AddRange(BaseNetworkable.serverEntities.Where(x => x.GetType() == type.Key)
+						.Select(x => x as BaseEntity));
 				}
 			}
 
@@ -38,7 +39,10 @@ public class Entities : IDisposable
 				Carbon.Logger.Warn($"Done mapping.");
 			}
 		}
-		catch (Exception ex) { Carbon.Logger.Error($"Failed Entities.Init()", ex); }
+		catch (Exception ex)
+		{
+			Carbon.Logger.Error($"Failed Entities.Init()", ex);
+		}
 	}
 
 	public void Dispose()
