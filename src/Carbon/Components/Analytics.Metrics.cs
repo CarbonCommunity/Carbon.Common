@@ -191,7 +191,8 @@ public partial struct Analytics
 			                    $"{Community.Runtime.MonoProfilerConfig.Plugins.Count}p " +
 			                    $"{Community.Runtime.MonoProfilerConfig.Modules.Count}m " +
 			                    $"{Community.Runtime.MonoProfilerConfig.Extensions.Count}e " +
-			                    $"{Community.Runtime.MonoProfilerConfig.Harmony.Count}h").
+			                    $"{Community.Runtime.MonoProfilerConfig.Harmony.Count}h" +
+			                    $"{(int)status}st").
 			Include("args", $"{args}").
 			Include("duration", $"{TimeEx.Format(duration).ToLower()}").
 			Submit("profiler_tl_ended");

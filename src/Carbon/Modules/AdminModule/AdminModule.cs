@@ -1073,7 +1073,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				xMin: 0, xMax: toggleButtonScale, yMin: 0, yMax: 0.015f);
 		}
 
-		using var split = TemporaryArray<string>.New(color.Split(' '));
+		using var split = TempArray<string>.New(color.Split(' '));
 		cui.CreateProtectedButton(container, parent,
 			color: color,
 			textColor: "1 1 1 1",

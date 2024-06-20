@@ -37,7 +37,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			{
 				var blur = cui.CreatePanel(container, panel, "0.1 0.1 0.1 0.8", blur: true);
 
-				using var lines = TemporaryArray<string>.New(content.Split('\n'));
+				using var lines = TempArray<string>.New(content.Split('\n'));
 				var temp = Pool.GetList<string>();
 
 				var resultContent = lines.Array.ToString("\n");

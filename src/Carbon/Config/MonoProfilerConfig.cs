@@ -14,6 +14,8 @@ public class MonoProfilerConfig
 	public List<string> Extensions = new();
 	public List<string> Harmony = new();
 
+	public const string Star = "*";
+
 	public enum ProfileTypes
 	{
 		Assembly,
@@ -23,7 +25,7 @@ public class MonoProfilerConfig
 		Harmony
 	}
 
-	public bool AppendProfile(ProfileTypes profile,string value)
+	public bool AppendProfile(ProfileTypes profile, string value)
 	{
 		return profile switch
 		{
@@ -73,11 +75,11 @@ public class MonoProfilerConfig
 	{
 		return profile switch
 		{
-			ProfileTypes.Assembly => Assemblies.Contains("*") || Assemblies.Contains(value),
-			ProfileTypes.Plugin => Plugins.Contains("*") || Plugins.Contains(value),
-			ProfileTypes.Module => Modules.Contains("*") || Modules.Contains(value),
-			ProfileTypes.Extension => Extensions.Contains("*") || Extensions.Contains(value),
-			ProfileTypes.Harmony => Harmony.Contains("*") || Harmony.Contains(value),
+			ProfileTypes.Assembly => Assemblies.Contains(Star) || Assemblies.Contains(value),
+			ProfileTypes.Plugin => Plugins.Contains(Star) || Plugins.Contains(value),
+			ProfileTypes.Module => Modules.Contains(Star) || Modules.Contains(value),
+			ProfileTypes.Extension => Extensions.Contains(Star) || Extensions.Contains(value),
+			ProfileTypes.Harmony => Harmony.Contains(Star) || Harmony.Contains(value),
 			_ => throw new ArgumentOutOfRangeException(nameof(profile), profile, null)
 		};
 	}
