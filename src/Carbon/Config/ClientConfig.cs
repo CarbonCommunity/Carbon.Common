@@ -36,8 +36,6 @@ public class ClientConfig
 	{
 		public string Url;
 		public bool Enabled = true;
-
-		public bool IsEnabled() => Enabled;
 	}
 
 	[Serializable]

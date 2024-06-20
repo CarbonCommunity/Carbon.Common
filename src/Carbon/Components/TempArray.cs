@@ -1,6 +1,6 @@
 ﻿/*
  *
- * Copyright (c) 2022-2024 Carbon Community 
+ * Copyright (c) 2022-2024 Carbon Community
  * Copyright (c) 2023 Patrette
  * All rights reserved.
  *
@@ -8,7 +8,7 @@
 
 namespace Carbon.Components;
 
-public class TemporaryArray<T> : IDisposable
+public class TempArray<T> : IDisposable
 {
 	public T[] Array;
 
@@ -21,9 +21,9 @@ public class TemporaryArray<T> : IDisposable
 		return index > Array.Length - 1 ? @default : Array[index];
 	}
 
-	public static TemporaryArray<T> New(T[] array)
+	public static TempArray<T> New(T[] array)
 	{
-		return new TemporaryArray<T>
+		return new TempArray<T>
 		{
 			Array = array
 		};

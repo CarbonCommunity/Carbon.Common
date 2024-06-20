@@ -169,7 +169,7 @@ public class CarbonAuto : API.Abstracts.CarbonAuto
 				Logger.Log($"Initialized Carbon Auto ({lines.Length:n0} {lines.Length.Plural("variable", "variables")})");
 				foreach (var line in lines)
 				{
-					using var value = TemporaryArray<string>.New(line.Split(' '));
+					using var value = TempArray<string>.New(line.Split(' '));
 
 					var convar = value.Get(0);
 					var conval = value.Get(1).Replace("\"", string.Empty);
