@@ -250,16 +250,7 @@ public static unsafe partial class MonoProfiler
 	{
 		public string Increment(string value)
 		{
-			if (string.IsNullOrEmpty(value))
-			{
-				return string.Empty;
-			}
-
-			int index = 1;
-
-			AddOrUpdate(value, index, (val, arg) => index = arg++);
-
-			return $"{value} ({index})";
+			return string.IsNullOrEmpty(value) ? string.Empty : $"{value} ({AddOrUpdate(value, 1, (_, arg) => arg + 1)})";
 		}
 	}
 
