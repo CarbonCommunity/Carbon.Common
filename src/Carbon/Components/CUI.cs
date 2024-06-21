@@ -214,12 +214,12 @@ public readonly struct CUI : IDisposable
 
 	#region ImageDatabase
 
-	public string GetImage(string url, float scale = 0)
+	public string GetImage(string url, float scale = 1)
 	{
-		return ImageDatabase.GetImageString(url, scale, true);
+		return ImageDatabase.GetImageString(url, scale);
 	}
 
-	public bool HasImage(string url, float scale = 0)
+	public bool HasImage(string url, float scale = 1)
 	{
 		return ImageDatabase.HasImage(url, scale);
 	}
@@ -230,7 +230,7 @@ public readonly struct CUI : IDisposable
 	}
 	public void QueueImages(IEnumerable<string> urls)
 	{
-		QueueImages(0, urls);
+		QueueImages(1, urls);
 	}
 
 	public void ClearImages(float scale, IEnumerable<string> urls)
@@ -242,7 +242,10 @@ public readonly struct CUI : IDisposable
 	}
 	public void ClearImages(IEnumerable<string> urls)
 	{
-		ClearImages(0, urls);
+		foreach (var url in urls)
+		{
+			ImageDatabase.DeleteAllImages(url);
+		}
 	}
 
 	#endregion
