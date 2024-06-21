@@ -499,7 +499,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 						cui.CreateImage(container, image, selectedPlugin.Image, selectedPlugin.HasInvalidImage() ? vendor.SafeIconScale : vendor.IconScale, "1 1 1 1", xMin: 0.05f, xMax: 0.95f, yMin: 0.05f, yMax: 0.95f);
 					}
 				}
-				
+
 				var pluginName = cui.CreateText(container, mainPanel, "1 1 1 1", selectedPlugin.Name, 25, xMin: 0.505f, yMax: 0.8f, align: TextAnchor.UpperLeft, font: CUI.Handler.FontTypes.RobotoCondensedBold);
 				cui.CreateText(container, mainPanel, "1 1 1 0.5", $"by <b>{(selectedPlugin.ExistentPlugin != null ? selectedPlugin.ExistentPlugin.Author : selectedPlugin.Author)}</b>  <b>•</b>  v{selectedPlugin.Version}  <b>•</b>  Updated on {selectedPlugin.UpdateDate}  <b>•</b>  {selectedPlugin.DownloadCount:n0} downloads", 11, xMin: 0.48f, yMax: 0.74f, align: TextAnchor.UpperLeft);
 				cui.CreateText(container, mainPanel, "1 1 1 0.3", $"{(!selectedPlugin.HasLookup ? "Fetching metdata..." : $"{selectedPlugin.Description}\n\n{selectedPlugin.Changelog}")}", 11, xMin: 0.48f, xMax: 0.85f, yMax: 0.635f, align: TextAnchor.UpperLeft);
@@ -1250,6 +1250,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 					core.webrequest.Enqueue(url, null, (code, result) =>
 					{
+						User ??= new();
+
 						switch (code)
 						{
 							case 401:
@@ -1275,7 +1277,6 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 								onComplete?.Invoke();
 								break;
 						}
-
 					}, null);
 				});
 			}

@@ -258,7 +258,7 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 
 		QueueBatch(scale, @override, results =>
 		{
-			foreach (var result in results)
+			foreach (var result in results.Where(result => result.Data != null && result.Data.Length != 0))
 			{
 				if (result.Data.Length >= MaximumBytes)
 				{
