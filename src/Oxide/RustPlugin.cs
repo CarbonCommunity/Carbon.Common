@@ -27,7 +27,7 @@ public class RustPlugin : Plugin
 	public Player Player { get { return rust.Player; } private set { } }
 	public Server Server { get { return rust.Server; } private set { } }
 
-	public virtual void SetupMod(ModLoader.ModPackage mod, string name, string author, VersionNumber version, string description)
+	public virtual void SetupMod(ModLoader.Package mod, string name, string author, VersionNumber version, string description)
 	{
 		Package = mod;
 		Setup(name, author, version, description);

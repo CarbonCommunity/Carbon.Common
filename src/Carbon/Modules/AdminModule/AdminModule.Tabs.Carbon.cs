@@ -189,7 +189,7 @@ public partial class AdminModule
 								}
 								else
 								{
-									using var commands = TemporaryArray<string>.New(action.Command.Split('|'));
+									using var commands = TempArray<string>.New(action.Command.Split('|'));
 
 									foreach (var command in commands.Array)
 									{

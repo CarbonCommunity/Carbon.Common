@@ -1,5 +1,7 @@
 ﻿#if !MINIMAL
 
+using ProtoBuf;
+
 /*
  *
  * Copyright (c) 2022-2023 Carbon Community
