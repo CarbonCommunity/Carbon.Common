@@ -666,13 +666,13 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 								});
 								break;
 							}
-						case MiniCopter minicopter:
+						case Minicopter minicopter:
 							{
 								tab.AddName(column, "Minicopter", TextAnchor.MiddleLeft);
 
 								if (!minicopter)
 								{
-									tab.AddButton(column, "Open Fuel", ap => { LastContainerLooter = ap; Core.timer.In(0.2f, () => Admin.Close(ap.Player)); Core.timer.In(0.5f, () => { minicopter.engineController.FuelSystem.GetFuelContainer().PlayerOpenLoot(ap.Player, doPositionChecks: false); }); });
+									tab.AddButton(column, "Open Fuel", ap => { LastContainerLooter = ap; Core.timer.In(0.2f, () => Admin.Close(ap.Player)); Core.timer.In(0.5f, () => { minicopter.engineController.FuelSystem.LootFuel(ap.Player); }); });
 								}
 								break;
 							}
