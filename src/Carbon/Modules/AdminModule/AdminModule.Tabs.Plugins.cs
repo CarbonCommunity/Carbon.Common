@@ -309,8 +309,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 			var eraseAllBeforehand = false;
 
-			if (images.Count > 0) Singleton.ImageDatabase.QueueBatch(vendor.IconScale, eraseAllBeforehand, images);
-			if (imagesSafe.Count > 0) Singleton.ImageDatabase.QueueBatch(vendor.SafeIconScale, eraseAllBeforehand, imagesSafe);
+			if (images.Count > 0) Singleton.ImageDatabase.QueueBatch(eraseAllBeforehand, images);
+			if (imagesSafe.Count > 0) Singleton.ImageDatabase.QueueBatch(eraseAllBeforehand, imagesSafe);
 
 			Facepunch.Pool.FreeList(ref plugins);
 			Facepunch.Pool.FreeList(ref images);

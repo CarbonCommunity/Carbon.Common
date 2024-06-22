@@ -224,13 +224,9 @@ public readonly struct CUI : IDisposable
 		return ImageDatabase.HasImage(url, scale);
 	}
 
-	public void QueueImages(float scale, IEnumerable<string> urls)
-	{
-		ImageDatabase.QueueBatch(scale, false, urls);
-	}
 	public void QueueImages(IEnumerable<string> urls)
 	{
-		QueueImages(1, urls);
+		ImageDatabase.QueueBatch(false, urls);
 	}
 
 	public void ClearImages(float scale, IEnumerable<string> urls)
