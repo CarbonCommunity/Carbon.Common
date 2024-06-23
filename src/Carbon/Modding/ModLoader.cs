@@ -324,6 +324,11 @@ public static partial class ModLoader
 
 		if (!premature)
 		{
+			if (!plugin.IsPrecompiled)
+			{
+				Assemblies.Plugins.Eliminate(Path.GetFileNameWithoutExtension(plugin.FilePath));
+			}
+
 			Logger.Log($"Unloaded plugin {plugin.ToPrettyString()}");
 			Interface.Oxide.RootPluginManager.RemovePlugin(plugin);
 
