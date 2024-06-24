@@ -1,4 +1,6 @@
-﻿namespace Carbon;
+﻿using System.Collections.Concurrent;
+
+namespace Carbon;
 
 public class Assemblies
 {
@@ -15,7 +17,7 @@ public class Assemblies
 		public List<Assembly> History { get; } = new();
 	}
 
-	public class RuntimeAssemblyBank : Dictionary<string, RuntimeAssembly>
+	public class RuntimeAssemblyBank : ConcurrentDictionary<string, RuntimeAssembly>
 	{
 		public RuntimeAssembly Get(string key)
 		{
@@ -36,23 +38,18 @@ public class Assemblies
 				return;
 			}
 
-			if (!TryGetValue(key, out var existent))
-			{
-				existent = new RuntimeAssembly();
-				existent.CurrentAssembly = assembly;
-				Add(key, existent);
-			}
-			else
-			{
-				if (existent.CurrentAssembly != null)
+			AddOrUpdate(key, _ => new RuntimeAssembly { CurrentAssembly = assembly, Location = location },
+				(_, existent) =>
 				{
-					existent.History.Add(existent.CurrentAssembly);
-				}
-				
-				existent.CurrentAssembly = assembly;
-			}
+					if (existent.CurrentAssembly != null)
+					{
+						existent.History.Add(existent.CurrentAssembly);
+					}
 
-			existent.Location = location;
+					existent.CurrentAssembly = assembly;
+					existent.Location = location;
+					return existent;
+				});
 		}
 		public void Eliminate(string key)
 		{
