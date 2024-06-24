@@ -1,6 +1,6 @@
 ﻿/*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -13,6 +13,11 @@ public static class SteamEx
 	}
 
 	public static bool IsSteamId(this ulong id)
+	{
+		return id > 76561197960265728UL;
+	}
+
+	public static bool IsSteamId(this BasePlayer.EncryptedValue<ulong> id)
 	{
 		return id > 76561197960265728UL;
 	}
