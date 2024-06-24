@@ -17,9 +17,7 @@ public partial class CorePlugin : CarbonPlugin
 	[Conditional("!MINIMAL")]
 	internal object IRecyclerThinkSpeed(Recycler recycler)
 	{
-		return null;
-
-		//if (recycler.IsSafezoneRecycler())
+		if (recycler.IsSafezoneRecycler())
 		{
 			if (SafezoneRecycleTickMultiplier != -1)
 			{
@@ -129,7 +127,7 @@ public partial class CorePlugin : CarbonPlugin
 
 		return null;
 	}
-	
+
 	[Conditional("!MINIMAL")]
 	private void IResearchDuration() { }
 

@@ -1209,7 +1209,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					{
 						if (!chartCache.HasPlayerReceivedData(session.Player.userID))
 						{
-							CommunityEntity.ServerInstance.ClientRPCPlayer(null, session.Player, "CL_ReceiveFilePng", chartCache.Crc,
+							CommunityEntity.ServerInstance.ClientRPC(RpcTarget.Player("CL_ReceiveFilePng", session.Player), chartCache.Crc,
 								(uint)chartCache.Data.Length, chartCache.Data, 0, (byte)FileStorage.Type.png);
 						}
 
@@ -2027,7 +2027,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 								{
 									if (!chartCache.HasPlayerReceivedData(ap.Player.userID))
 									{
-										CommunityEntity.ServerInstance.ClientRPCPlayer(null, ap.Player, "CL_ReceiveFilePng", chartCache.Crc,
+										CommunityEntity.ServerInstance.ClientRPC(RpcTarget.Player("CL_ReceiveFilePng", ap.Player), chartCache.Crc,
 											(uint)chartCache.Data.Length, chartCache.Data, 0, (byte)FileStorage.Type.png);
 									}
 
@@ -2119,7 +2119,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 								{
 									if (!chartCache.HasPlayerReceivedData(ap.Player.userID))
 									{
-										CommunityEntity.ServerInstance.ClientRPCPlayer(null, ap.Player, "CL_ReceiveFilePng", chartCache.Crc,
+										CommunityEntity.ServerInstance.ClientRPC(RpcTarget.Player("CL_ReceiveFilePng", ap.Player), chartCache.Crc,
 											(uint)chartCache.Data.Length, chartCache.Data, 0, (byte)FileStorage.Type.png);
 									}
 
@@ -2370,7 +2370,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			ap.Player.inventory.loot.MarkDirty();
 			ap.Player.inventory.loot.SendImmediate();
 
-			ap.Player.ClientRPCPlayer(null, ap.Player, "RPC_OpenLootPanel", "player_corpse");
+			ap.Player.ClientRPC(RpcTarget.Player("RPC_OpenLootPanel", ap.Player), "player_corpse");
 		});
 	}
 	internal static void OpenContainer(PlayerSession ap, ItemContainer container, Tab tab)
@@ -2392,7 +2392,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			ap.Player.inventory.loot.MarkDirty();
 			ap.Player.inventory.loot.SendImmediate();
 
-			ap.Player.ClientRPCPlayer(null, ap.Player, "RPC_OpenLootPanel", "generic");
+			ap.Player.ClientRPC(RpcTarget.Player("RPC_OpenLootPanel", ap.Player), "generic");
 		});
 	}
 
