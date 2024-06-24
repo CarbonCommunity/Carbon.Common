@@ -1,6 +1,4 @@
-﻿using UnityEngine.Serialization;
-
-namespace Carbon.Profiler;
+﻿namespace Carbon.Profiler;
 
 [Serializable]
 public class MonoProfilerConfig

@@ -110,14 +110,14 @@ public class OxideMod
 
 	public bool UnloadPlugin(string name)
 	{
-		if (Community.Runtime.ScriptProcessor.InstanceBuffer.TryGetValue(name, out var instance))
+		if (!Community.Runtime.ScriptProcessor.InstanceBuffer.TryGetValue(name, out var instance))
 		{
-			instance?.Clear();
-			instance?.Dispose();
-			Community.Runtime.ScriptProcessor.Remove(name);
 			return true;
 		}
 
+		instance.Clear();
+		instance.Dispose();
+		Community.Runtime.ScriptProcessor.Remove(name);
 		return true;
 	}
 

@@ -38,7 +38,7 @@ public class ComponentCacheBank<T> : Dictionary<GameObject, List<T>>, IComponent
 			this[go] = monos = new();
 		}
 
-		var existent = monos.FirstOrDefault(x => x is T);
+		var existent = monos.FirstOrDefault(x => x != null);
 
 		if (existent != null)
 		{

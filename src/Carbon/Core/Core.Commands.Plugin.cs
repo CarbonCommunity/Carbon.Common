@@ -257,15 +257,6 @@ public partial class CorePlugin : CarbonPlugin
 					}
 
 					Logger.Warn($"Plugin {name} was not found or was typed incorrectly.");
-
-					/*var module = BaseModule.GetModule<DRMModule>();
-					foreach (var drm in module.Config.DRMs)
-					{
-						foreach (var entry in drm.Entries)
-						{
-							if (entry.Id == name) drm.RequestEntry(entry);
-						}
-					}*/
 					break;
 				}
 		}
