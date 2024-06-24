@@ -127,7 +127,7 @@ public partial class CorePlugin : CarbonPlugin
 
 		return null;
 	}
-	
+
 	[Conditional("!MINIMAL")]
 	private void IResearchDuration() { }
 
