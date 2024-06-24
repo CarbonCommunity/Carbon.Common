@@ -113,16 +113,12 @@ public partial class CorePlugin : CarbonPlugin
 			arg.ReplyWith($"Couldn't find that module.");
 			return;
 		}
-
-		if (module.IsEnabled()) module.SetEnabled(false);
-
+		
 		try
 		{
 			module.Load();
 
-			if (module.IsEnabled()) module.OnEnableStatus();
-
-			arg.ReplyWith($"Reloaded '{module.Name}' module config.");
+			arg.ReplyWith($"Reloaded '{module.Name}' module config & data.");
 		}
 		catch (Exception ex)
 		{
