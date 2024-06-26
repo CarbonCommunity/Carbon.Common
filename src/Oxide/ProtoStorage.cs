@@ -3,7 +3,7 @@ using Logger = Carbon.Logger;
 
 /*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -67,10 +67,10 @@ public class ProtoStorage
 				Directory.CreateDirectory(directoryName);
 			}
 
-			var mode = File.Exists(fileDataPath) ? FileMode.Truncate : FileMode.Create;
 			using var stream = new MemoryStream();
 			Serializer.Serialize(stream, data);
-			OsEx.File.Create(fileDataPath, stream.ToArray());
+			using var temp = TempArray<byte>.New(stream.ToArray());
+			OsEx.File.Create(fileDataPath, temp.Array);
 		}
 		catch (Exception ex)
 		{
