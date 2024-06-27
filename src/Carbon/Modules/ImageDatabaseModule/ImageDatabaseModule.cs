@@ -249,13 +249,15 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 			return;
 		}
 
+		var urlCount = urls.Count();
+
 		QueueBatch(@override, results =>
 		{
 			foreach (var result in results.Where(result => result.Data != null && result.Data.Length != 0))
 			{
 				if (result.Data.Length >= MaximumBytes)
 				{
-					Puts($"Failed storing {urls.Count():n0} jobs: {result.Data.Length} more or equal than {MaximumBytes}");
+					Puts($"Failed storing {urlCount:n0} jobs: {result.Data.Length} more or equal than {MaximumBytes}");
 					continue;
 				}
 
@@ -277,6 +279,7 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 
 		var thread = new QueuedThread();
 		var existent = Pool.GetList<QueuedThreadResult>();
+		var urlCount = urls.Count();
 
 		try
 		{
@@ -317,7 +320,7 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 					{
 						if (result.Data.Length >= MaximumBytes)
 						{
-							Puts($"Failed storing {urls.Count():n0} jobs: {result.Data.Length} more or equal than {MaximumBytes}");
+							Puts($"Failed storing {urlCount:n0} jobs: {result.Data.Length} more or equal than {MaximumBytes}");
 							continue;
 						}
 
