@@ -167,17 +167,26 @@ public class CarbonAuto : API.Abstracts.CarbonAuto
 				var option = ConsoleSystem.Option.Server;
 
 				Logger.Log($"Initialized Carbon Auto ({lines.Length:n0} {lines.Length.Plural("variable", "variables")})");
+
+
 				foreach (var line in lines)
 				{
-					using var value = TempArray<string>.New(line.Split(' '));
-
-					var convar = value.Get(0);
-					var conval = value.Get(1).Replace("\"", string.Empty);
-
-					if (AutoCache.TryGetValue(convar, out var auto))
+					try
 					{
-						auto.SetValue(conval);
-						Logger.Warn($" {convar} \"{auto.GetValue()}\"{(auto.Variable.ForceModded ? " [modded]" : string.Empty)}");
+						using var value = TempArray<string>.New(line.Split(' '));
+
+						var convar = value.Get(0);
+						var conval = value.Array.Skip(1).ToString(" ").Replace("\"", string.Empty);
+						
+						if (AutoCache.TryGetValue(convar, out var auto))
+						{
+							auto.SetValue(conval);
+							Logger.Warn($" {convar} \"{auto.GetValue()}\"{(auto.Variable.ForceModded ? " [modded]" : string.Empty)}");
+						}
+					}
+					catch (Exception ex)
+					{
+						Logger.Error($"Failed processing line '{line}'", ex);
 					}
 				}
 
