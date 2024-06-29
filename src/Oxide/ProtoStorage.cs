@@ -38,12 +38,8 @@ public class ProtoStorage
 		{
 			if (File.Exists(fileDataPath))
 			{
-				T result;
-				using (var fileStream = new MemoryStream(OsEx.File.ReadBytes(fileDataPath)))
-				{
-					result = Serializer.Deserialize<T>(fileStream);
-				}
-				return result;
+				using var fileStream = new MemoryStream(OsEx.File.ReadBytes(fileDataPath));
+				return Serializer.Deserialize<T>(fileStream);
 			}
 		}
 		catch (Exception ex)
@@ -51,7 +47,7 @@ public class ProtoStorage
 			Logger.Error("Failed to load protobuf data from " + fileName, ex);
 		}
 
-		return default(T);
+		return default;
 	}
 
 	public static void Save<T>(T data, params string[] subPaths)

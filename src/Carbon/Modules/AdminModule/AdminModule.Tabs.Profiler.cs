@@ -103,14 +103,20 @@ public partial class AdminModule
 			};
 			profiler.Over = (_, cui, container, parent, _) =>
 			{
-				var message = MonoProfiler.Crashed ? "<b>Mono profiler has failed initializing properly</b>\nPlease ensure CarbonNative.dll is located in <b>carbon/native</b> or contact developers" :
+				var message = MonoProfiler.Crashed ? "<b>Mono profiler has failed initializing properly</b>\nPlease ensure " +
+#if LINUX
+				                                     "libCarbonNative.so"
+#else
+				                                     "CarbonNative.dll"
+#endif
+													+ " is located in <b>carbon/native</b> or contact developers" :
 						MonoProfiler.Enabled ? "<b>Mono profiler is disabled</b>\nEnable it in the config, then reboot the server" : null;
 
 				if (string.IsNullOrEmpty(message))
 				{
 					return;
 				}
-
+				
 				var blur = cui.CreatePanel(container, parent, "0 0 0 0.5", blur: true);
 				cui.CreateText(container, blur, "1 1 1 0.5", message, 10);
 			};
