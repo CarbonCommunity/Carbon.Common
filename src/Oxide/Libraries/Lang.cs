@@ -56,11 +56,8 @@ public class Lang : Library
 	{
 		if (string.IsNullOrEmpty(lang) || string.IsNullOrEmpty(userId)) return;
 
-		if (Interface.Oxide.Permission.UserExists(userId, out var data) && data.Language != lang)
-		{
-			data.Language = lang;
-			Interface.Oxide.Permission.SaveData();
-		}
+		if (!Interface.Oxide.Permission.UserExists(userId, out var data) || data.Language.Equals(lang)) return;
+		data.Language = lang;
 	}
 	public void SetServerLanguage(string lang)
 	{
