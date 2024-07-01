@@ -104,7 +104,7 @@ public partial class AdminModule
 			profiler.Over = (_, cui, container, parent, _) =>
 			{
 				var message = MonoProfiler.Crashed ? "<b>Mono profiler has failed initializing properly</b>\nPlease ensure " +
-#if LINUX
+#if UNIX
 				                                     "libCarbonNative.so"
 #else
 				                                     "CarbonNative.dll"
@@ -116,7 +116,7 @@ public partial class AdminModule
 				{
 					return;
 				}
-				
+
 				var blur = cui.CreatePanel(container, parent, "0 0 0 0.5", blur: true);
 				cui.CreateText(container, blur, "1 1 1 0.5", message, 10);
 			};
