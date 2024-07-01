@@ -5,7 +5,7 @@ using Logger = Carbon.Logger;
 
 /*
  *
- * Copyright (c) 2022-2023 Carbon Community 
+ * Copyright (c) 2022-2023 Carbon Community
  * All rights reserved.
  *
  */
@@ -35,12 +35,9 @@ public class MySql : Library, IDatabaseProvider
 				}
 				else
 				{
-					foreach (var connection in _runningConnections)
+					foreach (var connection in _runningConnections.Where(connection => connection is { ConnectionPersistent: false }))
 					{
-						if (connection != null && !connection.ConnectionPersistent)
-						{
-							CloseDb(connection);
-						}
+						CloseDb(connection);
 					}
 
 					_runningConnections.Clear();
