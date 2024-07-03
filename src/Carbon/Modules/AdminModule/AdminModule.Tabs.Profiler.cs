@@ -110,7 +110,7 @@ public partial class AdminModule
 				                                     "CarbonNative.dll"
 #endif
 													+ " is located in <b>carbon/native</b> or contact developers" :
-						MonoProfiler.Enabled ? "<b>Mono profiler is disabled</b>\nEnable it in the config, then reboot the server" : null;
+						!MonoProfiler.Enabled ? "<b>Mono profiler is disabled</b>\nEnable it in the config, then reboot the server" : null;
 
 				if (string.IsNullOrEmpty(message))
 				{
