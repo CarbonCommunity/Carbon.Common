@@ -91,14 +91,9 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 	[AuthLevel(2)]
 	private void DeleteImg(ConsoleSystem.Arg arg)
 	{
-		if (DeleteImage(arg.GetString(0), arg.GetFloat(1)))
-		{
-			arg.ReplyWith($"Deleted image.");
-		}
-		else
-		{
-			arg.ReplyWith($"Couldn't delete image. Probably because it doesn't exist.");
-		}
+		arg.ReplyWith(DeleteImage(arg.GetString(0))
+			? $"Deleted image"
+			: $"Couldn't delete image. Probably because it doesn't exist");
 	}
 
 	[ConsoleCommand("imagedb.pending")]
@@ -241,7 +236,6 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 		return false;
 	}
 
-
 	public void QueueBatch(bool @override, IEnumerable<string> urls)
 	{
 		if (urls == null || !urls.Any())
@@ -307,7 +301,7 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 		}
 		catch (Exception ex)
 		{
-			Logger.Error($"Failed processing queue batch", ex);
+			Logger.Error("Failed processing queue batch", ex);
 		}
 
 		Community.Runtime.Core.persistence.StartCoroutine(_executeQueue(thread, results =>
@@ -447,15 +441,15 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 
 		return !_protoData.Map.TryGetValue(id, out var uid) ? default : uid;
 	}
-	public string GetImageString(string keyOrUrl, float scale = 1)
+	public string GetImageString(string keyOrUrl)
 	{
 		return GetImage(keyOrUrl).ToString();
 	}
-	public bool HasImage(string keyOrUrl, float scale = 1)
+	public bool HasImage(string keyOrUrl)
 	{
 		return FileStorage.server.Get(GetImage(keyOrUrl), FileStorage.Type.png, CommunityEntity.ServerInstance.net.ID) != null;
 	}
-	public bool DeleteImage(string url, float scale = 1)
+	public bool DeleteImage(string url)
 	{
 		var id = GetId(url);
 
