@@ -68,7 +68,7 @@ namespace Oxide.Core.Plugins
 
 		public Plugin[] Requires { get; set; }
 
-		public ModLoader.ModPackage Package;
+		public ModLoader.Package Package;
 		public IBaseProcessor Processor;
 		public IBaseProcessor.IProcess ProcessorProcess;
 
@@ -269,7 +269,7 @@ namespace Oxide.Core.Plugins
 			{
 				using (TimeMeasure.New($"IUnload.UnloadRequirees on '{ToPrettyString()}'"))
 				{
-					var mods = Pool.GetList<ModLoader.ModPackage>();
+					var mods = Pool.GetList<ModLoader.Package>();
 					mods.AddRange(ModLoader.Packages);
 					var plugins = Pool.GetList<Plugin>();
 

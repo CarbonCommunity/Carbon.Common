@@ -309,8 +309,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 			var eraseAllBeforehand = false;
 
-			if (images.Count > 0) Singleton.ImageDatabase.QueueBatchCallback(vendor.IconScale, eraseAllBeforehand, result => { }, images);
-			if (imagesSafe.Count > 0) Singleton.ImageDatabase.QueueBatch(vendor.SafeIconScale, eraseAllBeforehand, imagesSafe);
+			if (images.Count > 0) Singleton.ImageDatabase.QueueBatch(eraseAllBeforehand, images);
+			if (imagesSafe.Count > 0) Singleton.ImageDatabase.QueueBatch(eraseAllBeforehand, imagesSafe);
 
 			Facepunch.Pool.FreeList(ref plugins);
 			Facepunch.Pool.FreeList(ref images);
@@ -371,7 +371,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				}
 				else
 				{
-					if (Singleton.ImageDatabase.GetImage(plugin.Thumbnail) != 0) cui.CreateImage(container, card, plugin.Thumbnail, plugin.HasInvalidImage() ? vendor.SafeIconScale : vendor.IconScale, "1 1 1 1");
+					if (Singleton.ImageDatabase.HasImage(plugin.Thumbnail)) cui.CreateImage(container, card, plugin.Thumbnail, "1 1 1 1");
 					else cui.CreateClientImage(container, card, plugin.Thumbnail, "1 1 1 1");
 				}
 
@@ -422,7 +422,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				xMin: 0f, xMax: 0.8f, yMin: 0.89f, yMax: 0.94f);
 
 			var drop = cui.CreatePanel(container, sidebar, "0 0 0 0", yMin: 0.95f, OxMin: -155);
-			Singleton.TabPanelDropdown(cui, PlaceboPage, container, drop, null, $"pluginbrowser.changesetting filter_dd", 1, 0, (int)ap.GetStorage(tab, "filter", FilterTypes.None), DropdownOptions, null, 0, DropdownShow);
+			Singleton.TabPanelDropdown(cui, PlaceboPage, container, drop, null, $"pluginbrowser.changesetting filter_dd", 1, 0, (int)ap.GetStorage(tab, "filter", FilterTypes.None), DropdownOptions, null, DropdownShow);
 
 			const float topbarYScale = 0.1f;
 			cui.CreateText(container, topbar, "1 1 1 1", plugins.Count > 0 ? $"/ {maxPages + 1:n0}" : "NONE", plugins.Count > 0 ? 10 : 8, xMin: plugins.Count > 0 ? 0.925f : 0.92f, xMax: 0.996f, align: TextAnchor.MiddleLeft);
@@ -479,6 +479,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			if (TagFilter.Contains("banan")) cui.CreateClientImage(container, grid, "https://upload.wikimedia.org/wikipedia/commons/2/23/Banan.jpg", "1 1 1 1", xMax: 0.8f);
 
 			var selectedPlugin = ap.GetStorage<Plugin>(tab, "selectedplugin");
+
 			if (selectedPlugin != null)
 			{
 				vendor.CheckMetadata(selectedPlugin.Id, () => { Singleton.Draw(ap.Player); });
@@ -488,11 +489,15 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 				var image = cui.CreatePanel(container, parent, "0 0 0 0.5", xMin: 0.08f, xMax: 0.45f, yMin: 0.15f, yMax: 0.85f);
 
-				if (selectedPlugin.NoImage()) cui.CreateImage(container, image, vendor.Logo, "0.2 0.2 0.2 0.4", xMin: 0.2f, xMax: 0.8f, yMin: 0.2f + vendor.LogoRatio, yMax: 0.8f - vendor.LogoRatio);
+				if (selectedPlugin.NoImage() || !Singleton.ImageDatabase.HasImage(selectedPlugin.Image))
 				{
-					if (Singleton.ImageDatabase.GetImage(selectedPlugin.Image) == 0) cui.CreateClientImage(container, image, selectedPlugin.Image, "1 1 1 1", xMin: 0.05f, xMax: 0.95f, yMin: 0.05f, yMax: 0.95f);
-					else cui.CreateImage(container, image, selectedPlugin.Image, selectedPlugin.HasInvalidImage() ? vendor.SafeIconScale : vendor.IconScale, "1 1 1 1", xMin: 0.05f, xMax: 0.95f, yMin: 0.05f, yMax: 0.95f);
+					cui.CreateImage(container, image, vendor.Logo, "0.2 0.2 0.2 0.4", xMin: 0.2f, xMax: 0.8f, yMin: 0.2f + vendor.LogoRatio, yMax: 0.8f - vendor.LogoRatio);
 				}
+				else
+				{
+					cui.CreateClientImage(container, image, selectedPlugin.Image, "1 1 1 1", xMin: 0.05f, xMax: 0.95f, yMin: 0.05f, yMax: 0.95f);
+				}
+
 				var pluginName = cui.CreateText(container, mainPanel, "1 1 1 1", selectedPlugin.Name, 25, xMin: 0.505f, yMax: 0.8f, align: TextAnchor.UpperLeft, font: CUI.Handler.FontTypes.RobotoCondensedBold);
 				cui.CreateText(container, mainPanel, "1 1 1 0.5", $"by <b>{(selectedPlugin.ExistentPlugin != null ? selectedPlugin.ExistentPlugin.Author : selectedPlugin.Author)}</b>  <b>•</b>  v{selectedPlugin.Version}  <b>•</b>  Updated on {selectedPlugin.UpdateDate}  <b>•</b>  {selectedPlugin.DownloadCount:n0} downloads", 11, xMin: 0.48f, yMax: 0.74f, align: TextAnchor.UpperLeft);
 				cui.CreateText(container, mainPanel, "1 1 1 0.3", $"{(!selectedPlugin.HasLookup ? "Fetching metdata..." : $"{selectedPlugin.Description}\n\n{selectedPlugin.Changelog}")}", 11, xMin: 0.48f, xMax: 0.85f, yMax: 0.635f, align: TextAnchor.UpperLeft);
@@ -741,9 +746,6 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			public IEnumerable<string> LogoEnumerable;
 			public virtual float LogoRatio { get; }
 
-			public virtual float IconScale { get; }
-			public virtual float SafeIconScale { get; }
-
 			public virtual string BarInfo { get; }
 
 			public IEnumerable<Plugin> PriceData { get; set; }
@@ -859,9 +861,6 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			public override string Url => "https://codefling.com";
 			public override string Logo => "cflogo";
 			public override float LogoRatio => 0f;
-
-			public override float IconScale => 0.4f;
-			public override float SafeIconScale => 0.2f;
 
 			public override string BarInfo => $"{FetchedPlugins.Count(x => !x.IsPaid()):n0} free, {FetchedPlugins.Count(x => x.IsPaid()):n0} paid";
 
@@ -1243,6 +1242,8 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 					core.webrequest.Enqueue(url, null, (code, result) =>
 					{
+						User ??= new();
+
 						switch (code)
 						{
 							case 401:
@@ -1268,7 +1269,6 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 								onComplete?.Invoke();
 								break;
 						}
-
 					}, null);
 				});
 			}
@@ -1391,9 +1391,6 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			public override string Url => "https://umod.org";
 			public override string Logo => "umodlogo";
 			public override float LogoRatio => 0.2f;
-
-			public override float IconScale => 1f;
-			public override float SafeIconScale => 1f;
 
 			public override string BarInfo => $"{FetchedPlugins.Count:n0} free";
 
@@ -1688,8 +1685,6 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			public override string ListEndpoint => string.Empty;
 			public override string DownloadEndpoint => string.Empty;
 			public override string BarInfo => $"{FetchedPlugins.Count:n0} loaded";
-			public override float IconScale => 0.4f;
-			public override float SafeIconScale => 0.2f;
 
 			internal string[] _defaultTags = new[] { "carbon", "oxide" };
 

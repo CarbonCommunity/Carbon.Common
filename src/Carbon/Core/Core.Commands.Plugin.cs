@@ -106,7 +106,7 @@ public partial class CorePlugin : CarbonPlugin
 							SplitMessageUp(true, failed, compilation, error, 0);
 						}
 
-						static void SplitMessageUp(bool initial, StringTable table, ModLoader.FailedCompilation compilation, ModLoader.Trace trace, int skip)
+						static void SplitMessageUp(bool initial, StringTable table, ModLoader.CompilationResult compilation, ModLoader.Trace trace, int skip)
 						{
 							const int size = 150;
 
@@ -257,15 +257,6 @@ public partial class CorePlugin : CarbonPlugin
 					}
 
 					Logger.Warn($"Plugin {name} was not found or was typed incorrectly.");
-
-					/*var module = BaseModule.GetModule<DRMModule>();
-					foreach (var drm in module.Config.DRMs)
-					{
-						foreach (var entry in drm.Entries)
-						{
-							if (entry.Id == name) drm.RequestEntry(entry);
-						}
-					}*/
 					break;
 				}
 		}

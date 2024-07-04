@@ -129,10 +129,10 @@ public class Community
 	public CorePlugin Core
 	{ get; set; }
 
-	public ModLoader.ModPackage Plugins
+	public ModLoader.Package Plugins
 	{ get; set; }
 
-	public ModLoader.ModPackage ZipPlugins
+	public ModLoader.Package ZipPlugins
 	{ get; set; }
 
 	public Entities Entities
@@ -144,9 +144,9 @@ public class Community
 	{
 		if (string.IsNullOrEmpty(name)) return string.Empty;
 
-		using var split = TemporaryArray<string>.New(name.Split(' '));
+		using var split = TempArray<string>.New(name.Split(' '));
 		var command = split.Array[0];
-		using var args = TemporaryArray<string>.New(split.Array.Skip(1).ToArray());
+		using var args = TempArray<string>.New(split.Array.Skip(1).ToArray());
 		var arguments = args.Array.ToString(" ");
 
 		return $"carbonprotecc_{RandomEx.GetRandomString(16, command + Tick, command.Length + Tick)} {arguments}".TrimEnd();
