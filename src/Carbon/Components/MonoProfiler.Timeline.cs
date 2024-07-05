@@ -6,6 +6,8 @@
  *
  */
 
+using ProtoBuf;
+
 namespace Carbon.Components;
 
 public partial class MonoProfiler
@@ -145,41 +147,6 @@ public partial class MonoProfiler
 		}
 	}
 
+	[ProtoContract]
 	public class Timeline : Dictionary<DateTime, Sample>;
-
-	public struct Sample
-	{
-		public AssemblyOutput Assemblies;
-		public CallOutput Calls;
-		public MemoryOutput Memory;
-		public GCRecord GC;
-
-		public static Sample Create() => new()
-		{
-			Assemblies = new(),
-			Calls = new(),
-			Memory = new()
-		};
-
-		public void Resample()
-		{
-			Clear();
-
-			Assemblies.AddRange(AssemblyRecords);
-			Calls.AddRange(CallRecords);
-			Memory.AddRange(MemoryRecords);
-			GC = GCStats;
-		}
-		public void Clear()
-		{
-			Assemblies ??= new();
-			Calls ??= new();
-			Memory ??= new();
-
-			Assemblies?.Clear();
-			Calls?.Clear();
-			Memory?.Clear();
-			GC = default;
-		}
-	}
 }

@@ -6,6 +6,7 @@ using System.Text;
 using API.Logger;
 using Carbon.Profiler;
 using Newtonsoft.Json;
+using ProtoBuf;
 using Timer = Oxide.Plugins.Timer;
 
 /*
@@ -55,16 +56,59 @@ public static unsafe partial class MonoProfiler
 		UnknownError = 6,
 	}
 
+	[ProtoContract]
 	public class AssemblyNameEntry
 	{
-		public string name;
-		public string displayName;
-		public MonoProfilerConfig.ProfileTypes profileType;
+		[ProtoMember(1)] public string name;
+		[ProtoMember(2)] public string displayName;
+		[ProtoMember(3)] public MonoProfilerConfig.ProfileTypes profileType;
 	}
 
+	[ProtoContract]
 	public class AssemblyOutput : List<AssemblyRecord>
 	{
 		public bool AnyValidRecords => Count > 0;
+
+		public AssemblyOutput Compare(AssemblyOutput other)
+		{
+			if (other == null)
+			{
+				return null;
+			}
+
+			var comparison = new AssemblyOutput();
+
+			for(int i = 0; i < this.Count; i++)
+			{
+				var record = this[i];
+				var otherRecord = other.FirstOrDefault(x => x.assembly_name.displayName == record.assembly_name.displayName);
+
+				if (otherRecord.assembly_name == null)
+				{
+					break;
+				}
+
+				comparison.Add(new AssemblyRecord
+				{
+					assembly_handle = record.assembly_handle,
+					assembly_name = record.assembly_name,
+
+					total_time = record.total_time - otherRecord.total_time,
+					total_time_percentage = record.total_time_percentage - otherRecord.total_time_percentage,
+					total_exceptions = record.total_exceptions - otherRecord.total_exceptions,
+					calls = record.calls - otherRecord.calls,
+					alloc = record.alloc - otherRecord.alloc,
+
+					total_time_c = Sample.Compare(record.total_time, otherRecord.total_time),
+					total_time_percentage_c = Sample.Compare(record.total_time_percentage, otherRecord.total_time_percentage),
+					total_exceptions_c = Sample.Compare(record.total_exceptions, otherRecord.total_exceptions),
+					calls_c = Sample.Compare(record.calls, otherRecord.calls),
+					alloc_c = Sample.Compare(record.alloc, otherRecord.alloc)
+				});
+			}
+
+			return comparison;
+		}
 
 		public string ToTable()
 		{
@@ -120,10 +164,55 @@ public static unsafe partial class MonoProfiler
 			return JsonConvert.SerializeObject(this, indented ? Formatting.Indented : Formatting.None);
 		}
 	}
+
+	[ProtoContract]
 	public class CallOutput : List<CallRecord>
 	{
 		public bool AnyValidRecords => Count > 0;
 		public bool Disabled;
+
+		public CallOutput Compare(CallOutput other)
+		{
+			if (other == null)
+			{
+				return null;
+			}
+
+			var comparison = new CallOutput();
+
+			for(int i = 0; i < this.Count; i++)
+			{
+				var record = this[i];
+				var otherRecord = other.FirstOrDefault(x =>
+					x.assembly_name.displayName == record.assembly_name.displayName &&
+				    x.method_name == record.method_name);
+
+				if (otherRecord.assembly_name == null)
+				{
+					break;
+				}
+
+				comparison.Add(new CallRecord
+				{
+					assembly_handle = record.assembly_handle,
+					assembly_name = record.assembly_name,
+					method_handle = record.method_handle,
+					method_name = record.method_name,
+
+					total_time = record.total_time - otherRecord.total_time,
+					total_time_percentage = record.total_time_percentage - otherRecord.total_time_percentage,
+					own_time = record.own_time - otherRecord.own_time,
+					own_time_percentage = record.own_time_percentage - otherRecord.own_time_percentage,
+					calls = record.calls - otherRecord.calls,
+					total_alloc = record.total_alloc - otherRecord.total_alloc,
+					own_alloc = record.own_alloc - otherRecord.own_alloc,
+					total_exceptions = record.total_exceptions - otherRecord.total_exceptions,
+					own_exceptions = record.own_exceptions - otherRecord.own_exceptions,
+				});
+			}
+
+			return comparison;
+		}
 
 		public string ToTable()
 		{
@@ -190,6 +279,8 @@ public static unsafe partial class MonoProfiler
 			return JsonConvert.SerializeObject(this, indented ? Formatting.Indented : Formatting.None);
 		}
 	}
+
+	[ProtoContract]
 	public class MemoryOutput : List<MemoryRecord>
 	{
 		public string ToTable()
@@ -254,11 +345,15 @@ public static unsafe partial class MonoProfiler
 		}
 	}
 
+	[ProtoContract]
 	[StructLayout(LayoutKind.Sequential)]
 	public struct GCRecord
 	{
-		public ulong calls;
-		public ulong total_time;
+		[ProtoMember(1)] public ulong calls;
+		[ProtoMember(1)] public ulong total_time;
+
+		[JsonIgnore] public Sample.Difference calls_comparison;
+		[JsonIgnore] public Sample.Difference total_time_comparison;
 
 		// managed
 		public double total_time_ms => total_time * 0.001f;
@@ -266,56 +361,82 @@ public static unsafe partial class MonoProfiler
 		public string GetTotalTime() => (total_time_ms < 1 ? $"{total_time:n0}μs" : $"{total_time_ms:n0}ms");
 	}
 
+	[ProtoContract]
 	[StructLayout(LayoutKind.Sequential)]
 	public struct AssemblyRecord
 	{
 		[JsonIgnore] public ModuleHandle assembly_handle;
-		public ulong total_time;
-		public double total_time_percentage;
-		public ulong total_exceptions;
-		public ulong calls;
-		public ulong alloc;
+
+		[ProtoMember(1)] public ulong total_time;
+		[ProtoMember(2)] public double total_time_percentage;
+		[ProtoMember(3)] public ulong total_exceptions;
+		[ProtoMember(4)] public ulong calls;
+		[ProtoMember(5)] public ulong alloc;
 
 		// managed
-		public AssemblyNameEntry assembly_name;
+		[ProtoMember(6)] public AssemblyNameEntry assembly_name;
 		public double total_time_ms => total_time * 0.001f;
+
+		[JsonIgnore] public Sample.Difference total_time_c;
+		[JsonIgnore] public Sample.Difference total_time_percentage_c;
+		[JsonIgnore] public Sample.Difference total_exceptions_c;
+		[JsonIgnore] public Sample.Difference calls_c;
+		[JsonIgnore] public Sample.Difference alloc_c;
 
 		public string GetTotalTime() => (total_time_ms < 1 ? $"{total_time:n0}μs" : $"{total_time_ms:n0}ms");
 	}
 
+	[ProtoContract]
 	[StructLayout(LayoutKind.Sequential)]
 	public struct MemoryRecord
 	{
 		public ModuleHandle assembly_handle;
 		public IntPtr class_handle;
-		public ulong allocations;
-		public ulong total_alloc_size;
-		public uint instance_size;
-		public uint class_token;
+		[ProtoMember(1)] public ulong allocations;
+		[ProtoMember(2)] public ulong total_alloc_size;
+		[ProtoMember(3)] public uint instance_size;
+		[ProtoMember(4)] public uint class_token;
 
 		// managed
-		public string class_name;
+		[ProtoMember(5)] public string class_name;
+		[ProtoMember(6)] public AssemblyNameEntry assembly_name;
+
+		[JsonIgnore] public Sample.Difference allocations_comparison;
+		[JsonIgnore] public Sample.Difference total_alloc_size_comparison;
+		[JsonIgnore] public Sample.Difference instance_size_comparison;
 	}
 
+	[ProtoContract]
 	[StructLayout(LayoutKind.Sequential)]
 	public struct CallRecord
 	{
 		[JsonIgnore] public ModuleHandle assembly_handle;
 		[JsonIgnore] public MonoMethod* method_handle;
-		public ulong total_time;
-		public double total_time_percentage;
-		public ulong own_time;
-		public double own_time_percentage;
-		public ulong calls;
-		public ulong total_alloc;
-		public ulong own_alloc;
-		public ulong total_exceptions;
-		public ulong own_exceptions;
+		[ProtoMember(1)] public ulong total_time;
+		[ProtoMember(2)] public double total_time_percentage;
+		[ProtoMember(3)] public ulong own_time;
+		[ProtoMember(4)] public double own_time_percentage;
+		[ProtoMember(5)] public ulong calls;
+		[ProtoMember(6)] public ulong total_alloc;
+		[ProtoMember(7)] public ulong own_alloc;
+		[ProtoMember(8)] public ulong total_exceptions;
+		[ProtoMember(9)] public ulong own_exceptions;
 
 		// managed
-		public string method_name;
+		[ProtoMember(10)] public string method_name;
+		[ProtoMember(11)] public AssemblyNameEntry assembly_name;
 		public double total_time_ms => total_time * 0.001f;
 		public double own_time_ms => own_time * 0.001f;
+
+		[JsonIgnore] public Sample.Difference total_time_comparison;
+		[JsonIgnore] public Sample.Difference total_time_percentage_comparison;
+		[JsonIgnore] public Sample.Difference own_time_comparison;
+		[JsonIgnore] public Sample.Difference own_time_percentage_comparison;
+		[JsonIgnore] public Sample.Difference calls_comparison;
+		[JsonIgnore] public Sample.Difference total_alloc_comparison;
+		[JsonIgnore] public Sample.Difference own_alloc_comparison;
+		[JsonIgnore] public Sample.Difference total_exceptions_comparison;
+		[JsonIgnore] public Sample.Difference own_exceptions_comparison;
 
 		public string GetTotalTime() => (total_time_ms < 1 ? $"{total_time:n0}μs" : $"{total_time_ms:n0}ms");
 		public string GetOwnTime() => (own_time_ms < 1 ? $"{own_time:n0}μs" : $"{own_time_ms:n0}ms");
@@ -376,9 +497,9 @@ public static unsafe partial class MonoProfiler
 	}
 
 
-	public static bool Enabled { get; private set; }
+	public static bool Enabled { get; }
 	public static bool IsRecording { get; private set; }
-	public static bool Crashed { get; private set; }
+	public static bool Crashed { get; }
 
 	public static bool IsCleared => !AssemblyRecords.Any() && !CallRecords.Any();
 
@@ -643,16 +764,33 @@ public static unsafe partial class MonoProfiler
 		{
 			MemoryRecord entry = records[i];
 
-			if (ClassMap.TryGetValue(entry.class_handle, out string name))
+			if (ClassMap.TryGetValue(entry.class_handle, out string className))
 			{
-				entry.class_name = name;
+				entry.class_name = className;
 			}
 			else
 			{
-				get_class_name(&name, entry.class_handle);
+				get_class_name(&className, entry.class_handle);
+				if (className == null) throw new NullReferenceException();
+				ClassMap[entry.class_handle] = className;
+				entry.class_name = className;
+			}
+
+			if (AssemblyMap.TryGetValue(entry.assembly_handle, out AssemblyNameEntry asmName))
+			{
+				entry.assembly_name = asmName;
+			}
+			else
+			{
+				string name;
+				get_image_name(&name, entry.assembly_handle);
 				if (name == null) throw new NullReferenceException();
-				ClassMap[entry.class_handle] = name;
-				entry.class_name = name;
+				asmName = new AssemblyNameEntry
+				{
+					name = name, displayName = name, profileType = MonoProfilerConfig.ProfileTypes.Assembly
+				};
+				AssemblyMap[entry.assembly_handle] = asmName;
+				entry.assembly_name = asmName;
 			}
 
 			records[i] = entry;
@@ -664,16 +802,32 @@ public static unsafe partial class MonoProfiler
 		{
 			CallRecord entry = records[i];
 
-			if (MethodMap.TryGetValue((IntPtr)entry.method_handle, out string name))
+			if (MethodMap.TryGetValue((IntPtr)entry.method_handle, out string methName))
 			{
-				entry.method_name = name;
+				entry.method_name = methName;
 			}
 			else
 			{
-				get_method_name(&name, entry.method_handle);
+				get_method_name(&methName, entry.method_handle);
+				MethodMap[(IntPtr)entry.method_handle] = methName ?? throw new NullReferenceException();
+				entry.method_name = methName;
+			}
+
+			if (AssemblyMap.TryGetValue(entry.assembly_handle, out AssemblyNameEntry asmName))
+			{
+				entry.assembly_name = asmName;
+			}
+			else
+			{
+				string name;
+				get_image_name(&name, entry.assembly_handle);
 				if (name == null) throw new NullReferenceException();
-				MethodMap[(IntPtr)entry.method_handle] = name;
-				entry.method_name = name;
+				asmName = new AssemblyNameEntry
+				{
+					name = name, displayName = name, profileType = MonoProfilerConfig.ProfileTypes.Assembly
+				};
+				AssemblyMap[entry.assembly_handle] = asmName;
+				entry.assembly_name = asmName;
 			}
 
 			records[i] = entry;
