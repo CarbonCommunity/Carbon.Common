@@ -165,8 +165,6 @@ public partial class CorePlugin : CarbonPlugin
 				}
 			}
 		}
-
-		Community.Runtime.CarbonClientManager.OnDisconnected(player.Connection);
 	}
 	private void OnPluginLoaded(Plugin plugin)
 	{

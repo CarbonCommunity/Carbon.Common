@@ -102,10 +102,7 @@ public class Community
 
 	public ICarbonProcessor CarbonProcessor
 	{ get; set; }
-
-	public ICarbonClientManager CarbonClientManager
-	{ get; set; }
-
+	
 	public static bool IsServerInitialized { get; internal set; }
 
 	public static bool IsConfigReady => Runtime != null && Runtime.Config != null;
