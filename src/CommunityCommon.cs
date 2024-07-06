@@ -4,13 +4,9 @@ using API.Commands;
 using API.Contracts;
 using API.Events;
 using API.Hooks;
-using Carbon.Client;
 using Facepunch;
 using Newtonsoft.Json;
-using Carbon.Extensions;
 using Application = UnityEngine.Application;
-using MathEx = Carbon.Extensions.MathEx;
-using Carbon.Client.SDK;
 using Carbon.Profiler;
 
 /*
