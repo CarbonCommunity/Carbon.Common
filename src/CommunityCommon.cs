@@ -102,7 +102,7 @@ public class Community
 
 	public ICarbonProcessor CarbonProcessor
 	{ get; set; }
-	
+
 	public static bool IsServerInitialized { get; internal set; }
 
 	public static bool IsConfigReady => Runtime != null && Runtime.Config != null;
@@ -115,9 +115,6 @@ public class Community
 	                                             ;
 
 	public Config Config
-	{ get; set; }
-
-	public Carbon.Client.ClientConfig ClientConfig
 	{ get; set; }
 
 	public Carbon.Profiler.MonoProfilerConfig MonoProfilerConfig
@@ -318,36 +315,6 @@ public class Community
 		}
 	}
 
-	public void LoadClientConfig()
-	{
-		var needsSave = false;
-
-		if (!OsEx.File.Exists(Defines.GetClientConfigFile()))
-		{
-			ClientConfig ??= new();
-			needsSave = true;
-		}
-		else
-		{
-			ClientConfig = JsonConvert.DeserializeObject<ClientConfig>(OsEx.File.ReadText(Defines.GetClientConfigFile()));
-		}
-
-		if (ClientConfig.Addons.Count == 0)
-		{
-			ClientConfig.Addons.Add(new ClientConfig.AddonEntry { Url = "http//", Enabled = false });
-			needsSave = true;
-		}
-
-		ClientConfig.RefreshNetworkedAddons();
-
-		if (ClientConfig.Enabled)
-		{
-			ConVar.Server.secure = false;
-		}
-
-		if(needsSave) SaveClientConfig();
-	}
-
 	public void LoadMonoProfilerConfig()
 	{
 		var needsSave = false;
@@ -370,13 +337,6 @@ public class Community
 		if (Config == null) Config = new Config();
 
 		OsEx.File.Create(Defines.GetConfigFile(), JsonConvert.SerializeObject(Config, Formatting.Indented));
-	}
-
-	public void SaveClientConfig()
-	{
-		ClientConfig ??= new();
-
-		OsEx.File.Create(Defines.GetClientConfigFile(), JsonConvert.SerializeObject(ClientConfig, Formatting.Indented));
 	}
 
 	public void SaveMonoProfilerConfig()
