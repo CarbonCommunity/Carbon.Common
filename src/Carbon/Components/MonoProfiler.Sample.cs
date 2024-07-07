@@ -58,6 +58,7 @@ public partial class MonoProfiler
 		}
 		public void Clear()
 		{
+			Duration = default;
 			Assemblies ??= new();
 			Calls ??= new();
 			Memory ??= new();

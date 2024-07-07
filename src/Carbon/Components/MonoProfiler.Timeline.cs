@@ -134,7 +134,7 @@ public partial class MonoProfiler
 		{
 			if (MonoProfiler.IsRecording)
 			{
-				ToggleProfiling(ProfilerArgs.Abort);
+				ToggleProfiling(ProfilerArgs.Abort, false);
 			}
 
 			Clear();

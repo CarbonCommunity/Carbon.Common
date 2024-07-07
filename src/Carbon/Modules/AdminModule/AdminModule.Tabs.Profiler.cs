@@ -401,7 +401,7 @@ public partial class AdminModule
 				}, ap => subtab == SubtabTypes.Memory ? OptionButton.Types.Selected : OptionButton.Types.None));
 
 			Stripe(this, 1, 100, 100, niceColor, niceColor,
-				"GC", $"{MonoProfiler.GCStats.calls:n0} calls | {MonoProfiler.GCStats.GetTotalTime()}", string.Empty, null, true);
+				"GC", $"{sample.GC.calls:n0} calls | {sample.GC.GetTotalTime()}", string.Empty, null, true);
 
 			switch (subtab)
 			{
@@ -951,7 +951,7 @@ public partial class AdminModule
 
 					ProfilerTab.sample.Resample();
 					Analytics.profiler_ended(profilerArgs, ProfilerTab.sample.Duration, true);
-				});
+				}, false);
 
 				Analytics.profiler_started(profilerArgs, true);
 
@@ -969,7 +969,7 @@ public partial class AdminModule
 		}
 		else
 		{
-			MonoProfiler.ToggleProfiling();
+			MonoProfiler.ToggleProfiling(logging: false);
 
 			if (!MonoProfiler.IsRecording)
 			{
