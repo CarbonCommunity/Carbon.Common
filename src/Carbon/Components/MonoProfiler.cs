@@ -77,35 +77,29 @@ public static unsafe partial class MonoProfiler
 			}
 
 			var comparison = new AssemblyOutput();
+			var list1 = this.Count > other.Count ? this : other;
+			var list2 = list1 == this ? other : this;
 
-			for(int i = 0; i < this.Count; i++)
+			comparison.AddRange(
+				from record in list1
+				let otherRecord = list2.FirstOrDefault(x => x.assembly_name.displayName == record.assembly_name.displayName)
+				select new AssemblyRecord
 			{
-				var record = this[i];
-				var otherRecord = other.FirstOrDefault(x => x.assembly_name.displayName == record.assembly_name.displayName);
+				assembly_handle = record.assembly_handle,
+				assembly_name = record.assembly_name,
 
-				if (otherRecord.assembly_name == null)
-				{
-					break;
-				}
-
-				comparison.Add(new AssemblyRecord
-				{
-					assembly_handle = record.assembly_handle,
-					assembly_name = record.assembly_name,
-
-					total_time = record.total_time - otherRecord.total_time,
-					total_time_percentage = record.total_time_percentage - otherRecord.total_time_percentage,
-					total_exceptions = record.total_exceptions - otherRecord.total_exceptions,
-					calls = record.calls - otherRecord.calls,
-					alloc = record.alloc - otherRecord.alloc,
-
-					total_time_c = Sample.Compare(record.total_time, otherRecord.total_time),
-					total_time_percentage_c = Sample.Compare(record.total_time_percentage, otherRecord.total_time_percentage),
-					total_exceptions_c = Sample.Compare(record.total_exceptions, otherRecord.total_exceptions),
-					calls_c = Sample.Compare(record.calls, otherRecord.calls),
-					alloc_c = Sample.Compare(record.alloc, otherRecord.alloc)
-				});
-			}
+				isComparedData = true,
+				total_time = Sample.CompareValue(record.total_time, otherRecord.total_time),
+				total_time_percentage = Sample.CompareValue(record.total_time_percentage, otherRecord.total_time_percentage),
+				total_exceptions = Sample.CompareValue(record.total_exceptions, otherRecord.total_exceptions),
+				calls = Sample.CompareValue(record.calls, otherRecord.calls),
+				alloc = Sample.CompareValue(record.alloc, otherRecord.alloc),
+				total_time_c = Sample.Compare(record.total_time, otherRecord.total_time),
+				total_time_percentage_c = Sample.Compare(record.total_time_percentage, otherRecord.total_time_percentage),
+				total_exceptions_c = Sample.Compare(record.total_exceptions, otherRecord.total_exceptions),
+				calls_c = Sample.Compare(record.calls, otherRecord.calls),
+				alloc_c = Sample.Compare(record.alloc, otherRecord.alloc)
+			});
 
 			return comparison;
 		}
@@ -179,47 +173,40 @@ public static unsafe partial class MonoProfiler
 			}
 
 			var comparison = new CallOutput();
+			var list1 = this.Count > other.Count ? this : other;
+			var list2 = list1 == this ? other : this;
 
-			for(int i = 0; i < this.Count; i++)
+			comparison.AddRange(
+				from record in list1
+				let otherRecord = list2.FirstOrDefault(x => x.method_name == record.method_name)
+				select new CallRecord
 			{
-				var record = this[i];
-				var otherRecord = other.FirstOrDefault(x =>
-					x.assembly_name.displayName == record.assembly_name.displayName &&
-				    x.method_name == record.method_name);
+				assembly_handle = record.assembly_handle,
+				assembly_name = record.assembly_name,
+				method_handle = record.method_handle,
+				method_name = record.method_name,
 
-				if (otherRecord.assembly_name == null)
-				{
-					break;
-				}
+				isComparedData = true,
+				total_time = Sample.CompareValue(record.total_time, otherRecord.total_time),
+				total_time_percentage = Sample.CompareValue(record.total_time_percentage, otherRecord.total_time_percentage),
+				own_time = Sample.CompareValue(record.own_time, otherRecord.own_time),
+				own_time_percentage = Sample.CompareValue(record.own_time_percentage, otherRecord.own_time_percentage),
+				calls = Sample.CompareValue(record.calls, otherRecord.calls),
+				total_alloc = Sample.CompareValue(record.total_alloc, otherRecord.total_alloc),
+				own_alloc = Sample.CompareValue(record.own_alloc, otherRecord.own_alloc),
+				total_exceptions = Sample.CompareValue(record.total_exceptions, otherRecord.total_exceptions),
+				own_exceptions = Sample.CompareValue(record.own_exceptions, otherRecord.own_exceptions),
 
-				comparison.Add(new CallRecord
-				{
-					assembly_handle = record.assembly_handle,
-					assembly_name = record.assembly_name,
-					method_handle = record.method_handle,
-					method_name = record.method_name,
-
-					total_time = record.total_time - otherRecord.total_time,
-					total_time_percentage = record.total_time_percentage - otherRecord.total_time_percentage,
-					own_time = record.own_time - otherRecord.own_time,
-					own_time_percentage = record.own_time_percentage - otherRecord.own_time_percentage,
-					calls = record.calls - otherRecord.calls,
-					total_alloc = record.total_alloc - otherRecord.total_alloc,
-					own_alloc = record.own_alloc - otherRecord.own_alloc,
-					total_exceptions = record.total_exceptions - otherRecord.total_exceptions,
-					own_exceptions = record.own_exceptions - otherRecord.own_exceptions,
-
-					total_time_c = Sample.Compare(record.total_time, otherRecord.total_time),
-					total_time_percentage_c = Sample.Compare(record.total_time_percentage, otherRecord.total_time_percentage),
-					own_time_c = Sample.Compare(record.own_time, otherRecord.own_time),
-					own_time_percentage_c = Sample.Compare(record.own_time_percentage, otherRecord.own_time_percentage),
-					calls_c = Sample.Compare(record.calls, otherRecord.calls),
-					total_alloc_c = Sample.Compare(record.total_alloc, otherRecord.total_alloc),
-					own_alloc_c = Sample.Compare(record.own_alloc, otherRecord.own_alloc),
-					total_exceptions_c = Sample.Compare(record.total_exceptions, otherRecord.total_exceptions),
-					own_exceptions_c = Sample.Compare(record.own_exceptions, otherRecord.own_exceptions)
-				});
-			}
+				total_time_c = Sample.Compare(record.total_time, otherRecord.total_time),
+				total_time_percentage_c = Sample.Compare(record.total_time_percentage, otherRecord.total_time_percentage),
+				own_time_c = Sample.Compare(record.own_time, otherRecord.own_time),
+				own_time_percentage_c = Sample.Compare(record.own_time_percentage, otherRecord.own_time_percentage),
+				calls_c = Sample.Compare(record.calls, otherRecord.calls),
+				total_alloc_c = Sample.Compare(record.total_alloc, otherRecord.total_alloc),
+				own_alloc_c = Sample.Compare(record.own_alloc, otherRecord.own_alloc),
+				total_exceptions_c = Sample.Compare(record.total_exceptions, otherRecord.total_exceptions),
+				own_exceptions_c = Sample.Compare(record.own_exceptions, otherRecord.own_exceptions)
+			});
 
 			return comparison;
 		}
@@ -301,33 +288,27 @@ public static unsafe partial class MonoProfiler
 			}
 
 			var comparison = new MemoryOutput();
+			var list1 = this.Count > other.Count ? this : other;
+			var list2 = list1 == this ? other : this;
 
-			for(int i = 0; i < this.Count; i++)
+			comparison.AddRange(
+				from record in list1
+				let otherRecord = list2.FirstOrDefault(x => x.assembly_name.displayName == record.assembly_name.displayName && x.class_name == record.class_name)
+				select new MemoryRecord
 			{
-				var record = this[i];
-				var otherRecord = other.FirstOrDefault(x => x.assembly_name.displayName == record.assembly_name.displayName && x.class_name == record.class_name);
+				assembly_handle = record.assembly_handle,
+				assembly_name = record.assembly_name,
+				class_name = record.class_name,
+				class_token = record.class_token,
 
-				if (otherRecord.assembly_name == null)
-				{
-					break;
-				}
-
-				comparison.Add(new MemoryRecord
-				{
-					assembly_handle = record.assembly_handle,
-					assembly_name = record.assembly_name,
-					class_name = record.class_name,
-
-					class_token = record.class_token,
-					allocations = record.allocations - otherRecord.allocations,
-					total_alloc_size = record.total_alloc_size - otherRecord.total_alloc_size,
-					instance_size = record.instance_size - otherRecord.instance_size,
-
-					allocations_c = Sample.Compare(record.allocations, otherRecord.allocations),
-					total_alloc_size_c = Sample.Compare(record.total_alloc_size, otherRecord.total_alloc_size),
-					instance_size_c = Sample.Compare(record.instance_size, otherRecord.instance_size)
-				});
-			}
+				isComparedData = true,
+				allocations = Sample.CompareValue(record.allocations, otherRecord.allocations),
+				total_alloc_size = Sample.CompareValue(record.total_alloc_size, otherRecord.total_alloc_size),
+				instance_size = Sample.CompareValue(record.instance_size, otherRecord.instance_size),
+				allocations_c = Sample.Compare(record.allocations, otherRecord.allocations),
+				total_alloc_size_c = Sample.Compare(record.total_alloc_size, otherRecord.total_alloc_size),
+				instance_size_c = Sample.Compare(record.instance_size, otherRecord.instance_size)
+			});
 
 			return comparison;
 		}
@@ -401,14 +382,17 @@ public static unsafe partial class MonoProfiler
 		[ProtoMember(1 + NATIVE_PROTOCOL)] public ulong calls;
 		[ProtoMember(2 + NATIVE_PROTOCOL)] public ulong total_time;
 
+		[JsonIgnore] public bool isComparedData;
 		[JsonIgnore] public Sample.Difference calls_c;
 		[JsonIgnore] public Sample.Difference total_time_c;
 
 		public GCRecord Compare(GCRecord other)
 		{
 			GCRecord record = default;
-			record.calls = calls - other.calls;
-			record.total_time = total_time - other.total_time;
+			record.calls = Sample.CompareValue(calls, other.calls);
+			record.total_time = Sample.CompareValue(total_time, other.total_time);
+
+			record.isComparedData = true;
 			record.calls_c = Sample.Compare(record.calls, other.calls);
 			record.total_time_c = Sample.Compare(record.total_time, other.total_time);
 			return record;
@@ -436,6 +420,7 @@ public static unsafe partial class MonoProfiler
 		[ProtoMember(6 + NATIVE_PROTOCOL)] public AssemblyNameEntry assembly_name;
 		public double total_time_ms => total_time * 0.001f;
 
+		[JsonIgnore] public bool isComparedData;
 		[JsonIgnore] public Sample.Difference total_time_c;
 		[JsonIgnore] public Sample.Difference total_time_percentage_c;
 		[JsonIgnore] public Sample.Difference total_exceptions_c;
@@ -460,6 +445,7 @@ public static unsafe partial class MonoProfiler
 		[ProtoMember(5 + NATIVE_PROTOCOL)] public string class_name;
 		[ProtoMember(6 + NATIVE_PROTOCOL)] public AssemblyNameEntry assembly_name;
 
+		[JsonIgnore] public bool isComparedData;
 		[JsonIgnore] public Sample.Difference allocations_c;
 		[JsonIgnore] public Sample.Difference total_alloc_size_c;
 		[JsonIgnore] public Sample.Difference instance_size_c;
@@ -487,6 +473,7 @@ public static unsafe partial class MonoProfiler
 		public double total_time_ms => total_time * 0.001f;
 		public double own_time_ms => own_time * 0.001f;
 
+		[JsonIgnore] public bool isComparedData;
 		[JsonIgnore] public Sample.Difference total_time_c;
 		[JsonIgnore] public Sample.Difference total_time_percentage_c;
 		[JsonIgnore] public Sample.Difference own_time_c;
