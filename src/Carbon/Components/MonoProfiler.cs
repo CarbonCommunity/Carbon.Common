@@ -208,6 +208,16 @@ public static unsafe partial class MonoProfiler
 					own_alloc = record.own_alloc - otherRecord.own_alloc,
 					total_exceptions = record.total_exceptions - otherRecord.total_exceptions,
 					own_exceptions = record.own_exceptions - otherRecord.own_exceptions,
+
+					total_time_c = Sample.Compare(record.total_time, otherRecord.total_time),
+					total_time_percentage_c = Sample.Compare(record.total_time_percentage, otherRecord.total_time_percentage),
+					own_time_c = Sample.Compare(record.own_time, otherRecord.own_time),
+					own_time_percentage_c = Sample.Compare(record.own_time_percentage, otherRecord.own_time_percentage),
+					calls_c = Sample.Compare(record.calls, otherRecord.calls),
+					total_alloc_c = Sample.Compare(record.total_alloc, otherRecord.total_alloc),
+					own_alloc_c = Sample.Compare(record.own_alloc, otherRecord.own_alloc),
+					total_exceptions_c = Sample.Compare(record.total_exceptions, otherRecord.total_exceptions),
+					own_exceptions_c = Sample.Compare(record.own_exceptions, otherRecord.own_exceptions)
 				});
 			}
 
@@ -283,6 +293,45 @@ public static unsafe partial class MonoProfiler
 	[ProtoContract]
 	public class MemoryOutput : List<MemoryRecord>
 	{
+		public MemoryOutput Compare(MemoryOutput other)
+		{
+			if (other == null)
+			{
+				return null;
+			}
+
+			var comparison = new MemoryOutput();
+
+			for(int i = 0; i < this.Count; i++)
+			{
+				var record = this[i];
+				var otherRecord = other.FirstOrDefault(x => x.assembly_name.displayName == record.assembly_name.displayName && x.class_name == record.class_name);
+
+				if (otherRecord.assembly_name == null)
+				{
+					break;
+				}
+
+				comparison.Add(new MemoryRecord
+				{
+					assembly_handle = record.assembly_handle,
+					assembly_name = record.assembly_name,
+					class_name = record.class_name,
+
+					class_token = record.class_token,
+					allocations = record.allocations - otherRecord.allocations,
+					total_alloc_size = record.total_alloc_size - otherRecord.total_alloc_size,
+					instance_size = record.instance_size - otherRecord.instance_size,
+
+					allocations_c = Sample.Compare(record.allocations, otherRecord.allocations),
+					total_alloc_size_c = Sample.Compare(record.total_alloc_size, otherRecord.total_alloc_size),
+					instance_size_c = Sample.Compare(record.instance_size, otherRecord.instance_size)
+				});
+			}
+
+			return comparison;
+		}
+
 		public string ToTable()
 		{
 			using StringTable table = new StringTable("Assembly", "Class", "Allocations", "Total Alloc. Size", "Instance Size");
@@ -352,8 +401,18 @@ public static unsafe partial class MonoProfiler
 		[ProtoMember(1)] public ulong calls;
 		[ProtoMember(1)] public ulong total_time;
 
-		[JsonIgnore] public Sample.Difference calls_comparison;
-		[JsonIgnore] public Sample.Difference total_time_comparison;
+		[JsonIgnore] public Sample.Difference calls_c;
+		[JsonIgnore] public Sample.Difference total_time_c;
+
+		public GCRecord Compare(GCRecord other)
+		{
+			GCRecord record = default;
+			record.calls = calls - other.calls;
+			record.total_time = total_time - other.total_time;
+			record.calls_c = Sample.Compare(record.calls, other.calls);
+			record.total_time_c = Sample.Compare(record.total_time, other.total_time);
+			return record;
+		}
 
 		// managed
 		public double total_time_ms => total_time * 0.001f;
@@ -401,9 +460,9 @@ public static unsafe partial class MonoProfiler
 		[ProtoMember(5)] public string class_name;
 		[ProtoMember(6)] public AssemblyNameEntry assembly_name;
 
-		[JsonIgnore] public Sample.Difference allocations_comparison;
-		[JsonIgnore] public Sample.Difference total_alloc_size_comparison;
-		[JsonIgnore] public Sample.Difference instance_size_comparison;
+		[JsonIgnore] public Sample.Difference allocations_c;
+		[JsonIgnore] public Sample.Difference total_alloc_size_c;
+		[JsonIgnore] public Sample.Difference instance_size_c;
 	}
 
 	[ProtoContract]
@@ -428,15 +487,15 @@ public static unsafe partial class MonoProfiler
 		public double total_time_ms => total_time * 0.001f;
 		public double own_time_ms => own_time * 0.001f;
 
-		[JsonIgnore] public Sample.Difference total_time_comparison;
-		[JsonIgnore] public Sample.Difference total_time_percentage_comparison;
-		[JsonIgnore] public Sample.Difference own_time_comparison;
-		[JsonIgnore] public Sample.Difference own_time_percentage_comparison;
-		[JsonIgnore] public Sample.Difference calls_comparison;
-		[JsonIgnore] public Sample.Difference total_alloc_comparison;
-		[JsonIgnore] public Sample.Difference own_alloc_comparison;
-		[JsonIgnore] public Sample.Difference total_exceptions_comparison;
-		[JsonIgnore] public Sample.Difference own_exceptions_comparison;
+		[JsonIgnore] public Sample.Difference total_time_c;
+		[JsonIgnore] public Sample.Difference total_time_percentage_c;
+		[JsonIgnore] public Sample.Difference own_time_c;
+		[JsonIgnore] public Sample.Difference own_time_percentage_c;
+		[JsonIgnore] public Sample.Difference calls_c;
+		[JsonIgnore] public Sample.Difference total_alloc_c;
+		[JsonIgnore] public Sample.Difference own_alloc_c;
+		[JsonIgnore] public Sample.Difference total_exceptions_c;
+		[JsonIgnore] public Sample.Difference own_exceptions_c;
 
 		public string GetTotalTime() => (total_time_ms < 1 ? $"{total_time:n0}μs" : $"{total_time_ms:n0}ms");
 		public string GetOwnTime() => (own_time_ms < 1 ? $"{own_time:n0}μs" : $"{own_time_ms:n0}ms");

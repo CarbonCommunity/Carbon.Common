@@ -29,8 +29,12 @@ public partial class MonoProfiler
 
 		public Sample Compare(Sample other)
 		{
-			var comparedSample = Create();
-
+			Sample sample = default;
+			sample.Assemblies = Assemblies.Compare(other.Assemblies);
+			sample.Calls = Calls.Compare(other.Calls);
+			sample.Memory = Memory.Compare(other.Memory);
+			sample.GC = GC.Compare(other.GC);
+			return sample;
 
 		}
 		public void Resample()
