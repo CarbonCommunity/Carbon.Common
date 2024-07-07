@@ -969,6 +969,7 @@ public partial class AdminModule
 			MonoProfiler.Clear();
 			MonoProfiler.ToggleProfiling();
 			ProfilerTab.sample.Resample();
+			MonoProfiler.Clear();
 
 			ap.SelectedTab.OnChange(ap, ap.SelectedTab);
 

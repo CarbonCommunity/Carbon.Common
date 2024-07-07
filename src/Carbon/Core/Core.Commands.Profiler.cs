@@ -49,6 +49,7 @@ public partial class CorePlugin : CarbonPlugin
 			Analytics.profiler_ended(flags, MonoProfiler.CurrentDurationTime.TotalSeconds, false);
 			MonoProfiler.ToggleProfiling(flags);
 			ProfileSample.Resample();
+			MonoProfiler.Clear();
 			return;
 		}
 
@@ -63,6 +64,7 @@ public partial class CorePlugin : CarbonPlugin
 			{
 				Analytics.profiler_ended(flags, duration, true);
 				ProfileSample.Resample();
+				MonoProfiler.Clear();
 			});
 			Analytics.profiler_started(flags, true);
 		}

@@ -662,13 +662,15 @@ public static unsafe partial class MonoProfiler
 				}
 
 				onTimerEnded?.Invoke(args);
+
+				Clear();
 			});
 		}
 		else if(IsRecording && logging)
 		{
 			_profileWarningTimer = Community.Runtime.Core.timer.Every(60 * 5, () =>
 			{
-				Logger.Warn($" Reminder: You've been profiling for {TimeEx.Format(MonoProfiler.CurrentDurationTime.TotalSeconds).ToLower()}..");
+				Logger.Warn($" Reminder: You've been profiling for {TimeEx.Format(CurrentDurationTime.TotalSeconds).ToLower()}..");
 			});
 		}
 
