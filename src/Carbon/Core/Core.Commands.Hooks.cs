@@ -181,7 +181,7 @@ public partial class CorePlugin : CarbonPlugin
 			return;
 		}
 
-		var name = arg.GetString(0).ToLower();
+		var name = arg.GetString(0);
 		var isUid = uint.TryParse(name, out _);
 
 		var hookName = isUid ? HookStringPool.GetOrAdd(name.ToUint()) : name;
