@@ -24,6 +24,8 @@ namespace Carbon.Components;
 [SuppressUnmanagedCodeSecurity]
 public static unsafe partial class MonoProfiler
 {
+	public const string ProfileExtension = "cprf";
+
 	public const ProfilerArgs AllFlags = AllNoTimingsFlags | ProfilerArgs.Timings;
 	public const ProfilerArgs AllNoTimingsFlags = ProfilerArgs.Calls | ProfilerArgs.CallMemory
 	                                                                 | ProfilerArgs.AdvancedMemory | ProfilerArgs.GCEvents;
@@ -396,6 +398,34 @@ public static unsafe partial class MonoProfiler
 			record.calls_c = Sample.Compare(record.calls, other.calls);
 			record.total_time_c = Sample.Compare(record.total_time, other.total_time);
 			return record;
+		}
+
+		public string ToTable()
+		{
+			using StringTable table = new StringTable("Calls", "Total Time");
+
+			table.AddRow($" {calls:n0}", $"{GetTotalTime()}");
+
+			return table.ToStringMinimal().Trim();
+		}
+		public string ToCSV()
+		{
+			StringBuilder builder = PoolEx.GetStringBuilder();
+
+			builder.AppendLine("Calls," +
+			                   "Total Time");
+
+			builder.AppendLine($"{calls}," +
+			                   $"{GetTotalTime()}");
+
+			string result = builder.ToString();
+
+			PoolEx.FreeStringBuilder(ref builder);
+			return result;
+		}
+		public string ToJson(bool indented)
+		{
+			return JsonConvert.SerializeObject(this, indented ? Formatting.Indented : Formatting.None);
 		}
 
 		// managed

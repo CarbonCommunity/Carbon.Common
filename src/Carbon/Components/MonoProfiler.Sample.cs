@@ -6,6 +6,7 @@
  *
  */
 
+using Newtonsoft.Json;
 using ProtoBuf;
 using MathEx = Carbon.Extensions.MathEx;
 
@@ -16,10 +17,11 @@ public partial class MonoProfiler
 	[ProtoContract]
 	public struct Sample
 	{
-		[ProtoMember(1 + NATIVE_PROTOCOL)] public AssemblyOutput Assemblies;
-		[ProtoMember(2 + NATIVE_PROTOCOL)] public CallOutput Calls;
-		[ProtoMember(3 + NATIVE_PROTOCOL)] public MemoryOutput Memory;
-		[ProtoMember(4 + NATIVE_PROTOCOL)] public GCRecord GC;
+		[ProtoMember(1 + NATIVE_PROTOCOL)] public double Duration;
+		[ProtoMember(2 + NATIVE_PROTOCOL)] public AssemblyOutput Assemblies;
+		[ProtoMember(3 + NATIVE_PROTOCOL)] public CallOutput Calls;
+		[ProtoMember(4 + NATIVE_PROTOCOL)] public MemoryOutput Memory;
+		[ProtoMember(5 + NATIVE_PROTOCOL)] public GCRecord GC;
 
 		public static Sample Create() => new()
 		{
@@ -27,6 +29,12 @@ public partial class MonoProfiler
 			Calls = new(),
 			Memory = new()
 		};
+		public static Sample Load(byte[] data)
+		{
+			return DeserializeSample(data);
+		}
+
+		[JsonIgnore] public bool IsCleared => Assemblies == null || !Assemblies.Any();
 
 		public Sample Compare(Sample other)
 		{
@@ -42,6 +50,7 @@ public partial class MonoProfiler
 		{
 			Clear();
 
+			Duration = DurationTime.TotalSeconds;
 			Assemblies.AddRange(AssemblyRecords);
 			Calls.AddRange(CallRecords);
 			Memory.AddRange(MemoryRecords);
@@ -64,6 +73,41 @@ public partial class MonoProfiler
 			ValueHigher = 1,
 			ValueEqual = 0,
 			ValueLower = -1
+		}
+
+		public string ToTable()
+		{
+			var builder = PoolEx.GetStringBuilder();
+
+			builder.AppendLine(Assemblies.ToTable());
+			builder.AppendLine(Calls.ToTable());
+			builder.AppendLine(Memory.ToTable());
+			builder.AppendLine(GC.ToTable());
+
+			var result = builder.ToString();
+			PoolEx.FreeStringBuilder(ref builder);
+			return result;
+		}
+		public string ToCSV()
+		{
+			var builder = PoolEx.GetStringBuilder();
+
+			builder.AppendLine(Assemblies.ToCSV());
+			builder.AppendLine(Calls.ToCSV());
+			builder.AppendLine(Memory.ToCSV());
+			builder.AppendLine(GC.ToCSV());
+
+			var result = builder.ToString();
+			PoolEx.FreeStringBuilder(ref builder);
+			return result;
+		}
+		public string ToJson(bool indented)
+		{
+			return JsonConvert.SerializeObject(this, indented ? Formatting.Indented : Formatting.None);
+		}
+		public byte[] ToProto()
+		{
+			return SerializeSample(this);
 		}
 
 		public static Difference Compare(ulong a, ulong b)

@@ -282,27 +282,32 @@ public partial class AdminModule
 					command: "adminmodule.timelinemode");
 				tabSpacing++;
 
-				cui.CreateProtectedButton(container, panel, "0.2 0.2 0.2 0.7", "1 1 1 0.2",
+				cui.CreateProtectedButton(container, panel, "0.2 0.2 0.2 0.7", $"1 1 1 {(!sample.IsCleared ? 0.2 : 0.5)}",
+					"<size=6>IMPORT\n</size>PROTO", 8,
+					xMin: 0.83f, xMax: 0.925f, OxMin: offset * tabSpacing, OxMax: offset * tabSpacing, command: "adminmodule.profilerimport");
+				tabSpacing++;
+
+				cui.CreateProtectedButton(container, panel, "0.2 0.2 0.2 0.7", $"1 1 1 {(sample.IsCleared ? 0.2 : 0.5)}",
 					"<size=6>EXPORT\n</size>PROTO", 8,
 					xMin: 0.83f, xMax: 0.925f, OxMin: offset * tabSpacing, OxMax: offset * tabSpacing, command: "adminmodule.profilerexport 3");
 				tabSpacing++;
 
-				cui.CreateProtectedButton(container, panel, "0.2 0.2 0.2 0.7", $"1 1 1 {(MonoProfiler.IsCleared ? 0.2 : 0.5)}",
+				cui.CreateProtectedButton(container, panel, "0.2 0.2 0.2 0.7", $"1 1 1 {(sample.IsCleared ? 0.2 : 0.5)}",
 					"<size=6>EXPORT\n</size>CSV", 8,
 					xMin: 0.83f, xMax: 0.925f, OxMin: offset * tabSpacing, OxMax: offset * tabSpacing, command: "adminmodule.profilerexport 2");
 				tabSpacing++;
 
-				cui.CreateProtectedButton(container, panel, "0.2 0.2 0.2 0.7", $"1 1 1 {(MonoProfiler.IsCleared ? 0.2 : 0.5)}",
+				cui.CreateProtectedButton(container, panel, "0.2 0.2 0.2 0.7", $"1 1 1 {(sample.IsCleared ? 0.2 : 0.5)}",
 					"<size=6>EXPORT\n</size>JSON", 8,
 					xMin: 0.83f, xMax: 0.925f, OxMin: offset * tabSpacing, OxMax: offset * tabSpacing, command: "adminmodule.profilerexport 1");
 				tabSpacing++;
 
-				cui.CreateProtectedButton(container, panel, "0.2 0.2 0.2 0.7", $"1 1 1 {(MonoProfiler.IsCleared ? 0.2 : 0.5)}",
+				cui.CreateProtectedButton(container, panel, "0.2 0.2 0.2 0.7", $"1 1 1 {(sample.IsCleared ? 0.2 : 0.5)}",
 					"<size=6>EXPORT\n</size>TABLE", 8,
 					xMin: 0.83f, xMax: 0.925f, OxMin: offset * tabSpacing, OxMax: offset * tabSpacing, command: "adminmodule.profilerexport 0");
 				tabSpacing++;
 
-				cui.CreateProtectedButton(container, panel, !MonoProfiler.IsCleared || MonoProfiler.IsRecording ? "0.9 0.1 0.1 1" : "0.2 0.2 0.2 0.7", "1 1 1 0.5",
+				cui.CreateProtectedButton(container, panel, !sample.IsCleared || MonoProfiler.IsRecording ? "0.9 0.1 0.1 1" : "0.2 0.2 0.2 0.7", "1 1 1 0.5",
 					MonoProfiler.IsRecording ? "ABORT" : "CLEAR", 8,
 					xMin: 0.83f, xMax: 0.925f, command: "adminmodule.profilerclear");
 
@@ -314,7 +319,7 @@ public partial class AdminModule
 			Stripe(this, 0, (float)filtered.Sum(x => x.total_time_percentage), 100, niceColor, niceColor,
 				"All",
 				$"{filtered.Sum(x => (float)x.total_time_ms):n0}ms | {filtered.Sum(x => (float)x.total_time_percentage):0.0}%",
-				$"<size=7>{TimeEx.Format(MonoProfiler.DurationTime.TotalSeconds, false).ToLower()}\n{sample.Calls.Count:n0} calls</size>",
+				$"<size=7>{TimeEx.Format(sample.Duration, false).ToLower()}\n{sample.Calls.Count:n0} calls</size>",
 				$"adminmodule.profilerselect -1",
 				selection.GetHashCode() == 0);
 
@@ -945,7 +950,7 @@ public partial class AdminModule
 					}
 
 					ProfilerTab.sample.Resample();
-					Analytics.profiler_ended(profilerArgs, duration, true);
+					Analytics.profiler_ended(profilerArgs, ProfilerTab.sample.Duration, true);
 				});
 
 				Analytics.profiler_started(profilerArgs, true);
@@ -964,12 +969,14 @@ public partial class AdminModule
 		}
 		else
 		{
-			Analytics.profiler_ended(MonoProfiler.AllFlags, MonoProfiler.CurrentDurationTime.TotalSeconds, false);
-
-			MonoProfiler.Clear();
 			MonoProfiler.ToggleProfiling();
-			ProfilerTab.sample.Resample();
-			MonoProfiler.Clear();
+
+			if (!MonoProfiler.IsRecording)
+			{
+				ProfilerTab.sample.Resample();
+				MonoProfiler.Clear();
+				Analytics.profiler_ended(MonoProfiler.AllFlags, ProfilerTab.sample.Duration, false);
+			}
 
 			ap.SelectedTab.OnChange(ap, ap.SelectedTab);
 
@@ -981,7 +988,7 @@ public partial class AdminModule
 	[ProtectedCommand("adminmodule.profilerexport")]
 	private void ProfilerExport(ConsoleSystem.Arg arg)
 	{
-		if (MonoProfiler.IsCleared)
+		if (ProfilerTab.sample.IsCleared)
 		{
 			return;
 		}
@@ -992,18 +999,19 @@ public partial class AdminModule
 		switch (index)
 		{
 			case 0:
-				WriteFileString("txt",
-					$"{ProfilerTab.sample.Assemblies.ToTable()}\n{ProfilerTab.sample.Calls.ToTable()}\n{ProfilerTab.sample.Memory.ToTable()}", ap.Player);
+				WriteFileString("txt", ProfilerTab.sample.ToTable(), ap.Player);
 				break;
 
 			case 1:
-				WriteFileString("json",
-					$"{ProfilerTab.sample.Assemblies.ToJson(true)}\n{ProfilerTab.sample.Calls.ToJson(true)}\n{ProfilerTab.sample.Memory.ToJson(true)}", ap.Player);
+				WriteFileString("json", ProfilerTab.sample.ToJson(true), ap.Player);
 				break;
 
 			case 2:
-				WriteFileString("csv",
-					$"{ProfilerTab.sample.Assemblies.ToCSV()}\n{ProfilerTab.sample.Calls.ToCSV()}\n{ProfilerTab.sample.Memory.ToCSV()}", ap.Player);
+				WriteFileString("csv", ProfilerTab.sample.ToCSV(), ap.Player);
+				break;
+
+			case 3:
+				WriteFileBytes(MonoProfiler.ProfileExtension, ProfilerTab.sample.ToProto(), ap.Player);
 				break;
 		}
 
@@ -1013,8 +1021,27 @@ public partial class AdminModule
 			var file = Path.Combine(Defines.GetProfilesFolder(), $"profile-{date.Year}_{date.Month}_{date.Day}_{date.Hour}{date.Minute}{date.Second}.{extension}");
 			OsEx.File.Create(file, data);
 
-			Notifications.Add(player, $"Stored output at '{file}'", 5);
+			Notifications.Add(player, $"Exported profile output at '{file}'");
 		}
+		static void WriteFileBytes(string extension, byte[] data, BasePlayer player)
+		{
+			var date = DateTime.Now;
+			var file = Path.Combine(Defines.GetProfilesFolder(), $"profile-{date.Year}_{date.Month}_{date.Day}_{date.Hour}{date.Minute}{date.Second}.{extension}");
+			OsEx.File.Create(file, data);
+
+			Notifications.Add(player, $"Exported profile output at '{file}'");
+		}
+	}
+
+	[Conditional("!MINIMAL")]
+	[ProtectedCommand("adminmodule.profilerimport")]
+	private void ProfilerImport(ConsoleSystem.Arg arg)
+	{
+		if (!ProfilerTab.sample.IsCleared)
+		{
+			return;
+		}
+
 	}
 
 	[Conditional("!MINIMAL")]
