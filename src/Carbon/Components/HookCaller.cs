@@ -1421,7 +1421,7 @@ public static class HookCaller
 
 					if (methodName.Contains("."))
 					{
-						using var temp = TemporaryArray<string>.New(methodName.Split('.'));
+						using var temp = TempArray<string>.New(methodName.Split('.'));
 						methodName = temp.Get(temp.Length - 1);
 					}
 				}
@@ -1644,13 +1644,13 @@ partial class {@class.Identifier.ValueText}
 		{
 			var processedDirective = directive.Replace(_ifDirective, string.Empty).Replace(_elifDirective, string.Empty).Trim();
 
-			using var subdirectives = TemporaryArray<string>.New(processedDirective.Split(_operatorsStrings, StringSplitOptions.RemoveEmptyEntries));
+			using var subdirectives = TempArray<string>.New(processedDirective.Split(_operatorsStrings, StringSplitOptions.RemoveEmptyEntries));
 
 			foreach (var subdirective in subdirectives.Array)
 			{
 				var processedSubdirective = subdirective.Trim();
 
-				using var split = TemporaryArray<string>.New(processedSubdirective.Split(_underscoreChar));
+				using var split = TempArray<string>.New(processedSubdirective.Split(_underscoreChar));
 
 				if (split.Length < 3)
 				{
@@ -1683,7 +1683,7 @@ partial class {@class.Identifier.ValueText}
 
 					case "CARBON":
 					{
-						using var protocol = TemporaryArray<string>.New(Community.Runtime.Analytics.Protocol.Split(_dotChar));
+						using var protocol = TempArray<string>.New(Community.Runtime.Analytics.Protocol.Split(_dotChar));
 
 						var current = new VersionNumber(protocol.Get(0).ToInt(), protocol.Get(1).ToInt(), protocol.Get(2).ToInt());
 

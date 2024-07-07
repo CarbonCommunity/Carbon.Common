@@ -11,13 +11,13 @@ namespace Carbon.Core;
 
 public partial class CorePlugin : CarbonPlugin
 {
-	[ConsoleCommand("test.beds", "Prints all currently queued up tests ready to be executed.")]
+	[ConsoleCommand("test_beds", "Prints all currently queued up tests ready to be executed.")]
 	[AuthLevel(2)]
 	private void TestBeds(ConsoleSystem.Arg arg)
 	{
 		using var table = new StringTable(string.Empty, "Bed", "Tests");
 
-		foreach (var bed in Integrations.Queue)
+		foreach (var bed in Integrations.Banks)
 		{
 			table.AddRow(string.Empty, bed.Context, $"{bed.Count:n0}");
 		}
@@ -25,7 +25,7 @@ public partial class CorePlugin : CarbonPlugin
 		arg.ReplyWith(table.ToStringMinimal());
 	}
 
-	[ConsoleCommand("test.run", "Executes all Test Beds that are currently queued up.")]
+	[ConsoleCommand("test_run", "Executes all Test Beds that are currently queued up.")]
 	[AuthLevel(2)]
 	private void TestRun(ConsoleSystem.Arg arg)
 	{
@@ -37,13 +37,16 @@ public partial class CorePlugin : CarbonPlugin
 			return;
 		}
 
-		Community.Runtime.Core.persistence.StartCoroutine(Integrations.RunQueue(delay));
+		Integrations.Run(delay);
 	}
 
-	[ConsoleCommand("test.clear", "Clears all Test Beds that are currently queued up.")]
+	[ConsoleCommand("test_clear", "Clears all Test Beds that are currently queued up.")]
 	[AuthLevel(2)]
 	private void TestClear(ConsoleSystem.Arg arg)
 	{
-		Integrations.ClearQueue();
+		Integrations.Clear();
 	}
+
+	[CommandVar("test_frame_offset")]
+	private int test_frame_offset { get => Integrations.FrameOffset; set => Integrations.FrameOffset = value; }
 }

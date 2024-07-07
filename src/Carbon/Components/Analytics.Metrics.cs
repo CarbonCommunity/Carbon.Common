@@ -98,21 +98,6 @@ public partial struct Analytics
 			Include("stacktrace", $"({ex.Message}) {ex.StackTrace}").
 			Submit("plugin_native_compile_fail");
 	}
-	public static void carbon_client_init()
-	{
-		if (!Enabled)
-		{
-			return;
-		}
-
-		var clientConfig = Community.Runtime.ClientConfig;
-
-		Singleton.
-			Include("nomap", clientConfig.Environment.NoMap).
-			Include("oldrecoil", clientConfig.Client.UseOldRecoil).
-			Include("clientgravity", clientConfig.Client.ClientGravity.ToString("0.0")).
-			Submit("carbon_client_init");
-	}
 	public static void admin_module_wizard(WizardProgress progress)
 	{
 		if (!Enabled)
@@ -191,7 +176,8 @@ public partial struct Analytics
 			                    $"{Community.Runtime.MonoProfilerConfig.Plugins.Count}p " +
 			                    $"{Community.Runtime.MonoProfilerConfig.Modules.Count}m " +
 			                    $"{Community.Runtime.MonoProfilerConfig.Extensions.Count}e " +
-			                    $"{Community.Runtime.MonoProfilerConfig.Harmony.Count}h").
+			                    $"{Community.Runtime.MonoProfilerConfig.Harmony.Count}h" +
+			                    $"{(int)status}st").
 			Include("args", $"{args}").
 			Include("duration", $"{TimeEx.Format(duration).ToLower()}").
 			Submit("profiler_tl_ended");

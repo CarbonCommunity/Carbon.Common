@@ -48,8 +48,6 @@ public partial class CorePlugin : CarbonPlugin
 			return Cache.True;
 		}
 
-		Community.Runtime.CarbonClientManager.OnConnected(connection);
-
 		// OnUserApprove
 		if (HookCaller.CallStaticHook(2666432541, connection) != null)
 			// OnUserApproved

@@ -6,7 +6,6 @@
  */
 
 using API.Assembly;
-using Carbon.Client;
 
 namespace Carbon.Core;
 

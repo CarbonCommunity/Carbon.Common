@@ -13,7 +13,7 @@ public interface IScriptLoader : IDisposable
 	bool HasFinished { get; set; }
 	bool HasRequires { get; set; }
 
-	ModLoader.ModPackage Mod { get; set; }
+	ModLoader.Package Mod { get; set; }
 	IBaseProcessor.IProcess Process { get; set; }
 	IBaseProcessor.IParser Parser { get; set; }
 }

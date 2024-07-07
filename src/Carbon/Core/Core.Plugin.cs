@@ -1,8 +1,6 @@
 ﻿using API.Events;
-using Carbon.Client;
 using Application = UnityEngine.Application;
 using CommandLine = Carbon.Components.CommandLine;
-using Timer = Oxide.Plugins.Timer;
 
 /*
  *
@@ -36,9 +34,11 @@ public partial class CorePlugin : CarbonPlugin
 
 	public static KeyValuePair<string, string> GetPluginPath(string shortName)
 	{
-		foreach (var file in OrderedFiles)
+		RefreshOrderedFiles();
+
+		foreach (var file in OrderedFiles.Where(file => file.Key.Equals(shortName, StringComparison.InvariantCultureIgnoreCase)))
 		{
-			if (file.Key.Equals(shortName, StringComparison.InvariantCultureIgnoreCase)) return new KeyValuePair<string, string>(file.Key, file.Value);
+			return new KeyValuePair<string, string>(file.Key, file.Value);
 		}
 
 		return default;
@@ -163,8 +163,6 @@ public partial class CorePlugin : CarbonPlugin
 				}
 			}
 		}
-
-		Community.Runtime.CarbonClientManager.OnDisconnected(player.Connection);
 	}
 	private void OnPluginLoaded(Plugin plugin)
 	{

@@ -82,6 +82,31 @@ public static class MathEx
 		return newValue;
 	}
 
+	public static ulong Max(ulong a, ulong b)
+	{
+		return a > b ? a : b;
+	}
+	public static ulong Min(ulong a, ulong b)
+	{
+		return a < b ? a : b;
+	}
+	public static uint Max(uint a, uint b)
+	{
+		return a > b ? a : b;
+	}
+	public static uint Min(uint a, uint b)
+	{
+		return a < b ? a : b;
+	}
+	public static double Max(double a, double b)
+	{
+		return a > b ? a : b;
+	}
+	public static double Min(double a, double b)
+	{
+		return a < b ? a : b;
+	}
+
 	public static int RoundUpToNearest(this int value, int nearest)
 	{
 		if (value % nearest == 0)

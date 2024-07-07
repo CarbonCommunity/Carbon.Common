@@ -24,14 +24,14 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		internal static RustPlugin Core = Community.Runtime.Core;
 		internal static AdminModule Admin = GetModule<AdminModule>();
 		internal static PlayerSession LastContainerLooter;
-		internal static string[] BuildingGrades = new string[]
-		{
+		internal static string[] BuildingGrades =
+		[
 			"Twig",
 			"Wood",
 			"Stone",
 			"Metal",
 			"Top Tier"
-		};
+		];
 		internal const string MultiselectionReplacement = "-";
 
 		public static Tab Get()
@@ -99,34 +99,50 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				DrawEntities(tab, ap3);
 			}, ap => isMulti);
 
-			var pool = Facepunch.Pool.GetList<BaseEntity>();
 			EntityCount = 0;
 
 			var usedFilter = ap3.GetStorage(tab, "filter", string.Empty)?.ToLower()?.Trim();
-			var map = Entities.Get<BaseEntity>(true);
 			var validateFilter = ap3.GetStorage<Func<BaseEntity, bool>>(tab, "validatefilter");
-			var maximumRange = ((int)World.Size).Clamp(1, int.MaxValue) / 2;
+			var maximumRange = (int)World.Size;
 			var range = ap3.GetStorage(tab, "range", maximumRange);
-			map.Each(entity =>
+
+			var map = Entities.GetAllFiltered(entity =>
 			{
-				pool.Add(entity);
-				EntityCount++;
-			}, entity => entity != null && entity.transform != null && (validateFilter == null || validateFilter.Invoke(entity)) && entity.transform.position != Vector3.zero
-				&& (string.IsNullOrEmpty(usedFilter) || entity.ToString().ToLower().Contains(usedFilter) || entity.name.ToLower().Contains(usedFilter) || entity.GetType().Name?.ToLower() == usedFilter)
-				&& (range == -1 || ap3 == null || (ap3.Player != null && Vector3.Distance(ap3.Player.transform.position, entity.transform.position) <= range)));
-			map.Dispose();
+					if (entity == null || entity.transform == null)
+					{
+						return false;
+					}
+
+					if (validateFilter != null && !validateFilter(entity))
+					{
+						return false;
+					}
+
+					if (range != -1 && (ap3.Player != null &&
+					                    Vector3.Distance(ap3.Player.transform.position, entity.transform.position) >
+					                    range))
+					{
+						return false;
+					}
+
+					return entity.name.Contains(usedFilter, CompareOptions.OrdinalIgnoreCase)
+					       || entity.GetType().Name.Contains(usedFilter, CompareOptions.OrdinalIgnoreCase)
+					       || entity.OwnerID.ToString().Equals(usedFilter, StringComparison.OrdinalIgnoreCase)
+					       || entity.skinID.ToString().Equals(usedFilter, StringComparison.OrdinalIgnoreCase);
+			}, true);
+			EntityCount = string.IsNullOrEmpty(usedFilter) ? 0 : map.Pool.Count;
 
 			tab.AddRange(0, "Range", 0, maximumRange, ap => range, (ap, value) => { try { ap.SetStorage(tab, "range", (int)value); DrawEntities(tab, ap); } catch (Exception ex) { Logger.Error($"Oof", ex); } }, ap => $"{range:0.0}m");
 			tab.AddName(0, $"Entities  ({EntityCount:n0})", TextAnchor.MiddleLeft);
 
 			var filter = ap3.GetStorage(tab, "filter", string.Empty);
 			tab.AddButtonArray(0,
-				new Tab.OptionButton("Players", ap => { ap.SetStorage(tab, "filter", nameof(BasePlayer)); DrawEntities(tab, ap); }, ap => filter == nameof(BasePlayer) ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.None),
-				new Tab.OptionButton("Containers", ap => { ap.SetStorage(tab, "filter", nameof(StorageContainer)); ap.ClearStorage(tab, "validatefilter"); DrawEntities(tab, ap); }, ap => filter == nameof(StorageContainer) ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.None),
-				new Tab.OptionButton("Deployables", ap => { ap.SetStorage(tab, "filter", nameof(Deployable)); ap.ClearStorage(tab, "validatefilter"); DrawEntities(tab, ap); }, ap => filter == nameof(Deployable) ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.None),
-				new Tab.OptionButton("Collectibles", ap => { ap.SetStorage(tab, "filter", nameof(CollectibleEntity)); ap.ClearStorage(tab, "validatefilter"); DrawEntities(tab, ap); }, ap => filter == nameof(CollectibleEntity) ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.None),
-				new Tab.OptionButton("NPCs", ap => { ap.SetStorage(tab, "filter", nameof(NPCPlayer)); ap.ClearStorage(tab, "validatefilter"); DrawEntities(tab, ap); }, ap => filter == nameof(NPCPlayer) ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.None),
-				new Tab.OptionButton("I/O", ap => { ap.SetStorage(tab, "filter", nameof(IOEntity)); ap.ClearStorage(tab, "validatefilter"); DrawEntities(tab, ap); }, ap => filter == nameof(IOEntity) ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.None));
+				new Tab.OptionButton("Players", ap => { ap.SetStorage(tab, "filter", nameof(BasePlayer)); DrawEntities(tab, ap); }, _ => filter == nameof(BasePlayer) ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.None),
+				new Tab.OptionButton("Containers", ap => { ap.SetStorage(tab, "filter", nameof(StorageContainer)); ap.ClearStorage(tab, "validatefilter"); DrawEntities(tab, ap); }, _ => filter == nameof(StorageContainer) ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.None),
+				new Tab.OptionButton("Deployables", ap => { ap.SetStorage(tab, "filter", nameof(Deployable)); ap.ClearStorage(tab, "validatefilter"); DrawEntities(tab, ap); }, _ => filter == nameof(Deployable) ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.None),
+				new Tab.OptionButton("Collectibles", ap => { ap.SetStorage(tab, "filter", nameof(CollectibleEntity)); ap.ClearStorage(tab, "validatefilter"); DrawEntities(tab, ap); }, _ => filter == nameof(CollectibleEntity) ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.None),
+				new Tab.OptionButton("NPCs", ap => { ap.SetStorage(tab, "filter", nameof(NPCPlayer)); ap.ClearStorage(tab, "validatefilter"); DrawEntities(tab, ap); }, _ => filter == nameof(NPCPlayer) ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.None),
+				new Tab.OptionButton("I/O", ap => { ap.SetStorage(tab, "filter", nameof(IOEntity)); ap.ClearStorage(tab, "validatefilter"); DrawEntities(tab, ap); }, _ => filter == nameof(IOEntity) ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.None));
 
 			switch (ap3.GetStorage(tab, "filter", string.Empty))
 			{
@@ -138,31 +154,34 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 					break;
 			}
 
-			foreach (var entity in pool)
+			if (!string.IsNullOrEmpty(usedFilter))
 			{
-				var name = entity switch
+				foreach (var entity in map.Pool)
 				{
-					BasePlayer player => player.displayName,
-					_ => entity.ToString()
-				};
-
-				tab.AddButton(0, name, ap =>
-				{
-					if (selectedEntitites.Contains(entity))
+					var name = entity switch
 					{
-						selectedEntitites.Remove(entity);
-						tab.ClearColumn(1);
-					}
-					else
-					{
-						SelectEntity(tab, ap, entity);
-					}
+						BasePlayer player => player.displayName,
+						_ => entity.ToString()
+					};
 
-					DrawEntitySettings(tab, 1, ap);
-				}, ap => selectedEntitites.Contains(entity) ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.None);
+					tab.AddButton(0, name, ap =>
+					{
+						if (selectedEntitites.Contains(entity))
+						{
+							selectedEntitites.Remove(entity);
+							tab.ClearColumn(1);
+						}
+						else
+						{
+							SelectEntity(tab, ap, entity);
+						}
+
+						DrawEntitySettings(tab, 1, ap);
+					}, ap => selectedEntitites.Contains(entity) ? Tab.OptionButton.Types.Selected : Tab.OptionButton.Types.None);
+				}
+
+				map.Dispose();
 			}
-
-			Pool.FreeList(ref pool);
 
 			if (EntityCount == 0)
 			{
@@ -197,15 +216,35 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 							tab.CreateDialog($"Are you sure about that?", ap =>
 							{
 								DoAll<BaseEntity>(e => e.Kill());
+
+								var selectedEntitites = ap3.GetStorage<List<BaseEntity>>(tab, "selectedentities");
+
+								if (!ap3.HasStorage(tab, "selectedentities"))
+								{
+									selectedEntitites = ap3.SetStorage(tab, "selectedentities", new List<BaseEntity>());
+								}
+
+								selectedEntitites.Clear();
+
 								DrawEntities(tab, ap);
 								tab.ClearColumn(column);
-							}, null);
+							});
 						}, ap => Tab.OptionButton.Types.Important),
 						new Tab.OptionButton("Kill (Gibbed)", ap =>
 						{
 							tab.CreateDialog($"Are you sure about that?", ap =>
 							{
 								DoAll<BaseEntity>(e => e.Kill(BaseNetworkable.DestroyMode.Gib));
+
+								var selectedEntitites = ap3.GetStorage<List<BaseEntity>>(tab, "selectedentities");
+
+								if (!ap3.HasStorage(tab, "selectedentities"))
+								{
+									selectedEntitites = ap3.SetStorage(tab, "selectedentities", new List<BaseEntity>());
+								}
+
+								selectedEntitites.Clear();
+
 								DrawEntities(tab, ap);
 								tab.ClearColumn(column);
 							}, null);
@@ -614,7 +653,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 								if (!minicopter)
 								{
-									tab.AddButton(column, "Open Fuel", ap => { LastContainerLooter = ap; Core.timer.In(0.2f, () => Admin.Close(ap.Player)); Core.timer.In(0.5f, () => { minicopter.engineController.FuelSystem.GetFuelContainer().PlayerOpenLoot(ap.Player, doPositionChecks: false); }); });
+									tab.AddButton(column, "Open Fuel", ap => { LastContainerLooter = ap; Core.timer.In(0.2f, () => Admin.Close(ap.Player)); Core.timer.In(0.5f, () => { minicopter.engineController.FuelSystem.LootFuel(ap.Player); }); });
 								}
 								break;
 							}
