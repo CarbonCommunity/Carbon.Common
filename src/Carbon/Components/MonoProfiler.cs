@@ -792,7 +792,7 @@ public static unsafe partial class MonoProfiler
 		}
 		if (callOutput is { Count: > 0 })
 		{
-			MapMethodRecords(callOutput);
+			MapCallRecords(callOutput);
 		}
 		if (memoryOutput is { Count: > 0 })
 		{
@@ -894,7 +894,7 @@ public static unsafe partial class MonoProfiler
 		}
 	}
 
-	private static void MapMethodRecords(List<CallRecord> records)
+	private static void MapCallRecords(List<CallRecord> records)
 	{
 		var mergedRecords = PoolEx.GetDictionary<string, CallRecord>();
 
@@ -930,7 +930,6 @@ public static unsafe partial class MonoProfiler
 				entry.assembly_name = asmName;
 			}
 
-			// Merge logic
 			if (mergedRecords.TryGetValue(entry.method_name, out CallRecord existingRecord))
 			{
 				existingRecord.total_time += entry.total_time;
@@ -951,7 +950,6 @@ public static unsafe partial class MonoProfiler
 			}
 		}
 
-		// Convert the dictionary back to a list
 		records.Clear();
 		records.AddRange(mergedRecords.Values);
 
