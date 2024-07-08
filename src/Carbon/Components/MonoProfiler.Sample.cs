@@ -40,11 +40,14 @@ public partial class MonoProfiler
 		[JsonIgnore] public bool FromDisk;
 		[JsonIgnore] public bool IsCleared => Assemblies == null || !Assemblies.Any();
 
+		[JsonIgnore] public Difference Duration_c;
+
 		public Sample Compare(Sample other)
 		{
 			Sample sample = default;
 			sample.FromDisk = true;
-			sample.Duration = Duration - other.Duration;
+			sample.Duration = MathEx.Max(Duration, other.Duration) - MathEx.Min(Duration, other.Duration);
+			sample.Duration_c = Compare(Duration, other.Duration);
 			sample.Assemblies = Assemblies.Compare(other.Assemblies);
 			sample.Calls = Calls.Compare(other.Calls);
 			sample.Memory = Memory.Compare(other.Memory);

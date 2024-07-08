@@ -328,7 +328,7 @@ public partial class AdminModule
 			Stripe(this, 0, (float)filtered.Sum(x => x.total_time_percentage), 100, niceColor, niceColor,
 				"All",
 				$"{filtered.Sum(x => (float)x.total_time_ms):n0}ms | {filtered.Sum(x => (float)x.total_time_percentage):0.0}%",
-				$"<size=7>{TimeEx.Format(sample.Duration, false).ToLower()}\n{sample.Calls.Count:n0} calls</size>",
+				$"<size=7>{MonoProfiler.Sample.GetDifferenceString(sample.Duration_c)}{TimeEx.Format(sample.Duration, false).ToLower()}\n{sample.Calls.Count:n0} calls</size>",
 				$"adminmodule.profilerselect -1",
 				string.IsNullOrEmpty(assembly));
 
