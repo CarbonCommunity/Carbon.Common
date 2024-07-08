@@ -291,7 +291,7 @@ public partial class AdminModule
 					command: "adminmodule.timelinemode");
 				tabSpacing++;
 
-				cui.CreateProtectedButton(container, panel, "0.2 0.2 0.2 0.7", $"1 1 1 0.5",
+				cui.CreateProtectedButton(container, panel, "0.2 0.2 0.2 0.7", $"1 1 1 {(sample.IsCompared ? 0.2 : 0.5)}",
 					$"<size=6>{(!sample.IsCleared ? "COMPARE" : "IMPORT")}\n</size>PROTO", 8,
 					xMin: 0.83f, xMax: 0.925f, OxMin: offset * tabSpacing, OxMax: offset * tabSpacing, command: "adminmodule.profilerimport");
 				tabSpacing++;
@@ -1042,6 +1042,11 @@ public partial class AdminModule
 	[ProtectedCommand("adminmodule.profilerimport")]
 	private void ProfilerImport(ConsoleSystem.Arg arg)
 	{
+		if (ProfilerTab.sample.IsCompared)
+		{
+			return;
+		}
+
 		var player = arg.Player();
 
 		File.Open(player, "Profiles", Defines.GetProfilesFolder(), MonoProfiler.ProfileExtension,

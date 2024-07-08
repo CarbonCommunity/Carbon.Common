@@ -148,8 +148,6 @@ public partial class MonoProfiler
 			return a > b ? Difference.ValueHigher : Difference.ValueLower;
 		}
 
-		#region String
-
 		public const string ValueHigherStr = "<color=#91ff0a>\u2191</color>";
 		public const string ValueLowerStr = "<color=#ff370a>\u2193</color>";
 		public const string ValueEqualStr = "<color=#fff30a>—</color>";
@@ -165,30 +163,16 @@ public partial class MonoProfiler
 			};
 		}
 
-		#endregion
-
 		public static ulong CompareValue(ulong a, ulong b)
 		{
-			if (a != b)
-			{
-				Logger.Log($"  ulong '{a}' '{b}'");
-			}
 			return MathEx.Max(a, b) - MathEx.Min(a, b);
 		}
 		public static uint CompareValue(uint a, uint b)
 		{
-			if (a != b)
-			{
-				Logger.Log($"  uint '{a}' '{b}'");
-			}
 			return MathEx.Max(a, b) - MathEx.Min(a, b);
 		}
 		public static double CompareValue(double a, double b)
 		{
-			if (a != b)
-			{
-				Logger.Log($"  double '{a}' '{b}'");
-			}
 			return MathEx.Max(a, b) - MathEx.Min(a, b);
 		}
 	}
