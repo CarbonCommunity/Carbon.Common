@@ -1042,6 +1042,15 @@ public partial class AdminModule
 			return;
 		}
 
+		var player = arg.Player();
+
+		File.Open(player, "Profiles", Defines.GetProfilesFolder(), MonoProfiler.ProfileExtension,
+			onConfirm: (ap, file) =>
+			{
+				using var buffer = TempArray<byte>.New(OsEx.File.ReadBytes(file.SelectedFile));
+				ProfilerTab.sample = MonoProfiler.Sample.Load(buffer.Array);
+				Singleton.Draw(player);
+			});
 	}
 
 	[Conditional("!MINIMAL")]
