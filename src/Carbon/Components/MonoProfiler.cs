@@ -549,7 +549,6 @@ public static unsafe partial class MonoProfiler
 	public readonly struct MonoImage
 	{
 		public readonly int ref_count;
-
 		public readonly void* storage;
 
 		/* Aliases storage->raw_data when storage is non-NULL. Otherwise NULL. */
@@ -926,7 +925,7 @@ public static unsafe partial class MonoProfiler
 				entry.assembly_name = asmName;
 			}
 
-			entry.method_id = (int)entry.method_handle->GetHashCode();
+			entry.method_id = (int)entry.method_handle->signature;
 			records[i] = entry;
 		}
 	}

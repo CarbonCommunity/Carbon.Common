@@ -58,6 +58,7 @@ public partial class MonoProfiler
 			Clear();
 
 			FromDisk = false;
+			IsCompared = false;
 			Duration = DurationTime.TotalSeconds;
 			Assemblies.AddRange(AssemblyRecords);
 			Calls.AddRange(CallRecords);
@@ -66,7 +67,9 @@ public partial class MonoProfiler
 		}
 		public void Clear()
 		{
+			IsCompared = false;
 			Duration = default;
+			FromDisk = false;
 			Assemblies ??= new();
 			Calls ??= new();
 			Memory ??= new();
