@@ -20,7 +20,9 @@ public partial class MonoProfiler
 	public static Sample DeserializeSample(byte[] buffer)
 	{
 		using var stream = new MemoryStream(buffer);
-		return ProtoBuf.Serializer.Deserialize<Sample>(stream);
+		var sample = ProtoBuf.Serializer.Deserialize<Sample>(stream);
+		sample.FromDisk = true;
+		return sample;
 	}
 
 }

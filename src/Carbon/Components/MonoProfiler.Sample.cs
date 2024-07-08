@@ -22,34 +22,42 @@ public partial class MonoProfiler
 		[ProtoMember(3 + NATIVE_PROTOCOL)] public CallOutput Calls;
 		[ProtoMember(4 + NATIVE_PROTOCOL)] public MemoryOutput Memory;
 		[ProtoMember(5 + NATIVE_PROTOCOL)] public GCRecord GC;
+		[ProtoMember(6 + NATIVE_PROTOCOL)] public bool IsCompared;
 
 		public static Sample Create() => new()
 		{
+			Duration = 0,
 			Assemblies = new(),
 			Calls = new(),
-			Memory = new()
+			Memory = new(),
+			GC = default
 		};
 		public static Sample Load(byte[] data)
 		{
 			return DeserializeSample(data);
 		}
 
+		[JsonIgnore] public bool FromDisk;
 		[JsonIgnore] public bool IsCleared => Assemblies == null || !Assemblies.Any();
 
 		public Sample Compare(Sample other)
 		{
 			Sample sample = default;
+			sample.FromDisk = true;
+			sample.Duration = Duration - other.Duration;
 			sample.Assemblies = Assemblies.Compare(other.Assemblies);
 			sample.Calls = Calls.Compare(other.Calls);
 			sample.Memory = Memory.Compare(other.Memory);
 			sample.GC = GC.Compare(other.GC);
+			sample.IsCompared = true;
 			return sample;
-
 		}
+
 		public void Resample()
 		{
 			Clear();
 
+			FromDisk = false;
 			Duration = DurationTime.TotalSeconds;
 			Assemblies.AddRange(AssemblyRecords);
 			Calls.AddRange(CallRecords);
@@ -71,9 +79,10 @@ public partial class MonoProfiler
 
 		public enum Difference
 		{
-			ValueHigher = 1,
-			ValueEqual = 0,
-			ValueLower = -1
+			None,
+			ValueHigher,
+			ValueEqual,
+			ValueLower
 		}
 
 		public string ToTable()
@@ -113,43 +122,74 @@ public partial class MonoProfiler
 
 		public static Difference Compare(ulong a, ulong b)
 		{
-			if (a > b)
+			if (a == b)
 			{
-				return Difference.ValueHigher;
+				return Difference.ValueEqual;
 			}
 
-			return a < b ? Difference.ValueLower : Difference.ValueEqual;
+			return a > b ? Difference.ValueHigher : Difference.ValueLower;
 		}
 		public static Difference Compare(uint a, uint b)
 		{
-			if (a > b)
+			if (a == b)
 			{
-				return Difference.ValueHigher;
+				return Difference.ValueEqual;
 			}
 
-			return a < b ? Difference.ValueLower : Difference.ValueEqual;
+			return a > b ? Difference.ValueHigher : Difference.ValueLower;
 		}
 		public static Difference Compare(double a, double b)
 		{
-			if (a > b)
+			if (a == b)
 			{
-				return Difference.ValueHigher;
+				return Difference.ValueEqual;
 			}
 
-			return a < b ? Difference.ValueLower : Difference.ValueEqual;
+			return a > b ? Difference.ValueHigher : Difference.ValueLower;
 		}
+
+		#region String
+
+		public const string ValueHigherStr = "<color=#91ff0a>\u2191</color>";
+		public const string ValueLowerStr = "<color=#ff370a>\u2193</color>";
+		public const string ValueEqualStr = "<color=#fff30a>—</color>";
+
+		public static string GetDifferenceString(Difference difference)
+		{
+			return difference switch
+			{
+				Difference.ValueHigher => ValueHigherStr,
+				Difference.ValueEqual => ValueEqualStr,
+				Difference.ValueLower => ValueLowerStr,
+				_ => string.Empty
+			};
+		}
+
+		#endregion
 
 		public static ulong CompareValue(ulong a, ulong b)
 		{
-			return MathEx.Max(a, b);
+			if (a != b)
+			{
+				Logger.Log($"  ulong '{a}' '{b}'");
+			}
+			return MathEx.Max(a, b) - MathEx.Min(a, b);
 		}
 		public static uint CompareValue(uint a, uint b)
 		{
-			return MathEx.Max(a, b);
+			if (a != b)
+			{
+				Logger.Log($"  uint '{a}' '{b}'");
+			}
+			return MathEx.Max(a, b) - MathEx.Min(a, b);
 		}
 		public static double CompareValue(double a, double b)
 		{
-			return MathEx.Max(a, b);
+			if (a != b)
+			{
+				Logger.Log($"  double '{a}' '{b}'");
+			}
+			return MathEx.Max(a, b) - MathEx.Min(a, b);
 		}
 	}
 }

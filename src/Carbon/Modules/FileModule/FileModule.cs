@@ -206,7 +206,7 @@ public partial class FileModule : CarbonModule<EmptyModuleConfig, EmptyModuleDat
 				break;
 
 			case "cancel":
-				file.OnConfirm?.Invoke(ap.Player, file);
+				file.OnCancel?.Invoke(ap.Player, file);
 				Instance.Close(ap.Player);
 				break;
 

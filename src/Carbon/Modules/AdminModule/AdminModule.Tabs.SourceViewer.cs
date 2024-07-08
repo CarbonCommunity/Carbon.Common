@@ -112,13 +112,12 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		}
 		public unsafe static SourceViewerTab MakeMethod(MonoProfiler.CallRecord call, int size = 8)
 		{
-			var assemblyName = MonoProfiler.AssemblyMap[call.assembly_handle];
-			var code = SourceCodeBank.Parse(assemblyName.name, call.assembly_handle);
+			var code = SourceCodeBank.Parse(call.assembly_name.name, call.assembly_handle);
 			var codeResult = code.ParseMethod(call.method_handle, out var type, out var method).Trim();
 
 			return Make(
 				$"<color=#878787>{type}.</color>{method}",
-				ProcessSyntaxHighlight(codeResult), assemblyName.displayName, size);
+				ProcessSyntaxHighlight(codeResult), call.assembly_name.displayName, size);
 		}
 
 		public static string ProcessSyntaxHighlight(string content)
