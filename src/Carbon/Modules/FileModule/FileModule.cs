@@ -122,7 +122,8 @@ public partial class FileModule : CarbonModule<EmptyModuleConfig, EmptyModuleDat
 
 			var background = cui.CreatePanel(container, PanelId, "0.05 0.05 0.05 0.9", xMin: 0.5f, xMax: 0.5f,
 				yMin: 0.5f, yMax: 0.5f, OxMin: -300, OxMax: 300, OyMin: -250, OyMax: 250);
-			cui.CreateText(container, background, Cache.CUI.WhiteColor, $"{Title.ToUpper()} ({DirectoryFiles.Count:n0})", 20,
+			cui.CreateText(container, background, Cache.CUI.WhiteColor,
+				$"{Title.ToUpper()} ({DirectoryFiles.Count:n0})", 20,
 				align: TextAnchor.UpperLeft, xMin: 0.03f, yMax: 0.97f, font: Handler.FontTypes.RobotoCondensedBold);
 
 			const float nameSpace = 0f;
@@ -136,7 +137,8 @@ public partial class FileModule : CarbonModule<EmptyModuleConfig, EmptyModuleDat
 			cui.CreateText(container, bar, "1 1 1 0.2", "SIZE", 12, align: TextAnchor.UpperCenter,
 				xMin: sizeSpace, xMax: sizeSpace + 0.05f);
 
-			var exit = cui.CreateProtectedButton(container, background, "0.5 0 0 0.4", Cache.CUI.BlankColor, string.Empty,
+			var exit = cui.CreateProtectedButton(container, background, "0.5 0 0 0.4", Cache.CUI.BlankColor,
+				string.Empty,
 				0, xMin: 0.955f, xMax: 0.99f, yMin: 0.95f, yMax: 0.99f, command: "file.action cancel");
 			cui.CreateImage(container, exit, "close", "1 0.5 0.5 0.3", xMin: 0.2f, xMax: 0.8f, yMin: 0.2f, yMax: 0.8f);
 
@@ -164,8 +166,14 @@ public partial class FileModule : CarbonModule<EmptyModuleConfig, EmptyModuleDat
 			{
 				var file = DirectoryFiles[i];
 				var fileButton = cui.CreateProtectedButton(container, scroll, "0.3 0.3 0.3 0.5",
-					"1 1 1 0.7", $"{Path.GetFileName(file.Path)}", 10, yMin: 1, yMax: 1, OyMin: fileOffset - scale,
+					Cache.CUI.BlankColor, string.Empty, 0, yMin: 1, yMax: 1, OyMin: fileOffset - scale,
 					OyMax: fileOffset, align: TextAnchor.MiddleLeft, command: $"file.action select {i}");
+
+				cui.CreateText(container, fileButton, "1 1 1 0.7",
+					$"<b>{Path.GetFileNameWithoutExtension(file.Path)}</b>{Path.GetExtension(file.Path)}", 10, xMin: 0.045f,
+					align: TextAnchor.MiddleLeft);
+				cui.CreateImage(container, fileButton, "file", "0.7 0.7 0.7 0.5", xMin: 0.01f, xMax: 0.04f, yMin: 0.15f,
+					yMax: 0.85f);
 
 				var modificationDate = file.Info.LastWriteTime;
 				cui.CreateText(container, fileButton, "1 1 1 0.4",
@@ -175,7 +183,8 @@ public partial class FileModule : CarbonModule<EmptyModuleConfig, EmptyModuleDat
 					$"{ByteEx.Format(file.Info.Length).ToUpper()}",
 					10, xMin: sizeSpace - 0.04f, xMax: sizeSpace + 0.1f, align: TextAnchor.MiddleCenter);
 
-				var deleteButton = cui.CreateProtectedButton(container, fileButton, "0.5 0 0 0.4", "1 0.5 0.5 0.3", "DELETE", 8,
+				var deleteButton = cui.CreateProtectedButton(container, fileButton, "0.5 0 0 0.4", "1 0.5 0.5 0.3",
+					"DELETE", 8,
 					xMin: 0.9f, command: $"file.action delete {i}", id: $"filedelete{i}");
 				deleteButton.Element2.Name = $"filedeletetext{i}";
 

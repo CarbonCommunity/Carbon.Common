@@ -84,7 +84,8 @@ public static unsafe partial class MonoProfiler
 
 			comparison.AddRange(
 				from record in list1
-				let otherRecord = list2.FirstOrDefault(x => x.assembly_name.displayName == record.assembly_name.displayName)
+				let otherRecord = list2.FirstOrDefault(x =>
+					x.assembly_name.displayName == record.assembly_name.displayName)
 				select new AssemblyRecord
 			{
 				assembly_handle = record.assembly_handle,
@@ -182,7 +183,9 @@ public static unsafe partial class MonoProfiler
 
 			comparison.AddRange(
 				from record in list1
-				let otherRecord = list2.FirstOrDefault(x => x.method_id == record.method_id)
+				let otherRecord = list2.FirstOrDefault(x =>
+					x.assembly_name.displayName == record.assembly_name.displayName &&
+				    x.method_name == record.method_name)
 				select new CallRecord
 			{
 				assembly_handle = record.assembly_handle,
@@ -297,9 +300,9 @@ public static unsafe partial class MonoProfiler
 
 			comparison.AddRange(
 				from record in list1
-				let otherRecord = list2.FirstOrDefault(x => x.assembly_name.name == record.assembly_name.name
-				                                            		   && x.class_token == record.class_token
-																	   && x.class_name == record.class_name)
+				let otherRecord = list2.FirstOrDefault(x => 
+					x.assembly_name.displayName == record.assembly_name.displayName &&
+					x.class_name == record.class_name)
 				select new MemoryRecord
 			{
 				assembly_handle = record.assembly_handle,
@@ -515,8 +518,7 @@ public static unsafe partial class MonoProfiler
 
 		// managed
 		[ProtoMember(10 + NATIVE_PROTOCOL)] public string method_name;
-		[ProtoMember(11 + NATIVE_PROTOCOL)] public int method_id;
-		[ProtoMember(12 + NATIVE_PROTOCOL)] public AssemblyNameEntry assembly_name;
+		[ProtoMember(11 + NATIVE_PROTOCOL)] public AssemblyNameEntry assembly_name;
 		public double total_time_ms => total_time * 0.001f;
 		public double own_time_ms => own_time * 0.001f;
 
@@ -893,6 +895,8 @@ public static unsafe partial class MonoProfiler
 	}
 	private static void MapCallRecords(List<CallRecord> records)
 	{
+		var temp = PoolEx.GetDictionary<string, CallRecord>();
+
 		for (int i = 0; i < records.Count; i++)
 		{
 			CallRecord entry = records[i];
@@ -925,9 +929,29 @@ public static unsafe partial class MonoProfiler
 				entry.assembly_name = asmName;
 			}
 
-			entry.method_id = (int)entry.method_handle->signature;
-			records[i] = entry;
+			if (temp.TryGetValue(entry.method_name, out var existingRecord))
+			{
+				existingRecord.total_time += entry.total_time;
+				existingRecord.total_time_percentage += entry.total_time_percentage;
+				existingRecord.own_time += entry.own_time;
+				existingRecord.own_time_percentage += entry.own_time_percentage;
+				existingRecord.calls += entry.calls;
+				existingRecord.total_alloc += entry.total_alloc;
+				existingRecord.own_alloc += entry.own_alloc;
+				existingRecord.total_exceptions += entry.total_exceptions;
+				existingRecord.own_exceptions += entry.own_exceptions;
+				temp[entry.method_name] = existingRecord;
+			}
+			else
+			{
+				temp[entry.method_name] = entry;
+			}
 		}
+
+		records.Clear();
+		records.AddRange(temp.Values);
+
+		PoolEx.FreeDictionary(ref temp);
 	}
 
 	public static void TryStartProfileFor(MonoProfilerConfig.ProfileTypes profileType, Assembly assembly, string value, bool incremental = false)
