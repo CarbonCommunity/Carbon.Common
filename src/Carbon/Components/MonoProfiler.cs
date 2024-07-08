@@ -79,12 +79,10 @@ public static unsafe partial class MonoProfiler
 			}
 
 			var comparison = new AssemblyOutput();
-			var list1 = this.Count > other.Count ? this : other;
-			var list2 = list1 == this ? other : this;
 
 			comparison.AddRange(
-				from record in list1
-				let otherRecord = list2.FirstOrDefault(x =>
+				from record in this
+				let otherRecord = other.FirstOrDefault(x =>
 					x.assembly_name.displayName == record.assembly_name.displayName)
 				select new AssemblyRecord
 			{
@@ -178,12 +176,10 @@ public static unsafe partial class MonoProfiler
 			}
 
 			var comparison = new CallOutput();
-			var list1 = this.Count > other.Count ? this : other;
-			var list2 = list1 == this ? other : this;
 
 			comparison.AddRange(
-				from record in list1
-				let otherRecord = list2.FirstOrDefault(x =>
+				from record in this
+				let otherRecord = other.FirstOrDefault(x =>
 					x.assembly_name.displayName == record.assembly_name.displayName &&
 				    x.method_name == record.method_name)
 				select new CallRecord
@@ -295,12 +291,10 @@ public static unsafe partial class MonoProfiler
 			}
 
 			var comparison = new MemoryOutput();
-			var list1 = this.Count > other.Count ? this : other;
-			var list2 = list1 == this ? other : this;
 
 			comparison.AddRange(
-				from record in list1
-				let otherRecord = list2.FirstOrDefault(x => 
+				from record in this
+				let otherRecord = other.FirstOrDefault(x =>
 					x.assembly_name.displayName == record.assembly_name.displayName &&
 					x.class_name == record.class_name)
 				select new MemoryRecord
