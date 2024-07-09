@@ -39,7 +39,7 @@ public partial class MonoProfiler
 		[JsonIgnore] public bool FromDisk;
 		[JsonIgnore] public bool IsCleared => Assemblies == null || !Assemblies.Any();
 
-		[JsonIgnore] public Difference Duration_c;
+		public Difference Duration_c;
 
 		public Sample Compare(Sample other)
 		{

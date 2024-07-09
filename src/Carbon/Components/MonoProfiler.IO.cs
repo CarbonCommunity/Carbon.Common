@@ -24,8 +24,9 @@ public partial class MonoProfiler
 			writer.Write(MANAGED_PROTOCOL);
 			writer.Write(sample.Duration);
 			writer.Write(sample.IsCompared);
+			writer.Write((int)sample.Duration_c);
 
-			var names = PoolEx.GetDictionary<string, int>();
+			var mappedAssemblies = PoolEx.GetDictionary<string, int>();
 
 			writer.Write(sample.Assemblies.Count);
 			for (int i = 0; i < sample.Assemblies.Count; i++)
@@ -40,8 +41,13 @@ public partial class MonoProfiler
 				writer.Write(assembly.assembly_name.displayName);
 				writer.Write(assembly.assembly_name.displayNameNonIncrement);
 				writer.Write((int)assembly.assembly_name.profileType);
+				writer.Write(assembly.isCompared);
+				writer.Write((int)assembly.total_time_c);
+				writer.Write((int)assembly.total_exceptions_c);
+				writer.Write((int)assembly.calls_c);
+				writer.Write((int)assembly.alloc_c);
 
-				names.Add(assembly.assembly_name.name, i);
+				mappedAssemblies.Add(assembly.assembly_name.name, i);
 			}
 
 			writer.Write(sample.Calls.Count);
@@ -58,9 +64,16 @@ public partial class MonoProfiler
 				writer.Write(call.total_exceptions);
 				writer.Write(call.own_exceptions);
 				writer.Write(call.method_name);
-
-				names.TryGetValue(call.assembly_name.name, out var id);
+				mappedAssemblies.TryGetValue(call.assembly_name.name, out var id);
 				writer.Write(id);
+				writer.Write(call.isCompared);
+				writer.Write((int)call.total_time_c);
+				writer.Write((int)call.own_time_c);
+				writer.Write((int)call.calls_c);
+				writer.Write((int)call.total_alloc);
+				writer.Write((int)call.own_alloc_c);
+				writer.Write((int)call.total_exceptions_c);
+				writer.Write((int)call.own_exceptions_c);
 			}
 
 			writer.Write(sample.Memory.Count);
@@ -72,15 +85,20 @@ public partial class MonoProfiler
 				writer.Write(memory.instance_size);
 				writer.Write(memory.class_token);
 				writer.Write(memory.class_name);
-
-				names.TryGetValue(memory.assembly_name.name, out var id);
+				mappedAssemblies.TryGetValue(memory.assembly_name.name, out var id);
 				writer.Write(id);
+				writer.Write(memory.isCompared);
+				writer.Write((int)memory.allocations_c);
+				writer.Write((int)memory.total_alloc_size_c);
 			}
 
 			writer.Write(sample.GC.calls);
 			writer.Write(sample.GC.total_time);
+			writer.Write(sample.GC.isCompared);
+			writer.Write((int)sample.GC.calls_c);
+			writer.Write((int)sample.GC.total_time_c);
 
-			PoolEx.FreeDictionary(ref names);
+			PoolEx.FreeDictionary(ref mappedAssemblies);
 		}
 
 		return memoryStream.ToArray();
@@ -102,75 +120,81 @@ public partial class MonoProfiler
 
 		sample.Duration = reader.ReadDouble();
 		sample.IsCompared = reader.ReadBoolean();
+		sample.Duration_c = (Sample.Difference)reader.ReadInt32();
 
 		var names = PoolEx.GetDictionary<int, AssemblyNameEntry>();
 
 		var assemblyLength = reader.ReadInt32();
 		for (int i = 0; i < assemblyLength; i++)
 		{
-			var assembly = new AssemblyRecord
+			AssemblyRecord record = default;
+			record.total_time = reader.ReadUInt64();
+			record.total_time_percentage = reader.ReadDouble();
+			record.total_exceptions = reader.ReadUInt64();
+			record.calls = reader.ReadUInt64();
+			record.alloc = reader.ReadUInt64();
+			record.assembly_name = new AssemblyNameEntry
 			{
-				total_time = reader.ReadUInt64(),
-				total_time_percentage = reader.ReadDouble(),
-				total_exceptions = reader.ReadUInt64(),
-				calls = reader.ReadUInt64(),
-				alloc = reader.ReadUInt64(),
-				assembly_name = new AssemblyNameEntry
-				{
-					name = reader.ReadString(),
-					displayName = reader.ReadString(),
-					displayNameNonIncrement = reader.ReadString(),
-					profileType = (MonoProfilerConfig.ProfileTypes)reader.ReadInt32()
-				}
+				name = reader.ReadString(),
+				displayName = reader.ReadString(),
+				displayNameNonIncrement = reader.ReadString(),
+				profileType = (MonoProfilerConfig.ProfileTypes)reader.ReadInt32()
 			};
-			sample.Assemblies.Add(assembly);
-			names.Add(i, assembly.assembly_name);
+			record.isCompared = reader.ReadBoolean();
+			record.total_time_c = (Sample.Difference)reader.ReadInt32();
+			record.total_exceptions_c = (Sample.Difference)reader.ReadInt32();
+			record.calls_c = (Sample.Difference)reader.ReadInt32();
+			record.alloc_c = (Sample.Difference)reader.ReadInt32();
+			sample.Assemblies.Add(record);
+			names.Add(i, record.assembly_name);
 		}
 
 		var callsLength = reader.ReadInt32();
 		for (int i = 0; i < callsLength; i++)
 		{
-			CallRecord call = new CallRecord
-			{
-				total_time = reader.ReadUInt64(),
-				total_time_percentage = reader.ReadDouble(),
-				own_time = reader.ReadUInt64(),
-				own_time_percentage = reader.ReadDouble(),
-				calls = reader.ReadUInt64(),
-				total_alloc = reader.ReadUInt64(),
-				own_alloc = reader.ReadUInt64(),
-				total_exceptions = reader.ReadUInt64(),
-				own_exceptions = reader.ReadUInt64(),
-				method_name = reader.ReadString()
-			};
-
+			CallRecord record = default;
+			record.total_time = reader.ReadUInt64();
+			record.total_time_percentage = reader.ReadDouble();
+			record.own_time = reader.ReadUInt64();
+			record.own_time_percentage = reader.ReadDouble();
+			record.calls = reader.ReadUInt64();
+			record.total_alloc = reader.ReadUInt64();
+			record.own_alloc = reader.ReadUInt64();
+			record.total_exceptions = reader.ReadUInt64();
+			record.own_exceptions = reader.ReadUInt64();
+			record.method_name = reader.ReadString();
 			if (names.TryGetValue(reader.ReadInt32(), out var val))
 			{
-				call.assembly_name = val;
+				record.assembly_name = val;
 			}
-
-			sample.Calls.Add(call);
+			record.isCompared = reader.ReadBoolean();
+			record.total_time_c = (Sample.Difference)reader.ReadInt32();
+			record.own_time_c = (Sample.Difference)reader.ReadInt32();
+			record.calls_c = (Sample.Difference)reader.ReadInt32();
+			record.total_alloc_c = (Sample.Difference)reader.ReadInt32();
+			record.own_alloc_c = (Sample.Difference)reader.ReadInt32();
+			record.total_exceptions_c = (Sample.Difference)reader.ReadInt32();
+			record.own_exceptions_c = (Sample.Difference)reader.ReadInt32();
+			sample.Calls.Add(record);
 		}
 
 		var memoryLength = reader.ReadInt32();
 		for (int i = 0; i < memoryLength; i++)
 		{
-			MemoryRecord memory = new MemoryRecord
+			MemoryRecord record = default;
+			record.allocations = reader.ReadUInt64();
+			record.total_alloc_size = reader.ReadUInt64();
+			record.instance_size = reader.ReadUInt32();
+			record.class_token = reader.ReadUInt32();
+			record.class_name = reader.ReadString();
+			if (names.TryGetValue(reader.ReadInt32(), out var val))
 			{
-				allocations = reader.ReadUInt64(),
-				total_alloc_size = reader.ReadUInt64(),
-				instance_size = reader.ReadUInt32(),
-				class_token = reader.ReadUInt32(),
-				class_name = reader.ReadString()
-			};
-
-			var id = reader.ReadInt32();
-			if (names.TryGetValue(id, out var val))
-			{
-				memory.assembly_name = val;
+				record.assembly_name = val;
 			}
-
-			sample.Memory.Add(memory);
+			record.isCompared = reader.ReadBoolean();
+			record.allocations_c = (Sample.Difference)reader.ReadInt32();
+			record.total_alloc_size_c = (Sample.Difference)reader.ReadInt32();
+			sample.Memory.Add(record);
 		}
 
 		sample.GC.calls = reader.ReadUInt64();
@@ -181,7 +205,7 @@ public partial class MonoProfiler
 		return sample;
 	}
 
-	public static bool ValidateFile(string file, out int protocol, out double duration)
+	public static bool ValidateFile(string file, out int protocol, out double duration, out bool isCompared)
 	{
 		try
 		{
@@ -189,6 +213,7 @@ public partial class MonoProfiler
 			{
 				protocol = default;
 				duration = default;
+				isCompared = default;
 				return false;
 			}
 
@@ -198,7 +223,7 @@ public partial class MonoProfiler
 
 			protocol = reader.ReadInt32();
 			duration = reader.ReadDouble();
-
+			isCompared = reader.ReadBoolean();
 			return protocol == MANAGED_PROTOCOL;
 		}
 		catch (Exception exception)
@@ -208,6 +233,7 @@ public partial class MonoProfiler
 
 		protocol = default;
 		duration = default;
+		isCompared = default;
 		return false;
 	}
 }

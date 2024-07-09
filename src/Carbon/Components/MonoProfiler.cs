@@ -311,8 +311,7 @@ public static unsafe partial class MonoProfiler
 				instance_size = AreRecordsValid(record, otherRecord) ? Sample.CompareValue(record.instance_size, otherRecord.instance_size) : default,
 
 				allocations_c = AreRecordsValid(record, otherRecord) ? Sample.Compare(record.allocations, otherRecord.allocations) : Sample.Difference.None,
-				total_alloc_size_c = AreRecordsValid(record, otherRecord) ? Sample.Compare(record.total_alloc_size, otherRecord.total_alloc_size) : Sample.Difference.None,
-				instance_size_c = AreRecordsValid(record, otherRecord) ? Sample.Compare(record.instance_size, otherRecord.instance_size) : Sample.Difference.None
+				total_alloc_size_c = AreRecordsValid(record, otherRecord) ? Sample.Compare(record.total_alloc_size, otherRecord.total_alloc_size) : Sample.Difference.None
 			});
 
 			return comparison;
@@ -388,9 +387,9 @@ public static unsafe partial class MonoProfiler
 		public ulong calls;
 		public ulong total_time;
 
-		[JsonIgnore] public bool isCompared;
-		[JsonIgnore] public Sample.Difference calls_c;
-		[JsonIgnore] public Sample.Difference total_time_c;
+		public bool isCompared;
+		public Sample.Difference calls_c;
+		public Sample.Difference total_time_c;
 
 		public GCRecord Compare(GCRecord other)
 		{
@@ -457,11 +456,11 @@ public static unsafe partial class MonoProfiler
 
 		[JsonIgnore] public bool IsValid => assembly_name != null;
 
-		[JsonIgnore] public bool isCompared;
-		[JsonIgnore] public Sample.Difference total_time_c;
-		[JsonIgnore] public Sample.Difference total_exceptions_c;
-		[JsonIgnore] public Sample.Difference calls_c;
-		[JsonIgnore] public Sample.Difference alloc_c;
+		public bool isCompared;
+		public Sample.Difference total_time_c;
+		public Sample.Difference total_exceptions_c;
+		public Sample.Difference calls_c;
+		public Sample.Difference alloc_c;
 
 		[JsonIgnore] public string total_time_ms_str;
 
@@ -487,7 +486,6 @@ public static unsafe partial class MonoProfiler
 		[JsonIgnore] public bool isCompared;
 		[JsonIgnore] public Sample.Difference allocations_c;
 		[JsonIgnore] public Sample.Difference total_alloc_size_c;
-		[JsonIgnore] public Sample.Difference instance_size_c;
 	}
 
 	[StructLayout(LayoutKind.Sequential)]
@@ -513,14 +511,14 @@ public static unsafe partial class MonoProfiler
 
 		[JsonIgnore] public bool IsValid => assembly_name != null;
 
-		[JsonIgnore] public bool isCompared;
-		[JsonIgnore] public Sample.Difference total_time_c;
-		[JsonIgnore] public Sample.Difference own_time_c;
-		[JsonIgnore] public Sample.Difference calls_c;
-		[JsonIgnore] public Sample.Difference total_alloc_c;
-		[JsonIgnore] public Sample.Difference own_alloc_c;
-		[JsonIgnore] public Sample.Difference total_exceptions_c;
-		[JsonIgnore] public Sample.Difference own_exceptions_c;
+		public bool isCompared;
+		public Sample.Difference total_time_c;
+		public Sample.Difference own_time_c;
+		public Sample.Difference calls_c;
+		public Sample.Difference total_alloc_c;
+		public Sample.Difference own_alloc_c;
+		public Sample.Difference total_exceptions_c;
+		public Sample.Difference own_exceptions_c;
 
 		[JsonIgnore] public string total_time_ms_str;
 		[JsonIgnore] public string own_time_ms_str;
@@ -590,7 +588,7 @@ public static unsafe partial class MonoProfiler
 	public static bool IsCleared => !AssemblyRecords.Any() && !CallRecords.Any();
 
 	public const int NATIVE_PROTOCOL = 3;
-	public const int MANAGED_PROTOCOL = NATIVE_PROTOCOL + 121;
+	public const int MANAGED_PROTOCOL = NATIVE_PROTOCOL + 122;
 
 	static MonoProfiler()
 	{

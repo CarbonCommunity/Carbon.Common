@@ -461,7 +461,7 @@ public partial class AdminModule
 						Stripe(this, 1, value, maxVal, intenseColor, calmColor,
 							record.class_name,
 							$"{MonoProfiler.Sample.GetDifferenceString(record.allocations_c)}{record.allocations:n0} allocated | {MonoProfiler.Sample.GetDifferenceString(record.total_alloc_size_c)}{ByteEx.Format(record.total_alloc_size).ToUpper()} total",
-							$"{MonoProfiler.Sample.GetDifferenceString(record.instance_size_c)}<b>{record.instance_size} B</b>",
+							$"<b>{record.instance_size} B</b>",
 							string.Empty);
 
 						index++;
@@ -1074,9 +1074,9 @@ public partial class AdminModule
 					return string.Empty;
 				}
 
-				if (MonoProfiler.ValidateFile(item.Path, out var protocol, out var duration))
+				if (MonoProfiler.ValidateFile(item.Path, out var protocol, out var duration, out var isCompared))
 				{
-					return $"Duration: {TimeEx.FormatPlayer(duration).ToLower()}s (protocol {protocol})";
+					return $"Duration: {TimeEx.FormatPlayer(duration).ToLower()}s (protocol {protocol}){(isCompared ? " [C]" : string.Empty)}";
 				}
 
 				return $"Invalid protocol {protocol}";
