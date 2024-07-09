@@ -117,7 +117,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 			return Make(
 				$"<color=#878787>{type}.</color>{method}",
-				ProcessSyntaxHighlight(codeResult), call.assembly_name.displayName, size);
+				ProcessSyntaxHighlight(codeResult), call.assembly_name.GetDisplayName(true), size);
 		}
 
 		public static string ProcessSyntaxHighlight(string content)

@@ -140,13 +140,13 @@ public partial class AdminModule
 
 			return (sort switch
 			{
-				0 => sample.Assemblies.OrderBy(x => x.assembly_name.displayName),
+				0 => sample.Assemblies.OrderBy(x => x.assembly_name.GetDisplayName(sample.IsCleared)),
 				1 => sample.Assemblies.OrderByDescending(x => x.total_time),
 				2 => sample.Assemblies.OrderByDescending(x => x.calls),
 				3 => sample.Assemblies.OrderByDescending(x => x.alloc),
 				4 => sample.Assemblies.OrderByDescending(x => x.total_exceptions),
 				_ => default
-			})!.Where(x => string.IsNullOrEmpty(search) || x.assembly_name.displayName.Contains(search, CompareOptions.OrdinalIgnoreCase));
+			})!.Where(x => string.IsNullOrEmpty(search) || x.assembly_name.GetDisplayName(sample.IsCleared).Contains(search, CompareOptions.OrdinalIgnoreCase));
 		}
 		public static IEnumerable<MonoProfiler.CallRecord> GetSortedCalls(string assembly, int sort, string search)
 		{
@@ -363,7 +363,7 @@ public partial class AdminModule
 				};
 
 				Stripe(this, 0, value, maxVal, intenseColor, calmColor,
-					record.assembly_name.displayName,
+					record.assembly_name.GetDisplayName(record.isCompared),
 					$"{MonoProfiler.Sample.GetDifferenceString(record.total_time_c)}{record.GetTotalTime()} ({record.total_time_percentage:0.0}%) | {MonoProfiler.Sample.GetDifferenceString(record.alloc_c)}{ByteEx.Format(record.alloc).ToUpper()} | {MonoProfiler.Sample.GetDifferenceString(record.total_exceptions_c)}{record.total_exceptions:n0} excep.",
 					$"{record.assembly_name.profileType}\n{MonoProfiler.Sample.GetDifferenceString(record.calls_c)}<b>{record.calls:n0}</b> calls", $"adminmodule.profilerselect {i}", record.assembly_name.name == assembly);
 			}
@@ -735,7 +735,7 @@ public partial class AdminModule
 
 				pooledLayers.Add(new Components.Graphics.Chart.Layer
 				{
-					Name = assembly.assembly_name.displayName,
+					Name = assembly.assembly_name.GetDisplayName(false),
 					Data = recording.Timeline.Select(x => x.Value.Assemblies.Where(x => x.assembly_handle == assembly.assembly_handle).SumULong(value)).ToArray(),
 					LayerSettings = new()
 					{
@@ -789,7 +789,7 @@ public partial class AdminModule
 
 				pooledLayers.Add(new Components.Graphics.Chart.Layer
 				{
-					Name = name.displayName,
+					Name = name.GetDisplayName(false),
 					Data = recording.Timeline.Select(x => x.Value.Calls.Where(x => x.assembly_handle == assembly.assembly_handle).SumULong(callValue)).ToArray(),
 					LayerSettings = new()
 					{

@@ -61,9 +61,15 @@ public static unsafe partial class MonoProfiler
 	[ProtoContract]
 	public class AssemblyNameEntry
 	{
-		[ProtoMember(1 + NATIVE_PROTOCOL)] public string name;
-		[ProtoMember(2 + NATIVE_PROTOCOL)] public string displayName;
-		[ProtoMember(3 + NATIVE_PROTOCOL)] public MonoProfilerConfig.ProfileTypes profileType;
+		[ProtoMember(1 + MONO_NATIVE_PROTOCOL)] public string name;
+		[ProtoMember(2 + MONO_NATIVE_PROTOCOL)] public string displayName;
+		[ProtoMember(3 + MONO_NATIVE_PROTOCOL)] public string displayNameNonIncrement;
+		[ProtoMember(4 + MONO_NATIVE_PROTOCOL)] public MonoProfilerConfig.ProfileTypes profileType;
+
+		public string GetDisplayName(bool isCompared)
+		{
+			return isCompared ? displayNameNonIncrement : displayName;
+		}
 	}
 
 	[ProtoContract]
@@ -83,7 +89,7 @@ public static unsafe partial class MonoProfiler
 			comparison.AddRange(
 				from record in this
 				let otherRecord = other.FirstOrDefault(x =>
-					x.assembly_name.displayName == record.assembly_name.displayName)
+					x.assembly_name.displayNameNonIncrement == record.assembly_name.displayNameNonIncrement)
 				select new AssemblyRecord
 			{
 				assembly_handle = record.assembly_handle,
@@ -118,7 +124,7 @@ public static unsafe partial class MonoProfiler
 					continue;
 				}
 
-				table.AddRow($" {assemblyName.displayName}",
+				table.AddRow($" {assemblyName.GetDisplayName(record.isCompared)}",
 					record.total_time == 0 ? string.Empty : record.GetTotalTime(),
 					record.total_time_percentage == 0 ? string.Empty : $"{record.total_time_percentage:0}%",
 					record.calls == 0 ? string.Empty : $"{record.calls:n0}",
@@ -144,7 +150,7 @@ public static unsafe partial class MonoProfiler
 					continue;
 				}
 
-				builder.AppendLine($"{assemblyName.displayName}," +
+				builder.AppendLine($"{assemblyName.GetDisplayName(record.isCompared)}," +
 				                   $"{record.GetTotalTime()}," +
 				                   $"{record.total_time_percentage:0}%," +
 				                   $"{record.calls:n0}," +
@@ -180,7 +186,7 @@ public static unsafe partial class MonoProfiler
 			comparison.AddRange(
 				from record in this
 				let otherRecord = other.FirstOrDefault(x =>
-					x.assembly_name.displayName == record.assembly_name.displayName &&
+					x.assembly_name.displayNameNonIncrement == record.assembly_name.displayNameNonIncrement &&
 				    x.method_name == record.method_name)
 				select new CallRecord
 			{
@@ -225,7 +231,7 @@ public static unsafe partial class MonoProfiler
 					continue;
 				}
 
-				table.AddRow($" {assemblyName.displayName}", $"{record.method_name}",
+				table.AddRow($" {assemblyName.GetDisplayName(record.isCompared)}", $"{record.method_name}",
 					record.total_time == 0 ? string.Empty : record.GetTotalTime(),
 					record.total_time_percentage == 0 ? string.Empty : $"{record.total_time_percentage:0}%",
 					record.own_time == 0 ? string.Empty : record.GetOwnTime(),
@@ -258,7 +264,7 @@ public static unsafe partial class MonoProfiler
 					continue;
 				}
 
-				builder.AppendLine($"{assemblyName.displayName}," +
+				builder.AppendLine($"{assemblyName.GetDisplayName(record.isCompared)}," +
 				                   $"{record.method_name}," +
 				                   $"{record.GetTotalTime()}," +
 				                   $"{record.total_time_percentage:0}%," +
@@ -295,7 +301,7 @@ public static unsafe partial class MonoProfiler
 			comparison.AddRange(
 				from record in this
 				let otherRecord = other.FirstOrDefault(x =>
-					x.assembly_name.displayName == record.assembly_name.displayName &&
+					x.assembly_name.displayNameNonIncrement == record.assembly_name.displayNameNonIncrement &&
 					x.class_name == record.class_name)
 				select new MemoryRecord
 			{
@@ -330,7 +336,7 @@ public static unsafe partial class MonoProfiler
 					continue;
 				}
 
-				table.AddRow($" {assemblyName.displayName}", $"{record.class_name}",
+				table.AddRow($" {assemblyName.GetDisplayName(record.isCompared)}", $"{record.class_name}",
 					record.allocations == 0 ? string.Empty : record.allocations.ToString("n0"),
 					record.total_alloc_size == 0 ? string.Empty : $"{ByteEx.Format(record.total_alloc_size).ToLower()}",
 					record.instance_size == 0 ? string.Empty : $"{record.instance_size:n0}b");
@@ -355,7 +361,7 @@ public static unsafe partial class MonoProfiler
 					continue;
 				}
 
-				builder.AppendLine($"{assemblyName.displayName}," +
+				builder.AppendLine($"{assemblyName.GetDisplayName(record.isCompared)}," +
 				                   $"{record.class_name}," +
 				                   $"{record.allocations.ToString("n0")}," +
 				                   $"{ByteEx.Format(record.total_alloc_size).ToLower()}," +
@@ -385,8 +391,8 @@ public static unsafe partial class MonoProfiler
 	[StructLayout(LayoutKind.Sequential)]
 	public struct GCRecord
 	{
-		[ProtoMember(1 + NATIVE_PROTOCOL)] public ulong calls;
-		[ProtoMember(2 + NATIVE_PROTOCOL)] public ulong total_time;
+		[ProtoMember(1 + MONO_NATIVE_PROTOCOL)] public ulong calls;
+		[ProtoMember(2 + MONO_NATIVE_PROTOCOL)] public ulong total_time;
 
 		[JsonIgnore] public bool isCompared;
 		[JsonIgnore] public Sample.Difference calls_c;
@@ -446,17 +452,17 @@ public static unsafe partial class MonoProfiler
 	{
 		[JsonIgnore] public ModuleHandle assembly_handle;
 
-		[ProtoMember(1 + NATIVE_PROTOCOL)] public ulong total_time;
-		[ProtoMember(2 + NATIVE_PROTOCOL)] public double total_time_percentage;
-		[ProtoMember(3 + NATIVE_PROTOCOL)] public ulong total_exceptions;
-		[ProtoMember(4 + NATIVE_PROTOCOL)] public ulong calls;
-		[ProtoMember(5 + NATIVE_PROTOCOL)] public ulong alloc;
-
-		[JsonIgnore] public bool IsValid => assembly_name != null;
+		[ProtoMember(1 + MONO_NATIVE_PROTOCOL)] public ulong total_time;
+		[ProtoMember(2 + MONO_NATIVE_PROTOCOL)] public double total_time_percentage;
+		[ProtoMember(3 + MONO_NATIVE_PROTOCOL)] public ulong total_exceptions;
+		[ProtoMember(4 + MONO_NATIVE_PROTOCOL)] public ulong calls;
+		[ProtoMember(5 + MONO_NATIVE_PROTOCOL)] public ulong alloc;
 
 		// managed
-		[ProtoMember(6 + NATIVE_PROTOCOL)] public AssemblyNameEntry assembly_name;
+		[ProtoMember(6 + MONO_NATIVE_PROTOCOL)] public AssemblyNameEntry assembly_name;
 		public double total_time_ms => total_time * 0.001f;
+
+		[JsonIgnore] public bool IsValid => assembly_name != null;
 
 		[JsonIgnore] public bool isCompared;
 		[JsonIgnore] public Sample.Difference total_time_c;
@@ -475,16 +481,16 @@ public static unsafe partial class MonoProfiler
 	{
 		[JsonIgnore] public ModuleHandle assembly_handle;
 		[JsonIgnore] public IntPtr class_handle;
-		[ProtoMember(1 + NATIVE_PROTOCOL)] public ulong allocations;
-		[ProtoMember(2 + NATIVE_PROTOCOL)] public ulong total_alloc_size;
-		[ProtoMember(3 + NATIVE_PROTOCOL)] public uint instance_size;
-		[ProtoMember(4 + NATIVE_PROTOCOL)] public uint class_token;
-
-		[JsonIgnore] public bool IsValid => assembly_name != null;
+		[ProtoMember(1 + MONO_NATIVE_PROTOCOL)] public ulong allocations;
+		[ProtoMember(2 + MONO_NATIVE_PROTOCOL)] public ulong total_alloc_size;
+		[ProtoMember(3 + MONO_NATIVE_PROTOCOL)] public uint instance_size;
+		[ProtoMember(4 + MONO_NATIVE_PROTOCOL)] public uint class_token;
 
 		// managed
-		[ProtoMember(5 + NATIVE_PROTOCOL)] public string class_name;
-		[ProtoMember(6 + NATIVE_PROTOCOL)] public AssemblyNameEntry assembly_name;
+		[ProtoMember(5 + MONO_NATIVE_PROTOCOL)] public string class_name;
+		[ProtoMember(6 + MONO_NATIVE_PROTOCOL)] public AssemblyNameEntry assembly_name;
+
+		[JsonIgnore] public bool IsValid => assembly_name != null;
 
 		[JsonIgnore] public bool isCompared;
 		[JsonIgnore] public Sample.Difference allocations_c;
@@ -498,23 +504,23 @@ public static unsafe partial class MonoProfiler
 	{
 		[JsonIgnore] public ModuleHandle assembly_handle;
 		[JsonIgnore] public MonoMethod* method_handle;
-		[ProtoMember(1 + NATIVE_PROTOCOL)] public ulong total_time;
-		[ProtoMember(2 + NATIVE_PROTOCOL)] public double total_time_percentage;
-		[ProtoMember(3 + NATIVE_PROTOCOL)] public ulong own_time;
-		[ProtoMember(4 + NATIVE_PROTOCOL)] public double own_time_percentage;
-		[ProtoMember(5 + NATIVE_PROTOCOL)] public ulong calls;
-		[ProtoMember(6 + NATIVE_PROTOCOL)] public ulong total_alloc;
-		[ProtoMember(7 + NATIVE_PROTOCOL)] public ulong own_alloc;
-		[ProtoMember(8 + NATIVE_PROTOCOL)] public ulong total_exceptions;
-		[ProtoMember(9 + NATIVE_PROTOCOL)] public ulong own_exceptions;
-
-		[JsonIgnore] public bool IsValid => assembly_name != null;
+		[ProtoMember(1 + MONO_NATIVE_PROTOCOL)] public ulong total_time;
+		[ProtoMember(2 + MONO_NATIVE_PROTOCOL)] public double total_time_percentage;
+		[ProtoMember(3 + MONO_NATIVE_PROTOCOL)] public ulong own_time;
+		[ProtoMember(4 + MONO_NATIVE_PROTOCOL)] public double own_time_percentage;
+		[ProtoMember(5 + MONO_NATIVE_PROTOCOL)] public ulong calls;
+		[ProtoMember(6 + MONO_NATIVE_PROTOCOL)] public ulong total_alloc;
+		[ProtoMember(7 + MONO_NATIVE_PROTOCOL)] public ulong own_alloc;
+		[ProtoMember(8 + MONO_NATIVE_PROTOCOL)] public ulong total_exceptions;
+		[ProtoMember(9 + MONO_NATIVE_PROTOCOL)] public ulong own_exceptions;
 
 		// managed
-		[ProtoMember(10 + NATIVE_PROTOCOL)] public string method_name;
-		[ProtoMember(11 + NATIVE_PROTOCOL)] public AssemblyNameEntry assembly_name;
+		[ProtoMember(10 + MONO_NATIVE_PROTOCOL)] public string method_name;
+		[ProtoMember(11 + MONO_NATIVE_PROTOCOL)] public AssemblyNameEntry assembly_name;
 		public double total_time_ms => total_time * 0.001f;
 		public double own_time_ms => own_time * 0.001f;
+
+		[JsonIgnore] public bool IsValid => assembly_name != null;
 
 		[JsonIgnore] public bool isCompared;
 		[JsonIgnore] public Sample.Difference total_time_c;
@@ -593,6 +599,7 @@ public static unsafe partial class MonoProfiler
 	public static bool IsCleared => !AssemblyRecords.Any() && !CallRecords.Any();
 
 	public const int NATIVE_PROTOCOL = 3;
+	public const int MONO_NATIVE_PROTOCOL = NATIVE_PROTOCOL + 100;
 
 	static MonoProfiler()
 	{
@@ -840,7 +847,7 @@ public static unsafe partial class MonoProfiler
 				if (name == null) throw new NullReferenceException();
 				asmName = new AssemblyNameEntry
 				{
-					name = name, displayName = name, profileType = MonoProfilerConfig.ProfileTypes.Assembly
+					name = name, displayName = name, displayNameNonIncrement = name, profileType = MonoProfilerConfig.ProfileTypes.Assembly
 				};
 				AssemblyMap[entry.assembly_handle] = asmName;
 				entry.assembly_name = asmName;
@@ -878,7 +885,7 @@ public static unsafe partial class MonoProfiler
 				if (name == null) throw new NullReferenceException();
 				asmName = new AssemblyNameEntry
 				{
-					name = name, displayName = name, profileType = MonoProfilerConfig.ProfileTypes.Assembly
+					name = name, displayName = name, displayNameNonIncrement = name, profileType = MonoProfilerConfig.ProfileTypes.Assembly
 				};
 				AssemblyMap[entry.assembly_handle] = asmName;
 				entry.assembly_name = asmName;
@@ -917,7 +924,7 @@ public static unsafe partial class MonoProfiler
 				if (name == null) throw new NullReferenceException();
 				asmName = new AssemblyNameEntry
 				{
-					name = name, displayName = name, profileType = MonoProfilerConfig.ProfileTypes.Assembly
+					name = name, displayName = name, displayNameNonIncrement = name, profileType = MonoProfilerConfig.ProfileTypes.Assembly
 				};
 				AssemblyMap[entry.assembly_handle] = asmName;
 				entry.assembly_name = asmName;
@@ -964,9 +971,11 @@ public static unsafe partial class MonoProfiler
 			return;
 		}
 
+		var incrementedValue = assemblyName;
+
 		if (incremental)
 		{
-			assemblyName = AssemblyBank.Increment(assemblyName);
+			incrementedValue = AssemblyBank.Increment(assemblyName);
 		}
 
 		ModuleHandle handle = assembly.ManifestModule.ModuleHandle;
@@ -974,7 +983,8 @@ public static unsafe partial class MonoProfiler
 		AssemblyMap[handle] = new AssemblyNameEntry
 		{
 			name = assembly.GetName().Name,
-			displayName = assemblyName,
+			displayName = incrementedValue,
+			displayNameNonIncrement = assemblyName,
 			profileType = profileType
 		};
 
