@@ -14,15 +14,16 @@ namespace Carbon.Components;
 
 public partial class MonoProfiler
 {
-	public static byte[] SerializeSample(MonoProfiler.Sample sample)
+	public static byte[] SerializeSample(Sample sample)
 	{
 		using var memoryStream = new MemoryStream();
 		using (var gzipStream = new GZipStream(memoryStream, CompressionMode.Compress))
 		{
 			using var writer = new BinaryWriter(gzipStream);
 
-			writer.Write(MonoProfiler.MANAGED_PROTOCOL);
+			writer.Write(MANAGED_PROTOCOL);
 			writer.Write(sample.Duration);
+			writer.Write(sample.IsCompared);
 
 			var names = PoolEx.GetDictionary<string, int>();
 
@@ -85,35 +86,36 @@ public partial class MonoProfiler
 		return memoryStream.ToArray();
 	}
 
-	public static MonoProfiler.Sample DeserializeSample(byte[] buffer)
+	public static Sample DeserializeSample(byte[] buffer)
 	{
 		using var memoryStream = new MemoryStream(buffer);
 		using var gzipStream = new GZipStream(memoryStream, CompressionMode.Decompress);
 		using var reader = new BinaryReader(gzipStream);
 
-		var sample = MonoProfiler.Sample.Create();
+		var sample = Sample.Create();
 		var protocol = reader.ReadUInt32();
 
-		if (protocol != MonoProfiler.MANAGED_PROTOCOL)
+		if (protocol != MANAGED_PROTOCOL)
 		{
-			throw new Exception($"Invalid protocol: {protocol} [expected {MonoProfiler.MANAGED_PROTOCOL}]");
+			throw new Exception($"Invalid protocol: {protocol} [expected {MANAGED_PROTOCOL}]");
 		}
 
 		sample.Duration = reader.ReadDouble();
+		sample.IsCompared = reader.ReadBoolean();
 
-		var names = PoolEx.GetDictionary<int, MonoProfiler.AssemblyNameEntry>();
+		var names = PoolEx.GetDictionary<int, AssemblyNameEntry>();
 
 		var assemblyLength = reader.ReadInt32();
 		for (int i = 0; i < assemblyLength; i++)
 		{
-			var assembly = new MonoProfiler.AssemblyRecord
+			var assembly = new AssemblyRecord
 			{
 				total_time = reader.ReadUInt64(),
 				total_time_percentage = reader.ReadDouble(),
 				total_exceptions = reader.ReadUInt64(),
 				calls = reader.ReadUInt64(),
 				alloc = reader.ReadUInt64(),
-				assembly_name = new MonoProfiler.AssemblyNameEntry
+				assembly_name = new AssemblyNameEntry
 				{
 					name = reader.ReadString(),
 					displayName = reader.ReadString(),
@@ -128,7 +130,7 @@ public partial class MonoProfiler
 		var callsLength = reader.ReadInt32();
 		for (int i = 0; i < callsLength; i++)
 		{
-			MonoProfiler.CallRecord call = new MonoProfiler.CallRecord
+			CallRecord call = new CallRecord
 			{
 				total_time = reader.ReadUInt64(),
 				total_time_percentage = reader.ReadDouble(),
@@ -153,7 +155,7 @@ public partial class MonoProfiler
 		var memoryLength = reader.ReadInt32();
 		for (int i = 0; i < memoryLength; i++)
 		{
-			MonoProfiler.MemoryRecord memory = new MonoProfiler.MemoryRecord
+			MemoryRecord memory = new MemoryRecord
 			{
 				allocations = reader.ReadUInt64(),
 				total_alloc_size = reader.ReadUInt64(),

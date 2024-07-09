@@ -14,15 +14,14 @@ namespace Carbon.Components;
 
 public partial class MonoProfiler
 {
-	[ProtoContract]
 	public struct Sample
 	{
-		[ProtoMember(1 + NATIVE_PROTOCOL)] public double Duration;
-		[ProtoMember(2 + NATIVE_PROTOCOL)] public AssemblyOutput Assemblies;
-		[ProtoMember(3 + NATIVE_PROTOCOL)] public CallOutput Calls;
-		[ProtoMember(4 + NATIVE_PROTOCOL)] public MemoryOutput Memory;
-		[ProtoMember(5 + NATIVE_PROTOCOL)] public GCRecord GC;
-		[ProtoMember(6 + NATIVE_PROTOCOL)] public bool IsCompared;
+		public double Duration;
+		public bool IsCompared;
+		public AssemblyOutput Assemblies;
+		public CallOutput Calls;
+		public MemoryOutput Memory;
+		public GCRecord GC;
 
 		public static Sample Create() => new()
 		{
