@@ -112,12 +112,10 @@ public partial class FileModule : CarbonModule<EmptyModuleConfig, EmptyModuleDat
 		{
 			Items.Clear();
 
-			if (!string.IsNullOrEmpty(DirectoryLimit) && !directory.Contains(DirectoryLimit))
+			if (string.IsNullOrEmpty(DirectoryLimit) || directory.Contains(DirectoryLimit))
 			{
-				return;
+				CurrentDirectory = directory;
 			}
-
-			CurrentDirectory = directory;
 
 			if (!OsEx.Folder.Exists(directory))
 			{

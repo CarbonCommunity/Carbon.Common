@@ -22,6 +22,12 @@ public partial class MonoProfiler
 		public CallOutput Calls;
 		public MemoryOutput Memory;
 		public GCRecord GC;
+		public SampleComparison Comparison;
+
+		public struct SampleComparison
+		{
+			public Difference Duration;
+		}
 
 		public static Sample Create() => new()
 		{
@@ -38,15 +44,13 @@ public partial class MonoProfiler
 
 		[JsonIgnore] public bool FromDisk;
 		[JsonIgnore] public bool IsCleared => Assemblies == null || !Assemblies.Any();
-
-		public Difference Duration_c;
-
+		
 		public Sample Compare(Sample other)
 		{
 			Sample sample = default;
 			sample.FromDisk = true;
 			sample.Duration = MathEx.Max(Duration, other.Duration) - MathEx.Min(Duration, other.Duration);
-			sample.Duration_c = Compare(Duration, other.Duration);
+			sample.Comparison.Duration = Compare(Duration, other.Duration);
 			sample.Assemblies = Assemblies.Compare(other.Assemblies);
 			sample.Calls = Calls.Compare(other.Calls);
 			sample.Memory = Memory.Compare(other.Memory);
@@ -62,7 +66,7 @@ public partial class MonoProfiler
 			FromDisk = false;
 			IsCompared = false;
 			Duration = DurationTime.TotalSeconds;
-			Duration_c = default;
+			Comparison = default;
 			Assemblies.AddRange(AssemblyRecords);
 			Calls.AddRange(CallRecords);
 			Memory.AddRange(MemoryRecords);
@@ -72,7 +76,7 @@ public partial class MonoProfiler
 		{
 			IsCompared = false;
 			Duration = default;
-			Duration_c = default;
+			Comparison = default;
 			FromDisk = false;
 			Assemblies ??= new();
 			Calls ??= new();

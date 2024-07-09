@@ -328,7 +328,7 @@ public partial class AdminModule
 			Stripe(this, 0, (float)filtered.Sum(x => x.total_time_percentage), 100, niceColor, niceColor,
 				"All",
 				$"{filtered.Sum(x => (float)x.total_time_ms):n0}ms | {filtered.Sum(x => (float)x.total_time_percentage):0.0}%",
-				$"<size=7>{MonoProfiler.Sample.GetDifferenceString(sample.Duration_c)}{TimeEx.Format(sample.Duration, false).ToLower()}\n{sample.Calls.Count:n0} calls</size>",
+				$"<size=7>{MonoProfiler.Sample.GetDifferenceString(sample.Comparison.Duration)}{TimeEx.Format(sample.Duration, false).ToLower()}\n{sample.Calls.Count:n0} calls</size>",
 				$"adminmodule.profilerselect -1",
 				string.IsNullOrEmpty(assembly));
 
@@ -363,9 +363,9 @@ public partial class AdminModule
 				};
 
 				Stripe(this, 0, value, maxVal, intenseColor, calmColor,
-					record.assembly_name.GetDisplayName(record.isCompared),
-					$"{MonoProfiler.Sample.GetDifferenceString(record.total_time_c)}{record.GetTotalTime()} ({record.total_time_percentage:0.0}%) | {MonoProfiler.Sample.GetDifferenceString(record.alloc_c)}{ByteEx.Format(record.alloc).ToUpper()} | {MonoProfiler.Sample.GetDifferenceString(record.total_exceptions_c)}{record.total_exceptions:n0} excep.",
-					$"{record.assembly_name.profileType}\n{MonoProfiler.Sample.GetDifferenceString(record.calls_c)}<b>{record.calls:n0}</b> calls", $"adminmodule.profilerselect {i}", record.assembly_name.name == assembly);
+					record.assembly_name.GetDisplayName(record.comparison.isCompared),
+					$"{MonoProfiler.Sample.GetDifferenceString(record.comparison.total_time)}{record.GetTotalTime()} ({record.total_time_percentage:0.0}%) | {MonoProfiler.Sample.GetDifferenceString(record.comparison.alloc)}{ByteEx.Format(record.alloc).ToUpper()} | {MonoProfiler.Sample.GetDifferenceString(record.comparison.total_exceptions)}{record.total_exceptions:n0} excep.",
+					$"{record.assembly_name.profileType}\n{MonoProfiler.Sample.GetDifferenceString(record.comparison.calls)}<b>{record.calls:n0}</b> calls", $"adminmodule.profilerselect {i}", record.assembly_name.name == assembly);
 			}
 
 			if (filtered.Count == 0)
@@ -410,7 +410,7 @@ public partial class AdminModule
 				}, ap => subtab == SubtabTypes.Memory ? OptionButton.Types.Selected : OptionButton.Types.None));
 
 			Stripe(this, 1, 100, 100, niceColor, niceColor,
-				"GC", $"{MonoProfiler.Sample.GetDifferenceString(sample.GC.calls_c)}{sample.GC.calls:n0} calls | {MonoProfiler.Sample.GetDifferenceString(sample.GC.total_time_c)}{sample.GC.GetTotalTime()}", string.Empty, null, true);
+				"GC", $"{MonoProfiler.Sample.GetDifferenceString(sample.GC.comparison.calls_c)}{sample.GC.calls:n0} calls | {MonoProfiler.Sample.GetDifferenceString(sample.GC.comparison.total_time_c)}{sample.GC.GetTotalTime()}", string.Empty, null, true);
 
 			switch (subtab)
 			{
@@ -460,7 +460,7 @@ public partial class AdminModule
 
 						Stripe(this, 1, value, maxVal, intenseColor, calmColor,
 							record.class_name,
-							$"{MonoProfiler.Sample.GetDifferenceString(record.allocations_c)}{record.allocations:n0} allocated | {MonoProfiler.Sample.GetDifferenceString(record.total_alloc_size_c)}{ByteEx.Format(record.total_alloc_size).ToUpper()} total",
+							$"{MonoProfiler.Sample.GetDifferenceString(record.comparison.allocations)}{record.allocations:n0} allocated | {MonoProfiler.Sample.GetDifferenceString(record.comparison.total_alloc_size)}{ByteEx.Format(record.total_alloc_size).ToUpper()} total",
 							$"<b>{record.instance_size} B</b>",
 							string.Empty);
 
@@ -530,8 +530,8 @@ public partial class AdminModule
 
 						Stripe(this, 1, value, maxVal, intenseColor, calmColor,
 							record.method_name.Truncate(105, "..."),
-							$"{MonoProfiler.Sample.GetDifferenceString(record.total_time_c)}{record.GetTotalTime()} total ({record.total_time_percentage:0.0}%) | {MonoProfiler.Sample.GetDifferenceString(record.own_time_c)}{record.GetOwnTime()} own ({record.own_time_percentage:0.0}%) | {MonoProfiler.Sample.GetDifferenceString(record.total_exceptions_c)}{record.total_exceptions:n0} total / {MonoProfiler.Sample.GetDifferenceString(record.own_exceptions_c)}{record.own_exceptions:n0} own excep.",
-							$"{MonoProfiler.Sample.GetDifferenceString(record.calls_c)}<b>{record.calls:n0}</b> {((record.calls).Plural("call", "calls"))}\n{MonoProfiler.Sample.GetDifferenceString(record.total_alloc_c)}{ByteEx.Format(record.total_alloc).ToUpper()} total | {MonoProfiler.Sample.GetDifferenceString(record.own_alloc_c)}{ByteEx.Format(record.own_alloc).ToUpper()} own",
+							$"{MonoProfiler.Sample.GetDifferenceString(record.comparison.total_time)}{record.GetTotalTime()} total ({record.total_time_percentage:0.0}%) | {MonoProfiler.Sample.GetDifferenceString(record.comparison.own_time)}{record.GetOwnTime()} own ({record.own_time_percentage:0.0}%) | {MonoProfiler.Sample.GetDifferenceString(record.comparison.total_exceptions)}{record.total_exceptions:n0} total / {MonoProfiler.Sample.GetDifferenceString(record.comparison.own_exceptions)}{record.own_exceptions:n0} own excep.",
+							$"{MonoProfiler.Sample.GetDifferenceString(record.comparison.calls)}<b>{record.calls:n0}</b> {((record.calls).Plural("call", "calls"))}\n{MonoProfiler.Sample.GetDifferenceString(record.comparison.total_alloc)}{ByteEx.Format(record.total_alloc).ToUpper()} total | {MonoProfiler.Sample.GetDifferenceString(record.comparison.own_alloc)}{ByteEx.Format(record.own_alloc).ToUpper()} own",
 							Community.Runtime.MonoProfilerConfig.SourceViewer && !sample.FromDisk ? $"adminmodule.profilerselectcall {index}" : string.Empty);
 
 						index++;
