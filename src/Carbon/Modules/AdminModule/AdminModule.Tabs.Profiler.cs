@@ -1049,7 +1049,7 @@ public partial class AdminModule
 
 		var player = arg.Player();
 
-		File.Open(player, "Profiles", Defines.GetProfilesFolder(), MonoProfiler.ProfileExtension,
+		File.Open(player, "Profiles", Defines.GetProfilesFolder(), Defines.GetProfilesFolder(), MonoProfiler.ProfileExtension,
 			onConfirm: (player, file) =>
 			{
 				using var buffer = TempArray<byte>.New(OsEx.File.ReadBytes(file.SelectedFile));
@@ -1067,6 +1067,19 @@ public partial class AdminModule
 				var ap = Singleton.GetPlayerSession(player);
 				ap.SelectedTab.OnChange(ap, ap.SelectedTab);
 				Singleton.Draw(player);
+			}, onExtraInfo: item =>
+			{
+				if (item.IsDirectory)
+				{
+					return string.Empty;
+				}
+
+				if (MonoProfiler.ValidateFile(item.Path, out var protocol, out var duration))
+				{
+					return $"Duration: {TimeEx.FormatPlayer(duration).ToLower()}s (protocol {protocol})";
+				}
+
+				return $"Invalid protocol {protocol}";
 			});
 	}
 

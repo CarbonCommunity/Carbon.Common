@@ -61,10 +61,10 @@ public static unsafe partial class MonoProfiler
 	[ProtoContract]
 	public class AssemblyNameEntry
 	{
-		[ProtoMember(1 + MONO_NATIVE_PROTOCOL)] public string name;
-		[ProtoMember(2 + MONO_NATIVE_PROTOCOL)] public string displayName;
-		[ProtoMember(3 + MONO_NATIVE_PROTOCOL)] public string displayNameNonIncrement;
-		[ProtoMember(4 + MONO_NATIVE_PROTOCOL)] public MonoProfilerConfig.ProfileTypes profileType;
+		[ProtoMember(1 + MANAGED_PROTOCOL)] public string name;
+		[ProtoMember(2 + MANAGED_PROTOCOL)] public string displayName;
+		[ProtoMember(3 + MANAGED_PROTOCOL)] public string displayNameNonIncrement;
+		[ProtoMember(4 + MANAGED_PROTOCOL)] public MonoProfilerConfig.ProfileTypes profileType;
 
 		public string GetDisplayName(bool isCompared)
 		{
@@ -391,8 +391,8 @@ public static unsafe partial class MonoProfiler
 	[StructLayout(LayoutKind.Sequential)]
 	public struct GCRecord
 	{
-		[ProtoMember(1 + MONO_NATIVE_PROTOCOL)] public ulong calls;
-		[ProtoMember(2 + MONO_NATIVE_PROTOCOL)] public ulong total_time;
+		[ProtoMember(1 + MANAGED_PROTOCOL)] public ulong calls;
+		[ProtoMember(2 + MANAGED_PROTOCOL)] public ulong total_time;
 
 		[JsonIgnore] public bool isCompared;
 		[JsonIgnore] public Sample.Difference calls_c;
@@ -452,14 +452,14 @@ public static unsafe partial class MonoProfiler
 	{
 		[JsonIgnore] public ModuleHandle assembly_handle;
 
-		[ProtoMember(1 + MONO_NATIVE_PROTOCOL)] public ulong total_time;
-		[ProtoMember(2 + MONO_NATIVE_PROTOCOL)] public double total_time_percentage;
-		[ProtoMember(3 + MONO_NATIVE_PROTOCOL)] public ulong total_exceptions;
-		[ProtoMember(4 + MONO_NATIVE_PROTOCOL)] public ulong calls;
-		[ProtoMember(5 + MONO_NATIVE_PROTOCOL)] public ulong alloc;
+		[ProtoMember(1 + MANAGED_PROTOCOL)] public ulong total_time;
+		[ProtoMember(2 + MANAGED_PROTOCOL)] public double total_time_percentage;
+		[ProtoMember(3 + MANAGED_PROTOCOL)] public ulong total_exceptions;
+		[ProtoMember(4 + MANAGED_PROTOCOL)] public ulong calls;
+		[ProtoMember(5 + MANAGED_PROTOCOL)] public ulong alloc;
 
 		// managed
-		[ProtoMember(6 + MONO_NATIVE_PROTOCOL)] public AssemblyNameEntry assembly_name;
+		[ProtoMember(6 + MANAGED_PROTOCOL)] public AssemblyNameEntry assembly_name;
 		public double total_time_ms => total_time * 0.001f;
 
 		[JsonIgnore] public bool IsValid => assembly_name != null;
@@ -481,14 +481,14 @@ public static unsafe partial class MonoProfiler
 	{
 		[JsonIgnore] public ModuleHandle assembly_handle;
 		[JsonIgnore] public IntPtr class_handle;
-		[ProtoMember(1 + MONO_NATIVE_PROTOCOL)] public ulong allocations;
-		[ProtoMember(2 + MONO_NATIVE_PROTOCOL)] public ulong total_alloc_size;
-		[ProtoMember(3 + MONO_NATIVE_PROTOCOL)] public uint instance_size;
-		[ProtoMember(4 + MONO_NATIVE_PROTOCOL)] public uint class_token;
+		[ProtoMember(1 + MANAGED_PROTOCOL)] public ulong allocations;
+		[ProtoMember(2 + MANAGED_PROTOCOL)] public ulong total_alloc_size;
+		[ProtoMember(3 + MANAGED_PROTOCOL)] public uint instance_size;
+		[ProtoMember(4 + MANAGED_PROTOCOL)] public uint class_token;
 
 		// managed
-		[ProtoMember(5 + MONO_NATIVE_PROTOCOL)] public string class_name;
-		[ProtoMember(6 + MONO_NATIVE_PROTOCOL)] public AssemblyNameEntry assembly_name;
+		[ProtoMember(5 + MANAGED_PROTOCOL)] public string class_name;
+		[ProtoMember(6 + MANAGED_PROTOCOL)] public AssemblyNameEntry assembly_name;
 
 		[JsonIgnore] public bool IsValid => assembly_name != null;
 
@@ -504,19 +504,19 @@ public static unsafe partial class MonoProfiler
 	{
 		[JsonIgnore] public ModuleHandle assembly_handle;
 		[JsonIgnore] public MonoMethod* method_handle;
-		[ProtoMember(1 + MONO_NATIVE_PROTOCOL)] public ulong total_time;
-		[ProtoMember(2 + MONO_NATIVE_PROTOCOL)] public double total_time_percentage;
-		[ProtoMember(3 + MONO_NATIVE_PROTOCOL)] public ulong own_time;
-		[ProtoMember(4 + MONO_NATIVE_PROTOCOL)] public double own_time_percentage;
-		[ProtoMember(5 + MONO_NATIVE_PROTOCOL)] public ulong calls;
-		[ProtoMember(6 + MONO_NATIVE_PROTOCOL)] public ulong total_alloc;
-		[ProtoMember(7 + MONO_NATIVE_PROTOCOL)] public ulong own_alloc;
-		[ProtoMember(8 + MONO_NATIVE_PROTOCOL)] public ulong total_exceptions;
-		[ProtoMember(9 + MONO_NATIVE_PROTOCOL)] public ulong own_exceptions;
+		[ProtoMember(1 + MANAGED_PROTOCOL)] public ulong total_time;
+		[ProtoMember(2 + MANAGED_PROTOCOL)] public double total_time_percentage;
+		[ProtoMember(3 + MANAGED_PROTOCOL)] public ulong own_time;
+		[ProtoMember(4 + MANAGED_PROTOCOL)] public double own_time_percentage;
+		[ProtoMember(5 + MANAGED_PROTOCOL)] public ulong calls;
+		[ProtoMember(6 + MANAGED_PROTOCOL)] public ulong total_alloc;
+		[ProtoMember(7 + MANAGED_PROTOCOL)] public ulong own_alloc;
+		[ProtoMember(8 + MANAGED_PROTOCOL)] public ulong total_exceptions;
+		[ProtoMember(9 + MANAGED_PROTOCOL)] public ulong own_exceptions;
 
 		// managed
-		[ProtoMember(10 + MONO_NATIVE_PROTOCOL)] public string method_name;
-		[ProtoMember(11 + MONO_NATIVE_PROTOCOL)] public AssemblyNameEntry assembly_name;
+		[ProtoMember(10 + MANAGED_PROTOCOL)] public string method_name;
+		[ProtoMember(11 + MANAGED_PROTOCOL)] public AssemblyNameEntry assembly_name;
 		public double total_time_ms => total_time * 0.001f;
 		public double own_time_ms => own_time * 0.001f;
 
@@ -599,7 +599,7 @@ public static unsafe partial class MonoProfiler
 	public static bool IsCleared => !AssemblyRecords.Any() && !CallRecords.Any();
 
 	public const int NATIVE_PROTOCOL = 3;
-	public const int MONO_NATIVE_PROTOCOL = NATIVE_PROTOCOL + 100;
+	public const int MANAGED_PROTOCOL = NATIVE_PROTOCOL + 120;
 
 	static MonoProfiler()
 	{

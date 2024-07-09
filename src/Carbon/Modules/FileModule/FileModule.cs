@@ -34,27 +34,29 @@ public partial class FileModule : CarbonModule<EmptyModuleConfig, EmptyModuleDat
 		return base.InitEnd();
 	}
 
-	public File Open(BasePlayer player,
+	public FileBrowser Open(BasePlayer player,
 					  string title,
 					  string directory,
+					  string directoryLimit,
 					  string extension,
-					  Action<BasePlayer, File> onConfirm = null,
-					  Action<BasePlayer, File> onCancel = null)
+					  Action<BasePlayer, FileBrowser> onConfirm = null,
+					  Action<BasePlayer, FileBrowser> onCancel = null,
+					  Func<FileBrowser.Item, string> onExtraInfo = null)
 	{
-		var file = new File
+		var file = new FileBrowser
 		{
 			Title = title,
-			Directory = directory,
-			Extension = extension,
+			DirectoryLimit = directoryLimit,
+			Extension = string.IsNullOrEmpty(extension) ? string.Empty : "." + extension,
 			OnCancel = onCancel,
 			OnConfirm = onConfirm,
-			Player = player,
+			OnExtraInfo = onExtraInfo,
 			Handler = new()
 		};
 
 		NextFrame(() =>
 		{
-			file.Fetch();
+			file.ChangeDirectory(directory);
 			file.Draw(player);
 		});
 
@@ -63,51 +65,70 @@ public partial class FileModule : CarbonModule<EmptyModuleConfig, EmptyModuleDat
 	public void Close(BasePlayer player)
 	{
 		using var cui = new CUI(Handler);
-		cui.Destroy(File.PanelId, player);
+		cui.Destroy(FileBrowser.PanelId, player);
 	}
 
-	public class File
+	public class FileBrowser
 	{
 		public string Title;
-		public string Directory;
+		public string DirectoryLimit;
 		public string Extension;
-		public Action<BasePlayer, File> OnConfirm;
-		public Action<BasePlayer, File> OnCancel;
+		public bool AllowBackFromParent;
+		public Action<BasePlayer, FileBrowser> OnConfirm;
+		public Action<BasePlayer, FileBrowser> OnCancel;
+		public Func<Item, string> OnExtraInfo;
 		public string BackgroundColor = "0 0 0 0.99";
 
 		public string SelectedFile;
 		public string DeletingFile;
 
+		internal string CurrentDirectory;
 		internal Handler Handler;
 		internal const string PanelId = "carbonfileui";
-		internal BasePlayer Player;
-		internal List<DirectoryFile> DirectoryFiles = new();
+		internal List<Item> Items = new();
 
-		public struct DirectoryFile
+		public struct Item
 		{
 			public string Path;
+			public bool IsDirectory;
 			public FileInfo Info;
 
-			public static DirectoryFile Get(string path)
+			public static Item Make(string path)
 			{
-				DirectoryFile file = default;
-				file.Path = path;
-				file.Info = new(path);
-				return file;
+				Item item = default;
+				item.Path = path;
+				item.IsDirectory = OsEx.Folder.Exists(path);
+
+				if (!item.IsDirectory)
+				{
+					item.Info = new(path);
+				}
+
+				return item;
 			}
 		}
 
-		public void Fetch()
+		public void ChangeDirectory(string directory)
 		{
-			DirectoryFiles.Clear();
+			Items.Clear();
 
-			if (!System.IO.Directory.Exists(Directory))
+			if (!string.IsNullOrEmpty(DirectoryLimit) && !directory.Contains(DirectoryLimit))
 			{
 				return;
 			}
 
-			DirectoryFiles.AddRange(System.IO.Directory.EnumerateFiles(Directory,
-				$"*.{Extension}").Select(x => DirectoryFile.Get(x)));
+			CurrentDirectory = directory;
+
+			if (!OsEx.Folder.Exists(directory))
+			{
+				return;
+			}
+
+			Items.AddRange(Directory.EnumerateDirectories(CurrentDirectory, "*")
+				.Select(x => Item.Make(x)));
+
+			Items.AddRange(Directory.EnumerateFiles(CurrentDirectory, $"*{Extension}")
+				.Select(x => Item.Make(x)));
 		}
 
 		public void Draw(BasePlayer player)
@@ -123,19 +144,19 @@ public partial class FileModule : CarbonModule<EmptyModuleConfig, EmptyModuleDat
 			var background = cui.CreatePanel(container, PanelId, "0.05 0.05 0.05 0.9", xMin: 0.5f, xMax: 0.5f,
 				yMin: 0.5f, yMax: 0.5f, OxMin: -300, OxMax: 300, OyMin: -250, OyMax: 250);
 			cui.CreateText(container, background, Cache.CUI.WhiteColor,
-				$"{Title.ToUpper()} ({DirectoryFiles.Count:n0})", 20,
+				$"{Title.ToUpper()} ({(string.IsNullOrEmpty(Extension) ? "*" : Extension)}) ({Items.Count(x => !x.IsDirectory):n0})", 20,
 				align: TextAnchor.UpperLeft, xMin: 0.03f, yMax: 0.97f, font: Handler.FontTypes.RobotoCondensedBold);
 
 			const float nameSpace = 0f;
-			const float dateSpace = 0.5f;
-			const float sizeSpace = 0.75f;
+			const float extraSpace = 0.33f;
+			const float dateSpace = 0.63f;
+			const float sizeSpace = 0.8f;
 
 			var bar = cui.CreatePanel(container, background, Cache.CUI.BlankColor, yMax: 0.9f);
-			cui.CreateText(container, bar, "1 1 1 0.2", "NAME", 12, align: TextAnchor.UpperLeft,
-				xMin: nameSpace + 0.03f);
+			cui.CreateText(container, bar, "1 1 1 0.2", "NAME", 12, align: TextAnchor.UpperLeft, xMin: nameSpace + 0.03f);
+			cui.CreateText(container, bar, "1 1 1 0.2", "INFO", 12, align: TextAnchor.UpperLeft, xMin: extraSpace);
 			cui.CreateText(container, bar, "1 1 1 0.2", "DATE", 12, align: TextAnchor.UpperLeft, xMin: dateSpace);
-			cui.CreateText(container, bar, "1 1 1 0.2", "SIZE", 12, align: TextAnchor.UpperCenter,
-				xMin: sizeSpace, xMax: sizeSpace + 0.05f);
+			cui.CreateText(container, bar, "1 1 1 0.2", "SIZE", 12, align: TextAnchor.UpperLeft, xMin: sizeSpace);
 
 			var exit = cui.CreateProtectedButton(container, background, "0.5 0 0 0.4", Cache.CUI.BlankColor,
 				string.Empty,
@@ -152,43 +173,60 @@ public partial class FileModule : CarbonModule<EmptyModuleConfig, EmptyModuleDat
 
 			verticalScrollbar.Size = 3f;
 
-			var fileOffset = 0f;
+			var offset = 0f;
 			const float scale = 25f;
 			const float spacing = 3f;
-			var pageScale = DirectoryFiles.Count * (scale + spacing);
+			var pageScale = (Items.Count + 1) * (scale + spacing);
 
 			content.AnchorMin = "0 0";
 			content.AnchorMax = "0.985 0";
 			content.OffsetMin = $"0 {-pageScale.Clamp(425, float.MaxValue)}";
 			content.OffsetMax = $"0 0";
 
-			for (int i = 0; i < DirectoryFiles.Count; i++)
+			static void DrawItem(FileBrowser browser, Item item, CUI cui, CuiElementContainer container, int i, Pair<string, CuiElement> scroll, ref float offset)
 			{
-				var file = DirectoryFiles[i];
 				var fileButton = cui.CreateProtectedButton(container, scroll, "0.3 0.3 0.3 0.5",
-					Cache.CUI.BlankColor, string.Empty, 0, yMin: 1, yMax: 1, OyMin: fileOffset - scale,
-					OyMax: fileOffset, align: TextAnchor.MiddleLeft, command: $"file.action select {i}");
+					Cache.CUI.BlankColor, string.Empty, 0, yMin: 1, yMax: 1, OyMin: offset - scale,
+					OyMax: offset, align: TextAnchor.MiddleLeft, command: $"file.action select {i}");
 
 				cui.CreateText(container, fileButton, "1 1 1 0.7",
-					$"<b>{Path.GetFileNameWithoutExtension(file.Path)}</b>{Path.GetExtension(file.Path)}", 10, xMin: 0.045f,
+					i == -1 ? "..." : Path.GetFileName(item.Path), 10, xMin: 0.045f,
 					align: TextAnchor.MiddleLeft);
-				cui.CreateImage(container, fileButton, "file", "0.7 0.7 0.7 0.5", xMin: 0.01f, xMax: 0.04f, yMin: 0.15f,
+				cui.CreateImage(container, fileButton, item.IsDirectory ? "folder" : "file", "0.7 0.7 0.7 0.5", xMin: 0.01f, xMax: 0.04f, yMin: 0.15f,
 					yMax: 0.85f);
 
-				var modificationDate = file.Info.LastWriteTime;
 				cui.CreateText(container, fileButton, "1 1 1 0.4",
-					$"{modificationDate.Month:00} {modificationDate.Day:00} {modificationDate.Year:0000} - {modificationDate.Hour:00}:{modificationDate.Minute:00}",
-					10, xMin: dateSpace - 0.1f, xMax: 0.65f, align: TextAnchor.MiddleCenter);
-				cui.CreateText(container, fileButton, "1 1 1 0.4",
-					$"{ByteEx.Format(file.Info.Length).ToUpper()}",
-					10, xMin: sizeSpace - 0.04f, xMax: sizeSpace + 0.1f, align: TextAnchor.MiddleCenter);
+					browser.OnExtraInfo?.Invoke(item),
+					10, xMin: extraSpace, xMax: 0.65f, align: TextAnchor.MiddleLeft);
 
-				var deleteButton = cui.CreateProtectedButton(container, fileButton, "0.5 0 0 0.4", "1 0.5 0.5 0.3",
-					"DELETE", 8,
-					xMin: 0.9f, command: $"file.action delete {i}", id: $"filedelete{i}");
-				deleteButton.Element2.Name = $"filedeletetext{i}";
+				if (!item.IsDirectory)
+				{
+					var modificationDate = item.Info.LastWriteTime;
+					cui.CreateText(container, fileButton, "1 1 1 0.4",
+						$"{modificationDate.Month:00}.{modificationDate.Day:00}.{modificationDate.Year:0000} {modificationDate.Hour:00}:{modificationDate.Minute:00}",
+						10, xMin: dateSpace, align: TextAnchor.MiddleLeft);
+					cui.CreateText(container, fileButton, "1 1 1 0.4",
+						$"{ByteEx.Format(item.Info.Length).ToUpper()}",
+						10, xMin: sizeSpace, align: TextAnchor.MiddleLeft);
 
-				fileOffset -= scale + spacing;
+					var deleteButton = cui.CreateProtectedButton(container, fileButton, "0.5 0 0 0.4", "1 0.5 0.5 0.3",
+						"DELETE", 8,
+						xMin: 0.9f, command: $"file.action delete {i}", id: $"filedelete{i}");
+					deleteButton.Element2.Name = $"filedeletetext{i}";
+				}
+
+				offset -= scale + spacing;
+			}
+
+			Item previous = default;
+			previous.IsDirectory = true;
+			previous.Path = OsEx.Folder.GetPreviousFolder(CurrentDirectory);
+
+			DrawItem(this, previous, cui, container, -1, scroll, ref offset);
+
+			for (int i = 0; i < Items.Count; i++)
+			{
+				DrawItem(this, Items[i], cui, container, i, scroll, ref offset);
 			}
 
 			ap.SetStorage(null, "file", this);
@@ -202,17 +240,37 @@ public partial class FileModule : CarbonModule<EmptyModuleConfig, EmptyModuleDat
 	private void FileAction(Arg arg)
 	{
 		var ap = Admin.GetPlayerSession(arg.Player());
-		var file = ap.GetStorage<File>(null, "file");
+		var file = ap.GetStorage<FileBrowser>(null, "file");
 
 		var mode = arg.GetString(0);
 
 		switch (mode)
 		{
 			case "select":
-				file.SelectedFile = file.DirectoryFiles[arg.GetInt(1)].Path;
-				file.OnConfirm?.Invoke(ap.Player, file);
-				Instance.Close(ap.Player);
+			{
+				var index = arg.GetInt(1);
+
+				if (index == -1)
+				{
+					file.ChangeDirectory(OsEx.Folder.GetPreviousFolder(file.CurrentDirectory));
+					file.Draw(ap.Player);
+					break;
+				}
+
+				var item = file.Items[index];
+				if (item.IsDirectory)
+				{
+					file.ChangeDirectory(item.Path);
+					file.Draw(ap.Player);
+				}
+				else
+				{
+					file.SelectedFile = item.Path;
+					file.OnConfirm?.Invoke(ap.Player, file);
+					Instance.Close(ap.Player);
+				}
 				break;
+			}
 
 			case "cancel":
 				file.OnCancel?.Invoke(ap.Player, file);
@@ -222,12 +280,12 @@ public partial class FileModule : CarbonModule<EmptyModuleConfig, EmptyModuleDat
 			case "delete":
 			{
 				var index = arg.GetInt(1);
-				var path = file.DirectoryFiles[index].Path;
+				var path = file.Items[index].Path;
 
 				if (file.DeletingFile == path)
 				{
 					OsEx.File.Delete(path);
-					file.DirectoryFiles.RemoveAll(x => x.Path == path);
+					file.Items.RemoveAll(x => x.Path == path);
 					file.DeletingFile = null;
 					file.Draw(ap.Player);
 				}
