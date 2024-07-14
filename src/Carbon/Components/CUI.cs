@@ -770,7 +770,6 @@ public readonly struct CUI : IDisposable
 				FontTypes.DroidSansMono => "droidsansmono.ttf",
 				_ => "robotocondensed-regular.ttf"
 			};
-
 		}
 
 		#endregion
