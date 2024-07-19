@@ -14,43 +14,59 @@ namespace Carbon.Components;
 
 public partial class MonoProfiler
 {
-	[ProtoContract]
 	public struct Sample
 	{
-		[ProtoMember(1 + NATIVE_PROTOCOL)] public double Duration;
-		[ProtoMember(2 + NATIVE_PROTOCOL)] public AssemblyOutput Assemblies;
-		[ProtoMember(3 + NATIVE_PROTOCOL)] public CallOutput Calls;
-		[ProtoMember(4 + NATIVE_PROTOCOL)] public MemoryOutput Memory;
-		[ProtoMember(5 + NATIVE_PROTOCOL)] public GCRecord GC;
+		public double Duration;
+		public bool IsCompared;
+		public AssemblyOutput Assemblies;
+		public CallOutput Calls;
+		public MemoryOutput Memory;
+		public GCRecord GC;
+		public SampleComparison Comparison;
+
+		public struct SampleComparison
+		{
+			public Difference Duration;
+		}
 
 		public static Sample Create() => new()
 		{
+			Duration = 0,
 			Assemblies = new(),
 			Calls = new(),
-			Memory = new()
+			Memory = new(),
+			GC = default
 		};
 		public static Sample Load(byte[] data)
 		{
 			return DeserializeSample(data);
 		}
 
+		[JsonIgnore] public bool FromDisk;
 		[JsonIgnore] public bool IsCleared => Assemblies == null || !Assemblies.Any();
 
 		public Sample Compare(Sample other)
 		{
 			Sample sample = default;
+			sample.FromDisk = true;
+			sample.Duration = MathEx.Max(Duration, other.Duration) - MathEx.Min(Duration, other.Duration);
+			sample.Comparison.Duration = Compare(Duration, other.Duration);
 			sample.Assemblies = Assemblies.Compare(other.Assemblies);
 			sample.Calls = Calls.Compare(other.Calls);
 			sample.Memory = Memory.Compare(other.Memory);
 			sample.GC = GC.Compare(other.GC);
+			sample.IsCompared = true;
 			return sample;
-
 		}
+
 		public void Resample()
 		{
 			Clear();
 
+			FromDisk = false;
+			IsCompared = false;
 			Duration = DurationTime.TotalSeconds;
+			Comparison = default;
 			Assemblies.AddRange(AssemblyRecords);
 			Calls.AddRange(CallRecords);
 			Memory.AddRange(MemoryRecords);
@@ -58,7 +74,10 @@ public partial class MonoProfiler
 		}
 		public void Clear()
 		{
+			IsCompared = false;
 			Duration = default;
+			Comparison = default;
+			FromDisk = false;
 			Assemblies ??= new();
 			Calls ??= new();
 			Memory ??= new();
@@ -71,9 +90,10 @@ public partial class MonoProfiler
 
 		public enum Difference
 		{
-			ValueHigher = 1,
-			ValueEqual = 0,
-			ValueLower = -1
+			None,
+			ValueHigher,
+			ValueEqual,
+			ValueLower
 		}
 
 		public string ToTable()
@@ -113,43 +133,58 @@ public partial class MonoProfiler
 
 		public static Difference Compare(ulong a, ulong b)
 		{
-			if (a > b)
+			if (a == b)
 			{
-				return Difference.ValueHigher;
+				return Difference.ValueEqual;
 			}
 
-			return a < b ? Difference.ValueLower : Difference.ValueEqual;
+			return a > b ? Difference.ValueHigher : Difference.ValueLower;
 		}
 		public static Difference Compare(uint a, uint b)
 		{
-			if (a > b)
+			if (a == b)
 			{
-				return Difference.ValueHigher;
+				return Difference.ValueEqual;
 			}
 
-			return a < b ? Difference.ValueLower : Difference.ValueEqual;
+			return a > b ? Difference.ValueHigher : Difference.ValueLower;
 		}
 		public static Difference Compare(double a, double b)
 		{
-			if (a > b)
+			if (a == b)
 			{
-				return Difference.ValueHigher;
+				return Difference.ValueEqual;
 			}
 
-			return a < b ? Difference.ValueLower : Difference.ValueEqual;
+			return a > b ? Difference.ValueHigher : Difference.ValueLower;
+		}
+
+		public const string ValueHigherStr = "<color=#91ff0a>\u2191</color>";
+		public const string ValueLowerStr = "<color=#ff370a>\u2193</color>";
+		public const string ValueEqualStr = "<color=#fff30a>—</color>";
+
+		public static string GetDifferenceString(Difference difference)
+		{
+			return difference switch
+			{
+				Difference.ValueHigher => ValueHigherStr,
+				Difference.ValueEqual => ValueEqualStr,
+				Difference.ValueLower => ValueLowerStr,
+				_ => string.Empty
+			};
 		}
 
 		public static ulong CompareValue(ulong a, ulong b)
 		{
-			return MathEx.Max(a, b);
+			return MathEx.Max(a, b) - MathEx.Min(a, b);
 		}
 		public static uint CompareValue(uint a, uint b)
 		{
-			return MathEx.Max(a, b);
+			return MathEx.Max(a, b) - MathEx.Min(a, b);
 		}
 		public static double CompareValue(double a, double b)
 		{
-			return MathEx.Max(a, b);
+			return MathEx.Max(a, b) - MathEx.Min(a, b);
 		}
 	}
 }

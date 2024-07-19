@@ -42,6 +42,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 	public ColorPickerModule ColorPicker;
 	public DatePickerModule DatePicker;
 	public ModalModule Modal;
+	public FileModule File;
 
 	public readonly Handler Handler = new();
 
@@ -127,6 +128,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		ColorPicker = GetModule<ColorPickerModule>();
 		DatePicker = GetModule<DatePickerModule>();
 		Modal = GetModule<ModalModule>();
+		File = GetModule<FileModule>();
 
 		Unsubscribe("OnPluginLoaded");
 		Unsubscribe("OnPluginUnloaded");
