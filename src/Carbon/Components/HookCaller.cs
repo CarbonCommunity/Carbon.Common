@@ -27,14 +27,14 @@ public class HookCallerCommon
 
 	public struct HookArgPool
 	{
-		internal Queue<object[]> _pool;
+		internal ConcurrentQueue<object[]> _pool;
 		internal int _length;
 
 		public HookArgPool(int length, int count)
 		{
 			this._length = length;
 
-			_pool = new Queue<object[]>(count);
+			_pool = new ConcurrentQueue<object[]>();
 
 			for (int i = 0; i < count; i++)
 			{
@@ -44,7 +44,12 @@ public class HookCallerCommon
 
 		public object[] Take()
 		{
-			return _pool.Count != 0 ? _pool.Dequeue() : new object[_length];
+			if (_pool.Count > 0 && _pool.TryDequeue(out var buffer))
+			{
+				return buffer;
+			}
+
+			return new object[_length];
 		}
 		public void Return(object[] array)
 		{
