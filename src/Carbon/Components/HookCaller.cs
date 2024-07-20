@@ -1,9 +1,6 @@
 ﻿using System.Collections.Concurrent;
-using System.Diagnostics;
 using System.Text;
 using Carbon.Base.Interfaces;
-using ConVar;
-using Facepunch;
 using HarmonyLib;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
