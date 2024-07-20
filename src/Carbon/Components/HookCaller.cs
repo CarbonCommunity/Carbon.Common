@@ -22,8 +22,8 @@ namespace Carbon;
 
 public class HookCallerCommon
 {
-	public Dictionary<int, HookArgPool> _argumentBuffer = new();
-	public Dictionary<uint, DateTime> _lastDeprecatedWarningAt = new();
+	public ConcurrentDictionary<int, HookArgPool> _argumentBuffer = new();
+	public ConcurrentDictionary<uint, DateTime> _lastDeprecatedWarningAt = new();
 
 	public struct HookArgPool
 	{
@@ -150,7 +150,10 @@ public static class HookCaller
 
 	private static object CallStaticHook(uint hookId, BindingFlags flag = BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public, object[] args = null)
 	{
-		if (Community.Runtime == null || Community.Runtime.ModuleProcessor == null) return null;
+		if (Community.Runtime == null || Community.Runtime.ModuleProcessor == null)
+		{
+			return null;
+		}
 
 		var result = (object)null;
 		var conflicts = Pool.GetList<Conflict>();
@@ -190,7 +193,10 @@ public static class HookCaller
 				{
 					var methodResult = Caller.CallHook(plugin, hookId, flags: flag, args: args);
 
-					if (methodResult == null) continue;
+					if (methodResult == null)
+					{
+						continue;
+					}
 
 					result = methodResult;
 					ResultOverride(conflicts, plugin, hookId, result);
