@@ -89,6 +89,7 @@ public partial class FileModule : CarbonModule<EmptyModuleConfig, EmptyModuleDat
 
 		public struct Item
 		{
+			public string Name;
 			public string Path;
 			public bool IsDirectory;
 			public FileInfo Info;
@@ -96,6 +97,7 @@ public partial class FileModule : CarbonModule<EmptyModuleConfig, EmptyModuleDat
 			public static Item Make(string path)
 			{
 				Item item = default;
+				item.Name = System.IO.Path.GetFileName(path);
 				item.Path = path;
 				item.IsDirectory = OsEx.Folder.Exists(path);
 
@@ -123,10 +125,10 @@ public partial class FileModule : CarbonModule<EmptyModuleConfig, EmptyModuleDat
 			}
 
 			Items.AddRange(Directory.EnumerateDirectories(CurrentDirectory, "*")
-				.Select(x => Item.Make(x)));
+				.Select(x => Item.Make(x)).OrderBy(x => x.Name));
 
 			Items.AddRange(Directory.EnumerateFiles(CurrentDirectory, $"*{Extension}")
-				.Select(x => Item.Make(x)));
+				.Select(x => Item.Make(x)).OrderByDescending(x => x.Info.LastWriteTime));
 		}
 
 		public void Draw(BasePlayer player)
