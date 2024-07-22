@@ -19,19 +19,19 @@ namespace Carbon;
 
 public class HookCallerCommon
 {
-	public ConcurrentDictionary<int, HookArgPool> _argumentBuffer = new();
-	public ConcurrentDictionary<uint, DateTime> _lastDeprecatedWarningAt = new();
+	public Dictionary<int, HookArgPool> _argumentBuffer = new();
+	public Dictionary<uint, DateTime> _lastDeprecatedWarningAt = new();
 
 	public struct HookArgPool
 	{
-		internal ConcurrentQueue<object[]> _pool;
+		internal Queue<object[]> _pool;
 		internal int _length;
 
 		public HookArgPool(int length, int count)
 		{
 			this._length = length;
 
-			_pool = new ConcurrentQueue<object[]>();
+			_pool = new Queue<object[]>(count);
 
 			for (int i = 0; i < count; i++)
 			{
@@ -41,12 +41,7 @@ public class HookCallerCommon
 
 		public object[] Take()
 		{
-			if (_pool.Count > 0 && _pool.TryDequeue(out var buffer))
-			{
-				return buffer;
-			}
-
-			return new object[_length];
+			return _pool.Count > 0 ? _pool.Dequeue() : new object[_length];
 		}
 		public void Return(object[] array)
 		{
