@@ -159,8 +159,8 @@ public partial class MonoProfiler
 			return a > b ? Difference.ValueHigher : Difference.ValueLower;
 		}
 
-		public const string ValueHigherStr = "<color=#91ff0a>\u2191</color>";
-		public const string ValueLowerStr = "<color=#ff370a>\u2193</color>";
+		public const string ValueHigherStr = "<color=#ff370a>\u2191</color>";
+		public const string ValueLowerStr = "<color=#91ff0a>\u2193</color>";
 		public const string ValueEqualStr = "<color=#fff30a>—</color>";
 
 		public static string GetDifferenceString(Difference difference)

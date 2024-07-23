@@ -1,9 +1,6 @@
 ﻿using System.Collections.Concurrent;
-using System.Diagnostics;
 using System.Text;
 using Carbon.Base.Interfaces;
-using ConVar;
-using Facepunch;
 using HarmonyLib;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -44,7 +41,7 @@ public class HookCallerCommon
 
 		public object[] Take()
 		{
-			return _pool.Count != 0 ? _pool.Dequeue() : new object[_length];
+			return _pool.Count > 0 ? _pool.Dequeue() : new object[_length];
 		}
 		public void Return(object[] array)
 		{
@@ -150,7 +147,10 @@ public static class HookCaller
 
 	private static object CallStaticHook(uint hookId, BindingFlags flag = BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public, object[] args = null)
 	{
-		if (Community.Runtime == null || Community.Runtime.ModuleProcessor == null) return null;
+		if (Community.Runtime == null || Community.Runtime.ModuleProcessor == null)
+		{
+			return null;
+		}
 
 		var result = (object)null;
 		var conflicts = Pool.GetList<Conflict>();
@@ -190,7 +190,10 @@ public static class HookCaller
 				{
 					var methodResult = Caller.CallHook(plugin, hookId, flags: flag, args: args);
 
-					if (methodResult == null) continue;
+					if (methodResult == null)
+					{
+						continue;
+					}
 
 					result = methodResult;
 					ResultOverride(conflicts, plugin, hookId, result);
