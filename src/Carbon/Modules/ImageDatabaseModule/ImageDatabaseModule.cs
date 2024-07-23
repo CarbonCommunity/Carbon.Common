@@ -53,7 +53,9 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 		["fade"] = "https://carbonmod.gg/assets/media/cui/fade.png",
 		["graph"] = "https://carbonmod.gg/assets/media/cui/graph.png",
 		["maximize"] = "https://carbonmod.gg/assets/media/cui/maximize.png",
-		["minimize"] = "https://carbonmod.gg/assets/media/cui/minimize.png"
+		["minimize"] = "https://carbonmod.gg/assets/media/cui/minimize.png",
+		["folder"] = "https://carbonmod.gg/assets/media/cui/folder.png",
+		["file"] = "https://carbonmod.gg/assets/media/cui/file.png"
 	};
 
 	internal string _getProtoDataPath()

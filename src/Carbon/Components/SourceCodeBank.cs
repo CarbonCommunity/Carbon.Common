@@ -155,7 +155,7 @@ public class SourceCodeBank
 
 			Settings.UsingDeclarations = false;
 
-			var iMethod = Decompiler.TypeSystem.MainModule.GetDefinition( UnsafeUtility.As<uint, MethodDefinitionHandle>(ref token));
+			var iMethod = Decompiler.TypeSystem.MainModule.GetDefinition(UnsafeUtility.As<uint, MethodDefinitionHandle>(ref token));
 
 			if (iMethod == null)
 			{

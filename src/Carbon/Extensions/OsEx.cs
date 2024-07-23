@@ -333,6 +333,10 @@ public class OsEx
 
 			return files.ToArray();
 		}
+		public static string GetPreviousFolder(string folder)
+		{
+			return string.IsNullOrEmpty(folder) ? string.Empty : Path.GetDirectoryName(folder.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+		}
 	}
 
 	public static class Utils
