@@ -383,14 +383,14 @@ public class CuiCountdownComponent : ICuiComponent
 	public string Command { get; set; }
 
 	[JsonProperty("endTime", NullValueHandling = NullValueHandling.Ignore, DefaultValueHandling = DefaultValueHandling.Ignore)]
-	public int EndTime { get; set; }
+	public float EndTime { get; set; }
 
 	[JsonProperty("startTime", NullValueHandling = NullValueHandling.Ignore, DefaultValueHandling = DefaultValueHandling.Ignore)]
-	public int StartTime { get; set; }
+	public float StartTime { get; set; }
 
 	[JsonProperty("step", NullValueHandling = NullValueHandling.Ignore, DefaultValueHandling = DefaultValueHandling.Ignore)]
 	public int Step { get; set; }
-	
+
 	[JsonProperty("fadeIn", NullValueHandling = NullValueHandling.Ignore, DefaultValueHandling = DefaultValueHandling.Ignore)]
 	public float FadeIn { get; set; }
 
