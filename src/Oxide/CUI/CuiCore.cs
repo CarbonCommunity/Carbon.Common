@@ -379,6 +379,9 @@ public class CuiCountdownComponent : ICuiComponent
 {
 	public string Type => "Countdown";
 
+	[JsonProperty("command", NullValueHandling = NullValueHandling.Ignore, DefaultValueHandling = DefaultValueHandling.Ignore)]
+	public string Command { get; set; }
+
 	[JsonProperty("endTime", NullValueHandling = NullValueHandling.Ignore, DefaultValueHandling = DefaultValueHandling.Ignore)]
 	public int EndTime { get; set; }
 
@@ -387,12 +390,31 @@ public class CuiCountdownComponent : ICuiComponent
 
 	[JsonProperty("step", NullValueHandling = NullValueHandling.Ignore, DefaultValueHandling = DefaultValueHandling.Ignore)]
 	public int Step { get; set; }
-
-	[JsonProperty("command", NullValueHandling = NullValueHandling.Ignore, DefaultValueHandling = DefaultValueHandling.Ignore)]
-	public string Command { get; set; }
-
+	
 	[JsonProperty("fadeIn", NullValueHandling = NullValueHandling.Ignore, DefaultValueHandling = DefaultValueHandling.Ignore)]
 	public float FadeIn { get; set; }
+
+	[JsonProperty("interval", NullValueHandling = NullValueHandling.Ignore, DefaultValueHandling = DefaultValueHandling.Ignore)]
+	public float Interval { get; set; }
+
+	[JsonProperty("timerFormat", NullValueHandling = NullValueHandling.Ignore, DefaultValueHandling = DefaultValueHandling.Ignore)]
+	public TimerFormats TimerFormat { get; set; }
+
+	[JsonProperty("numberFormat", NullValueHandling = NullValueHandling.Ignore, DefaultValueHandling = DefaultValueHandling.Ignore)]
+	public string NumberFormat { get; set; }
+
+	[JsonProperty("destroyIfDone", NullValueHandling = NullValueHandling.Ignore, DefaultValueHandling = DefaultValueHandling.Ignore)]
+	public bool DestroyIfDone { get; set; }
+
+	public enum TimerFormats
+	{
+		None,
+		SecondsHundreth,
+		MinutesSeconds,
+		MinutesSecondsHundreth,
+		HoursMinutes,
+		HoursMinutesSeconds
+	}
 }
 public class CuiTextComponent : ICuiComponent, ICuiColor
 {
