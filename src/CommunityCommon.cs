@@ -85,9 +85,6 @@ public class Community
 	public IModuleProcessor ModuleProcessor
 	{ get; set; }
 
-	public IWebScriptProcessor WebScriptProcessor
-	{ get; set; }
-
 	public IZipScriptProcessor ZipScriptProcessor
 	{ get; set; }
 
