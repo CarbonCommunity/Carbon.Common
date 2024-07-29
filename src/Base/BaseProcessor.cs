@@ -43,7 +43,7 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 
 		IsInitialized = true;
 
-		_wfsInstance = new WaitForSeconds(Rate);
+		RefreshRate();
 
 		StopAllCoroutines();
 		StartCoroutine(Run());
@@ -303,6 +303,11 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 			Logger.Debug(2, $"[{Name}] File deleted: {path}");
 			mod.MarkDeleted();
 		}
+	}
+
+	public void RefreshRate()
+	{
+		_wfsInstance = new WaitForSeconds(Rate);
 	}
 
 	public bool IsBlacklisted(string path)
