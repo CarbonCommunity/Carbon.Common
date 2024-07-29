@@ -113,7 +113,9 @@ public partial class CorePlugin : CarbonPlugin
 		{
 			Community.Runtime.Config.Processors.ZipScriptProcessingRate = value;
 			Community.Runtime.ZipScriptProcessor.RefreshRate();
+#if DEBUG
 			Community.Runtime.ZipDevScriptProcessor.RefreshRate();
+#endif
 			Community.Runtime.SaveConfig();
 		}
 	}
