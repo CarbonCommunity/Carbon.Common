@@ -397,6 +397,7 @@ public class CuiCountdownComponent : ICuiComponent
 	[JsonProperty("interval", NullValueHandling = NullValueHandling.Ignore, DefaultValueHandling = DefaultValueHandling.Ignore)]
 	public float Interval { get; set; }
 
+	[JsonConverter(typeof(StringEnumConverter))]
 	[JsonProperty("timerFormat", NullValueHandling = NullValueHandling.Ignore, DefaultValueHandling = DefaultValueHandling.Ignore)]
 	public TimerFormats TimerFormat { get; set; }
 
@@ -405,17 +406,18 @@ public class CuiCountdownComponent : ICuiComponent
 
 	[JsonProperty("destroyIfDone", NullValueHandling = NullValueHandling.Ignore, DefaultValueHandling = DefaultValueHandling.Ignore)]
 	public bool DestroyIfDone { get; set; }
-
-	public enum TimerFormats
-	{
-		None,
-		SecondsHundreth,
-		MinutesSeconds,
-		MinutesSecondsHundreth,
-		HoursMinutes,
-		HoursMinutesSeconds
-	}
 }
+
+public enum TimerFormats
+{
+	None,
+	SecondsHundreth,
+	MinutesSeconds,
+	MinutesSecondsHundreth,
+	HoursMinutes,
+	HoursMinutesSeconds
+}
+
 public class CuiTextComponent : ICuiComponent, ICuiColor
 {
 	public string Type => "UnityEngine.UI.Text";
