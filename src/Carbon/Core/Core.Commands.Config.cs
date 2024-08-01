@@ -91,6 +91,35 @@ public partial class CorePlugin : CarbonPlugin
 	[AuthLevel(2)]
 	private double LogSplitSize { get { return Community.Runtime.Config.Logging.LogSplitSize; } set { Community.Runtime.Config.Logging.LogSplitSize = value; Community.Runtime.SaveConfig(); } }
 
+	[CommandVar("scriptprocessrate", "The speed of detecting local file changes for items in the carbon/plugins directory.")]
+	[AuthLevel(2)]
+	private float ScriptProcessingRate
+	{
+		get => Community.Runtime.Config.Processors.ScriptProcessingRate;
+		set
+		{
+			Community.Runtime.Config.Processors.ScriptProcessingRate = value;
+			Community.Runtime.ScriptProcessor.RefreshRate();
+			Community.Runtime.SaveConfig();
+		}
+	}
+
+	[CommandVar("zipscriptprocessrate", "The speed of detecting local file changes for zipscript items in the carbon/plugins directory.")]
+	[AuthLevel(2)]
+	private float ZipScriptProcessingRate
+	{
+		get => Community.Runtime.Config.Processors.ZipScriptProcessingRate;
+		set
+		{
+			Community.Runtime.Config.Processors.ZipScriptProcessingRate = value;
+			Community.Runtime.ZipScriptProcessor.RefreshRate();
+#if DEBUG
+			Community.Runtime.ZipDevScriptProcessor.RefreshRate();
+#endif
+			Community.Runtime.SaveConfig();
+		}
+	}
+
 #if WIN
 	[CommandVar("consoleinfo", "Show the Windows-only Carbon information at the bottom of the console.")]
 	[AuthLevel(2)]

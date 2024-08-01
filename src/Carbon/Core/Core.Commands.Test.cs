@@ -46,7 +46,4 @@ public partial class CorePlugin : CarbonPlugin
 	{
 		Integrations.Clear();
 	}
-
-	[CommandVar("test_frame_offset")]
-	private int test_frame_offset { get => Integrations.FrameOffset; set => Integrations.FrameOffset = value; }
 }

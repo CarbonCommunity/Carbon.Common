@@ -1095,11 +1095,11 @@ public partial class AdminModule
 		}
 		else
 		{
+			ProfilerTab.sample.Clear();
 			MonoProfiler.Clear();
 			ap.SetStorage(null, "profilerval", string.Empty);
 		}
 
-		ProfilerTab.sample.Clear();
 		ap.SelectedTab.OnChange(ap, ap.SelectedTab);
 
 		Draw(ap.Player);

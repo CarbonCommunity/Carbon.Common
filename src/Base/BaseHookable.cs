@@ -45,7 +45,7 @@ public class BaseHookable
 		public CachedHook PrimaryHook;
 		public List<CachedHook> Hooks;
 
-		public bool IsValid() => Hooks != null && Hooks.Any();
+		public bool IsValid() => Hooks != null && Hooks.Count > 0;
 		public void RefreshPrimary()
 		{
 			PrimaryHook = Hooks.OrderByDescending(x => x.Parameters.Length).FirstOrDefault();

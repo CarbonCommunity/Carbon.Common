@@ -158,6 +158,7 @@ public partial class AdminModule
 							if (editMode)
 							{
 								Singleton.ConfigInstance.QuickActions.RemoveAll(x => x.Name == action.Name);
+								Community.Runtime.SaveConfig();
 								Refresh(tab, ap);
 								return;
 							}
@@ -257,6 +258,8 @@ public partial class AdminModule
 								IncludeUserId = includeUserId,
 								ConfirmDialog = confirmDialog
 							});
+							Community.Runtime.SaveConfig();
+
 							ap.SetStorage(tab, "carbontabbtnname", string.Empty);
 							ap.SetStorage(tab, "carbontabbtncmd", string.Empty);
 							ap.SetStorage(tab, "carbontabbtnuser", false);

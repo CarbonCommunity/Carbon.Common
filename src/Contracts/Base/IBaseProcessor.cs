@@ -22,6 +22,8 @@
 		bool IsBlacklisted(string path);
 		bool IncludeSubdirectories { get; set; }
 
+		void RefreshRate();
+
 		public interface IProcess : IDisposable
 		{
 			bool IsRemoved { get; }
