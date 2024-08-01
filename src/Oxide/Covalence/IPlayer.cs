@@ -56,7 +56,7 @@ namespace Oxide.Game.Rust.Libraries.Covalence
 
 		public bool IsServer { get; set; } = true;
 
-		public bool IsAdmin => ulong.TryParse(Id, out var id) && ServerUsers.Is(id, ServerUsers.UserGroup.Owner);
+		public bool IsAdmin => IsServer || (ulong.TryParse(Id, out var id) && ServerUsers.Is(id, ServerUsers.UserGroup.Owner));
 
 		public bool IsBanned => ulong.TryParse(Id, out var id) && ServerUsers.Is(id, ServerUsers.UserGroup.Banned);
 

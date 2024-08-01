@@ -304,36 +304,13 @@ public partial class CorePlugin : CarbonPlugin
 						Community.Runtime.ScriptProcessor.Ignore(plugin);
 					}
 				}
-
-				//
-				// Web-Scripts
-				//
-				{
-					var tempList = Facepunch.Pool.GetList<string>();
-					tempList.AddRange(Community.Runtime.WebScriptProcessor.IgnoreList);
-					Community.Runtime.WebScriptProcessor.IgnoreList.RemoveAll(x => !except.Any() || (except.Any() && !except.Any(x.Contains)));
-					Community.Runtime.WebScriptProcessor.Clear(except);
-
-					foreach (var plugin in tempList)
-					{
-						if (except.Any(plugin.Contains))
-						{
-							continue;
-						}
-
-						Community.Runtime.WebScriptProcessor.Ignore(plugin);
-					}
-					Facepunch.Pool.FreeList(ref tempList);
-					break;
-				}
-
+				break;
 			default:
 				{
 					var path = GetPluginPath(name);
 					if (!string.IsNullOrEmpty(path.Value))
 					{
 						Community.Runtime.ScriptProcessor.Ignore(path.Value);
-						Community.Runtime.WebScriptProcessor.Ignore(path.Value);
 					}
 
 					var pluginFound = false;
