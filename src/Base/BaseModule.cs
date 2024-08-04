@@ -1,14 +1,6 @@
 ﻿using Carbon.Base.Interfaces;
-using HarmonyLib;
 using Defines = Carbon.Core.Defines;
 using Harmony = HarmonyLib.Harmony;
-
-/*
- *
- * Copyright (c) 2022-2024 Carbon Community
- * All rights reserved.
- *
- */
 
 namespace Carbon.Base;
 

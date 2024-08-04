@@ -1,14 +1,5 @@
 ﻿namespace Carbon;
 
-/*
- *
- * Copyright (c) 2022-2024 Carbon Community
- * All rights reserved.
- *
- */
-
-using System.Linq.Expressions;
-
 public class Cache
 {
 	public static readonly object False = false;

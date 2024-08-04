@@ -1,11 +1,4 @@
-﻿/*
- *
- * Copyright (c) 2022-2024 Carbon Community
- * All rights reserved.
- *
- */
-
-namespace Carbon.Components;
+﻿namespace Carbon.Components;
 
 public static class ComponentCacheBankNonGeneric
 {

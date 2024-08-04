@@ -1,13 +1,6 @@
-﻿/*
- *
- * Copyright (c) 2022-2023 Carbon Community 
- * All rights reserved.
- *
- */
+﻿namespace Carbon.Core;
 
-namespace Carbon.Core;
-
-public partial class CorePlugin : CarbonPlugin
+public partial class CorePlugin
 {
 	[ConsoleCommand("wipemarkers", "Removes all markers of the calling player or argument filter.")]
 	[AuthLevel(2)]

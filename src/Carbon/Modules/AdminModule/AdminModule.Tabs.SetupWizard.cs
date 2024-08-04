@@ -1,12 +1,5 @@
 ﻿#if !MINIMAL
 
-/*
- *
- * Copyright (c) 2022-2023 Carbon Community
- * All rights reserved.
- *
- */
-
 using API.Commands;
 using Newtonsoft.Json;
 using Oxide.Game.Rust.Cui;

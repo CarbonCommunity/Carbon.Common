@@ -1,13 +1,6 @@
-﻿/*
- *
- * Copyright (c) 2022-2023 Carbon Community
- * All rights reserved.
- *
- */
+﻿namespace Carbon.Core;
 
-namespace Carbon.Core;
-
-public partial class CorePlugin : CarbonPlugin
+public partial class CorePlugin
 {
 	[ConsoleCommand("loadconfig", "Loads Carbon config from file.")]
 	[AuthLevel(2)]

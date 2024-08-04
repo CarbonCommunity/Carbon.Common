@@ -1,11 +1,4 @@
-﻿/*
- *
- * Copyright (c) 2022-2024 Carbon Community
- * All rights reserved.
- *
- */
-
-using Facepunch;
+﻿using Facepunch;
 
 namespace Carbon.Components;
 

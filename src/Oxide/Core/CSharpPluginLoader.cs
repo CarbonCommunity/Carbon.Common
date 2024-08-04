@@ -1,6 +1,3 @@
 ﻿namespace Oxide.Plugins;
 
-public class CSharpPluginLoader : PluginLoader
-{
-
-}
+public class CSharpPluginLoader : PluginLoader;

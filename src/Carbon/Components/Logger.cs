@@ -2,13 +2,6 @@
 using API.Logger;
 using ILogger = API.Logger.ILogger;
 
-/*
- *
- * Copyright (c) 2022-2024 Carbon Community
- * All rights reserved.
- *
- */
-
 namespace Carbon;
 
 public sealed class Logger : ILogger

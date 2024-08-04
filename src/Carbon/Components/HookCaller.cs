@@ -1,5 +1,4 @@
-﻿using System.Collections.Concurrent;
-using System.Text;
+﻿using System.Text;
 using Carbon.Base.Interfaces;
 using HarmonyLib;
 using Microsoft.CodeAnalysis;
@@ -7,13 +6,6 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using static Carbon.HookCallerCommon;
 using Pool = Facepunch.Pool;
-
-/*
- *
- * Copyright (c) 2022-2024 Carbon Community
- * All rights reserved.
- *
- */
 
 namespace Carbon;
 

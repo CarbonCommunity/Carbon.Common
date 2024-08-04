@@ -1,20 +1,11 @@
-﻿using System.Drawing;
-using System.Drawing.Imaging;
+﻿using System.Drawing.Imaging;
 using System.Net;
 using Facepunch;
 using ProtoBuf;
 using QRCoder;
 using Color = System.Drawing.Color;
 using Defines = Carbon.Core.Defines;
-using Graphics = System.Drawing.Graphics;
 using Timer = Oxide.Plugins.Timer;
-
-/*
- *
- * Copyright (c) 2022-2023 Carbon Community
- * All rights reserved.
- *
- */
 
 namespace Carbon.Modules;
 

@@ -1,13 +1,6 @@
 ﻿using ProtoBuf;
 using Logger = Carbon.Logger;
 
-/*
- *
- * Copyright (c) 2022-2023 Carbon Community
- * All rights reserved.
- *
- */
-
 namespace Oxide.Core;
 
 public class ProtoStorage

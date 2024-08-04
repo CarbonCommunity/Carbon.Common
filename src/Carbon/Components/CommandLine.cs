@@ -1,12 +1,4 @@
-﻿/*
- *
- * Copyright (c) 2022-2024 Carbon Community  
- * All rights reserved.
- *
- */
-
-using API.Commands;
-using static API.Commands.Command;
+﻿using API.Commands;
 
 namespace Carbon.Components;
 
@@ -18,17 +10,14 @@ public static class CommandLine
 	public static void ExecuteCommands(string @switch, string context, string[] lines = null)
 	{
 		var arg = CommandLineEx.GetArgumentResult(lines ?? Environment.GetCommandLineArgs(), @switch, string.Empty);
-		var commands = arg.Split(_delimiter, StringSplitOptions.RemoveEmptyEntries);
+		using var commands = TempArray<string>.New(arg.Split(_delimiter, StringSplitOptions.RemoveEmptyEntries));
 
 		if (commands.Length > 0)
 		{
 			Logger.Log($" Executing {commands.Length:n0} {commands.Length.Plural("command", "commands")} for the '{@switch}' switch ({context}):");
 		}
 
-		ExecuteCommands(commands);
-
-		Array.Clear(commands, 0, commands.Length);
-		commands = null;
+		ExecuteCommands(commands.Array);
 	}
 
 	public static void ExecuteCommands(string[] commands)
@@ -40,8 +29,8 @@ public static class CommandLine
 				continue;
 			}
 
-			var split = command.Split(' ');
-			var name = split[0];
+			using var split = TempArray<string>.New(command.Split(' '));
+			var name = split.Get(0);
 
 			if (Community.Runtime.CommandManager.Contains(Community.Runtime.CommandManager.RCon, name, out var cmd))
 			{
@@ -49,7 +38,7 @@ public static class CommandLine
 				{
 					var commandArgs = Facepunch.Pool.Get<PlayerArgs>();
 					commandArgs.Type = cmd.Type;
-					commandArgs.Arguments = split?.Skip(1)?.ToArray() ?? _emptyArgs;
+					commandArgs.Arguments = split.Array.Skip(1)?.ToArray() ?? _emptyArgs;
 					commandArgs.PrintOutput = true;
 					commandArgs.IsServer = true;
 					commandArgs.IsRCon = true;
@@ -78,9 +67,6 @@ public static class CommandLine
 					Logger.Error($"Failed executing native command '{command}'", ex);
 				}
 			}
-
-			Array.Clear(split, 0, split.Length);
-			split = null;
 		}
 	}
 }

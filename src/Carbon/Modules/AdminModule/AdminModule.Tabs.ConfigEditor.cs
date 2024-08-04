@@ -1,12 +1,5 @@
 ﻿#if !MINIMAL
 
-/*
- *
- * Copyright (c) 2022-2023 Carbon Community
- * All rights reserved.
- *
- */
-
 using Newtonsoft.Json.Linq;
 using StringEx = Carbon.Extensions.StringEx;
 using static Carbon.Components.CUI;

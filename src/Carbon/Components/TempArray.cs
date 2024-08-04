@@ -1,12 +1,4 @@
-﻿/*
- *
- * Copyright (c) 2022-2024 Carbon Community
- * Copyright (c) 2023 Patrette
- * All rights reserved.
- *
- */
-
-namespace Carbon.Components;
+﻿namespace Carbon.Components;
 
 public class TempArray<T> : IDisposable
 {

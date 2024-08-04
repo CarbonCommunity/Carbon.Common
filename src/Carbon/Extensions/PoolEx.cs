@@ -1,12 +1,6 @@
-﻿/*
- *
- * Copyright (c) 2022-2023 Carbon Community
- * All rights reserved.
- *
- */
-
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Text;
+
 namespace Carbon.Pooling;
 
 public class PoolEx

@@ -1,12 +1,5 @@
 ﻿#if !MINIMAL
 
-/*
-*
- * Copyright (c) 2022-2023 Carbon Community
- * All rights reserved.
- *
- */
-
 using System.Text;
 using Facepunch;
 using Microsoft.CodeAnalysis;
@@ -16,7 +9,7 @@ using UnityEngine.UI;
 
 namespace Carbon.Modules;
 
-public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
+public partial class AdminModule
 {
 	public class SourceViewerTab : Tab
 	{
@@ -28,7 +21,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 		public static SourceViewerTab Make(string fileName, string content, string context, int size = 8)
 		{
-			var tab = new SourceViewerTab("testchat", "TestChat", Community.Runtime.Core);
+			var tab = new SourceViewerTab("sourceviewer", "Source Viewer", Community.Runtime.Core);
 			tab.OnChange += (_, tab1) =>
 			{
 				tab1.AddColumn(0, true);

@@ -1,6 +1,6 @@
 ﻿namespace Carbon.Components;
 
-public partial struct Localisation
+public struct Localisation
 {
 	internal static CorePlugin Core => Community.Runtime.Core;
 

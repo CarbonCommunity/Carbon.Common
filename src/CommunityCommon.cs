@@ -9,13 +9,6 @@ using Newtonsoft.Json;
 using Application = UnityEngine.Application;
 using Carbon.Profiler;
 
-/*
- *
- * Copyright (c) 2022-2023 Carbon Community
- * All rights reserved.
- *
- */
-
 namespace Carbon;
 
 public class Community

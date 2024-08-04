@@ -1,17 +1,8 @@
-﻿using System.Collections.Specialized;
-using ConVar;
-using Network;
+﻿using Network;
 using Oxide.Game.Rust.Cui;
 using UnityEngine.UI;
 using static Carbon.Components.CUI;
 using Net = Network.Net;
-
-/*
- *
- * Copyright (c) 2022-2024 Carbon Community
- * All rights reserved.
- *
- */
 
 namespace Carbon.Components;
 
