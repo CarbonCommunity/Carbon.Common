@@ -1,5 +1,8 @@
 ﻿namespace Carbon.Components;
 
+/// <summary>
+/// Synonymous to Rust's own 'serverauto' tweakable ConVar variables. Carbon expands on Rust or Carbon-related features designed for customisation.
+/// </summary>
 public class CarbonAuto : API.Abstracts.CarbonAuto
 {
 	public static Dictionary<string, AutoVar> AutoCache = new();
@@ -167,17 +170,26 @@ public class CarbonAuto : API.Abstracts.CarbonAuto
 				var option = ConsoleSystem.Option.Server;
 
 				Logger.Log($"Initialized Carbon Auto ({lines.Length:n0} {lines.Length.Plural("variable", "variables")})");
+
+
 				foreach (var line in lines)
 				{
-					using var value = TempArray<string>.New(line.Split(' '));
-
-					var convar = value.Get(0);
-					var conval = value.Get(1).Replace("\"", string.Empty);
-
-					if (AutoCache.TryGetValue(convar, out var auto))
+					try
 					{
-						auto.SetValue(conval);
-						Logger.Warn($" {convar} \"{auto.GetValue()}\"{(auto.Variable.ForceModded ? " [modded]" : string.Empty)}");
+						using var value = TempArray<string>.New(line.Split(' '));
+
+						var convar = value.Get(0);
+						var conval = value.array.Skip(1).ToString(" ").Replace("\"", string.Empty);
+						
+						if (AutoCache.TryGetValue(convar, out var auto))
+						{
+							auto.SetValue(conval);
+							Logger.Warn($" {convar} \"{auto.GetValue()}\"{(auto.Variable.ForceModded ? " [modded]" : string.Empty)}");
+						}
+					}
+					catch (Exception ex)
+					{
+						Logger.Error($"Failed processing line '{line}'", ex);
 					}
 				}
 
@@ -195,6 +207,9 @@ public class CarbonAuto : API.Abstracts.CarbonAuto
 	}
 }
 
+/// <summary>
+/// Carbon-auto variable definition attribute.
+/// </summary>
 [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
 public class CarbonAutoVar : CommandVarAttribute
 {
@@ -208,6 +223,9 @@ public class CarbonAutoVar : CommandVarAttribute
 	}
 }
 
+/// <summary>
+/// Carbon-auto variable definition attribute which when its value is not '-1' (default), will enforce the server to become modded to reduce the risk of being blacklisted.
+/// </summary>
 [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
 public class CarbonAutoModdedVar : CarbonAutoVar
 {

@@ -1,8 +1,9 @@
-﻿/*
+﻿using ProtoBuf;
+
+/*
  *
- * Copyright (c) 2024 Carbon Community
- * Copyright (c) 2024 Patrette
- * All rights reserved.
+ * Copyright (c) 2023 Patrette, under the GNU v3 license rights
+ * Copyright (c) 2023-2024 Carbon Community, under the GNU v3 license rights
  *
  */
 
@@ -132,7 +133,7 @@ public partial class MonoProfiler
 		{
 			if (MonoProfiler.IsRecording)
 			{
-				ToggleProfiling(ProfilerArgs.Abort);
+				ToggleProfiling(ProfilerArgs.Abort, false);
 			}
 
 			Clear();
@@ -145,41 +146,6 @@ public partial class MonoProfiler
 		}
 	}
 
+	[ProtoContract]
 	public class Timeline : Dictionary<DateTime, Sample>;
-
-	public struct Sample
-	{
-		public AssemblyOutput Assemblies;
-		public CallOutput Calls;
-		public MemoryOutput Memory;
-		public GCRecord GC;
-
-		public static Sample Create() => new()
-		{
-			Assemblies = new(),
-			Calls = new(),
-			Memory = new()
-		};
-
-		public void Resample()
-		{
-			Clear();
-
-			Assemblies.AddRange(AssemblyRecords);
-			Calls.AddRange(CallRecords);
-			Memory.AddRange(MemoryRecords);
-			GC = GCStats;
-		}
-		public void Clear()
-		{
-			Assemblies ??= new();
-			Calls ??= new();
-			Memory ??= new();
-
-			Assemblies?.Clear();
-			Calls?.Clear();
-			Memory?.Clear();
-			GC = default;
-		}
-	}
 }

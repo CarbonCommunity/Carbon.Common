@@ -1,16 +1,8 @@
-﻿/*
- *
- * Copyright (c) 2022-2024 Carbon Community
- * All rights reserved.
- *
- */
-
-using System.Reflection.Metadata;
+﻿using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.Decompiler.TypeSystem;
 using Unity.Collections.LowLevel.Unsafe;
 
 namespace Carbon.Components;
@@ -143,8 +135,7 @@ public class SourceCodeBank
 
 			Settings.UsingDeclarations = false;
 
-			return string.Empty;
-			// return Methods[id] = Decompiler.DecompileAsString(Decompiler.TypeSystem.MainModule.GetDefinition(UnsafeUtility.As<uint, MethodDefinitionHandle>(ref token)).MetadataToken);
+			return Methods[id] = Decompiler.DecompileAsString(Decompiler.TypeSystem.MainModule.GetDefinition(UnsafeUtility.As<uint, MethodDefinitionHandle>(ref token)).MetadataToken);
 		}
 		public unsafe string ParseMethod(MonoProfiler.MonoMethod* methodInfo, out string type, out string method)
 		{
@@ -157,7 +148,7 @@ public class SourceCodeBank
 
 			Settings.UsingDeclarations = false;
 
-			var iMethod = (ITypeDefinition)null; // Decompiler.TypeSystem.MainModule.GetDefinition( UnsafeUtility.As<uint, MethodDefinitionHandle>(ref token));
+			var iMethod = Decompiler.TypeSystem.MainModule.GetDefinition(UnsafeUtility.As<uint, MethodDefinitionHandle>(ref token));
 
 			if (iMethod == null)
 			{

@@ -1,9 +1,4 @@
-﻿using API.Commands;
-using Carbon.Components.Graphics;
-using ConVar;
-using HarmonyLib;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json;
 using Oxide.Game.Rust.Cui;
 using UnityEngine.UI;
 using static Carbon.Components.CUI;
@@ -11,14 +6,8 @@ using static ConsoleSystem;
 using Color = UnityEngine.Color;
 using StringEx = Carbon.Extensions.StringEx;
 
-/*
- *
- * Copyright (c) 2022-2024 Carbon Community
- * All rights reserved.
- *
- */
-
 namespace Carbon.Modules;
+
 #pragma warning disable IDE0051
 
 public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
@@ -42,6 +31,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 	public ColorPickerModule ColorPicker;
 	public DatePickerModule DatePicker;
 	public ModalModule Modal;
+	public FileModule File;
 
 	public readonly Handler Handler = new();
 
@@ -127,6 +117,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		ColorPicker = GetModule<ColorPickerModule>();
 		DatePicker = GetModule<DatePickerModule>();
 		Modal = GetModule<ModalModule>();
+		File = GetModule<FileModule>();
 
 		Unsubscribe("OnPluginLoaded");
 		Unsubscribe("OnPluginUnloaded");
@@ -715,7 +706,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				xMin: 0.2f, xMax: 0.8f, yMin: 0.2f, yMax: 0.8f);
 		}
 	}
-	public void TabPanelDropdown(CUI cui, PlayerSession.Page page, CuiElementContainer container, string parent, string text, string command, float height, float offset, int index, string[] options, string[] optionsIcons, float optionsIconsScale, bool display, Tab.OptionButton.Types type = Tab.OptionButton.Types.Selected)
+	public void TabPanelDropdown(CUI cui, PlayerSession.Page page, CuiElementContainer container, string parent, string text, string command, float height, float offset, int index, string[] options, string[] optionsIcons, bool display, Tab.OptionButton.Types type = Tab.OptionButton.Types.Selected)
 	{
 		var color = type switch
 		{
@@ -765,11 +756,11 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		cui.CreateImage(container, button, "fade", Cache.CUI.WhiteColor);
 
 		cui.CreateText(container, button, "1 1 1 0.7", options[index], 10,
-			xMin: string.IsNullOrEmpty(icon) ? 0.02f : 0.085f, xMax: 1f, yMin: 0f, yMax: 1f, align: TextAnchor.MiddleLeft);
+			xMin: string.IsNullOrEmpty(icon) ? 0.035f : 0.09f, xMax: 1f, yMin: 0f, yMax: 1f, align: TextAnchor.MiddleLeft);
 
 		if (!string.IsNullOrEmpty(icon))
 		{
-			cui.CreateImage(container, button, icon, optionsIconsScale, "1 1 1 0.7",
+			cui.CreateImage(container, button, icon, "1 1 1 0.7",
 				xMin: iconXmin, xMax: iconXmax, yMin: iconYmin, yMax: iconYmax);
 		}
 
@@ -810,7 +801,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 				if (!string.IsNullOrEmpty(subIcon))
 				{
-					cui.CreateImage(container, subButton, subIcon, optionsIconsScale, isSelected ? "1 1 1 0.7" : "1 1 1 0.4",
+					cui.CreateImage(container, subButton, subIcon, isSelected ? "1 1 1 0.7" : "1 1 1 0.4",
 						xMin: iconXmin, xMax: iconXmax, yMin: iconYmin, yMax: iconYmax);
 				}
 
@@ -1444,7 +1435,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 											break;
 
 										case Tab.OptionDropdown dropdown:
-											TabPanelDropdown(cui, ap._selectedDropdownPage, container, panel, dropdown.Name, PanelId + $".callaction {i} {actualI}", rowHeight, rowIndex, dropdown.Index.Invoke(ap), dropdown.Options, dropdown.OptionsIcons, dropdown.OptionsIconScale, ap._selectedDropdown == dropdown);
+											TabPanelDropdown(cui, ap._selectedDropdownPage, container, panel, dropdown.Name, PanelId + $".callaction {i} {actualI}", rowHeight, rowIndex, dropdown.Index.Invoke(ap), dropdown.Options, dropdown.OptionsIcons, ap._selectedDropdown == dropdown);
 											HandleReveal(DataInstance.Colors.OptionWidth);
 											break;
 

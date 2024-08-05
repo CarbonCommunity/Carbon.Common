@@ -1,23 +1,12 @@
-﻿/*
- *
- * Copyright (c) 2022-2023 Carbon Community 
- * All rights reserved.
- *
- */
+﻿namespace Oxide.Game.Rust;
 
-namespace Oxide.Game.Rust
+public class RustPluginLoader : PluginLoader
 {
-	public class RustPluginLoader : PluginLoader
+	public override Type[] CorePlugins
 	{
-		public override Type[] CorePlugins
+		get
 		{
-			get
-			{
-				return new Type[]
-				{
-					typeof(CorePlugin)
-				};
-			}
+			return new Type[] { typeof(CorePlugin) };
 		}
 	}
 }

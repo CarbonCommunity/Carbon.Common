@@ -1,26 +1,23 @@
-﻿using System.Collections.Specialized;
-using ConVar;
-using Network;
+﻿using Network;
 using Oxide.Game.Rust.Cui;
 using UnityEngine.UI;
 using static Carbon.Components.CUI;
 using Net = Network.Net;
 
-/*
- *
- * Copyright (c) 2022-2024 Carbon Community
- * All rights reserved.
- *
- */
-
 namespace Carbon.Components;
 
+/// <summary>
+/// Carbon's built-in pooled CUI cache-based structure.
+/// </summary>
 public readonly struct CUI : IDisposable
 {
 	public Handler Manager { get; }
 	public ImageDatabaseModule ImageDatabase { get; }
 	public Handler.Cache CacheInstance => Manager.CacheInstance;
 
+	/// <summary>
+	/// All currently available client-side UI panels.
+	/// </summary>
 	public enum ClientPanels
 	{
 		Overall,
@@ -29,25 +26,23 @@ public readonly struct CUI : IDisposable
 		Hud,
 		HudMenu,
 		Under,
-		UnderNonScaled,
-
-		// C4C-Only
-		LoadingBG,
-		LoadingFG
+		UnderNonScaled
 	}
+
+	/// <summary>
+	/// Gets the Rust-identifiable client-side panel name.
+	/// </summary>
 	public string GetClientPanel(ClientPanels panel)
 	{
 		return panel switch
 		{
 			ClientPanels.Overall => "Overall",
-            ClientPanels.Overlay => "Overlay",
+			ClientPanels.OverlayNonScaled => "OverlayNonScaled",
 			ClientPanels.Hud => "Hud",
 			ClientPanels.HudMenu => "Hud.Menu",
 			ClientPanels.Under => "Under",
 			ClientPanels.UnderNonScaled => "UnderNonScaled",
-			ClientPanels.LoadingBG => "Loading.BG",
-			ClientPanels.LoadingFG => "Loading.FG",
-			_ => "OverlayNonScaled",
+			_ => "Overlay",
 		};
 	}
 
@@ -59,6 +54,9 @@ public readonly struct CUI : IDisposable
 
 	#region Update
 
+	/// <summary>
+	/// Gets a disposable Update pool used to update existent Carbon elements already drawn onto the client.
+	/// </summary>
 	public Handler.UpdatePool UpdatePool()
 	{
 		return new Handler.UpdatePool();
@@ -67,11 +65,11 @@ public readonly struct CUI : IDisposable
     #endregion
 
     #region Methods
-    public CuiElementContainer CreateContainer(string panel, string color = "0 0 0 0", float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, ClientPanels parent = ClientPanels.OverlayNonScaled, string destroyUi = null)
+    public CuiElementContainer CreateContainer(string panel, string color = "0 0 0 0", float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, ClientPanels parent = ClientPanels.Overlay, string destroyUi = null)
     {
         return CreateContainerParent(panel, color, xMin, xMax, yMin, yMax, OxMin, OxMax, OyMin, OyMax, fadeIn, fadeOut, needsCursor, needsKeyboard, GetClientPanel(parent), destroyUi);
     }
-    public CuiElementContainer CreateContainerParent(string panel, string color = "0 0 0 0", float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string parentName = "OverlayNonScaled", string destroyUi = null)
+    public CuiElementContainer CreateContainerParent(string panel, string color = "0 0 0 0", float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string parentName = "Overlay", string destroyUi = null)
 	{
 		var container = Manager.TakeFromPoolContainer();
 		container.Name = panel;
@@ -141,17 +139,6 @@ public readonly struct CUI : IDisposable
 
 		return Manager.Image(container, parent, GetImage(url), null, color, material, xMin, xMax, yMin, yMax, OxMin, OxMax, OyMin, OyMax, fadeIn, fadeOut, needsCursor, needsKeyboard, outlineColor, outlineDistance, outlineUseGraphicAlpha, id, destroyUi, update);
 	}
-	public Pair<string, CuiElement> CreateImage(CuiElementContainer container, string parent, string url, float scale, string color, string material = null, float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string outlineColor = null, string outlineDistance = null, bool outlineUseGraphicAlpha = false, string id = null, string destroyUi = null, bool update = false)
-	{
-		if (!HasImage(url))
-		{
-			return Manager.Panel(container, parent, color, material, xMin, xMax, yMin, yMax, OxMin, OxMax, OyMin, OyMax,
-				false, fadeIn, fadeOut, needsCursor, needsKeyboard, outlineColor, outlineDistance,
-				outlineUseGraphicAlpha, id, destroyUi, update);
-		}
-
-		return Manager.Image(container, parent, GetImage(url, scale), null, color, material, xMin, xMax, yMin, yMax, OxMin, OxMax, OyMin, OyMax, fadeIn, fadeOut, needsCursor, needsKeyboard, outlineColor, outlineDistance, outlineUseGraphicAlpha, id, destroyUi, update);
-	}
 	public Pair<string, CuiElement> CreateSimpleImage(CuiElementContainer container, string parent, string png, string sprite, string color, string material = null, float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string outlineColor = null, string outlineDistance = null, bool outlineUseGraphicAlpha = false, string id = null, string destroyUi = null, bool update = false)
 	{
 		return Manager.SimpleImage(container, parent, png, sprite, color, material, xMin, xMax, yMin, yMax, OxMin, OxMax, OyMin, OyMax, fadeIn, fadeOut, needsCursor, needsKeyboard, outlineColor, outlineDistance, outlineUseGraphicAlpha, id, destroyUi, update);
@@ -214,33 +201,40 @@ public readonly struct CUI : IDisposable
 
 	#region ImageDatabase
 
-	public string GetImage(string url, float scale = 1)
+	/// <summary>
+	/// Gets an existent image based on a mapped key or full length URL from Carbon's ImageDatabase module.
+	/// </summary>
+	public string GetImage(string keyOrUrl)
 	{
-		return ImageDatabase.GetImageString(url, scale);
+		return ImageDatabase.GetImageString(keyOrUrl);
 	}
 
-	public bool HasImage(string url, float scale = 1)
+	/// <summary>
+	/// Checks if an image is existent in Carbon's ImageDatabase module, using a key identifier or a full length URL.
+	/// </summary>
+	/// <param name="url"></param>
+	/// <returns></returns>
+	public bool HasImage(string url)
 	{
-		return ImageDatabase.HasImage(url, scale);
+		return ImageDatabase.HasImage(url);
 	}
 
+	/// <summary>
+	/// Queues up various URLs to be downloaded and stored within Carbon's ImageDatabase module.
+	/// </summary>
 	public void QueueImages(IEnumerable<string> urls)
 	{
 		ImageDatabase.QueueBatch(false, urls);
 	}
 
-	public void ClearImages(float scale, IEnumerable<string> urls)
-	{
-		foreach (var url in urls)
-		{
-			ImageDatabase.DeleteImage(url, scale);
-		}
-	}
+	/// <summary>
+	/// Removes all stored images (if they exist) in the provided urls enumerable.
+	/// </summary>
 	public void ClearImages(IEnumerable<string> urls)
 	{
 		foreach (var url in urls)
 		{
-			ImageDatabase.DeleteAllImages(url);
+			ImageDatabase.DeleteImage(url);
 		}
 	}
 
@@ -248,14 +242,17 @@ public readonly struct CUI : IDisposable
 
 	#region Send
 
+	/// <summary>
+	/// Serializes and networks the Carbon managed pooled container to a specified player.
+	/// </summary>
 	public void Send(CuiElementContainer container, BasePlayer player)
 	{
 		Manager.Send(container, player);
 	}
-	public void Destroy(CuiElementContainer container, BasePlayer player)
-	{
-		Manager.Destroy(container, player);
-	}
+
+	/// <summary>
+	/// Destroys a container using its panel identifier from a specific player.
+	/// </summary>
 	public void Destroy(string name, BasePlayer player)
 	{
 		Manager.Destroy(name, player);
@@ -263,6 +260,10 @@ public readonly struct CUI : IDisposable
 
 	#endregion
 
+	/// <summary>
+	/// Pair of one sub-element. 
+	/// </summary>
+	/// <typeparam name="T1">Key identifier.</typeparam>
 	public struct Pair<T1, T2>
 	{
 		public T1 Id;
@@ -279,6 +280,11 @@ public readonly struct CUI : IDisposable
 			return value.Id.ToString();
 		}
 	}
+
+	/// <summary>
+	/// Pair of two sub-elements.
+	/// </summary>
+	/// <typeparam name="T1">Key identifier.</typeparam>
 	public struct Pair<T1, T2, T3>
 	{
 		public T1 Id;
@@ -298,6 +304,9 @@ public readonly struct CUI : IDisposable
 		}
 	}
 
+	/// <summary>
+	/// Disposes and sends all currently used CUI elements to pool, for further reuse.
+	/// </summary>
 	public void Dispose()
 	{
 		Manager.SendToPool();
@@ -788,7 +797,6 @@ public readonly struct CUI : IDisposable
 				FontTypes.DroidSansMono => "droidsansmono.ttf",
 				_ => "robotocondensed-regular.ttf"
 			};
-
 		}
 
 		#endregion
@@ -953,10 +961,6 @@ public static class CUIStatics
 	public static Pair<string, CuiElement> UpdateImage(this CUI cui, string id, string url, string color, string material = null, float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string outlineColor = null, string outlineDistance = null, bool outlineUseGraphicAlpha = false, string destroyUi = null)
 	{
 		return cui.CreateImage(null, null, url, color, material, xMin, xMax, yMin, yMax, OxMin, OxMax, OyMin, OyMax, fadeIn, fadeOut, needsCursor, needsKeyboard, outlineColor, outlineDistance, outlineUseGraphicAlpha, id, destroyUi, true);
-	}
-	public static Pair<string, CuiElement> UpdateImage(this CUI cui, string id, string url, float scale, string color, string material = null, float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string outlineColor = null, string outlineDistance = null, bool outlineUseGraphicAlpha = false, string destroyUi = null)
-	{
-		return cui.CreateImage(null, null, url, scale, color, material, xMin, xMax, yMin, yMax, OxMin, OxMax, OyMin, OyMax, fadeIn, fadeOut, needsCursor, needsKeyboard, outlineColor, outlineDistance, outlineUseGraphicAlpha, id, destroyUi, true);
 	}
 	public static Pair<string, CuiElement> UpdateSimpleImage(this CUI cui, string id, string png, string sprite, string color, string material = null, float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string outlineColor = null, string outlineDistance = null, bool outlineUseGraphicAlpha = false, string destroyUi = null)
 	{

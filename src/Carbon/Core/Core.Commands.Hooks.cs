@@ -1,18 +1,9 @@
-﻿/*
- *
- * Copyright (c) 2022-2023 Carbon Community
- * All rights reserved.
- *
- */
-
-using System.Text;
-using API.Hooks;
-using Facepunch;
+﻿using API.Hooks;
 using Timer = Oxide.Plugins.Timer;
 
 namespace Carbon.Core;
 
-public partial class CorePlugin : CarbonPlugin
+public partial class CorePlugin
 {
 	[ConsoleCommand("hooks", "Prints total information for all currently active and patched hooks in the server. (syntax: c.hooks [loaded] [-p|-s|-d])")]
 	[AuthLevel(2)]
@@ -181,7 +172,7 @@ public partial class CorePlugin : CarbonPlugin
 			return;
 		}
 
-		var name = arg.GetString(0).ToLower();
+		var name = arg.GetString(0);
 		var isUid = uint.TryParse(name, out _);
 
 		var hookName = isUid ? HookStringPool.GetOrAdd(name.ToUint()) : name;

@@ -61,7 +61,6 @@ public class Assemblies
 
 			if (!TryGetValue(key, out var existent) || existent.CurrentAssembly == null)
 			{
-				Logger.Warn($"RuntimeAssemblyBank.Eliminate: No key with '{key}'");
 				return;
 			}
 

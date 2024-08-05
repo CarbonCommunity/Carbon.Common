@@ -1,31 +1,24 @@
-﻿using System.Drawing;
-using System.Drawing.Imaging;
+﻿using System.Drawing.Imaging;
 using System.Net;
 using Facepunch;
 using ProtoBuf;
 using QRCoder;
 using Color = System.Drawing.Color;
 using Defines = Carbon.Core.Defines;
-using Graphics = System.Drawing.Graphics;
-
-/*
- *
- * Copyright (c) 2022-2023 Carbon Community
- * All rights reserved.
- *
- */
+using Timer = Oxide.Plugins.Timer;
 
 namespace Carbon.Modules;
 
 public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, EmptyModuleData>
 {
+	public static ImageDatabaseModule Singleton;
+
 	public override string Name => "ImageDatabase";
 	public override Type Type => typeof(ImageDatabaseModule);
 	public override VersionNumber Version => new(1, 0, 0);
 	public override bool EnabledByDefault => true;
 	public override bool ForceEnabled => true;
 
-	internal readonly List<QueuedThread> _queue = new();
 	internal ImageDatabaseDataProto _protoData { get; set; }
 
 	internal Dictionary<string, string> _defaultImages = new()
@@ -51,27 +44,11 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 		["fade"] = "https://carbonmod.gg/assets/media/cui/fade.png",
 		["graph"] = "https://carbonmod.gg/assets/media/cui/graph.png",
 		["maximize"] = "https://carbonmod.gg/assets/media/cui/maximize.png",
-		["minimize"] = "https://carbonmod.gg/assets/media/cui/minimize.png"
+		["minimize"] = "https://carbonmod.gg/assets/media/cui/minimize.png",
+		["folder"] = "https://carbonmod.gg/assets/media/cui/folder.png",
+		["file"] = "https://carbonmod.gg/assets/media/cui/file.png"
 	};
 
-	internal IEnumerator _executeQueue(QueuedThread thread, Action<List<QueuedThreadResult>> onFinished)
-	{
-		if (thread == null)
-		{
-			yield break;
-		}
-
-		thread.Start();
-
-		while (!thread.IsDone)
-		{
-			yield return null;
-		}
-
-		onFinished?.Invoke(thread.Result);
-
-		thread.Dispose();
-	}
 	internal string _getProtoDataPath()
 	{
 		return Path.Combine(Defines.GetModulesFolder(), Name, "data.db");
@@ -91,21 +68,9 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 	[AuthLevel(2)]
 	private void DeleteImg(ConsoleSystem.Arg arg)
 	{
-		if (DeleteImage(arg.GetString(0), arg.GetFloat(1)))
-		{
-			arg.ReplyWith($"Deleted image.");
-		}
-		else
-		{
-			arg.ReplyWith($"Couldn't delete image. Probably because it doesn't exist.");
-		}
-	}
-
-	[ConsoleCommand("imagedb.pending")]
-	[AuthLevel(2)]
-	private void ShowPending(ConsoleSystem.Arg arg)
-	{
-		arg.ReplyWith($"Queued {_queue.Count} batches of {_queue.Sum(x => x._urlQueue.Count):n0} URLs.");
+		arg.ReplyWith(DeleteImage(arg.GetString(0))
+			? $"Deleted image"
+			: $"Couldn't delete image. Probably because it doesn't exist");
 	}
 
 	[ConsoleCommand("imagedb.clearinvalid")]
@@ -131,6 +96,12 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 		Facepunch.Pool.FreeList(ref toDelete);
 	}
 
+	public override void Init()
+	{
+		base.Init();
+
+		Singleton = this;
+	}
 	public override void OnServerInit(bool initial)
 	{
 		base.OnServerInit(initial);
@@ -241,7 +212,6 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 		return false;
 	}
 
-
 	public void QueueBatch(bool @override, IEnumerable<string> urls)
 	{
 		if (urls == null || !urls.Any())
@@ -249,13 +219,15 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 			return;
 		}
 
+		var urlCount = urls.Count();
+
 		QueueBatch(@override, results =>
 		{
 			foreach (var result in results.Where(result => result.Data != null && result.Data.Length != 0))
 			{
 				if (result.Data.Length >= MaximumBytes)
 				{
-					Puts($"Failed storing {urls.Count():n0} jobs: {result.Data.Length} more or equal than {MaximumBytes}");
+					Puts($"Failed storing {urlCount:n0} jobs: {result.Data.Length} more or equal than {MaximumBytes}");
 					continue;
 				}
 
@@ -268,20 +240,20 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 			}
 		}, urls);
 	}
-	public void QueueBatch(bool @override, Action<List<QueuedThreadResult>> onComplete, IEnumerable<string> urls)
+	public void QueueBatch(bool @override, Action<List<ImageQueueResult>> onComplete, IEnumerable<string> urls)
 	{
 		if (urls == null || !urls.Any())
 		{
 			return;
 		}
 
-		var thread = new QueuedThread();
-		var existent = Pool.GetList<QueuedThreadResult>();
+		var queue = new ImageQueue();
+		var existent = Pool.GetList<ImageQueueResult>();
+		var urlCount = urls.Count();
 
 		try
 		{
-			thread.ImageUrls.AddRange(urls);
-			_queue.Add(thread);
+			queue.ImageUrls.AddRange(urls);
 
 			if (!@override)
 			{
@@ -290,13 +262,13 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 					var image = GetImage(url);
 
 					if (image == 0) continue;
-					existent.Add(new QueuedThreadResult { CRC = image, Url = url, Success = true });
-					thread.ImageUrls.Remove(url);
+					existent.Add(new ImageQueueResult { CRC = image, Url = url, Success = true });
+					queue.ImageUrls.Remove(url);
 				}
 			}
 			else
 			{
-				foreach (var url in thread.ImageUrls)
+				foreach (var url in queue.ImageUrls)
 				{
 					DeleteAllImages(url);
 				}
@@ -304,10 +276,10 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 		}
 		catch (Exception ex)
 		{
-			Logger.Error($"Failed processing queue batch", ex);
+			Logger.Error("Failed processing queue batch", ex);
 		}
 
-		Community.Runtime.Core.persistence.StartCoroutine(_executeQueue(thread, results =>
+		Community.Runtime.Core.persistence.StartCoroutine(RunQueue(queue, results =>
 		{
 			try
 			{
@@ -317,7 +289,7 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 					{
 						if (result.Data.Length >= MaximumBytes)
 						{
-							Puts($"Failed storing {urls.Count():n0} jobs: {result.Data.Length} more or equal than {MaximumBytes}");
+							Puts($"Failed storing {urlCount:n0} jobs: {result.Data.Length} more or equal than {MaximumBytes}");
 							continue;
 						}
 
@@ -335,31 +307,12 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 				}
 
 				Pool.FreeList(ref existent);
-				_queue.Remove(thread);
 			}
 			catch (Exception ex)
 			{
 				PutsError($"Failed QueueBatch of {urls.Count():n0}", ex);
 			}
 		}));
-
-		Community.Runtime.Core.timer.In(ConfigInstance.TimeoutPerUrl * urls.Count(), () =>
-		{
-			if (thread._disposed) return;
-
-			try
-			{
-				thread.Result.InsertRange(0, existent);
-				onComplete?.Invoke(thread.Result);
-
-				thread.Dispose();
-				_queue.Remove(thread);
-			}
-			catch (Exception ex)
-			{
-				Logger.Error($"Failed timeout process", ex);
-			}
-		});
 	}
 
 	public void Queue(bool @override, Dictionary<string, string> mappedUrls)
@@ -379,7 +332,7 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 
 		QueueBatch(@override, urls);
 	}
-	public void Queue(bool @override, Action<List<QueuedThreadResult>> onComplete, Dictionary<string, string> mappedUrls)
+	public void Queue(bool @override, Action<List<ImageQueueResult>> onComplete, Dictionary<string, string> mappedUrls)
 	{
 		if (mappedUrls == null || mappedUrls.Count == 0)
 		{
@@ -405,7 +358,7 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 
 		Queue(false, mappedUrls);
 	}
-	public void Queue(Action<List<QueuedThreadResult>> onComplete, Dictionary<string, string> mappedUrls)
+	public void Queue(Action<List<ImageQueueResult>> onComplete, Dictionary<string, string> mappedUrls)
 	{
 		if (mappedUrls == null || mappedUrls.Count == 0)
 		{
@@ -444,15 +397,15 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 
 		return !_protoData.Map.TryGetValue(id, out var uid) ? default : uid;
 	}
-	public string GetImageString(string keyOrUrl, float scale = 1)
+	public string GetImageString(string keyOrUrl)
 	{
 		return GetImage(keyOrUrl).ToString();
 	}
-	public bool HasImage(string keyOrUrl, float scale = 1)
+	public bool HasImage(string keyOrUrl)
 	{
 		return FileStorage.server.Get(GetImage(keyOrUrl), FileStorage.Type.png, CommunityEntity.ServerInstance.net.ID) != null;
 	}
-	public bool DeleteImage(string url, float scale = 1)
+	public bool DeleteImage(string url)
 	{
 		var id = GetId(url);
 
@@ -518,105 +471,107 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 		return url;
 	}
 
-	public class QueuedThread : BaseThreadedJob
+	public static IEnumerator RunQueue(ImageQueue imageQueue, Action<List<ImageQueueResult>> callback)
+	{
+		imageQueue.Init();
+		imageQueue.Client = new WebRequests.WebRequest.Client();
+		{
+			imageQueue.Client.Headers.Add("User-Agent", Community.Runtime.Analytics.UserAgent);
+			imageQueue.Client.Credentials = CredentialCache.DefaultCredentials;
+			imageQueue.Client.Proxy = null;
+
+			imageQueue.Client.DownloadDataCompleted += (_, e) =>
+			{
+				imageQueue.DoNext();
+
+				if (e.Error != null)
+				{
+					return;
+				}
+
+				imageQueue.Result.Add(new ImageQueueResult
+				{
+					Url = (string)e.UserState,
+					Data = e.Result
+				});
+			};
+
+			imageQueue.DoNext();
+
+			while (!imageQueue.IsDone)
+			{
+				yield return CoroutineEx.waitForSeconds(0.5f);
+			}
+
+			callback?.Invoke(imageQueue.Result);
+			imageQueue.Dispose();
+		}
+	}
+
+	public class ImageQueue : IDisposable
 	{
 		public List<string> ImageUrls { get; internal set; } = new();
+		public List<ImageQueueResult> Result { get; internal set; } = new();
+		public Action<List<ImageQueueResult>> ResultAction { get; set; }
 
-		public List<QueuedThreadResult> Result { get; internal set; } = new();
+		public bool IsDone;
+		public int Processed;
+		public WebRequests.WebRequest.Client Client;
 
-		internal Queue<string> _urlQueue = new();
-		internal int _processed;
-		internal WebRequests.WebRequest.Client _client;
-		internal bool _finishedProcessing;
-		internal bool _disposed;
+		private Timer _timer;
+		private int _index;
 
-		public override void Start()
+		public void Init()
 		{
-			foreach (var url in ImageUrls)
-			{
-				_urlQueue.Enqueue(url);
-			}
-
-			base.Start();
+			DoTimer();
 		}
-		public override void ThreadFunction()
+		public void DoNext()
 		{
-			base.ThreadFunction();
+			Processed++;
 
-			_client = new WebRequests.WebRequest.Client();
+			if (Processed > ImageUrls.Count)
 			{
-				_client.Headers.Add("User-Agent", Community.Runtime.Analytics.UserAgent);
-				_client.Credentials = CredentialCache.DefaultCredentials;
-				_client.Proxy = null;
-
-				_client.DownloadDataCompleted += (_, e) =>
-				{
-					_processed++;
-
-					if (e.Error != null)
-					{
-						return;
-					}
-
-					Result.Add(new QueuedThreadResult
-					{
-						Url = (string)e.UserState,
-						Data = e.Result
-					});
-
-					_doQueue();
-				};
-
-				_doQueue();
-			}
-
-			while (_processed != ImageUrls.Count)
-			{
-			}
-
-			_client.Dispose();
-			_client = null;
-
-			while (!_finishedProcessing)
-			{
-			}
-		}
-		public override void Dispose()
-		{
-			ImageUrls.Clear();
-			Result.Clear();
-			_urlQueue.Clear();
-			_client?.Dispose();
-			_finishedProcessing = default;
-			_disposed = true;
-
-			ImageUrls = null;
-			Result = null;
-			_urlQueue = null;
-
-			base.Dispose();
-		}
-
-		internal void _doQueue()
-		{
-			if (_urlQueue.Count == 0)
-			{
+				IsDone = true;
 				return;
 			}
 
-			var url = _urlQueue.Dequeue();
+			var url = ImageUrls[_index];
 
-			try
+			Client.DownloadDataAsync(new Uri(url), url);
+			_index++;
+		}
+		public void DoTimer()
+		{
+			_timer = Community.Runtime.Core.timer.In(Singleton.ConfigInstance.TimeoutPerUrl * ImageUrls.Count, () =>
 			{
-				_client.DownloadDataAsync(new Uri(url), url);
-			}
-			catch (Exception exception)
-			{
-				Logger.Error($"Failed enqueuing '{url}'", exception);
-			}
+				if (IsDone)
+				{
+					return;
+				}
+
+				try
+				{
+					if (Result.Count > 0)
+					{
+						ResultAction?.Invoke(Result);
+					}
+
+					Dispose();
+				}
+				catch (Exception ex)
+				{
+					Logger.Error($"Failed timeout process", ex);
+				}
+			});
+		}
+
+		public void Dispose()
+		{
+			_timer?.Dispose();
+			Client?.Dispose();
 		}
 	}
-	public class QueuedThreadResult : IDisposable
+	public class ImageQueueResult : IDisposable
 	{
 		public string Url { get; set; }
 		public byte[] Data { get; set; }

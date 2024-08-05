@@ -1,17 +1,10 @@
 ﻿using Carbon.Profiler;
-using Timer = Oxide.Plugins.Timer;
-
-/*
- *
- * Copyright (c) 2022-2023 Carbon Community
- * All rights reserved.
- *
- */
 
 namespace Carbon.Core;
+
 #pragma warning disable IDE0051
 
-public partial class CorePlugin : CarbonPlugin
+public partial class CorePlugin
 {
 	public static MonoProfiler.Sample ProfileSample = MonoProfiler.Sample.Create();
 
@@ -49,6 +42,7 @@ public partial class CorePlugin : CarbonPlugin
 			Analytics.profiler_ended(flags, MonoProfiler.CurrentDurationTime.TotalSeconds, false);
 			MonoProfiler.ToggleProfiling(flags);
 			ProfileSample.Resample();
+			MonoProfiler.Clear();
 			return;
 		}
 
@@ -63,6 +57,7 @@ public partial class CorePlugin : CarbonPlugin
 			{
 				Analytics.profiler_ended(flags, duration, true);
 				ProfileSample.Resample();
+				MonoProfiler.Clear();
 			});
 			Analytics.profiler_started(flags, true);
 		}
@@ -82,7 +77,7 @@ public partial class CorePlugin : CarbonPlugin
 		ProfileSample.Clear();
 	}
 
-	[ConsoleCommand("profiler.print", "If any parsed data available, it'll print basic and advanced information.")]
+	[ConsoleCommand("profiler.print", "If any parsed data available, it'll print basic and advanced information. Include -f to print to file. (-c=CSV, -j=JSON, -t=Table, -p=ProtoBuf [default])")]
 	[AuthLevel(2)]
 	private void ProfilerPrint(ConsoleSystem.Arg arg)
 	{
@@ -93,49 +88,44 @@ public partial class CorePlugin : CarbonPlugin
 		}
 
 		var mode = arg.GetString(0);
-		var toFile = arg.HasArg("-f");
-		var output = string.Empty;
 
 		switch (mode)
 		{
 			case "-c":
-				output = $"{ProfileSample.Assemblies.ToCSV()}{(toFile ? $"\n{ProfileSample.Calls.ToCSV()}\n{ProfileSample.Memory.ToCSV()}" : string.Empty)}";
-				if (toFile) WriteFileString("csv", output); else arg.ReplyWith(output);
+				arg.ReplyWith(WriteFileString("csv", ProfileSample.ToCSV()));
 				break;
 
 			case "-j":
-				// patret magic
+				arg.ReplyWith(WriteFileString("json", ProfileSample.ToJson(true)));
 				break;
 
-			case "-p":
-				// patret magic
+			case "-t":
+				arg.ReplyWith(WriteFileString("txt", ProfileSample.ToTable()));
 				break;
 
 			default:
-			case "-t":
-				output = $"{ProfileSample.Assemblies.ToTable()}{(toFile ? $"\n\n{ProfileSample.Calls.ToTable()}\n{ProfileSample.Memory.ToCSV()}" : string.Empty)}";
-				if (toFile) WriteFileString("txt", output); else arg.ReplyWith(output);
+			case "-p":
+				arg.ReplyWith(WriteFileBytes(MonoProfiler.ProfileExtension, ProfileSample.ToProto()));
 				break;
 
 		}
 
-		static void WriteFileString(string extension, string data)
+		static string WriteFileString(string extension, string data)
 		{
 			var date = DateTime.Now;
 			var file = Path.Combine(Defines.GetProfilesFolder(), $"profile-{date.Year}_{date.Month}_{date.Day}_{date.Hour}{date.Minute}{date.Second}.{extension}");
 			OsEx.File.Create(file, data);
 
-			Logger.Warn($" Stored output at {file}");
+			return $"Exported profile output at '{file}'";
 		}
-		// static void WriteFileByte(ConsoleSystem.Arg arg, string extension, byte[] data)
-		// {
-		// 	var date = DateTime.Now;
-		// 	var file = Path.Combine(Defines.GetRustRootFolder(),
-		// 		$"profile-{date.Year}_{date.Month}_{date.Day}_{date.Hour}{date.Minute}{date.Second}.{extension}");
-		// 	OsEx.File.Create(file, data);
+		static string WriteFileBytes(string extension, byte[] data)
+		{
+			var date = DateTime.Now;
+			var file = Path.Combine(Defines.GetProfilesFolder(), $"profile-{date.Year}_{date.Month}_{date.Day}_{date.Hour}{date.Minute}{date.Second}.{extension}");
+			OsEx.File.Create(file, data);
 
-		// 	Logger.Log($"Saved at {file}");
-		// }
+			return $"Exported profile output at '{file}'";
+		}
 	}
 
 	[ConsoleCommand("profiler.tracks", "All tracking lists present in the config which are used by the Mono profiler for tracking.")]

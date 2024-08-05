@@ -1,17 +1,9 @@
 ﻿using API.Events;
-using Carbon.Client;
 using Application = UnityEngine.Application;
 using CommandLine = Carbon.Components.CommandLine;
-using Timer = Oxide.Plugins.Timer;
-
-/*
- *
- * Copyright (c) 2022-2023 Carbon Community
- * All rights reserved.
- *
- */
 
 namespace Carbon.Core;
+
 #pragma warning disable IDE0051
 
 public partial class CorePlugin : CarbonPlugin
@@ -165,8 +157,6 @@ public partial class CorePlugin : CarbonPlugin
 				}
 			}
 		}
-
-		Community.Runtime.CarbonClientManager.OnDisconnected(player.Connection);
 	}
 	private void OnPluginLoaded(Plugin plugin)
 	{

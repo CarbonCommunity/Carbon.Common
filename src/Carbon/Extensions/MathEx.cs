@@ -1,11 +1,4 @@
-﻿/*
- *
- * Copyright (c) 2022-2023 Carbon Community
- * All rights reserved.
- *
- */
-
-namespace Carbon.Extensions;
+﻿namespace Carbon.Extensions;
 
 public static class MathEx
 {
@@ -80,6 +73,31 @@ public static class MathEx
 		var newValue = (oldValue - oldMin) * newRange / oldRange + newMin;
 
 		return newValue;
+	}
+
+	public static ulong Max(ulong a, ulong b)
+	{
+		return a > b ? a : b;
+	}
+	public static ulong Min(ulong a, ulong b)
+	{
+		return a < b ? a : b;
+	}
+	public static uint Max(uint a, uint b)
+	{
+		return a > b ? a : b;
+	}
+	public static uint Min(uint a, uint b)
+	{
+		return a < b ? a : b;
+	}
+	public static double Max(double a, double b)
+	{
+		return a > b ? a : b;
+	}
+	public static double Min(double a, double b)
+	{
+		return a < b ? a : b;
 	}
 
 	public static int RoundUpToNearest(this int value, int nearest)

@@ -1,18 +1,10 @@
 ﻿using System.Net;
 using System.Text;
-using Facepunch;
 using Logger = Carbon.Logger;
 
-/*
- *
- * Copyright (c) 2022-2023 Carbon Community
- * All rights reserved.
- *
- */
+namespace Oxide.Core.Libraries;
 
 #pragma warning disable CS4014
-
-namespace Oxide.Core.Libraries;
 
 public enum RequestMethod
 {

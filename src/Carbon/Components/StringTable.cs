@@ -1,12 +1,5 @@
 ﻿using System.Text;
 
-/*
- *
- * Copyright (c) 2022-2024 Carbon Community 
- * All rights reserved.
- *
- */
-
 namespace Carbon.Components;
 
 public struct StringTable : IDisposable

@@ -1,13 +1,4 @@
-﻿/*
- *
- * Copyright (c) 2022-2024 Carbon Community
- * All rights reserved.
- *
- */
-
-using HarmonyLib;
-
-namespace Carbon.Plugins;
+﻿namespace Carbon.Plugins;
 
 public class CarbonPlugin : RustPlugin
 {

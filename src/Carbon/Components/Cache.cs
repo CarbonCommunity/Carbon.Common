@@ -1,14 +1,8 @@
 ﻿namespace Carbon;
 
-/*
- *
- * Copyright (c) 2022-2024 Carbon Community
- * All rights reserved.
- *
- */
-
-using System.Linq.Expressions;
-
+/// <summary>
+/// Boxing cache of unmanaged values. Very helpful for reducing memory allocations for hooks returning an object.
+/// </summary>
 public class Cache
 {
 	public static readonly object False = false;

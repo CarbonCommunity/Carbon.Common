@@ -1,13 +1,6 @@
 ﻿using ProtoBuf;
 using Logger = Carbon.Logger;
 
-/*
- *
- * Copyright (c) 2022-2023 Carbon Community 
- * All rights reserved.
- *
- */
-
 namespace Oxide.Core;
 
 public class ProtoStorage
@@ -38,12 +31,8 @@ public class ProtoStorage
 		{
 			if (File.Exists(fileDataPath))
 			{
-				T result;
-				using (var fileStream = new MemoryStream(OsEx.File.ReadBytes(fileDataPath)))
-				{
-					result = Serializer.Deserialize<T>(fileStream);
-				}
-				return result;
+				using var fileStream = new MemoryStream(OsEx.File.ReadBytes(fileDataPath));
+				return Serializer.Deserialize<T>(fileStream);
 			}
 		}
 		catch (Exception ex)
@@ -51,7 +40,7 @@ public class ProtoStorage
 			Logger.Error("Failed to load protobuf data from " + fileName, ex);
 		}
 
-		return default(T);
+		return default;
 	}
 
 	public static void Save<T>(T data, params string[] subPaths)
@@ -67,10 +56,10 @@ public class ProtoStorage
 				Directory.CreateDirectory(directoryName);
 			}
 
-			var mode = File.Exists(fileDataPath) ? FileMode.Truncate : FileMode.Create;
 			using var stream = new MemoryStream();
 			Serializer.Serialize(stream, data);
-			OsEx.File.Create(fileDataPath, stream.ToArray());
+			using var temp = TempArray<byte>.New(stream.ToArray());
+			OsEx.File.Create(fileDataPath, temp.array);
 		}
 		catch (Exception ex)
 		{

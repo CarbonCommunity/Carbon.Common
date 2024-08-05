@@ -1,12 +1,8 @@
-﻿/*
- *
- * Copyright (c) 2022-2024 Carbon Community  
- * All rights reserved.
- *
- */
+﻿namespace Carbon.Components;
 
-namespace Carbon.Components;
-
+/// <summary>
+/// Debug-only tool for tracking a block of code's memory allocation and warns when the value goes beyond the threshold.
+/// </summary>
 public struct MemoryMeasure : IDisposable
 {
 #if DEBUG

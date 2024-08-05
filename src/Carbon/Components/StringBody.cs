@@ -1,11 +1,4 @@
-﻿/*
- *
- * Copyright (c) 2022-2024 Carbon Community  
- * All rights reserved.
- *
- */
-
-namespace Carbon.Components;
+﻿namespace Carbon.Components;
 
 public struct StringBody : IDisposable
 {
@@ -112,7 +105,7 @@ public struct StringBody : IDisposable
 
 	public void Dispose()
 	{
-		Items.Clear();
+		_items.Clear();
 		_items = null;
 	}
 }

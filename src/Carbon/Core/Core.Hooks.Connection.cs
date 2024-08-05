@@ -1,16 +1,10 @@
-﻿/*
- *
- * Copyright (c) 2022-2023 Carbon Community
- * All rights reserved.
- *
- */
-
-using Connection = Network.Connection;
+﻿using Connection = Network.Connection;
 
 namespace Carbon.Core;
+
 #pragma warning disable IDE0051
 
-public partial class CorePlugin : CarbonPlugin
+public partial class CorePlugin
 {
 	internal static object IOnPlayerConnected(BasePlayer player)
 	{
@@ -47,8 +41,6 @@ public partial class CorePlugin : CarbonPlugin
 			ConnectionAuth.Reject(connection, (obj4 is string) ? obj4.ToString() : "Connection was rejected", null);
 			return Cache.True;
 		}
-
-		Community.Runtime.CarbonClientManager.OnConnected(connection);
 
 		// OnUserApprove
 		if (HookCaller.CallStaticHook(2666432541, connection) != null)

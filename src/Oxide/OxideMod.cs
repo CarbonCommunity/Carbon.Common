@@ -1,16 +1,7 @@
-﻿/*
- *
- * Copyright (c) 2022-2023 Carbon Community
- * All rights reserved.
- *
- */
-
-using System.Collections.Concurrent;
-using System.Runtime.CompilerServices;
+﻿using System.Collections.Concurrent;
 using Newtonsoft.Json;
 using Oxide.Core.Extensions;
 using Oxide.Core.Logging;
-using Oxide.Plugins;
 using Logger = Carbon.Logger;
 
 namespace Oxide.Core;
