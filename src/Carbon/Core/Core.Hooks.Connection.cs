@@ -67,11 +67,6 @@ public partial class CorePlugin
 		// OnUserRespawn
 		return HookCaller.CallStaticHook(3398288406, basePlayer.AsIPlayer());
 	}
-	private string OnPlayerRespawn(BasePlayer basePlayer, object myValue)
-	{
-		// OnUserRespawn
-		return "test";
-	}
 	private void OnPlayerRespawned(BasePlayer basePlayer)
 	{
 		// OnUserRespawned
