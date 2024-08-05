@@ -1,15 +1,8 @@
-﻿/*
- *
- * Copyright (c) 2024 Carbon Community
- * All rights reserved.
- *
- */
-
-using Carbon.Test;
+﻿using Carbon.Test;
 
 namespace Carbon.Core;
 
-public partial class CorePlugin : CarbonPlugin
+public partial class CorePlugin
 {
 	[ConsoleCommand("test_beds", "Prints all currently queued up tests ready to be executed.")]
 	[AuthLevel(2)]

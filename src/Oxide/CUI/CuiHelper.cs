@@ -2,13 +2,6 @@
 using Newtonsoft.Json;
 using Formatting = Newtonsoft.Json.Formatting;
 
-/*
- *
- * Copyright (c) 2022-2023 Carbon Community
- * All rights reserved.
- *
- */
-
 namespace Oxide.Game.Rust.Cui;
 
 public static class CuiHelper

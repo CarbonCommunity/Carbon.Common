@@ -1,17 +1,8 @@
 ﻿#if !MINIMAL
 
-/*
-*
- * Copyright (c) 2022-2023 Carbon Community
- * All rights reserved.
- *
- */
-
-using Newtonsoft.Json;
-
 namespace Carbon.Modules;
 
-public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
+public partial class AdminModule
 {
 	public class EnvironmentTab
 	{

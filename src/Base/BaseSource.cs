@@ -1,13 +1,6 @@
-﻿/*
- *
- * Copyright (c) 2022-2024 Carbon Community 
- * All rights reserved.
- *
- */
+﻿namespace Carbon.Base;
 
-namespace Carbon.Base;
-
-public class BaseSource : IDisposable, ISource
+public class BaseSource : ISource
 {
 	public string ContextFilePath { get; set; }
 	public string ContextFileName { get; set; }

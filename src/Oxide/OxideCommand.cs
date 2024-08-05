@@ -1,12 +1,5 @@
 ﻿using API.Commands;
 
-/*
- *
- * Copyright (c) 2022-2023 Carbon Community 
- * All rights reserved.
- *
- */
-
 public class OxideCommand : AuthenticatedCommand
 {
 	public string Command { get { return Name; } set { Name = value; } }

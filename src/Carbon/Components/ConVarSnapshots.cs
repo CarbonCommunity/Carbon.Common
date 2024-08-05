@@ -1,14 +1,7 @@
-﻿/*
- *
- * Copyright (c) 2022-2024 Carbon Community
- * All rights reserved.
- *
- */
-
-namespace Carbon.Components;
+﻿namespace Carbon.Components;
 
 /// <summary>
-/// This is dedicated to take a snapshot of all default values of all Rust ConVars.
+/// A dedicated place of keeping track of all default Rust variable (ConVar) values.
 /// </summary>
 public class ConVarSnapshots
 {

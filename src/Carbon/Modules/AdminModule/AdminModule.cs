@@ -1,9 +1,4 @@
-﻿using API.Commands;
-using Carbon.Components.Graphics;
-using ConVar;
-using HarmonyLib;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json;
 using Oxide.Game.Rust.Cui;
 using UnityEngine.UI;
 using static Carbon.Components.CUI;
@@ -11,14 +6,8 @@ using static ConsoleSystem;
 using Color = UnityEngine.Color;
 using StringEx = Carbon.Extensions.StringEx;
 
-/*
- *
- * Copyright (c) 2022-2024 Carbon Community
- * All rights reserved.
- *
- */
-
 namespace Carbon.Modules;
+
 #pragma warning disable IDE0051
 
 public partial class AdminModule : CarbonModule<AdminConfig, AdminData>

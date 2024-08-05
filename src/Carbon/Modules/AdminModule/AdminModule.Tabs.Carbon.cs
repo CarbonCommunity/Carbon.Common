@@ -1,12 +1,6 @@
-﻿using System.Net;
-#if !MINIMAL
+﻿#if !MINIMAL
 
-/*
- *
- * Copyright (c) 2022-2023 Carbon Community
- * All rights reserved.
- *
- */
+using System.Net;
 
 namespace Carbon.Modules;
 
@@ -192,7 +186,7 @@ public partial class AdminModule
 								{
 									using var commands = TempArray<string>.New(action.Command.Split('|'));
 
-									foreach (var command in commands.Array)
+									foreach (var command in commands.array)
 									{
 										if (action.User)
 										{

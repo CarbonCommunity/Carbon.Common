@@ -1,13 +1,4 @@
-﻿/*
- *
- * Copyright (c) 2024 Carbon Community
- * All rights reserved.
- *
- */
-
-using Newtonsoft.Json;
-
-namespace Carbon.Core;
+﻿namespace Carbon.Core;
 
 public static partial class ModLoader
 {

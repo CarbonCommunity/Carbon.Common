@@ -1,17 +1,9 @@
 ﻿using System.Text;
-using API.Assembly;
 using Carbon.Base.Interfaces;
-
-/*
- *
- * Copyright (c) 2022-2023 Carbon Community
- * All rights reserved.
- *
- */
 
 namespace Carbon.Core;
 
-public partial class CorePlugin : CarbonPlugin
+public partial class CorePlugin
 {
 	[ConsoleCommand("setmodule", "Enables or disables Carbon modules. Visit root/carbon/modules and use the config file names as IDs.")]
 	[AuthLevel(2)]
@@ -113,7 +105,7 @@ public partial class CorePlugin : CarbonPlugin
 			arg.ReplyWith($"Couldn't find that module.");
 			return;
 		}
-		
+
 		try
 		{
 			module.Load();

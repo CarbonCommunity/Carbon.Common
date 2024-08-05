@@ -1,11 +1,4 @@
-﻿/*
- *
- * Copyright (c) 2022-2023 Carbon Community
- * All rights reserved.
- *
- */
-
-namespace Carbon.Hooks;
+﻿namespace Carbon.Hooks;
 
 public sealed class Updater
 {

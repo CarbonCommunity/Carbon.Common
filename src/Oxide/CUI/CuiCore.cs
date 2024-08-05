@@ -4,13 +4,6 @@ using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
 using UnityEngine.UI;
 
-/*
- *
- * Copyright (c) 2022-2023 Carbon Community
- * All rights reserved.
- *
- */
-
 namespace Oxide.Game.Rust.Cui;
 
 public class ComponentConverter : JsonConverter

@@ -1,12 +1,5 @@
 ﻿using Formatter = Oxide.Core.Libraries.Covalence.Formatter;
 
-/*
- *
- * Copyright (c) 2022-2023 Carbon Community 
- * All rights reserved.
- *
- */
-
 namespace Oxide.Game.Rust.Libraries;
 
 public class Server : Library

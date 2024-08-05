@@ -1,12 +1,4 @@
-﻿using Facepunch;
-using Logger = Carbon.Logger;
-
-/*
- *
- * Copyright (c) 2022-2023 Carbon Community
- * All rights reserved.
- *
- */
+﻿using Logger = Carbon.Logger;
 
 namespace Oxide.Plugins;
 

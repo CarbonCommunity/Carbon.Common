@@ -1,13 +1,5 @@
 ﻿using static Oxide.Plugins.CovalencePlugin;
-using Formatter = Oxide.Core.Libraries.Covalence.Formatter;
 using Logger = Carbon.Logger;
-
-/*
- *
- * Copyright (c) 2022-2023 Carbon Community
- * All rights reserved.
- *
- */
 
 namespace Oxide.Plugins
 {

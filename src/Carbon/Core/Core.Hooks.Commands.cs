@@ -1,18 +1,12 @@
-﻿/*
- *
- * Copyright (c) 2022-2023 Carbon Community
- * All rights reserved.
- *
- */
-
-using API.Commands;
+﻿using API.Commands;
 using ConVar;
 using Command = API.Commands.Command;
 
 namespace Carbon.Core;
+
 #pragma warning disable IDE0051
 
-public partial class CorePlugin : CarbonPlugin
+public partial class CorePlugin
 {
 	public static object IOnPlayerCommand(BasePlayer player, string message, Command.Prefix prefix)
 	{
