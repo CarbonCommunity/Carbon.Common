@@ -137,39 +137,6 @@ public static class HookCaller
 		return finalValue;
 	}
 
-	public static Dictionary<uint, CachedMethod> subscribees = new();
-
-	public unsafe struct CachedMethod
-	{
-		BaseHookable plugin;
-		delegate*<object, object[]> func;
-
-		public static CachedMethod Get(BaseHookable hookable, MethodInfo hookMethod)
-		{
-			CachedMethod instance = default;
-			instance.plugin = hookable;
-			instance.func = null;
-			return instance;
-		}
-
-		public static unsafe delegate*<BaseHookable, object[], object> GetFuncPtr(MethodInfo method)
-		{
-			if (method.ReturnType == typeof(object) && method.GetParameters().Length == 1 &&
-				method.GetParameters()[0].ParameterType == typeof(object[]) && !method.IsVirtual && method.DeclaringType.IsAssignableFrom(typeof(BaseHookable)) && !method.IsStatic)
-			{
-				return (delegate*<BaseHookable, object[], object>)method.MethodHandle.GetFunctionPointer();
-			}
-
-			throw new InvalidOperationException("GetFuncPtr");
-		}
-	}
-
-	public unsafe static object DoCallTest(BaseHookable plugin, object[] args)
-	{
-		delegate*<BaseHookable, object[], object> ptr = CachedMethod.GetFuncPtr(typeof(TestPlugin).GetMethod("HookFunc"));
-		return ptr(plugin, args);
-	}
-
 	private static object CallStaticHook(uint hookId, BindingFlags flag = BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public, object[] args = null)
 	{
 		if (Community.Runtime == null || Community.Runtime.ModuleProcessor == null)
