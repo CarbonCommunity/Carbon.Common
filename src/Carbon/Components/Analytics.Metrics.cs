@@ -4,6 +4,9 @@ namespace Carbon.Components;
 
 public partial struct Analytics
 {
+	/// <summary>
+	/// Metric executed whenever the server started up. Sends anonymous information about Carbon and Rust versions.
+	/// </summary>
 	public static void on_server_startup()
 	{
 		if (!Enabled)
@@ -19,6 +22,10 @@ public partial struct Analytics
 			Submit("on_server_startup");
 
 	}
+
+	/// <summary>
+	/// Metric executed when the server is fully initialized. Sends anonymous information about overall plugin, extension, module and hook count and initial plugin hook memory and time usage.
+	/// </summary>
 	public static void on_server_initialized()
 	{
 		if (!Enabled)
@@ -35,6 +42,10 @@ public partial struct Analytics
 			Include("hook_count", Community.Runtime.HookManager.LoadedDynamicHooks.Count(x => x.IsInstalled) + Community.Runtime.HookManager.LoadedStaticHooks.Count(x => x.IsInstalled)).
 			Submit("on_server_initialized");
 	}
+
+	/// <summary>
+	/// Metric executed whenever a plugin constructor fails. A rare error but we anonymously track it to identify potential issues.
+	/// </summary>
 	public static void plugin_constructor_failure(RustPlugin plugin)
 	{
 		if (!Enabled)
@@ -46,6 +57,10 @@ public partial struct Analytics
 			Include("plugin", $"{plugin.Name} v{plugin.Version} by {plugin.Author}")
 			.Submit("plugin_constructor_failure");
 	}
+
+	/// <summary>
+	/// Metric executed when a plugin loading batch finalized, giving us anonymous statistics about base plugin types used overall (RustPlugin, CovalencePlugin and CarbonPlugin).
+	/// </summary>
 	public static void batch_plugin_types()
 	{
 		if (!Enabled)
@@ -70,7 +85,11 @@ public partial struct Analytics
 			Include("carbonplugin", $"{carbonPluginCount:n0}").
 			Submit("batch_plugin_types");
 	}
-	public static void plugin_time_warn(string readableHook, Plugin basePlugin, double afterHookTime, double totalMemory, BaseHookable.CachedHook cachedHook, BaseHookable hookable, bool lagSpike)
+
+	/// <summary>
+	/// Metric executed when a major time warning caused by a plugin occurs.
+	/// </summary>
+	public static void plugin_time_warn(string readableHook, Plugin basePlugin, double afterHookTime, double totalMemory, bool lagSpike, BaseHookable.CachedHook cachedHook, BaseHookable hookable)
 	{
 		if (!Enabled)
 		{
@@ -86,6 +105,10 @@ public partial struct Analytics
 			Include("lagspike", lagSpike).
 			Submit("plugin_time_warn");
 	}
+
+	/// <summary>
+	/// Metric executed whenever a Carbon-specific error occurred in the compilation process.
+	/// </summary>
 	public static void plugin_native_compile_fail(ISource initialSource, Exception ex)
 	{
 		if (!Enabled)
@@ -98,6 +121,10 @@ public partial struct Analytics
 			Include("stacktrace", $"({ex.Message}) {ex.StackTrace}").
 			Submit("plugin_native_compile_fail");
 	}
+
+	/// <summary>
+	/// Metric executed whenever an administrator is skipping the AdminModule splash screen panel.
+	/// </summary>
 	public static void admin_module_wizard(WizardProgress progress)
 	{
 		if (!Enabled)
@@ -110,6 +137,10 @@ public partial struct Analytics
 			Include("skipped", progress == WizardProgress.Skipped).
 			Submit("admin_module_wizard");
 	}
+
+	/// <summary>
+	/// Metric executed when the Carbon mono-profiler gets started.
+	/// </summary>
 	public static void profiler_started(MonoProfiler.ProfilerArgs args, bool timed)
 	{
 		if (!Enabled)
@@ -127,6 +158,10 @@ public partial struct Analytics
 			Include("args", $"{args} {timed}t").
 			Submit("profiler_started");
 	}
+
+	/// <summary>
+	/// Metric executed whenever the Carbon mono-profiler get stopped.
+	/// </summary>
 	public static void profiler_ended(MonoProfiler.ProfilerArgs args, double duration, bool timed)
 	{
 		if (!Enabled)
@@ -145,6 +180,10 @@ public partial struct Analytics
 			Include("duration", $"{TimeEx.Format(duration).ToLower()}").
 			Submit("profiler_started");
 	}
+
+	/// <summary>
+	/// Metric executed whenever the Carbon mono-profiler timeline started.
+	/// </summary>
 	public static void profiler_tl_started(MonoProfiler.ProfilerArgs args)
 	{
 		if (!Enabled)
@@ -163,6 +202,10 @@ public partial struct Analytics
 			Submit("profiler_tl_started");
 
 	}
+
+	/// <summary>
+	/// Metric executed whenever the Carbon mono-profiler timeline stopped.
+	/// </summary>
 	public static void profiler_tl_ended(MonoProfiler.ProfilerArgs args, double duration, MonoProfiler.TimelineRecording.StatusTypes status)
 	{
 		if (!Enabled)

@@ -9,6 +9,13 @@ namespace Carbon.Components;
 
 public partial class MonoProfiler
 {
+	/// <summary>
+	/// Rust-side native protocol.
+	/// </summary>
 	public const int NATIVE_PROTOCOL = 3;
+
+	/// <summary>
+	/// Managed-side protocol. Primarily used by locally stored profiles.
+	/// </summary>
 	public const int MANAGED_PROTOCOL = NATIVE_PROTOCOL + 123;
 }

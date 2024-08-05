@@ -20,6 +20,10 @@ using Timer = Oxide.Plugins.Timer;
 
 namespace Carbon.Components;
 
+/// <summary>
+/// Carbon MonoProfiler tracking assembly, call, memory and GC information.
+/// It directly interacts with Carbon's Native Rust-written library to start and stop tracking at a native level, making customized tracking as lightweight as it can get.
+/// </summary>
 [SuppressUnmanagedCodeSecurity]
 public static unsafe partial class MonoProfiler
 {
@@ -57,6 +61,9 @@ public static unsafe partial class MonoProfiler
 		UnknownError = 6,
 	}
 
+	/// <summary>
+	/// Assembly information provided by memory or call output data.
+	/// </summary>
 	public class AssemblyNameEntry
 	{
 		public string name;
@@ -70,6 +77,9 @@ public static unsafe partial class MonoProfiler
 		}
 	}
 
+	/// <summary>
+	/// Assembly record dataset.
+	/// </summary>
 	public class AssemblyOutput : List<AssemblyRecord>
 	{
 		public bool AnyValidRecords => Count > 0;
@@ -165,6 +175,9 @@ public static unsafe partial class MonoProfiler
 		}
 	}
 
+	/// <summary>
+	/// Call record dataset.
+	/// </summary>
 	public class CallOutput : List<CallRecord>
 	{
 		public bool AnyValidRecords => Count > 0;
@@ -282,6 +295,9 @@ public static unsafe partial class MonoProfiler
 		}
 	}
 
+	/// <summary>
+	/// Memory record dataset.
+	/// </summary>
 	public class MemoryOutput : List<MemoryRecord>
 	{
 		public MemoryOutput Compare(MemoryOutput other)
@@ -374,6 +390,9 @@ public static unsafe partial class MonoProfiler
 		}
 	}
 
+	/// <summary>
+	/// Used to identify dynamically managed and processed assemblies (such as plugins, hotloadable extensions/harmony mods) whenever they get hotloaded or assemblies with the same name get reloaded with changes.
+	/// </summary>
 	public class RuntimeAssemblyBank : ConcurrentDictionary<string, int>
 	{
 		public string Increment(string value)
@@ -382,6 +401,9 @@ public static unsafe partial class MonoProfiler
 		}
 	}
 
+	/// <summary>
+	/// Rust-returned dataset structure of a GC record, tracking total calls and time taken in the recording time period.
+	/// </summary>
 	[StructLayout(LayoutKind.Sequential)]
 	public struct GCRecord
 	{
@@ -444,6 +466,9 @@ public static unsafe partial class MonoProfiler
 		public string GetTotalTime() => total_time_ms_str ??= (total_time_ms < 10 ? $"{total_time:n0}μs" : $"{total_time_ms:n0}ms");
 	}
 
+	/// <summary>
+	/// Rust-returned dataset structure of an Assembly record, tracking total time, time percentage, exceptions, call and allocations taken in the recording time period.
+	/// </summary>
 	[StructLayout(LayoutKind.Sequential)]
 	public struct AssemblyRecord
 	{
@@ -475,6 +500,9 @@ public static unsafe partial class MonoProfiler
 		public string GetTotalTime() => total_time_ms_str ??= total_time_ms < 10 ? $"{total_time:n0}μs" : $"{total_time_ms:n0}ms";
 	}
 
+	/// <summary>
+	/// Rust-returned dataset structure of a Memory record, tracking allocations, total allocation size, instance size and class token identifier taken in the recording time period.
+	/// </summary>
 	[StructLayout(LayoutKind.Sequential)]
 	public struct MemoryRecord
 	{
@@ -499,6 +527,9 @@ public static unsafe partial class MonoProfiler
 		[JsonIgnore] public bool IsValid => assembly_name != null;
 	}
 
+	/// <summary>
+	/// Rust-returned dataset structure of a Call record, tracking total time, its percentage, own time (+ percentage), calls, total and own allocations, total and own exceptions and assembly + method information taken in the recording time period.
+	/// </summary>
 	[StructLayout(LayoutKind.Sequential)]
 	public struct CallRecord
 	{
@@ -542,6 +573,9 @@ public static unsafe partial class MonoProfiler
 		public string GetOwnTime() => own_time_ms_str ??= own_time_ms < 10 ? $"{own_time:n0}μs" : $"{own_time_ms:n0}ms";
 	}
 
+	/// <summary>
+	/// Don't touch it.
+	/// </summary>
 	[StructLayout(LayoutKind.Explicit)]
 	public struct MonoImageUnion
 	{
@@ -551,6 +585,9 @@ public static unsafe partial class MonoProfiler
 		public MonoImage* ptr;
 	}
 
+	/// <summary>
+	/// Don't touch it.
+	/// </summary>
 	[StructLayout(LayoutKind.Sequential)]
 	public readonly struct MonoImage
 	{
@@ -571,6 +608,9 @@ public static unsafe partial class MonoProfiler
 		}
 	}
 
+	/// <summary>
+	/// Don't touch it.
+	/// </summary>
 	[StructLayout(LayoutKind.Sequential)]
 	public readonly struct MonoMethod
 	{
@@ -661,6 +701,9 @@ public static unsafe partial class MonoProfiler
 		}
 	}
 
+	/// <summary>
+	/// Clears currently collected and Rust-returned information.
+	/// </summary>
 	public static void Clear()
 	{
 		AssemblyRecords.Clear();

@@ -33,7 +33,7 @@ public partial class AdminModule
 				using var lines = TempArray<string>.New(content.Split('\n'));
 				var temp = Pool.GetList<string>();
 
-				var resultContent = lines.Array.ToString("\n");
+				var resultContent = lines.array.ToString("\n");
 
 				for (int i = 0; i < lines.Length; i++) temp.Add($"{i + 1}");
 
@@ -65,7 +65,7 @@ public partial class AdminModule
 				cui.CreatePanel(container, scrollview, "0.2 0.2 0.2 1", xMin: 0, xMax: 0, OxMin: 29, OxMax: 30);
 				cui.CreatePanel(container, blur, "0.2 0.2 0.2 1", xMin: 0, xMax: 0, OxMin: 29, OxMax: 30, yMin: 0.96f);
 
-				var longestLine = lines.Array.Max(x => x.Length);
+				var longestLine = lines.array.Max(x => x.Length);
 				var height = -(11.2f * lines.Length.Clamp(45, int.MaxValue));
 				var width = 2.75f * longestLine.Clamp(547, int.MaxValue);
 

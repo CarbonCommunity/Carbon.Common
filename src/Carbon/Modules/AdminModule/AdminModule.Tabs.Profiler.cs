@@ -1049,11 +1049,11 @@ public partial class AdminModule
 
 				if (ProfilerTab.sample.IsCleared)
 				{
-					ProfilerTab.sample = MonoProfiler.Sample.Load(buffer.Array);
+					ProfilerTab.sample = MonoProfiler.Sample.Load(buffer.array);
 				}
 				else
 				{
-					var comparingSample = MonoProfiler.Sample.Load(buffer.Array);
+					var comparingSample = MonoProfiler.Sample.Load(buffer.array);
 					ProfilerTab.sample = ProfilerTab.sample.Compare(comparingSample);
 				}
 

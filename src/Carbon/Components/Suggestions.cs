@@ -2,6 +2,9 @@
 
 namespace Carbon.Components;
 
+/// <summary>
+/// Cache based suggestion system used to return confidence based data.
+/// </summary>
 public class Suggestions
 {
 	public static BufferBank Buffer = new();

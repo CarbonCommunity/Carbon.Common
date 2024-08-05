@@ -141,8 +141,8 @@ public class Community
 		if (string.IsNullOrEmpty(name)) return string.Empty;
 
 		using var split = TempArray<string>.New(name.Split(' '));
-		var command = split.Array[0];
-		var arguments = split.Array.Skip(1).ToString(" ");
+		var command = split.array[0];
+		var arguments = split.array.Skip(1).ToString(" ");
 
 		return $"carbonprotecc_{RandomEx.GetRandomString(command.Length, command + RuntimeId, command.Length)} {arguments}".TrimEnd();
 	}

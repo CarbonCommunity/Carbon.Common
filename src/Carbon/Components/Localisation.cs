@@ -1,5 +1,8 @@
 ﻿namespace Carbon.Components;
 
+/// <summary>
+/// Central place for Carbon-related localized text of Core plugin and components.
+/// </summary>
 public struct Localisation
 {
 	internal static CorePlugin Core => Community.Runtime.Core;

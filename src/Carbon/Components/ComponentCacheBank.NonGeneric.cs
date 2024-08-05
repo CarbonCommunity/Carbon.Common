@@ -1,5 +1,8 @@
 ﻿namespace Carbon.Components;
 
+/// <summary>
+/// General implementation of the ComponentCache Carbon component.
+/// </summary>
 public static class ComponentCacheBankNonGeneric
 {
 	public static List<IComponentBank> All = new();

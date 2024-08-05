@@ -2,6 +2,9 @@
 
 namespace Carbon.Components;
 
+/// <summary>
+/// Carbon-specific command handling of command line commands.
+/// </summary>
 public static class CommandLine
 {
 	internal static readonly string[] _emptyArgs = new string[0];
@@ -17,7 +20,7 @@ public static class CommandLine
 			Logger.Log($" Executing {commands.Length:n0} {commands.Length.Plural("command", "commands")} for the '{@switch}' switch ({context}):");
 		}
 
-		ExecuteCommands(commands.Array);
+		ExecuteCommands(commands.array);
 	}
 
 	public static void ExecuteCommands(string[] commands)
@@ -38,7 +41,7 @@ public static class CommandLine
 				{
 					var commandArgs = Facepunch.Pool.Get<PlayerArgs>();
 					commandArgs.Type = cmd.Type;
-					commandArgs.Arguments = split.Array.Skip(1)?.ToArray() ?? _emptyArgs;
+					commandArgs.Arguments = split.array.Skip(1)?.ToArray() ?? _emptyArgs;
 					commandArgs.PrintOutput = true;
 					commandArgs.IsServer = true;
 					commandArgs.IsRCon = true;

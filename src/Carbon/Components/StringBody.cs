@@ -105,7 +105,7 @@ public struct StringBody : IDisposable
 
 	public void Dispose()
 	{
-		Items.Clear();
+		_items.Clear();
 		_items = null;
 	}
 }

@@ -2,33 +2,33 @@
 
 public class TempArray<T> : IDisposable
 {
-	public T[] Array;
+	public T[] array;
 
-	public bool IsEmpty => Array == null || Array.Length == 0;
+	public bool IsEmpty => array == null || array.Length == 0;
 
-	public int Length => IsEmpty ? 0 : Array.Length;
+	public int Length => IsEmpty ? 0 : array.Length;
 
 	public T Get(int index, T @default = default)
 	{
-		return index > Array.Length - 1 ? @default : Array[index];
+		return index > array.Length - 1 ? @default : array[index];
 	}
 
 	public static TempArray<T> New(T[] array)
 	{
 		return new TempArray<T>
 		{
-			Array = array
+			array = array
 		};
 	}
 
 	public void Dispose()
 	{
-		if (Array == null)
+		if (array == null)
 		{
 			return;
 		}
 
-		System.Array.Clear(Array, 0, Array.Length);
-		Array = null;
+		System.Array.Clear(array, 0, array.Length);
+		array = null;
 	}
 }

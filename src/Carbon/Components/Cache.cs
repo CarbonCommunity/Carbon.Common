@@ -1,5 +1,8 @@
 ﻿namespace Carbon;
 
+/// <summary>
+/// Boxing cache of unmanaged values. Very helpful for reducing memory allocations for hooks returning an object.
+/// </summary>
 public class Cache
 {
 	public static readonly object False = false;

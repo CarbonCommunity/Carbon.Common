@@ -4,6 +4,10 @@ using ILogger = API.Logger.ILogger;
 
 namespace Carbon;
 
+/// <summary>
+/// Carbon base logger with the purpose of writing to console, RCon and file.
+/// Provides various useful eventful actions.
+/// </summary>
 public sealed class Logger : ILogger
 {
 	public static FileLogger CoreLog { get; set; }
@@ -197,7 +201,9 @@ public sealed class Logger : ILogger
 	public static void Error(object message, Exception ex = null)
 		=> Write(Severity.Error, message, ex);
 
-	// Interface implementation workaround for static methods.
+	/// <summary>
+	/// Implementation of console writing the message logs taking severity and exception information into account.
+	/// </summary>
 	void ILogger.Console(string message, Severity severity, Exception exception)
 	{
 		switch (severity)

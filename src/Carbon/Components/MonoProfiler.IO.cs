@@ -12,6 +12,9 @@ namespace Carbon.Components;
 
 public partial class MonoProfiler
 {
+	/// <summary>
+	/// Opens and reads a locally stored file's header to verify protocol, duration and if it's a compared file.
+	/// </summary>
 	public static bool ValidateFile(string file, out int protocol, out double duration, out bool isCompared)
 	{
 		try
@@ -44,6 +47,9 @@ public partial class MonoProfiler
 		return false;
 	}
 
+	/// <summary>
+	/// Serializes and compresses a sample, returning a byte buffer.
+	/// </summary>
 	public static byte[] SerializeSample(Sample sample)
 	{
 		using var memoryStream = new MemoryStream();
@@ -134,6 +140,9 @@ public partial class MonoProfiler
 		return memoryStream.ToArray();
 	}
 
+	/// <summary>
+	/// Decompresses and deserializes a sample using a provided buffer.
+	/// </summary>
 	public static Sample DeserializeSample(byte[] buffer)
 	{
 		using var memoryStream = new MemoryStream(buffer);
