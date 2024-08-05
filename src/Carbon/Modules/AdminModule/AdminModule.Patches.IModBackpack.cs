@@ -2,13 +2,6 @@
 
 using API.Hooks;
 
-/*
- *
- * Copyright (c) 2022-2023 Carbon Community
- * All rights reserved.
- *
- */
-
 namespace Carbon.Modules;
 
 public partial class AdminModule

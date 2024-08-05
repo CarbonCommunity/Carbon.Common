@@ -1,15 +1,8 @@
-﻿/*
- *
- * Copyright (c) 2022-2023 Carbon Community
- * All rights reserved.
- *
- */
-
-using API.Assembly;
+﻿using API.Assembly;
 
 namespace Carbon.Core;
 
-public partial class CorePlugin : CarbonPlugin
+public partial class CorePlugin
 {
 	[ConsoleCommand("harmonyload", "Loads a mod from 'carbon/harmony'. The equivalent of Rust's `harmony.load` that's been stripped away under framework management.")]
 	[AuthLevel(2)]
@@ -73,18 +66,12 @@ public partial class CorePlugin : CarbonPlugin
 	[AuthLevel(2)]
 	private void HarmonyMods(ConsoleSystem.Arg args)
 	{
-		using var table = new StringTable($"HarmonyMod ({Harmony.ModHooks.Count:n0})", "Version", "Assembly", "Type", "Method");
+		using var table = new StringTable($"HarmonyMod ({Harmony.ModHooks.Count:n0})", "Version", "Assembly");
 
-		foreach (var mod in Harmony.ModHooks)
+		foreach (var mod in Assemblies.Harmony)
 		{
-			var parentAssembly = mod.Key.GetName().Name;
-			var first = true;
-
-			foreach (var patch in Harmony.CurrentPatches.Where(x => x.Harmony == null && x.ParentAssemblyName.Equals(parentAssembly + ".dll")))
-			{
-				table.AddRow(first ? parentAssembly : string.Empty, first ? mod.Key.GetName().Version.ToString() : string.Empty, patch.AssemblyName, patch.TypeName, patch.MethodName);
-				first = false;
-			}
+			var name = mod.Value.CurrentAssembly.GetName();
+			table.AddRow(mod.Key, name.Version, name.Name);
 		}
 
 		args.ReplyWith($"{table.ToStringMinimal()}");

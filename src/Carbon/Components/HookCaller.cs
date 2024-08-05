@@ -1,22 +1,11 @@
-﻿using System.Collections.Concurrent;
-using System.Diagnostics;
-using System.Text;
+﻿using System.Text;
 using Carbon.Base.Interfaces;
-using ConVar;
-using Facepunch;
 using HarmonyLib;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using static Carbon.HookCallerCommon;
 using Pool = Facepunch.Pool;
-
-/*
- *
- * Copyright (c) 2022-2024 Carbon Community
- * All rights reserved.
- *
- */
 
 namespace Carbon;
 
@@ -44,7 +33,7 @@ public class HookCallerCommon
 
 		public object[] Take()
 		{
-			return _pool.Count != 0 ? _pool.Dequeue() : new object[_length];
+			return _pool.Count > 0 ? _pool.Dequeue() : new object[_length];
 		}
 		public void Return(object[] array)
 		{
@@ -150,7 +139,10 @@ public static class HookCaller
 
 	private static object CallStaticHook(uint hookId, BindingFlags flag = BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public, object[] args = null)
 	{
-		if (Community.Runtime == null || Community.Runtime.ModuleProcessor == null) return null;
+		if (Community.Runtime == null || Community.Runtime.ModuleProcessor == null)
+		{
+			return null;
+		}
 
 		var result = (object)null;
 		var conflicts = Pool.GetList<Conflict>();
@@ -190,7 +182,10 @@ public static class HookCaller
 				{
 					var methodResult = Caller.CallHook(plugin, hookId, flags: flag, args: args);
 
-					if (methodResult == null) continue;
+					if (methodResult == null)
+					{
+						continue;
+					}
 
 					result = methodResult;
 					ResultOverride(conflicts, plugin, hookId, result);
@@ -1646,7 +1641,7 @@ partial class {@class.Identifier.ValueText}
 
 			using var subdirectives = TempArray<string>.New(processedDirective.Split(_operatorsStrings, StringSplitOptions.RemoveEmptyEntries));
 
-			foreach (var subdirective in subdirectives.Array)
+			foreach (var subdirective in subdirectives.array)
 			{
 				var processedSubdirective = subdirective.Trim();
 

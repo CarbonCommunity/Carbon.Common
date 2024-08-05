@@ -1,11 +1,4 @@
-﻿/*
- *
- * Copyright (c) 2022-2023 Carbon Community 
- * All rights reserved.
- *
- */
-
-namespace Oxide.Core;
+﻿namespace Oxide.Core;
 
 public class DataFileSystem
 {

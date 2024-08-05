@@ -6,7 +6,6 @@ using System.Text;
 using API.Logger;
 using Carbon.Profiler;
 using Newtonsoft.Json;
-using ProtoBuf;
 using Timer = Oxide.Plugins.Timer;
 
 /*
@@ -21,6 +20,10 @@ using Timer = Oxide.Plugins.Timer;
 
 namespace Carbon.Components;
 
+/// <summary>
+/// Carbon MonoProfiler tracking assembly, call, memory and GC information.
+/// It directly interacts with Carbon's Native Rust-written library to start and stop tracking at a native level, making customized tracking as lightweight as it can get.
+/// </summary>
 [SuppressUnmanagedCodeSecurity]
 public static unsafe partial class MonoProfiler
 {
@@ -35,7 +38,7 @@ public static unsafe partial class MonoProfiler
 	public static CallOutput CallRecords = new();
 	public static MemoryOutput MemoryRecords = new();
 	public static RuntimeAssemblyBank AssemblyBank = new();
-	public static Dictionary<ModuleHandle, AssemblyNameEntry> AssemblyMap = new();
+	public static ConcurrentDictionary<ModuleHandle, AssemblyNameEntry> AssemblyMap = new();
 	public static Dictionary<IntPtr, string> ClassMap = new();
 	public static Dictionary<IntPtr, string> MethodMap = new();
 	public static TimeSpan DataProcessingTime;
@@ -58,15 +61,25 @@ public static unsafe partial class MonoProfiler
 		UnknownError = 6,
 	}
 
-	[ProtoContract]
+	/// <summary>
+	/// Assembly information provided by memory or call output data.
+	/// </summary>
 	public class AssemblyNameEntry
 	{
-		[ProtoMember(1 + NATIVE_PROTOCOL)] public string name;
-		[ProtoMember(2 + NATIVE_PROTOCOL)] public string displayName;
-		[ProtoMember(3 + NATIVE_PROTOCOL)] public MonoProfilerConfig.ProfileTypes profileType;
+		public string name;
+		public string displayName;
+		public string displayNameNonIncrement;
+		public MonoProfilerConfig.ProfileTypes profileType;
+
+		public string GetDisplayName(bool isCompared)
+		{
+			return isCompared ? displayNameNonIncrement : displayName;
+		}
 	}
 
-	[ProtoContract]
+	/// <summary>
+	/// Assembly record dataset.
+	/// </summary>
 	public class AssemblyOutput : List<AssemblyRecord>
 	{
 		public bool AnyValidRecords => Count > 0;
@@ -79,32 +92,33 @@ public static unsafe partial class MonoProfiler
 			}
 
 			var comparison = new AssemblyOutput();
-			var list1 = this.Count > other.Count ? this : other;
-			var list2 = list1 == this ? other : this;
 
 			comparison.AddRange(
-				from record in list1
-				let otherRecord = list2.FirstOrDefault(x => x.assembly_name.displayName == record.assembly_name.displayName)
+				from record in this
+				let otherRecord = other.FirstOrDefault(x =>
+					x.assembly_name.displayNameNonIncrement == record.assembly_name.displayNameNonIncrement)
 				select new AssemblyRecord
 			{
-				assembly_handle = record.assembly_handle,
 				assembly_name = record.assembly_name,
-
-				isComparedData = true,
-				total_time = Sample.CompareValue(record.total_time, otherRecord.total_time),
-				total_time_percentage = Sample.CompareValue(record.total_time_percentage, otherRecord.total_time_percentage),
-				total_exceptions = Sample.CompareValue(record.total_exceptions, otherRecord.total_exceptions),
-				calls = Sample.CompareValue(record.calls, otherRecord.calls),
-				alloc = Sample.CompareValue(record.alloc, otherRecord.alloc),
-				total_time_c = Sample.Compare(record.total_time, otherRecord.total_time),
-				total_time_percentage_c = Sample.Compare(record.total_time_percentage, otherRecord.total_time_percentage),
-				total_exceptions_c = Sample.Compare(record.total_exceptions, otherRecord.total_exceptions),
-				calls_c = Sample.Compare(record.calls, otherRecord.calls),
-				alloc_c = Sample.Compare(record.alloc, otherRecord.alloc)
+				total_time = AreRecordsValid(record, otherRecord) ? Sample.CompareValue(record.total_time, otherRecord.total_time) : default,
+				total_time_percentage = AreRecordsValid(record, otherRecord) ? Sample.CompareValue(record.total_time_percentage, otherRecord.total_time_percentage) : default,
+				total_exceptions = AreRecordsValid(record, otherRecord) ? Sample.CompareValue(record.total_exceptions, otherRecord.total_exceptions) : default,
+				calls = AreRecordsValid(record, otherRecord) ? Sample.CompareValue(record.calls, otherRecord.calls) : default,
+				alloc = AreRecordsValid(record, otherRecord) ? Sample.CompareValue(record.alloc, otherRecord.alloc) : default,
+				comparison = new()
+				{
+					isCompared = true,
+					total_time = AreRecordsValid(record, otherRecord) ? Sample.Compare(record.total_time, otherRecord.total_time) : Sample.Difference.None,
+					total_exceptions = AreRecordsValid(record, otherRecord) ? Sample.Compare(record.total_exceptions, otherRecord.total_exceptions) : Sample.Difference.None,
+					calls = AreRecordsValid(record, otherRecord) ? Sample.Compare(record.calls, otherRecord.calls) : Sample.Difference.None,
+					alloc = AreRecordsValid(record, otherRecord) ? Sample.Compare(record.alloc, otherRecord.alloc) : Sample.Difference.None
+				}
 			});
 
 			return comparison;
 		}
+		public static bool AreRecordsValid(AssemblyRecord recordA, AssemblyRecord recordB) =>
+			recordA.IsValid && recordB.IsValid;
 
 		public string ToTable()
 		{
@@ -117,7 +131,7 @@ public static unsafe partial class MonoProfiler
 					continue;
 				}
 
-				table.AddRow($" {assemblyName.displayName}",
+				table.AddRow($" {assemblyName.GetDisplayName(record.comparison.isCompared)}",
 					record.total_time == 0 ? string.Empty : record.GetTotalTime(),
 					record.total_time_percentage == 0 ? string.Empty : $"{record.total_time_percentage:0}%",
 					record.calls == 0 ? string.Empty : $"{record.calls:n0}",
@@ -143,7 +157,7 @@ public static unsafe partial class MonoProfiler
 					continue;
 				}
 
-				builder.AppendLine($"{assemblyName.displayName}," +
+				builder.AppendLine($"{assemblyName.GetDisplayName(record.comparison.isCompared)}," +
 				                   $"{record.GetTotalTime()}," +
 				                   $"{record.total_time_percentage:0}%," +
 				                   $"{record.calls:n0}," +
@@ -161,7 +175,9 @@ public static unsafe partial class MonoProfiler
 		}
 	}
 
-	[ProtoContract]
+	/// <summary>
+	/// Call record dataset.
+	/// </summary>
 	public class CallOutput : List<CallRecord>
 	{
 		public bool AnyValidRecords => Count > 0;
@@ -175,43 +191,43 @@ public static unsafe partial class MonoProfiler
 			}
 
 			var comparison = new CallOutput();
-			var list1 = this.Count > other.Count ? this : other;
-			var list2 = list1 == this ? other : this;
 
 			comparison.AddRange(
-				from record in list1
-				let otherRecord = list2.FirstOrDefault(x => x.method_name == record.method_name)
+				from record in this
+				let otherRecord = other.FirstOrDefault(x =>
+					x.assembly_name.displayNameNonIncrement == record.assembly_name.displayNameNonIncrement &&
+				    x.method_name == record.method_name)
 				select new CallRecord
 			{
-				assembly_handle = record.assembly_handle,
 				assembly_name = record.assembly_name,
-				method_handle = record.method_handle,
 				method_name = record.method_name,
 
-				isComparedData = true,
-				total_time = Sample.CompareValue(record.total_time, otherRecord.total_time),
-				total_time_percentage = Sample.CompareValue(record.total_time_percentage, otherRecord.total_time_percentage),
-				own_time = Sample.CompareValue(record.own_time, otherRecord.own_time),
-				own_time_percentage = Sample.CompareValue(record.own_time_percentage, otherRecord.own_time_percentage),
-				calls = Sample.CompareValue(record.calls, otherRecord.calls),
-				total_alloc = Sample.CompareValue(record.total_alloc, otherRecord.total_alloc),
-				own_alloc = Sample.CompareValue(record.own_alloc, otherRecord.own_alloc),
-				total_exceptions = Sample.CompareValue(record.total_exceptions, otherRecord.total_exceptions),
-				own_exceptions = Sample.CompareValue(record.own_exceptions, otherRecord.own_exceptions),
-
-				total_time_c = Sample.Compare(record.total_time, otherRecord.total_time),
-				total_time_percentage_c = Sample.Compare(record.total_time_percentage, otherRecord.total_time_percentage),
-				own_time_c = Sample.Compare(record.own_time, otherRecord.own_time),
-				own_time_percentage_c = Sample.Compare(record.own_time_percentage, otherRecord.own_time_percentage),
-				calls_c = Sample.Compare(record.calls, otherRecord.calls),
-				total_alloc_c = Sample.Compare(record.total_alloc, otherRecord.total_alloc),
-				own_alloc_c = Sample.Compare(record.own_alloc, otherRecord.own_alloc),
-				total_exceptions_c = Sample.Compare(record.total_exceptions, otherRecord.total_exceptions),
-				own_exceptions_c = Sample.Compare(record.own_exceptions, otherRecord.own_exceptions)
+				total_time = AreRecordsValid(record, otherRecord) ? Sample.CompareValue(record.total_time, otherRecord.total_time) : default,
+				total_time_percentage = AreRecordsValid(record, otherRecord) ? Sample.CompareValue(record.total_time_percentage, otherRecord.total_time_percentage) : default,
+				own_time = AreRecordsValid(record, otherRecord) ? Sample.CompareValue(record.own_time, otherRecord.own_time) : default,
+				own_time_percentage = AreRecordsValid(record, otherRecord) ? Sample.CompareValue(record.own_time_percentage, otherRecord.own_time_percentage) : default,
+				calls = AreRecordsValid(record, otherRecord) ? Sample.CompareValue(record.calls, otherRecord.calls) : default,
+				total_alloc = AreRecordsValid(record, otherRecord) ? Sample.CompareValue(record.total_alloc, otherRecord.total_alloc) : default,
+				own_alloc = AreRecordsValid(record, otherRecord) ? Sample.CompareValue(record.own_alloc, otherRecord.own_alloc) : default,
+				total_exceptions = AreRecordsValid(record, otherRecord) ? Sample.CompareValue(record.total_exceptions, otherRecord.total_exceptions) : default,
+				own_exceptions = AreRecordsValid(record, otherRecord) ? Sample.CompareValue(record.own_exceptions, otherRecord.own_exceptions) : default,
+				comparison = new()
+				{
+					isCompared = true,
+					total_time = AreRecordsValid(record, otherRecord) ? Sample.Compare(record.total_time, otherRecord.total_time) : Sample.Difference.None,
+					own_time = AreRecordsValid(record, otherRecord) ? Sample.Compare(record.own_time, otherRecord.own_time) : Sample.Difference.None,
+					calls = AreRecordsValid(record, otherRecord) ? Sample.Compare(record.calls, otherRecord.calls) : Sample.Difference.None,
+					total_alloc = AreRecordsValid(record, otherRecord) ? Sample.Compare(record.total_alloc, otherRecord.total_alloc) : Sample.Difference.None,
+					own_alloc = AreRecordsValid(record, otherRecord) ? Sample.Compare(record.own_alloc, otherRecord.own_alloc) : Sample.Difference.None,
+					total_exceptions = AreRecordsValid(record, otherRecord) ? Sample.Compare(record.total_exceptions, otherRecord.total_exceptions) : Sample.Difference.None,
+					own_exceptions = AreRecordsValid(record, otherRecord) ? Sample.Compare(record.own_exceptions, otherRecord.own_exceptions) : Sample.Difference.None,
+				}
 			});
 
 			return comparison;
 		}
+		public static bool AreRecordsValid(CallRecord recordA, CallRecord recordB) =>
+			recordA.IsValid && recordB.IsValid;
 
 		public string ToTable()
 		{
@@ -224,7 +240,7 @@ public static unsafe partial class MonoProfiler
 					continue;
 				}
 
-				table.AddRow($" {assemblyName.displayName}", $"{record.method_name}",
+				table.AddRow($" {assemblyName.GetDisplayName(record.comparison.isCompared)}", $"{record.method_name}",
 					record.total_time == 0 ? string.Empty : record.GetTotalTime(),
 					record.total_time_percentage == 0 ? string.Empty : $"{record.total_time_percentage:0}%",
 					record.own_time == 0 ? string.Empty : record.GetOwnTime(),
@@ -257,7 +273,7 @@ public static unsafe partial class MonoProfiler
 					continue;
 				}
 
-				builder.AppendLine($"{assemblyName.displayName}," +
+				builder.AppendLine($"{assemblyName.GetDisplayName(record.comparison.isCompared)}," +
 				                   $"{record.method_name}," +
 				                   $"{record.GetTotalTime()}," +
 				                   $"{record.total_time_percentage:0}%," +
@@ -279,7 +295,9 @@ public static unsafe partial class MonoProfiler
 		}
 	}
 
-	[ProtoContract]
+	/// <summary>
+	/// Memory record dataset.
+	/// </summary>
 	public class MemoryOutput : List<MemoryRecord>
 	{
 		public MemoryOutput Compare(MemoryOutput other)
@@ -290,30 +308,33 @@ public static unsafe partial class MonoProfiler
 			}
 
 			var comparison = new MemoryOutput();
-			var list1 = this.Count > other.Count ? this : other;
-			var list2 = list1 == this ? other : this;
 
 			comparison.AddRange(
-				from record in list1
-				let otherRecord = list2.FirstOrDefault(x => x.assembly_name.displayName == record.assembly_name.displayName && x.class_name == record.class_name)
+				from record in this
+				let otherRecord = other.FirstOrDefault(x =>
+					x.assembly_name.displayNameNonIncrement == record.assembly_name.displayNameNonIncrement &&
+					x.class_name == record.class_name)
 				select new MemoryRecord
 			{
-				assembly_handle = record.assembly_handle,
 				assembly_name = record.assembly_name,
 				class_name = record.class_name,
 				class_token = record.class_token,
 
-				isComparedData = true,
-				allocations = Sample.CompareValue(record.allocations, otherRecord.allocations),
-				total_alloc_size = Sample.CompareValue(record.total_alloc_size, otherRecord.total_alloc_size),
-				instance_size = Sample.CompareValue(record.instance_size, otherRecord.instance_size),
-				allocations_c = Sample.Compare(record.allocations, otherRecord.allocations),
-				total_alloc_size_c = Sample.Compare(record.total_alloc_size, otherRecord.total_alloc_size),
-				instance_size_c = Sample.Compare(record.instance_size, otherRecord.instance_size)
+				allocations = AreRecordsValid(record, otherRecord) ? Sample.CompareValue(record.allocations, otherRecord.allocations) : default,
+				total_alloc_size = AreRecordsValid(record, otherRecord) ? Sample.CompareValue(record.total_alloc_size, otherRecord.total_alloc_size) : default,
+				instance_size = AreRecordsValid(record, otherRecord) ? Sample.CompareValue(record.instance_size, otherRecord.instance_size) : default,
+				comparison = new()
+				{
+					isCompared = true,
+					allocations = AreRecordsValid(record, otherRecord) ? Sample.Compare(record.allocations, otherRecord.allocations) : Sample.Difference.None,
+					total_alloc_size = AreRecordsValid(record, otherRecord) ? Sample.Compare(record.total_alloc_size, otherRecord.total_alloc_size) : Sample.Difference.None
+				}
 			});
 
 			return comparison;
 		}
+		public static bool AreRecordsValid(MemoryRecord recordA, MemoryRecord recordB) =>
+			recordA.IsValid && recordB.IsValid;
 
 		public string ToTable()
 		{
@@ -326,7 +347,7 @@ public static unsafe partial class MonoProfiler
 					continue;
 				}
 
-				table.AddRow($" {assemblyName.displayName}", $"{record.class_name}",
+				table.AddRow($" {assemblyName.GetDisplayName(record.comparison.isCompared)}", $"{record.class_name}",
 					record.allocations == 0 ? string.Empty : record.allocations.ToString("n0"),
 					record.total_alloc_size == 0 ? string.Empty : $"{ByteEx.Format(record.total_alloc_size).ToLower()}",
 					record.instance_size == 0 ? string.Empty : $"{record.instance_size:n0}b");
@@ -351,7 +372,7 @@ public static unsafe partial class MonoProfiler
 					continue;
 				}
 
-				builder.AppendLine($"{assemblyName.displayName}," +
+				builder.AppendLine($"{assemblyName.GetDisplayName(record.comparison.isCompared)}," +
 				                   $"{record.class_name}," +
 				                   $"{record.allocations.ToString("n0")}," +
 				                   $"{ByteEx.Format(record.total_alloc_size).ToLower()}," +
@@ -369,6 +390,9 @@ public static unsafe partial class MonoProfiler
 		}
 	}
 
+	/// <summary>
+	/// Used to identify dynamically managed and processed assemblies (such as plugins, hotloadable extensions/harmony mods) whenever they get hotloaded or assemblies with the same name get reloaded with changes.
+	/// </summary>
 	public class RuntimeAssemblyBank : ConcurrentDictionary<string, int>
 	{
 		public string Increment(string value)
@@ -377,16 +401,22 @@ public static unsafe partial class MonoProfiler
 		}
 	}
 
-	[ProtoContract]
+	/// <summary>
+	/// Rust-returned dataset structure of a GC record, tracking total calls and time taken in the recording time period.
+	/// </summary>
 	[StructLayout(LayoutKind.Sequential)]
 	public struct GCRecord
 	{
-		[ProtoMember(1 + NATIVE_PROTOCOL)] public ulong calls;
-		[ProtoMember(2 + NATIVE_PROTOCOL)] public ulong total_time;
+		public ulong calls;
+		public ulong total_time;
+		public Comparison comparison;
 
-		[JsonIgnore] public bool isComparedData;
-		[JsonIgnore] public Sample.Difference calls_c;
-		[JsonIgnore] public Sample.Difference total_time_c;
+		public struct Comparison
+		{
+			public bool isCompared;
+			public Sample.Difference calls_c;
+			public Sample.Difference total_time_c;
+		}
 
 		public GCRecord Compare(GCRecord other)
 		{
@@ -394,9 +424,9 @@ public static unsafe partial class MonoProfiler
 			record.calls = Sample.CompareValue(calls, other.calls);
 			record.total_time = Sample.CompareValue(total_time, other.total_time);
 
-			record.isComparedData = true;
-			record.calls_c = Sample.Compare(record.calls, other.calls);
-			record.total_time_c = Sample.Compare(record.total_time, other.total_time);
+			record.comparison.isCompared = true;
+			record.comparison.calls_c = Sample.Compare(record.calls, other.calls);
+			record.comparison.total_time_c = Sample.Compare(record.total_time, other.total_time);
 			return record;
 		}
 
@@ -431,93 +461,121 @@ public static unsafe partial class MonoProfiler
 		// managed
 		public double total_time_ms => total_time * 0.001f;
 
-		public string GetTotalTime() => (total_time_ms < 1 ? $"{total_time:n0}μs" : $"{total_time_ms:n0}ms");
+		private string total_time_ms_str;
+
+		public string GetTotalTime() => total_time_ms_str ??= (total_time_ms < 10 ? $"{total_time:n0}μs" : $"{total_time_ms:n0}ms");
 	}
 
-	[ProtoContract]
+	/// <summary>
+	/// Rust-returned dataset structure of an Assembly record, tracking total time, time percentage, exceptions, call and allocations taken in the recording time period.
+	/// </summary>
 	[StructLayout(LayoutKind.Sequential)]
 	public struct AssemblyRecord
 	{
 		[JsonIgnore] public ModuleHandle assembly_handle;
 
-		[ProtoMember(1 + NATIVE_PROTOCOL)] public ulong total_time;
-		[ProtoMember(2 + NATIVE_PROTOCOL)] public double total_time_percentage;
-		[ProtoMember(3 + NATIVE_PROTOCOL)] public ulong total_exceptions;
-		[ProtoMember(4 + NATIVE_PROTOCOL)] public ulong calls;
-		[ProtoMember(5 + NATIVE_PROTOCOL)] public ulong alloc;
+		public ulong total_time;
+		public double total_time_percentage;
+		public ulong total_exceptions;
+		public ulong calls;
+		public ulong alloc;
+		public Comparison comparison;
+		public AssemblyNameEntry assembly_name;
 
-		// managed
-		[ProtoMember(6 + NATIVE_PROTOCOL)] public AssemblyNameEntry assembly_name;
+		public struct Comparison
+		{
+			public bool isCompared;
+			public Sample.Difference total_time;
+			public Sample.Difference total_exceptions;
+			public Sample.Difference calls;
+			public Sample.Difference alloc;
+		}
+
 		public double total_time_ms => total_time * 0.001f;
 
-		[JsonIgnore] public bool isComparedData;
-		[JsonIgnore] public Sample.Difference total_time_c;
-		[JsonIgnore] public Sample.Difference total_time_percentage_c;
-		[JsonIgnore] public Sample.Difference total_exceptions_c;
-		[JsonIgnore] public Sample.Difference calls_c;
-		[JsonIgnore] public Sample.Difference alloc_c;
+		[JsonIgnore] public bool IsValid => assembly_name != null;
 
-		public string GetTotalTime() => (total_time_ms < 1 ? $"{total_time:n0}μs" : $"{total_time_ms:n0}ms");
+		private string total_time_ms_str;
+
+		public string GetTotalTime() => total_time_ms_str ??= total_time_ms < 10 ? $"{total_time:n0}μs" : $"{total_time_ms:n0}ms";
 	}
 
-	[ProtoContract]
+	/// <summary>
+	/// Rust-returned dataset structure of a Memory record, tracking allocations, total allocation size, instance size and class token identifier taken in the recording time period.
+	/// </summary>
 	[StructLayout(LayoutKind.Sequential)]
 	public struct MemoryRecord
 	{
-		public ModuleHandle assembly_handle;
-		public IntPtr class_handle;
-		[ProtoMember(1 + NATIVE_PROTOCOL)] public ulong allocations;
-		[ProtoMember(2 + NATIVE_PROTOCOL)] public ulong total_alloc_size;
-		[ProtoMember(3 + NATIVE_PROTOCOL)] public uint instance_size;
-		[ProtoMember(4 + NATIVE_PROTOCOL)] public uint class_token;
+		[JsonIgnore] public ModuleHandle assembly_handle;
+		[JsonIgnore] public IntPtr class_handle;
 
-		// managed
-		[ProtoMember(5 + NATIVE_PROTOCOL)] public string class_name;
-		[ProtoMember(6 + NATIVE_PROTOCOL)] public AssemblyNameEntry assembly_name;
+		public ulong allocations;
+		public ulong total_alloc_size;
+		public uint instance_size;
+		public uint class_token;
+		public AssemblyNameEntry assembly_name;
+		public string class_name;
+		public Comparison comparison;
 
-		[JsonIgnore] public bool isComparedData;
-		[JsonIgnore] public Sample.Difference allocations_c;
-		[JsonIgnore] public Sample.Difference total_alloc_size_c;
-		[JsonIgnore] public Sample.Difference instance_size_c;
+		public struct Comparison
+		{
+			public bool isCompared;
+			public Sample.Difference allocations;
+			public Sample.Difference total_alloc_size;
+		}
+
+		[JsonIgnore] public bool IsValid => assembly_name != null;
 	}
 
-	[ProtoContract]
+	/// <summary>
+	/// Rust-returned dataset structure of a Call record, tracking total time, its percentage, own time (+ percentage), calls, total and own allocations, total and own exceptions and assembly + method information taken in the recording time period.
+	/// </summary>
 	[StructLayout(LayoutKind.Sequential)]
 	public struct CallRecord
 	{
 		[JsonIgnore] public ModuleHandle assembly_handle;
 		[JsonIgnore] public MonoMethod* method_handle;
-		[ProtoMember(1 + NATIVE_PROTOCOL)] public ulong total_time;
-		[ProtoMember(2 + NATIVE_PROTOCOL)] public double total_time_percentage;
-		[ProtoMember(3 + NATIVE_PROTOCOL)] public ulong own_time;
-		[ProtoMember(4 + NATIVE_PROTOCOL)] public double own_time_percentage;
-		[ProtoMember(5 + NATIVE_PROTOCOL)] public ulong calls;
-		[ProtoMember(6 + NATIVE_PROTOCOL)] public ulong total_alloc;
-		[ProtoMember(7 + NATIVE_PROTOCOL)] public ulong own_alloc;
-		[ProtoMember(8 + NATIVE_PROTOCOL)] public ulong total_exceptions;
-		[ProtoMember(9 + NATIVE_PROTOCOL)] public ulong own_exceptions;
 
-		// managed
-		[ProtoMember(10 + NATIVE_PROTOCOL)] public string method_name;
-		[ProtoMember(11 + NATIVE_PROTOCOL)] public AssemblyNameEntry assembly_name;
+		public ulong total_time;
+		public double total_time_percentage;
+		public ulong own_time;
+		public double own_time_percentage;
+		public ulong calls;
+		public ulong total_alloc;
+		public ulong own_alloc;
+		public ulong total_exceptions;
+		public ulong own_exceptions;
+		public AssemblyNameEntry assembly_name;
+		public string method_name;
+		public Comparison comparison;
+
+		public struct Comparison
+		{
+			public bool isCompared;
+			public Sample.Difference total_time;
+			public Sample.Difference own_time;
+			public Sample.Difference calls;
+			public Sample.Difference total_alloc;
+			public Sample.Difference own_alloc;
+			public Sample.Difference total_exceptions;
+			public Sample.Difference own_exceptions;
+		}
+
 		public double total_time_ms => total_time * 0.001f;
 		public double own_time_ms => own_time * 0.001f;
 
-		[JsonIgnore] public bool isComparedData;
-		[JsonIgnore] public Sample.Difference total_time_c;
-		[JsonIgnore] public Sample.Difference total_time_percentage_c;
-		[JsonIgnore] public Sample.Difference own_time_c;
-		[JsonIgnore] public Sample.Difference own_time_percentage_c;
-		[JsonIgnore] public Sample.Difference calls_c;
-		[JsonIgnore] public Sample.Difference total_alloc_c;
-		[JsonIgnore] public Sample.Difference own_alloc_c;
-		[JsonIgnore] public Sample.Difference total_exceptions_c;
-		[JsonIgnore] public Sample.Difference own_exceptions_c;
+		[JsonIgnore] public bool IsValid => assembly_name != null;
 
-		public string GetTotalTime() => (total_time_ms < 1 ? $"{total_time:n0}μs" : $"{total_time_ms:n0}ms");
-		public string GetOwnTime() => (own_time_ms < 1 ? $"{own_time:n0}μs" : $"{own_time_ms:n0}ms");
+		private string total_time_ms_str;
+		private string own_time_ms_str;
+
+		public string GetTotalTime() => total_time_ms_str ??= total_time_ms < 10 ? $"{total_time:n0}μs" : $"{total_time_ms:n0}ms";
+		public string GetOwnTime() => own_time_ms_str ??= own_time_ms < 10 ? $"{own_time:n0}μs" : $"{own_time_ms:n0}ms";
 	}
 
+	/// <summary>
+	/// Don't touch it.
+	/// </summary>
 	[StructLayout(LayoutKind.Explicit)]
 	public struct MonoImageUnion
 	{
@@ -527,11 +585,13 @@ public static unsafe partial class MonoProfiler
 		public MonoImage* ptr;
 	}
 
+	/// <summary>
+	/// Don't touch it.
+	/// </summary>
 	[StructLayout(LayoutKind.Sequential)]
 	public readonly struct MonoImage
 	{
 		public readonly int ref_count;
-
 		public readonly void* storage;
 
 		/* Aliases storage->raw_data when storage is non-NULL. Otherwise NULL. */
@@ -548,6 +608,9 @@ public static unsafe partial class MonoProfiler
 		}
 	}
 
+	/// <summary>
+	/// Don't touch it.
+	/// </summary>
 	[StructLayout(LayoutKind.Sequential)]
 	public readonly struct MonoMethod
 	{
@@ -572,14 +635,11 @@ public static unsafe partial class MonoProfiler
 		GCEvents = 1 << 6
 	}
 
-
 	public static bool Enabled { get; }
 	public static bool IsRecording { get; private set; }
 	public static bool Crashed { get; }
 
 	public static bool IsCleared => !AssemblyRecords.Any() && !CallRecords.Any();
-
-	public const int NATIVE_PROTOCOL = 3;
 
 	static MonoProfiler()
 	{
@@ -641,6 +701,9 @@ public static unsafe partial class MonoProfiler
 		}
 	}
 
+	/// <summary>
+	/// Clears currently collected and Rust-returned information.
+	/// </summary>
 	public static void Clear()
 	{
 		AssemblyRecords.Clear();
@@ -773,7 +836,7 @@ public static unsafe partial class MonoProfiler
 		}
 		if (callOutput is { Count: > 0 })
 		{
-			MapMethodRecords(callOutput);
+			MapCallRecords(callOutput);
 		}
 		if (memoryOutput is { Count: > 0 })
 		{
@@ -827,7 +890,7 @@ public static unsafe partial class MonoProfiler
 				if (name == null) throw new NullReferenceException();
 				asmName = new AssemblyNameEntry
 				{
-					name = name, displayName = name, profileType = MonoProfilerConfig.ProfileTypes.Assembly
+					name = name, displayName = name, displayNameNonIncrement = name, profileType = MonoProfilerConfig.ProfileTypes.Assembly
 				};
 				AssemblyMap[entry.assembly_handle] = asmName;
 				entry.assembly_name = asmName;
@@ -865,7 +928,7 @@ public static unsafe partial class MonoProfiler
 				if (name == null) throw new NullReferenceException();
 				asmName = new AssemblyNameEntry
 				{
-					name = name, displayName = name, profileType = MonoProfilerConfig.ProfileTypes.Assembly
+					name = name, displayName = name, displayNameNonIncrement = name, profileType = MonoProfilerConfig.ProfileTypes.Assembly
 				};
 				AssemblyMap[entry.assembly_handle] = asmName;
 				entry.assembly_name = asmName;
@@ -874,8 +937,10 @@ public static unsafe partial class MonoProfiler
 			records[i] = entry;
 		}
 	}
-	private static void MapMethodRecords(List<CallRecord> records)
+	private static void MapCallRecords(List<CallRecord> records)
 	{
+		var temp = PoolEx.GetDictionary<string, CallRecord>();
+
 		for (int i = 0; i < records.Count; i++)
 		{
 			CallRecord entry = records[i];
@@ -902,14 +967,35 @@ public static unsafe partial class MonoProfiler
 				if (name == null) throw new NullReferenceException();
 				asmName = new AssemblyNameEntry
 				{
-					name = name, displayName = name, profileType = MonoProfilerConfig.ProfileTypes.Assembly
+					name = name, displayName = name, displayNameNonIncrement = name, profileType = MonoProfilerConfig.ProfileTypes.Assembly
 				};
 				AssemblyMap[entry.assembly_handle] = asmName;
 				entry.assembly_name = asmName;
 			}
 
-			records[i] = entry;
+			if (temp.TryGetValue(entry.method_name, out var existingRecord))
+			{
+				existingRecord.total_time += entry.total_time;
+				existingRecord.total_time_percentage += entry.total_time_percentage;
+				existingRecord.own_time += entry.own_time;
+				existingRecord.own_time_percentage += entry.own_time_percentage;
+				existingRecord.calls += entry.calls;
+				existingRecord.total_alloc += entry.total_alloc;
+				existingRecord.own_alloc += entry.own_alloc;
+				existingRecord.total_exceptions += entry.total_exceptions;
+				existingRecord.own_exceptions += entry.own_exceptions;
+				temp[entry.method_name] = existingRecord;
+			}
+			else
+			{
+				temp[entry.method_name] = entry;
+			}
 		}
+
+		records.Clear();
+		records.AddRange(temp.Values);
+
+		PoolEx.FreeDictionary(ref temp);
 	}
 
 	public static void TryStartProfileFor(MonoProfilerConfig.ProfileTypes profileType, Assembly assembly, string value, bool incremental = false)
@@ -928,9 +1014,11 @@ public static unsafe partial class MonoProfiler
 			return;
 		}
 
+		var incrementedValue = assemblyName;
+
 		if (incremental)
 		{
-			assemblyName = AssemblyBank.Increment(assemblyName);
+			incrementedValue = AssemblyBank.Increment(assemblyName);
 		}
 
 		ModuleHandle handle = assembly.ManifestModule.ModuleHandle;
@@ -938,7 +1026,8 @@ public static unsafe partial class MonoProfiler
 		AssemblyMap[handle] = new AssemblyNameEntry
 		{
 			name = assembly.GetName().Name,
-			displayName = assemblyName,
+			displayName = incrementedValue,
+			displayNameNonIncrement = assemblyName,
 			profileType = profileType
 		};
 

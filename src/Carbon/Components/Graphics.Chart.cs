@@ -1,11 +1,4 @@
-﻿/*
- *
- * Copyright (c) 2022-2024 Carbon Community
- * All rights reserved.
- *
- */
-
-using System.Drawing;
+﻿using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Drawing.Text;
@@ -16,6 +9,9 @@ namespace Carbon.Components.Graphics;
 
 #pragma warning disable CS0649 // Field 'Chart.graphic' is never assigned to, and will always have its default value null
 
+/// <summary>
+/// Carbon base-line for multithreaded Chart image generating.
+/// </summary>
 public struct Chart
 {
 	public string Name;

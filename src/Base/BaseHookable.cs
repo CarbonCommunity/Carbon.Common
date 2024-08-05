@@ -1,14 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using Facepunch.Extend;
 using Newtonsoft.Json;
-
-/*
- *
- * Copyright (c) 2022-2024 Carbon Community
- * All rights reserved.
- *
- */
 
 namespace Carbon.Base;
 
@@ -45,7 +37,7 @@ public class BaseHookable
 		public CachedHook PrimaryHook;
 		public List<CachedHook> Hooks;
 
-		public bool IsValid() => Hooks != null && Hooks.Any();
+		public bool IsValid() => Hooks != null && Hooks.Count > 0;
 		public void RefreshPrimary()
 		{
 			PrimaryHook = Hooks.OrderByDescending(x => x.Parameters.Length).FirstOrDefault();

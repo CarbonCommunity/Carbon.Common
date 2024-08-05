@@ -1,11 +1,4 @@
-﻿/*
- *
- * Copyright (c) 2022-2024 Carbon Community
- * All rights reserved.
- *
- */
-
-namespace Carbon.Base;
+﻿namespace Carbon.Base;
 
 public class BaseThreadedJob : IDisposable
 {

@@ -9,13 +9,6 @@ using Newtonsoft.Json;
 using Application = UnityEngine.Application;
 using Carbon.Profiler;
 
-/*
- *
- * Copyright (c) 2022-2023 Carbon Community
- * All rights reserved.
- *
- */
-
 namespace Carbon;
 
 public class Community
@@ -85,9 +78,6 @@ public class Community
 	public IModuleProcessor ModuleProcessor
 	{ get; set; }
 
-	public IWebScriptProcessor WebScriptProcessor
-	{ get; set; }
-
 	public IZipScriptProcessor ZipScriptProcessor
 	{ get; set; }
 
@@ -128,18 +118,33 @@ public class Community
 	public Entities Entities
 	{ get; set; }
 
-	internal static int Tick = DateTime.UtcNow.Year + DateTime.UtcNow.Month + DateTime.UtcNow.Day + DateTime.UtcNow.Hour + DateTime.UtcNow.Minute + DateTime.UtcNow.Second + DateTime.UtcNow.Millisecond;
+	internal static string _runtimeId;
+
+	public static string RuntimeId
+	{
+		get
+		{
+			if (string.IsNullOrEmpty(_runtimeId))
+			{
+				var date = DateTime.Now;
+				_runtimeId = date.Year.ToString() + date.Month + date.Day +
+				             date.Hour + date.Minute + date.Second + date.Millisecond;
+
+			}
+
+			return _runtimeId;
+		}
+	}
 
 	public static string Protect(string name)
 	{
 		if (string.IsNullOrEmpty(name)) return string.Empty;
 
 		using var split = TempArray<string>.New(name.Split(' '));
-		var command = split.Array[0];
-		using var args = TempArray<string>.New(split.Array.Skip(1).ToArray());
-		var arguments = args.Array.ToString(" ");
+		var command = split.array[0];
+		var arguments = split.array.Skip(1).ToString(" ");
 
-		return $"carbonprotecc_{RandomEx.GetRandomString(16, command + Tick, command.Length + Tick)} {arguments}".TrimEnd();
+		return $"carbonprotecc_{RandomEx.GetRandomString(command.Length, command + RuntimeId, command.Length)} {arguments}".TrimEnd();
 	}
 
 	public void MarkServerInitialized(bool wants, bool hookCall = true)

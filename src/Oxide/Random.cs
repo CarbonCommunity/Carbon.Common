@@ -1,12 +1,5 @@
 ﻿namespace Oxide.Core;
 
-/*
- *
- * Copyright (c) 2022-2023 Carbon Community 
- * All rights reserved.
- *
- */
-
 public static class Random
 {
 	internal static System.Random _random = new System.Random();

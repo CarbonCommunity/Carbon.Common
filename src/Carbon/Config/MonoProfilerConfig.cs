@@ -1,5 +1,12 @@
 ﻿namespace Carbon.Profiler;
 
+/*
+ *
+ * Copyright (c) 2023 Patrette, under the GNU v3 license rights
+ * Copyright (c) 2023-2024 Carbon Community, under the GNU v3 license rights
+ *
+ */
+
 [Serializable]
 public class MonoProfilerConfig
 {

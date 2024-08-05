@@ -2,20 +2,13 @@
 
 #if !MINIMAL
 
-/*
-*
- * Copyright (c) 2022-2024 Carbon Community
- * All rights reserved.
- *
- */
-
 namespace Carbon.Modules;
 
 public partial class AdminModule
 {
 	public class ProfilerTab : Tab
 	{
-		public static MonoProfiler.Sample sample = MonoProfiler.Sample.Create();
+		public static MonoProfiler.Sample sample;
 
 		internal static ProfilerTab _instance;
 		internal static Color intenseColor;
@@ -96,6 +89,12 @@ public partial class AdminModule
 		public static ProfilerTab GetOrCache(PlayerSession session) => _instance ??= Make(session);
 		public static ProfilerTab Make(PlayerSession session)
 		{
+			if (sample.Assemblies == null)
+			{
+				sample = MonoProfiler.Sample.Create();
+				sample.Clear();
+			}
+
 			var profiler = new ProfilerTab("profiler", "Profiler", Community.Runtime.Core);
 			profiler.OnChange = (ap, _) =>
 			{
@@ -134,24 +133,27 @@ public partial class AdminModule
 
 			return (sort switch
 			{
-				0 => sample.Assemblies.OrderBy(x => x.assembly_name.displayName),
+				0 => sample.Assemblies.OrderBy(x => x.assembly_name.GetDisplayName(sample.IsCleared)),
 				1 => sample.Assemblies.OrderByDescending(x => x.total_time),
 				2 => sample.Assemblies.OrderByDescending(x => x.calls),
 				3 => sample.Assemblies.OrderByDescending(x => x.alloc),
 				4 => sample.Assemblies.OrderByDescending(x => x.total_exceptions),
 				_ => default
-			})!.Where(x => string.IsNullOrEmpty(search) || x.assembly_name.displayName.Contains(search, CompareOptions.OrdinalIgnoreCase));
+			})!.Where(x => string.IsNullOrEmpty(search) || x.assembly_name.GetDisplayName(sample.IsCleared).Contains(search, CompareOptions.OrdinalIgnoreCase));
 		}
-		public static IEnumerable<MonoProfiler.CallRecord> GetSortedCalls(ModuleHandle selection, int sort, string search)
+		public static IEnumerable<MonoProfiler.CallRecord> GetSortedCalls(string assembly, int sort, string search)
 		{
 			if (sample.Calls == null)
 			{
 				return default;
 			}
 
-			var advancedRecords = sample.Calls.Where(x => selection.GetHashCode() == 0 || x.assembly_handle == selection);
+			var advancedRecords = sample.Calls.Where(x => string.IsNullOrEmpty(assembly) || x.assembly_name.name == assembly);
 
-			if (!advancedRecords.Any()) return advancedRecords;
+			if (!advancedRecords.Any())
+			{
+				return advancedRecords;
+			}
 
 			return (sort switch
 			{
@@ -188,7 +190,7 @@ public partial class AdminModule
 
 		internal void Draw(PlayerSession ap)
 		{
-			var selection = ap.GetStorage<ModuleHandle>(null, "profilerval");
+			var selection = ap.GetStorage<string>(null, "profilerval");
 
 			DrawSubtabs(ap, selection);
 			DrawAssemblies(ap, selection);
@@ -241,7 +243,7 @@ public partial class AdminModule
 			});
 		}
 
-		public void DrawAssemblies(PlayerSession session, ModuleHandle selection)
+		public void DrawAssemblies(PlayerSession session, string assembly)
 		{
 			AddColumn(0, true);
 
@@ -282,8 +284,8 @@ public partial class AdminModule
 					command: "adminmodule.timelinemode");
 				tabSpacing++;
 
-				cui.CreateProtectedButton(container, panel, "0.2 0.2 0.2 0.7", $"1 1 1 {(!sample.IsCleared ? 0.2 : 0.5)}",
-					"<size=6>IMPORT\n</size>PROTO", 8,
+				cui.CreateProtectedButton(container, panel, "0.2 0.2 0.2 0.7", $"1 1 1 {(sample.IsCompared ? 0.2 : 0.5)}",
+					$"<size=6>{(!sample.IsCleared ? "COMPARE" : "IMPORT")}\n</size>PROTO", 8,
 					xMin: 0.83f, xMax: 0.925f, OxMin: offset * tabSpacing, OxMax: offset * tabSpacing, command: "adminmodule.profilerimport");
 				tabSpacing++;
 
@@ -319,24 +321,24 @@ public partial class AdminModule
 			Stripe(this, 0, (float)filtered.Sum(x => x.total_time_percentage), 100, niceColor, niceColor,
 				"All",
 				$"{filtered.Sum(x => (float)x.total_time_ms):n0}ms | {filtered.Sum(x => (float)x.total_time_percentage):0.0}%",
-				$"<size=7>{TimeEx.Format(sample.Duration, false).ToLower()}\n{sample.Calls.Count:n0} calls</size>",
+				$"<size=7>{MonoProfiler.Sample.GetDifferenceString(sample.Comparison.Duration)}{TimeEx.Format(sample.Duration, false).ToLower()}\n{sample.Calls.Count:n0} calls</size>",
 				$"adminmodule.profilerselect -1",
-				selection.GetHashCode() == 0);
+				string.IsNullOrEmpty(assembly));
 
 			AddDropdown(0, $"<b>ASSEMBLIES ({sample.Assemblies.Count:n0})</b>", ap => sortIndex, (ap, i) =>
 			{
 				ap.SetStorage(this, "bsort", i);
-				DrawAssemblies(session, selection);
+				DrawAssemblies(session, assembly);
 			}, sortAssemblyOptions);
 
 			AddInputButton(0, "Search", 0.075f, new OptionInput(null, ap => searchInput, 0, false, (ap, args) =>
 			{
 				ap.SetStorage(this, "bsearch", args.ToString(" "));
-				DrawAssemblies(ap, selection);
+				DrawAssemblies(ap, assembly);
 			}), new OptionButton("X", ap =>
 			{
 				ap.SetStorage(this, "bsearch", string.Empty);
-				DrawAssemblies(ap, selection);
+				DrawAssemblies(ap, assembly);
 
 			}, _ => string.IsNullOrEmpty(searchInput) ? OptionButton.Types.None : OptionButton.Types.Important));
 
@@ -354,9 +356,9 @@ public partial class AdminModule
 				};
 
 				Stripe(this, 0, value, maxVal, intenseColor, calmColor,
-					record.assembly_name.displayName,
-					$"{record.GetTotalTime()} ({record.total_time_percentage:0.0}%) | {ByteEx.Format(record.alloc).ToUpper()} | {record.total_exceptions:n0} excep.",
-					$"{record.assembly_name.profileType}\n<b>{record.calls:n0}</b> calls", $"adminmodule.profilerselect {i}", record.assembly_handle == selection);
+					record.assembly_name.GetDisplayName(record.comparison.isCompared),
+					$"{MonoProfiler.Sample.GetDifferenceString(record.comparison.total_time)}{record.GetTotalTime()} ({record.total_time_percentage:0.0}%) | {MonoProfiler.Sample.GetDifferenceString(record.comparison.alloc)}{ByteEx.Format(record.alloc).ToUpper()} | {MonoProfiler.Sample.GetDifferenceString(record.comparison.total_exceptions)}{record.total_exceptions:n0} excep.",
+					$"{record.assembly_name.profileType}\n{MonoProfiler.Sample.GetDifferenceString(record.comparison.calls)}<b>{record.calls:n0}</b> calls", $"adminmodule.profilerselect {i}", record.assembly_name.name == assembly);
 			}
 
 			if (filtered.Count == 0)
@@ -366,7 +368,7 @@ public partial class AdminModule
 
 			Pool.FreeList(ref filtered);
 		}
-		public void DrawSubtabs(PlayerSession session, ModuleHandle selection)
+		public void DrawSubtabs(PlayerSession session, string assembly)
 		{
 			AddColumn(1, true);
 
@@ -380,8 +382,8 @@ public partial class AdminModule
 				AddDropdown(1, "Chart Options", ap => timelineChartType, (ap, i) =>
 				{
 					ap.SetStorage(this, "timelinect", i);
-					DrawSubtabs(session, selection);
-					DrawAssemblies(session, selection);
+					DrawSubtabs(session, assembly);
+					DrawAssemblies(session, assembly);
 				}, timelineChartOptions);
 
 				return;
@@ -392,16 +394,16 @@ public partial class AdminModule
 			AddButtonArray(1, new OptionButton("Calls", ap =>
 				{
 					session.SetStorage(this, "subtab", SubtabTypes.Calls);
-					DrawSubtabs(session, selection);
+					DrawSubtabs(session, assembly);
 				}, ap => subtab == SubtabTypes.Calls ? OptionButton.Types.Selected : OptionButton.Types.None),
 				new OptionButton("Memory", ap =>
 				{
 					session.SetStorage(this, "subtab", SubtabTypes.Memory);
-					DrawSubtabs(session, selection);
+					DrawSubtabs(session, assembly);
 				}, ap => subtab == SubtabTypes.Memory ? OptionButton.Types.Selected : OptionButton.Types.None));
 
 			Stripe(this, 1, 100, 100, niceColor, niceColor,
-				"GC", $"{sample.GC.calls:n0} calls | {sample.GC.GetTotalTime()}", string.Empty, null, true);
+				"GC", $"{MonoProfiler.Sample.GetDifferenceString(sample.GC.comparison.calls_c)}{sample.GC.calls:n0} calls | {MonoProfiler.Sample.GetDifferenceString(sample.GC.comparison.total_time_c)}{sample.GC.GetTotalTime()}", string.Empty, null, true);
 
 			switch (subtab)
 			{
@@ -409,38 +411,38 @@ public partial class AdminModule
 				{
 					var searchInput = session.GetStorage(this, "msearch", string.Empty);
 					var sort = session.GetStorage(this, "msort", 1);
-					var advancedRecords = GetSortedMemory(sort, searchInput);
+					var memoryRecords = GetSortedMemory(sort, searchInput);
 					var maxVal = 0f;
 
-					if (advancedRecords.Any())
+					if (memoryRecords.Any())
 					{
 						maxVal = sort switch
 						{
-							0 or 1 => advancedRecords.Max(x => (float)x.allocations),
-							2 => advancedRecords.Max(x => (float)x.total_alloc_size),
+							0 or 1 => memoryRecords.Max(x => (float)x.allocations),
+							2 => memoryRecords.Max(x => (float)x.total_alloc_size),
 							_ => maxVal
 						};
 					}
 
-					AddDropdown(1, $"<b>MEMORY ({advancedRecords.Count():n0})</b>", ap => sort, (ap, i) =>
+					AddDropdown(1, $"<b>MEMORY ({memoryRecords.Count():n0})</b>", ap => sort, (ap, i) =>
 					{
 						ap.SetStorage(this, "msort", i);
-						DrawSubtabs(session, selection);
+						DrawSubtabs(session, assembly);
 					}, sortMemoryOptions);
 
 					AddInputButton(1, "Search", 0.075f, new OptionInput(null, ap => searchInput, 0, false, (ap, args) =>
 					{
 						ap.SetStorage(this, "msearch", args.ToString(" "));
-						DrawSubtabs(ap, selection);
+						DrawSubtabs(ap, assembly);
 					}), new OptionButton("X", ap =>
 					{
 						ap.SetStorage(this, "msearch", string.Empty);
-						DrawSubtabs(ap, selection);
+						DrawSubtabs(ap, assembly);
 
 					}, _ => string.IsNullOrEmpty(searchInput) ? OptionButton.Types.None : OptionButton.Types.Important));
 
 					var index = 0;
-					foreach (var record in advancedRecords)
+					foreach (var record in memoryRecords)
 					{
 						var value = sort switch
 						{
@@ -451,27 +453,25 @@ public partial class AdminModule
 
 						Stripe(this, 1, value, maxVal, intenseColor, calmColor,
 							record.class_name,
-							$"{record.allocations:n0} allocated | {ByteEx.Format(record.total_alloc_size).ToUpper()} total",
+							$"{MonoProfiler.Sample.GetDifferenceString(record.comparison.allocations)}{record.allocations:n0} allocated | {MonoProfiler.Sample.GetDifferenceString(record.comparison.total_alloc_size)}{ByteEx.Format(record.total_alloc_size).ToUpper()} total",
 							$"<b>{record.instance_size} B</b>",
 							string.Empty);
 
 						index++;
 					}
 
-					if (!advancedRecords.Any())
+					if (!memoryRecords.Any())
 					{
 						AddText(1, "No memory records available", 8, "1 1 1 0.5");
 					}
 
 					break;
 				}
-
-				default:
 				case SubtabTypes.Calls:
 				{
 					var searchInput = session.GetStorage(this, "asearch", string.Empty);
 					var sort = session.GetStorage(this, "asort", 1);
-					var advancedRecords = GetSortedCalls(selection, sort, searchInput);
+					var advancedRecords = GetSortedCalls(assembly, sort, searchInput);
 					var maxVal = 0f;
 
 					if (advancedRecords.Any())
@@ -492,17 +492,17 @@ public partial class AdminModule
 					AddDropdown(1, $"<b>CALLS ({advancedRecords.Count():n0})</b>", ap => sort, (ap, i) =>
 					{
 						ap.SetStorage(this, "asort", i);
-						DrawSubtabs(session, selection);
+						DrawSubtabs(session, assembly);
 					}, sortCallsOptions);
 
 					AddInputButton(1, "Search", 0.075f, new OptionInput(null, ap => searchInput, 0, false, (ap, args) =>
 					{
 						ap.SetStorage(this, "asearch", args.ToString(" "));
-						DrawSubtabs(ap, selection);
+						DrawSubtabs(ap, assembly);
 					}), new OptionButton("X", ap =>
 					{
 						ap.SetStorage(this, "asearch", string.Empty);
-						DrawSubtabs(ap, selection);
+						DrawSubtabs(ap, assembly);
 
 					}, _ => string.IsNullOrEmpty(searchInput) ? OptionButton.Types.None : OptionButton.Types.Important));
 
@@ -523,11 +523,9 @@ public partial class AdminModule
 
 						Stripe(this, 1, value, maxVal, intenseColor, calmColor,
 							record.method_name.Truncate(105, "..."),
-							$"{record.GetTotalTime()} total ({record.total_time_percentage:0.0}%) | {record.GetOwnTime()} own ({record.own_time_percentage:0.0}%) | {record.total_exceptions:n0} total / {record.own_exceptions:n0} own excep.",
-							$"<b>{record.calls:n0}</b> {((record.calls).Plural("call", "calls"))}\n{ByteEx.Format(record.total_alloc).ToUpper()} total | {ByteEx.Format(record.own_alloc).ToUpper()} own",
-							Community.Runtime.MonoProfilerConfig.SourceViewer
-								? $"adminmodule.profilerselectcall {index}"
-								: string.Empty);
+							$"{MonoProfiler.Sample.GetDifferenceString(record.comparison.total_time)}{record.GetTotalTime()} total ({record.total_time_percentage:0.0}%) | {MonoProfiler.Sample.GetDifferenceString(record.comparison.own_time)}{record.GetOwnTime()} own ({record.own_time_percentage:0.0}%) | {MonoProfiler.Sample.GetDifferenceString(record.comparison.total_exceptions)}{record.total_exceptions:n0} total / {MonoProfiler.Sample.GetDifferenceString(record.comparison.own_exceptions)}{record.own_exceptions:n0} own excep.",
+							$"{MonoProfiler.Sample.GetDifferenceString(record.comparison.calls)}<b>{record.calls:n0}</b> {((record.calls).Plural("call", "calls"))}\n{MonoProfiler.Sample.GetDifferenceString(record.comparison.total_alloc)}{ByteEx.Format(record.total_alloc).ToUpper()} total | {MonoProfiler.Sample.GetDifferenceString(record.comparison.own_alloc)}{ByteEx.Format(record.own_alloc).ToUpper()} own",
+							Community.Runtime.MonoProfilerConfig.SourceViewer && !sample.FromDisk ? $"adminmodule.profilerselectcall {index}" : string.Empty);
 
 						index++;
 					}
@@ -730,7 +728,7 @@ public partial class AdminModule
 
 				pooledLayers.Add(new Components.Graphics.Chart.Layer
 				{
-					Name = assembly.assembly_name.displayName,
+					Name = assembly.assembly_name.GetDisplayName(false),
 					Data = recording.Timeline.Select(x => x.Value.Assemblies.Where(x => x.assembly_handle == assembly.assembly_handle).SumULong(value)).ToArray(),
 					LayerSettings = new()
 					{
@@ -784,7 +782,7 @@ public partial class AdminModule
 
 				pooledLayers.Add(new Components.Graphics.Chart.Layer
 				{
-					Name = name.displayName,
+					Name = name.GetDisplayName(false),
 					Data = recording.Timeline.Select(x => x.Value.Calls.Where(x => x.assembly_handle == assembly.assembly_handle).SumULong(callValue)).ToArray(),
 					LayerSettings = new()
 					{
@@ -866,7 +864,7 @@ public partial class AdminModule
 
 		var selection = ProfilerTab.GetSortedAssemblies(ap.GetStorage(ap.SelectedTab, "bsort", 1), ap.GetStorage(ap.SelectedTab, "bsearch", string.Empty))
 			.FindAt(arg.GetInt(0));
-		ap.SetStorage(null, "profilerval", selection.assembly_handle);
+		ap.SetStorage(null, "profilerval", selection.assembly_name == null ? string.Empty : selection.assembly_name.name);
 		ap.SelectedTab.OnChange(ap, ap.SelectedTab);
 
 		Draw(ap.Player);
@@ -878,7 +876,7 @@ public partial class AdminModule
 	{
 		var player = arg.Player();
 
-		if (!HasAccess(player, "profiler.sourceviewer"))
+		if (!HasAccess(player, "profiler.sourceviewer") || ProfilerTab.sample.FromDisk)
 		{
 			return;
 		}
@@ -886,8 +884,8 @@ public partial class AdminModule
 		var index = arg.GetInt(0);
 		var ap = GetPlayerSession(player);
 
-		var selection = ap.GetStorage<ModuleHandle>(null, "profilerval");
-		var call = ProfilerTab.GetSortedCalls(selection, ap.GetStorage(ap.SelectedTab, "asort", 1), ap.GetStorage(ap.SelectedTab, "asearch", string.Empty))
+		var assembly = ap.GetStorage<string>(null, "profilerval");
+		var call = ProfilerTab.GetSortedCalls(assembly, ap.GetStorage(ap.SelectedTab, "asort", 1), ap.GetStorage(ap.SelectedTab, "asearch", string.Empty))
 			.FindAt(index);
 
 		var currentTab = ap.SelectedTab;
@@ -1037,11 +1035,45 @@ public partial class AdminModule
 	[ProtectedCommand("adminmodule.profilerimport")]
 	private void ProfilerImport(ConsoleSystem.Arg arg)
 	{
-		if (!ProfilerTab.sample.IsCleared)
+		if (ProfilerTab.sample.IsCompared)
 		{
 			return;
 		}
 
+		var player = arg.Player();
+
+		File.Open(player, "Profiles", Defines.GetProfilesFolder(), Defines.GetProfilesFolder(), MonoProfiler.ProfileExtension,
+			onConfirm: (player, file) =>
+			{
+				using var buffer = TempArray<byte>.New(OsEx.File.ReadBytes(file.SelectedFile));
+
+				if (ProfilerTab.sample.IsCleared)
+				{
+					ProfilerTab.sample = MonoProfiler.Sample.Load(buffer.array);
+				}
+				else
+				{
+					var comparingSample = MonoProfiler.Sample.Load(buffer.array);
+					ProfilerTab.sample = ProfilerTab.sample.Compare(comparingSample);
+				}
+
+				var ap = Singleton.GetPlayerSession(player);
+				ap.SelectedTab.OnChange(ap, ap.SelectedTab);
+				Singleton.Draw(player);
+			}, onExtraInfo: item =>
+			{
+				if (item.IsDirectory)
+				{
+					return string.Empty;
+				}
+
+				if (MonoProfiler.ValidateFile(item.Path, out var protocol, out var duration, out var isCompared))
+				{
+					return $"Duration: {TimeEx.FormatPlayer(duration).ToLower()}s (protocol {protocol}){(isCompared ? " [C]" : string.Empty)}";
+				}
+
+				return $"Invalid protocol {protocol}";
+			});
 	}
 
 	[Conditional("!MINIMAL")]
@@ -1056,11 +1088,11 @@ public partial class AdminModule
 		}
 		else
 		{
+			ProfilerTab.sample.Clear();
 			MonoProfiler.Clear();
-			ap.SetStorage(null, "profilerval", (ModuleHandle)default);
+			ap.SetStorage(null, "profilerval", string.Empty);
 		}
 
-		ProfilerTab.sample.Clear();
 		ap.SelectedTab.OnChange(ap, ap.SelectedTab);
 
 		Draw(ap.Player);

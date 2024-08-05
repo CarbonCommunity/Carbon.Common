@@ -1,12 +1,5 @@
 ﻿using Newtonsoft.Json;
 
-/*
- *
- * Copyright (c) 2022-2023 Carbon Community 
- * All rights reserved.
- *
- */
-
 namespace Oxide.Core.Configuration;
 
 public class DynamicConfigFile : ConfigFile, IEnumerable<KeyValuePair<string, object>>, IEnumerable

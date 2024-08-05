@@ -1,20 +1,11 @@
-﻿using System.Drawing;
-using System.Drawing.Imaging;
+﻿using System.Drawing.Imaging;
 using System.Net;
 using Facepunch;
 using ProtoBuf;
 using QRCoder;
 using Color = System.Drawing.Color;
 using Defines = Carbon.Core.Defines;
-using Graphics = System.Drawing.Graphics;
 using Timer = Oxide.Plugins.Timer;
-
-/*
- *
- * Copyright (c) 2022-2023 Carbon Community
- * All rights reserved.
- *
- */
 
 namespace Carbon.Modules;
 
@@ -53,7 +44,9 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 		["fade"] = "https://carbonmod.gg/assets/media/cui/fade.png",
 		["graph"] = "https://carbonmod.gg/assets/media/cui/graph.png",
 		["maximize"] = "https://carbonmod.gg/assets/media/cui/maximize.png",
-		["minimize"] = "https://carbonmod.gg/assets/media/cui/minimize.png"
+		["minimize"] = "https://carbonmod.gg/assets/media/cui/minimize.png",
+		["folder"] = "https://carbonmod.gg/assets/media/cui/folder.png",
+		["file"] = "https://carbonmod.gg/assets/media/cui/file.png"
 	};
 
 	internal string _getProtoDataPath()

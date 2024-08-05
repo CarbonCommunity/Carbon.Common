@@ -1,13 +1,6 @@
 ﻿using System.Data;
 using System.Text;
 
-/*
- *
- * Copyright (c) 2022-2023 Carbon Community 
- * All rights reserved.
- *
- */
-
 namespace Oxide.Core.Database;
 
 public class Sql

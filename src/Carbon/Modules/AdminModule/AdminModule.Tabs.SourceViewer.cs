@@ -1,12 +1,5 @@
 ﻿#if !MINIMAL
 
-/*
-*
- * Copyright (c) 2022-2023 Carbon Community
- * All rights reserved.
- *
- */
-
 using System.Text;
 using Facepunch;
 using Microsoft.CodeAnalysis;
@@ -16,7 +9,7 @@ using UnityEngine.UI;
 
 namespace Carbon.Modules;
 
-public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
+public partial class AdminModule
 {
 	public class SourceViewerTab : Tab
 	{
@@ -28,7 +21,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 		public static SourceViewerTab Make(string fileName, string content, string context, int size = 8)
 		{
-			var tab = new SourceViewerTab("testchat", "TestChat", Community.Runtime.Core);
+			var tab = new SourceViewerTab("sourceviewer", "Source Viewer", Community.Runtime.Core);
 			tab.OnChange += (_, tab1) =>
 			{
 				tab1.AddColumn(0, true);
@@ -40,7 +33,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				using var lines = TempArray<string>.New(content.Split('\n'));
 				var temp = Pool.GetList<string>();
 
-				var resultContent = lines.Array.ToString("\n");
+				var resultContent = lines.array.ToString("\n");
 
 				for (int i = 0; i < lines.Length; i++) temp.Add($"{i + 1}");
 
@@ -72,7 +65,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				cui.CreatePanel(container, scrollview, "0.2 0.2 0.2 1", xMin: 0, xMax: 0, OxMin: 29, OxMax: 30);
 				cui.CreatePanel(container, blur, "0.2 0.2 0.2 1", xMin: 0, xMax: 0, OxMin: 29, OxMax: 30, yMin: 0.96f);
 
-				var longestLine = lines.Array.Max(x => x.Length);
+				var longestLine = lines.array.Max(x => x.Length);
 				var height = -(11.2f * lines.Length.Clamp(45, int.MaxValue));
 				var width = 2.75f * longestLine.Clamp(547, int.MaxValue);
 
@@ -112,13 +105,12 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		}
 		public unsafe static SourceViewerTab MakeMethod(MonoProfiler.CallRecord call, int size = 8)
 		{
-			var assemblyName = MonoProfiler.AssemblyMap[call.assembly_handle];
-			var code = SourceCodeBank.Parse(assemblyName.name, call.assembly_handle);
+			var code = SourceCodeBank.Parse(call.assembly_name.name, call.assembly_handle);
 			var codeResult = code.ParseMethod(call.method_handle, out var type, out var method).Trim();
 
 			return Make(
 				$"<color=#878787>{type}.</color>{method}",
-				ProcessSyntaxHighlight(codeResult), assemblyName.displayName, size);
+				ProcessSyntaxHighlight(codeResult), call.assembly_name.GetDisplayName(true), size);
 		}
 
 		public static string ProcessSyntaxHighlight(string content)

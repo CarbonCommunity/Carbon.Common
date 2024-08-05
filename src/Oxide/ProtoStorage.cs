@@ -1,13 +1,6 @@
 ﻿using ProtoBuf;
 using Logger = Carbon.Logger;
 
-/*
- *
- * Copyright (c) 2022-2023 Carbon Community
- * All rights reserved.
- *
- */
-
 namespace Oxide.Core;
 
 public class ProtoStorage
@@ -66,7 +59,7 @@ public class ProtoStorage
 			using var stream = new MemoryStream();
 			Serializer.Serialize(stream, data);
 			using var temp = TempArray<byte>.New(stream.ToArray());
-			OsEx.File.Create(fileDataPath, temp.Array);
+			OsEx.File.Create(fileDataPath, temp.array);
 		}
 		catch (Exception ex)
 		{

@@ -1,11 +1,4 @@
-﻿/*
- *
- * Copyright (c) 2022-2023 Carbon Community
- * All rights reserved.
- *
- */
-
-public static class SteamEx
+﻿public static class SteamEx
 {
 	public static bool IsSteamId(this string id)
 	{

@@ -1,24 +1,7 @@
-﻿using API.Assembly;
+﻿namespace Carbon.Core;
 
-/*
- *
- * Copyright (c) 2022-2023 Carbon Community
- * All rights reserved.
- *
- */
-
-namespace Carbon.Core;
-
-public partial class CorePlugin : CarbonPlugin
+public partial class CorePlugin
 {
-	[ConsoleCommand("reloadextensions", "Fully reloads all extensions.")]
-	[AuthLevel(2)]
-	private void ReloadExtensions(ConsoleSystem.Arg arg)
-	{
-		arg.ReplyWith("Command temporarily disabled.");
-		// Community.Runtime.AssemblyEx.Extensions.Watcher.TriggerAll(WatcherChangeTypes.Changed);
-	}
-
 	[ConsoleCommand("extensions", "Prints a list of all currently loaded extensions.")]
 	[AuthLevel(2)]
 	private void Extensions(ConsoleSystem.Arg arg)

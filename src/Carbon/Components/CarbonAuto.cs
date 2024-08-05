@@ -1,5 +1,8 @@
 ﻿namespace Carbon.Components;
 
+/// <summary>
+/// Synonymous to Rust's own 'serverauto' tweakable ConVar variables. Carbon expands on Rust or Carbon-related features designed for customisation.
+/// </summary>
 public class CarbonAuto : API.Abstracts.CarbonAuto
 {
 	public static Dictionary<string, AutoVar> AutoCache = new();
@@ -176,7 +179,7 @@ public class CarbonAuto : API.Abstracts.CarbonAuto
 						using var value = TempArray<string>.New(line.Split(' '));
 
 						var convar = value.Get(0);
-						var conval = value.Array.Skip(1).ToString(" ").Replace("\"", string.Empty);
+						var conval = value.array.Skip(1).ToString(" ").Replace("\"", string.Empty);
 						
 						if (AutoCache.TryGetValue(convar, out var auto))
 						{
@@ -204,6 +207,9 @@ public class CarbonAuto : API.Abstracts.CarbonAuto
 	}
 }
 
+/// <summary>
+/// Carbon-auto variable definition attribute.
+/// </summary>
 [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
 public class CarbonAutoVar : CommandVarAttribute
 {
@@ -217,6 +223,9 @@ public class CarbonAutoVar : CommandVarAttribute
 	}
 }
 
+/// <summary>
+/// Carbon-auto variable definition attribute which when its value is not '-1' (default), will enforce the server to become modded to reduce the risk of being blacklisted.
+/// </summary>
 [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
 public class CarbonAutoModdedVar : CarbonAutoVar
 {

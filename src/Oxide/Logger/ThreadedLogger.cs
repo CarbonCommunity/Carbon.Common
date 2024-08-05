@@ -1,11 +1,4 @@
-﻿/*
- *
- * Copyright (c) 2022-2023 Carbon Community
- * All rights reserved.
- *
- */
-
-namespace Oxide.Core.Logging;
+﻿namespace Oxide.Core.Logging;
 
 public enum LogType
 {
@@ -71,12 +64,6 @@ public abstract class Logger
 	}
 }
 
-public class ThreadedLogger : Logger
-{
+public class ThreadedLogger : Logger;
 
-}
-
-public class CompoundLogger : Logger
-{
-
-}
+public class CompoundLogger : Logger;

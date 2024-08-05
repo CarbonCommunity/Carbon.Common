@@ -1,13 +1,4 @@
-﻿/*
- *
- * Copyright (c) 2022-2023 Carbon Community
- * All rights reserved.
- *
- */
-
-using API.Abstracts;
-using ConVar;
-using static Carbon.Components.CUI;
+﻿using static Carbon.Components.CUI;
 
 namespace Carbon.Modules;
 

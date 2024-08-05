@@ -1,11 +1,4 @@
-﻿/*
- *
- * Copyright (c) 2024 Carbon Community
- * All rights reserved.
- *
- */
-
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 
 namespace Carbon.Core;
 
