@@ -1,16 +1,9 @@
-﻿/*
- *
- * Copyright (c) 2022-2023 Carbon Community
- * All rights reserved.
- *
- */
-
-using System.Text;
+﻿using System.Text;
 using API.Commands;
 
 namespace Carbon.Core;
 
-public partial class CorePlugin : CarbonPlugin
+public partial class CorePlugin
 {
 	[ConsoleCommand("plugins", "Prints the list of mods and their loaded plugins. Eg. c.plugins [-j|--j|-json|-abc|--json|-t|-m|-f|-ls] [-asc]")]
 	[AuthLevel(2)]
@@ -106,7 +99,7 @@ public partial class CorePlugin : CarbonPlugin
 							SplitMessageUp(true, failed, compilation, error, 0);
 						}
 
-						static void SplitMessageUp(bool initial, StringTable table, ModLoader.FailedCompilation compilation, ModLoader.Trace trace, int skip)
+						static void SplitMessageUp(bool initial, StringTable table, ModLoader.CompilationResult compilation, ModLoader.Trace trace, int skip)
 						{
 							const int size = 150;
 
@@ -257,15 +250,6 @@ public partial class CorePlugin : CarbonPlugin
 					}
 
 					Logger.Warn($"Plugin {name} was not found or was typed incorrectly.");
-
-					/*var module = BaseModule.GetModule<DRMModule>();
-					foreach (var drm in module.Config.DRMs)
-					{
-						foreach (var entry in drm.Entries)
-						{
-							if (entry.Id == name) drm.RequestEntry(entry);
-						}
-					}*/
 					break;
 				}
 		}
@@ -313,36 +297,13 @@ public partial class CorePlugin : CarbonPlugin
 						Community.Runtime.ScriptProcessor.Ignore(plugin);
 					}
 				}
-
-				//
-				// Web-Scripts
-				//
-				{
-					var tempList = Facepunch.Pool.GetList<string>();
-					tempList.AddRange(Community.Runtime.WebScriptProcessor.IgnoreList);
-					Community.Runtime.WebScriptProcessor.IgnoreList.RemoveAll(x => !except.Any() || (except.Any() && !except.Any(x.Contains)));
-					Community.Runtime.WebScriptProcessor.Clear(except);
-
-					foreach (var plugin in tempList)
-					{
-						if (except.Any(plugin.Contains))
-						{
-							continue;
-						}
-
-						Community.Runtime.WebScriptProcessor.Ignore(plugin);
-					}
-					Facepunch.Pool.FreeList(ref tempList);
-					break;
-				}
-
+				break;
 			default:
 				{
 					var path = GetPluginPath(name);
 					if (!string.IsNullOrEmpty(path.Value))
 					{
 						Community.Runtime.ScriptProcessor.Ignore(path.Value);
-						Community.Runtime.WebScriptProcessor.Ignore(path.Value);
 					}
 
 					var pluginFound = false;

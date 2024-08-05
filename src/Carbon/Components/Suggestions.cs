@@ -1,14 +1,10 @@
-﻿/*
- *
- * Copyright (c) 2022-2024 Carbon Community
- * All rights reserved.
- *
- */
-
-using Facepunch;
+﻿using Facepunch;
 
 namespace Carbon.Components;
 
+/// <summary>
+/// Cache based suggestion system used to return confidence based data.
+/// </summary>
 public class Suggestions
 {
 	public static BufferBank Buffer = new();

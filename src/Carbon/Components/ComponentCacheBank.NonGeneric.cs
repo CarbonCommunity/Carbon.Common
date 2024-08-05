@@ -1,12 +1,8 @@
-﻿/*
- *
- * Copyright (c) 2022-2024 Carbon Community
- * All rights reserved.
- *
- */
+﻿namespace Carbon.Components;
 
-namespace Carbon.Components;
-
+/// <summary>
+/// General implementation of the ComponentCache Carbon component.
+/// </summary>
 public static class ComponentCacheBankNonGeneric
 {
 	public static List<IComponentBank> All = new();

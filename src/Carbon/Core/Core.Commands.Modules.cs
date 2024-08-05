@@ -1,17 +1,9 @@
 ﻿using System.Text;
-using API.Assembly;
 using Carbon.Base.Interfaces;
-
-/*
- *
- * Copyright (c) 2022-2023 Carbon Community
- * All rights reserved.
- *
- */
 
 namespace Carbon.Core;
 
-public partial class CorePlugin : CarbonPlugin
+public partial class CorePlugin
 {
 	[ConsoleCommand("setmodule", "Enables or disables Carbon modules. Visit root/carbon/modules and use the config file names as IDs.")]
 	[AuthLevel(2)]
@@ -114,15 +106,11 @@ public partial class CorePlugin : CarbonPlugin
 			return;
 		}
 
-		if (module.IsEnabled()) module.SetEnabled(false);
-
 		try
 		{
 			module.Load();
 
-			if (module.IsEnabled()) module.OnEnableStatus();
-
-			arg.ReplyWith($"Reloaded '{module.Name}' module config.");
+			arg.ReplyWith($"Reloaded '{module.Name}' module config & data.");
 		}
 		catch (Exception ex)
 		{

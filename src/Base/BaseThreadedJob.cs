@@ -1,11 +1,4 @@
-﻿/*
- *
- * Copyright (c) 2022-2024 Carbon Community  
- * All rights reserved.
- *
- */
-
-namespace Carbon.Base;
+﻿namespace Carbon.Base;
 
 public class BaseThreadedJob : IDisposable
 {
@@ -42,7 +35,10 @@ public class BaseThreadedJob : IDisposable
 			cancellationToken = new CancellationTokenSource();
 			_task = Task.Factory.StartNew(Run, cancellationToken.Token);
 		}
-		else Run();
+		else
+		{
+			Run();
+		}
 	}
 	public virtual void Abort()
 	{

@@ -1,13 +1,6 @@
 ﻿using API.Logger;
 using Command = API.Commands.Command;
 
-/*
- *
- * Copyright (c) 2022-2024 Carbon Community
- * All rights reserved.
- *
- */
-
 namespace Carbon.Core;
 
 [Serializable]
@@ -25,6 +18,7 @@ public class Config
 	public AnalyticsConfig Analytics { get; set; } = new();
 	public SelfUpdatingConfig SelfUpdating { get; set; } = new();
 	public DebuggingConfig Debugging { get; set; } = new();
+	public ProcessorsConfig Processors { get; set; } = new();
 	public LoggingConfig Logging { get; set; } = new();
 	public ProfilerConfig Profiler { get; set; } = new();
 	public CompilerConfig Compiler { get; set; } = new();
@@ -87,6 +81,12 @@ public class Config
 		public string AdminDefaultGroup { get; set; } = "admin";
 		public bool BypassAdminCooldowns { get; set; } = false;
 		public Permission.SerializationMode PermissionSerialization { get; set; } = Permission.SerializationMode.Protobuf;
+	}
+
+	public class ProcessorsConfig
+	{
+		public float ScriptProcessingRate = 0.2f;
+		public float ZipScriptProcessingRate = 0.5f;
 	}
 
 	public class DebuggingConfig

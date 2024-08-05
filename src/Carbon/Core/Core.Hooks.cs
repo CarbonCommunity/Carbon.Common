@@ -1,18 +1,10 @@
-﻿/*
- *
- * Copyright (c) 2022-2023 Carbon Community
- * All rights reserved.
- *
- */
-
-using Carbon.Base.Interfaces;
-using Facepunch;
+﻿using Facepunch;
 
 namespace Carbon.Core;
 
 #pragma warning disable IDE0051
 
-public partial class CorePlugin : CarbonPlugin
+public partial class CorePlugin
 {
 	internal static bool _isPlayerTakingDamage = false;
 	internal static readonly string[] _emptyStringArray = new string[0];

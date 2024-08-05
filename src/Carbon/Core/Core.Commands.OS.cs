@@ -1,17 +1,8 @@
-﻿using Facepunch;
-using Newtonsoft.Json;
-using Application = UnityEngine.Application;
-
-/*
- *
- * Copyright (c) 2022-2023 Carbon Community
- * All rights reserved.
- *
- */
+﻿using Application = UnityEngine.Application;
 
 namespace Carbon.Core;
 
-public partial class CorePlugin : CarbonPlugin
+public partial class CorePlugin
 {
 	[ConsoleCommand("openplugin", "Locally opens the `cs` file of a loaded plugin.")]
 	[AuthLevel(2)]

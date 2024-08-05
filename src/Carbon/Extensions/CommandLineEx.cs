@@ -1,11 +1,4 @@
-﻿/*
- *
- * Copyright (c) 2022-2023 Carbon Community 
- * All rights reserved.
- *
- */
-
-namespace Carbon.Extensions;
+﻿namespace Carbon.Extensions;
 
 public static class CommandLineEx
 {
@@ -24,7 +17,7 @@ public static class CommandLineEx
 		{
 			if (args[i] == argument)
 			{
-				return string.IsNullOrEmpty(args[i + 1]) ? result = Default : result = args[i + 1];
+				return string.IsNullOrEmpty(args[i + 1]) ? Default : args[i + 1];
 			}
 		}
 

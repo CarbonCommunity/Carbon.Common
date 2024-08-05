@@ -1,12 +1,5 @@
 ﻿using Newtonsoft.Json;
 
-/*
- *
- * Copyright (c) 2022-2023 Carbon Community
- * All rights reserved.
- *
- */
-
 namespace Oxide.Core.Libraries;
 
 public class Lang : Library
@@ -44,7 +37,7 @@ public class Lang : Library
 		{
 			if (Directory.GetFiles(text).Length != 0 && (plugin == null || (plugin != null && OsEx.File.Exists(Path.Combine(text, plugin.Name + ".json")))))
 			{
-				list.Add(text.Substring(Interface.Oxide.LangDirectory.Length + 1));
+				list.Add(text[(Interface.Oxide.LangDirectory.Length + 1)..]);
 			}
 		}
 
@@ -56,11 +49,8 @@ public class Lang : Library
 	{
 		if (string.IsNullOrEmpty(lang) || string.IsNullOrEmpty(userId)) return;
 
-		if (Interface.Oxide.Permission.UserExists(userId, out var data))
-		{
-			data.Language = lang;
-			Interface.Oxide.Permission.SaveData();
-		}
+		if (!Interface.Oxide.Permission.UserExists(userId, out var data) || data.Language.Equals(lang)) return;
+		data.Language = lang;
 	}
 	public void SetServerLanguage(string lang)
 	{

@@ -1,11 +1,4 @@
-﻿/*
- *
- * Copyright (c) 2022-2024 Carbon Community
- * All rights reserved.
- *
- */
-
-using System.Reflection.Metadata;
+﻿using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp;
@@ -155,7 +148,7 @@ public class SourceCodeBank
 
 			Settings.UsingDeclarations = false;
 
-			var iMethod = Decompiler.TypeSystem.MainModule.GetDefinition( UnsafeUtility.As<uint, MethodDefinitionHandle>(ref token));
+			var iMethod = Decompiler.TypeSystem.MainModule.GetDefinition(UnsafeUtility.As<uint, MethodDefinitionHandle>(ref token));
 
 			if (iMethod == null)
 			{

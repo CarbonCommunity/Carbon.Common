@@ -3,20 +3,13 @@ using System.Data.Common;
 using MySql.Data.MySqlClient;
 using Logger = Carbon.Logger;
 
-/*
- *
- * Copyright (c) 2022-2023 Carbon Community 
- * All rights reserved.
- *
- */
-
 namespace Oxide.Core.MySql.Libraries;
 
 public class MySql : Library, IDatabaseProvider
 {
 	public MySql()
 	{
-		_worker = new Thread(new ThreadStart(Worker));
+		_worker = new Thread(Worker);
 		_worker.Start();
 	}
 

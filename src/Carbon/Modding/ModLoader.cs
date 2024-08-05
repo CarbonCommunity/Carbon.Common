@@ -2,20 +2,13 @@
 using Carbon.Profiler;
 using Newtonsoft.Json;
 
-/*
- *
- * Copyright (c) 2022-2024 Carbon Community
- * All rights reserved.
- *
- */
-
 namespace Carbon.Core;
 
-public static class ModLoader
+public static partial class ModLoader
 {
 	public static bool IsBatchComplete { get; set; }
-	public static ModPackages Packages = new();
-	public static Dictionary<string, FailedCompilation> FailedCompilations = new();
+	public static PackageBank Packages = new();
+	public static Dictionary<string, CompilationResult> FailedCompilations = new();
 
 	internal static Dictionary<string, Type> TypeDictionaryCache { get; } = new();
 	internal static Dictionary<string, List<string>> PendingRequirees { get; } = new();
@@ -26,14 +19,11 @@ public static class ModLoader
 	internal const string RUST_PLUGIN = "RustPlugin";
 	internal const string COVALENCE_PLUGIN = "CovalencePlugin";
 
-	public static FailedCompilation GetOrCreateFailedCompilation(string file, bool clear = false)
+	public static CompilationResult GetOrCreateFailedCompilation(string file, bool clear = false)
 	{
 		if (!FailedCompilations.TryGetValue(file, out var result))
 		{
-			FailedCompilations[file] = result = new()
-			{
-				File = file
-			};
+			FailedCompilations[file] = result = CompilationResult.Create(file);
 		}
 
 		if (clear)
@@ -43,14 +33,14 @@ public static class ModLoader
 
 		return result;
 	}
-	public static void RegisterPackage(ModPackage package)
+	public static void RegisterPackage(Package package)
 	{
 		if (!Packages.Contains(package))
 		{
 			Packages.Add(package);
 		}
 	}
-	public static ModPackage GetPackage(string name)
+	public static Package GetPackage(string name)
 	{
 		return Packages.FirstOrDefault(mod => mod.Name.StartsWith(name, StringComparison.OrdinalIgnoreCase));
 	}
@@ -147,7 +137,7 @@ public static class ModLoader
 	{
 		ClearAllRequirees();
 
-		var list = Facepunch.Pool.GetList<ModPackage>();
+		var list = Facepunch.Pool.GetList<Package>();
 		list.AddRange(Packages);
 
 		foreach (var mod in list)
@@ -172,7 +162,7 @@ public static class ModLoader
 		return true;
 	}
 
-	public static void InitializePlugins(ModPackage mod)
+	public static void InitializePlugins(Package mod)
 	{
 		Logger.Warn($"Initializing mod '{mod.Name}'");
 
@@ -192,7 +182,7 @@ public static class ModLoader
 			catch (Exception ex) { Logger.Error($"Failed loading '{mod.Name}'", ex); }
 		}
 	}
-	public static void UninitializePlugins(ModPackage mod)
+	public static void UninitializePlugins(Package mod)
 	{
 		var plugins = Facepunch.Pool.GetList<RustPlugin>();
 		plugins.AddRange(mod.Plugins);
@@ -209,7 +199,7 @@ public static class ModLoader
 		Facepunch.Pool.FreeList(ref plugins);
 	}
 
-	public static bool InitializePlugin(Type type, out RustPlugin plugin, ModPackage package = default, Action<RustPlugin> preInit = null, bool precompiled = false)
+	public static bool InitializePlugin(Type type, out RustPlugin plugin, Package package = default, Action<RustPlugin> preInit = null, bool precompiled = false)
 	{
 		var constructor = type.GetConstructor(Type.EmptyTypes);
 		var instance = FormatterServices.GetUninitializedObject(type);
@@ -327,6 +317,11 @@ public static class ModLoader
 
 		if (!premature)
 		{
+			if (!plugin.IsPrecompiled)
+			{
+				Assemblies.Plugins.Eliminate(Path.GetFileNameWithoutExtension(plugin.FilePath));
+			}
+
 			Logger.Log($"Unloaded plugin {plugin.ToPrettyString()}");
 			Interface.Oxide.RootPluginManager.RemovePlugin(plugin);
 
@@ -628,7 +623,7 @@ public static class ModLoader
 
 		PostBatchFailedRequirees.Clear();
 
-		if (PostBatchFailedRequirees.Count == 0)
+		if (temp.Count == 0)
 		{
 			IsBatchComplete = true;
 		}
@@ -641,199 +636,46 @@ public static class ModLoader
 			Community.Runtime.MarkServerInitialized(true);
 		}
 
-		if (Community.IsServerInitialized)
+		if (!Community.IsServerInitialized)
 		{
-			var counter = 0;
-			var plugins = Facepunch.Pool.GetList<RustPlugin>();
+			return;
+		}
 
-			foreach (var mod in Packages)
+		var counter = 0;
+		var plugins = Facepunch.Pool.GetList<RustPlugin>();
+		plugins.AddRange(Packages.SelectMany(mod => mod.Plugins));
+
+		foreach (var plugin in plugins)
+		{
+			try
 			{
-				foreach (var plugin in mod.Plugins)
-				{
-					plugins.Add(plugin);
-				}
+				plugin.InternalApplyPluginReferences();
 			}
-
-			foreach (var plugin in plugins)
+			catch(Exception exception)
 			{
-				try { plugin.InternalApplyPluginReferences(); } catch { }
+				Logger.Error($"Failed applying PluginReferences for '{plugin.ToPrettyString()}'", exception);
 			}
-
-			foreach (var plugin in plugins)
-			{
-				if (plugin.HasInitialized) continue;
-				counter++;
-
-				plugin.HasInitialized = true;
-				plugin.CallHook("OnServerInitialized", FirstLoadSinceStartup);
-			}
-
-			FirstLoadSinceStartup = false;
-
-			Facepunch.Pool.FreeList(ref plugins);
-
-			if (counter > 1)
-			{
-				Analytics.batch_plugin_types();
-
-				Logger.Log($" Batch completed! OSI on {counter:n0} {counter.Plural("plugin", "plugins")}.");
-			}
-
-			Community.Runtime.Events.Trigger(CarbonEvent.AllPluginsLoaded, EventArgs.Empty);
 		}
-	}
 
-	public class ModPackages : List<ModPackage>
-	{
-		public ModPackage FindPackage(string name)
+		foreach (var plugin in plugins.Where(plugin => !plugin.HasInitialized))
 		{
-			return this.FirstOrDefault(x => x.Name.Equals(name, StringComparison.InvariantCulture));
+			counter++;
+
+			plugin.HasInitialized = true;
+			plugin.CallHook("OnServerInitialized", FirstLoadSinceStartup);
 		}
 
-		public RustPlugin FindPlugin(string name)
+		FirstLoadSinceStartup = false;
+
+		Facepunch.Pool.FreeList(ref plugins);
+
+		if (counter > 1)
 		{
-			foreach (var package in this)
-			{
-				var plugin = package.FindPlugin(name);
+			Analytics.batch_plugin_types();
 
-				if (plugin != null)
-				{
-					return plugin;
-				}
-			}
-
-			return default;
-		}
-	}
-
-	[JsonObject(MemberSerialization.OptIn)]
-	public struct ModPackage
-	{
-		public Assembly Assembly;
-		public Type[] AllTypes;
-
-		[JsonProperty] public string Name;
-		[JsonProperty] public string File;
-		[JsonProperty] public bool IsCoreMod;
-		[JsonProperty] public List<RustPlugin> Plugins;
-
-		public bool IsValid { get; internal set; }
-		public readonly int PluginCount => IsValid ? Plugins.Count : default;
-
-		public ModPackage AddPlugin(RustPlugin plugin)
-		{
-			if (!IsValid || Plugins == null || Plugins.Contains(plugin))
-			{
-				return this;
-			}
-
-			Plugins.Add(plugin);
-			return this;
-		}
-		public ModPackage RemovePlugin(RustPlugin plugin)
-		{
-			if (!IsValid || Plugins == null || !Plugins.Contains(plugin))
-			{
-				return this;
-			}
-
-			Plugins.Remove(plugin);
-			return this;
-		}
-		public RustPlugin FindPlugin(string name)
-		{
-			if(Plugins == null)
-			{
-				return default;
-			}
-
-			return Plugins.FirstOrDefault(x => x.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase));
+			Logger.Log($" Batch completed! OSI on {counter:n0} {counter.Plural("plugin", "plugins")}.");
 		}
 
-		public static ModPackage Get(string name, bool isCoreMod, string file = null)
-		{
-			ModPackage package = default;
-
-			package.Name = name;
-			package.File = file;
-			package.IsCoreMod = isCoreMod;
-			package.Plugins = new();
-			package.IsValid = true;
-
-			return package;
-		}
-	}
-
-	[JsonObject(MemberSerialization.OptIn)]
-	public class FailedCompilation
-	{
-		[JsonProperty] public string File;
-		[JsonProperty] public List<Trace> Errors = new();
-		[JsonProperty] public List<Trace> Warnings = new();
-		public Type RollbackType;
-
-		public void AppendErrors(IEnumerable<Trace> traces)
-		{
-			Errors.AddRange(traces);
-		}
-		public void AppendWarnings(IEnumerable<Trace> traces)
-		{
-			Warnings.AddRange(traces);
-		}
-
-		public void SetRollbackType(Type type)
-		{
-			RollbackType = type;
-		}
-		public void LoadRollbackType()
-		{
-			if (RollbackType == null)
-			{
-				return;
-			}
-
-			var existentPlugin = FindPlugin(GetRollbackTypeName());
-
-			if (existentPlugin != null)
-			{
-				return;
-			}
-
-			InitializePlugin(RollbackType, out var plugin, Community.Runtime.Plugins, plugin =>
-			{
-				Logger.Warn($"Rollback for plugin '{plugin.ToPrettyString()}' due to compilation failure");
-			}, precompiled: true);
-			plugin.InternalCallHookOverriden = true;
-			plugin.IsPrecompiled = false;
-		}
-
-		public string GetRollbackTypeName()
-		{
-			if (RollbackType == null)
-			{
-				return string.Empty;
-			}
-
-			return  RollbackType.GetCustomAttribute<InfoAttribute>()?.Title?.Replace(" ", string.Empty);
-		}
-
-		public bool IsValid()
-		{
-			return Errors != null && Errors.Count > 0;
-		}
-		public void Clear()
-		{
-			Errors?.Clear();
-			Warnings?.Clear();
-		}
-	}
-
-	[JsonObject(MemberSerialization.OptIn)]
-	public struct Trace
-	{
-		[JsonProperty] public string Number;
-		[JsonProperty] public string Message;
-		[JsonProperty] public int Column;
-		[JsonProperty] public int Line;
+		Community.Runtime.Events.Trigger(CarbonEvent.AllPluginsLoaded, EventArgs.Empty);
 	}
 }

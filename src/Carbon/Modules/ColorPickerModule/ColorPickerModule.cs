@@ -1,11 +1,4 @@
-﻿/*
- *
- * Copyright (c) 2022-2023 Carbon Community
- * All rights reserved.
- *
- */
-
-using Oxide.Game.Rust.Cui;
+﻿using Oxide.Game.Rust.Cui;
 using static Carbon.Components.CUI;
 using static Carbon.Modules.AdminModule;
 using static ConsoleSystem;

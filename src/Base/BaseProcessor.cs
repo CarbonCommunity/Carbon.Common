@@ -1,11 +1,4 @@
-﻿/*
- *
- * Copyright (c) 2022-2024 Carbon Community
- * All rights reserved.
- *
- */
-
-namespace Carbon.Base;
+﻿namespace Carbon.Base;
 
 public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProcessor
 {
@@ -43,7 +36,7 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 
 		IsInitialized = true;
 
-		_wfsInstance = new WaitForSeconds(Rate);
+		RefreshRate();
 
 		StopAllCoroutines();
 		StartCoroutine(Run());
@@ -149,7 +142,10 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 	}
 	public virtual void Prepare(string id, string file)
 	{
-		if (IgnoreList.Contains(file)) return;
+		if (string.IsNullOrEmpty(id) || string.IsNullOrEmpty(file) || IgnoreList.Contains(file))
+		{
+			return;
+		}
 
 		if (!string.IsNullOrEmpty(file))
 		{
@@ -160,8 +156,6 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 				return;
 			}
 		}
-
-		Logger.Debug($" Loading plugin '{id}'...", 1);
 
 		Remove(id);
 
@@ -302,6 +296,11 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 			Logger.Debug(2, $"[{Name}] File deleted: {path}");
 			mod.MarkDeleted();
 		}
+	}
+
+	public void RefreshRate()
+	{
+		_wfsInstance = new WaitForSeconds(Rate);
 	}
 
 	public bool IsBlacklisted(string path)

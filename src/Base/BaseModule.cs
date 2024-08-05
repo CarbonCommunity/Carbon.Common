@@ -1,14 +1,6 @@
 ﻿using Carbon.Base.Interfaces;
-using HarmonyLib;
 using Defines = Carbon.Core.Defines;
 using Harmony = HarmonyLib.Harmony;
-
-/*
- *
- * Copyright (c) 2022-2024 Carbon Community
- * All rights reserved.
- *
- */
 
 namespace Carbon.Base;
 
@@ -135,7 +127,7 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 
 		Config ??= new DynamicConfigFile(GetConfigPath());
 		Data ??= new DynamicConfigFile(GetDataPath());
-		Lang ??= new(this);
+		Lang ??= new Lang(this);
 
 		var newConfig = !Config.Exists();
 		var newData = !Data.Exists();
@@ -314,7 +306,7 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 	public virtual void OnDisabled(bool initialized)
 	{
 		if (ForceDisabled) return;
-		
+
 		OnUnload();
 	}
 	public virtual void OnEnabled(bool initialized)
@@ -378,7 +370,6 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 	}
 	public override void Shutdown()
 	{
-		Save();
 		OnUnload();
 
 		Community.Runtime.ModuleProcessor.Uninstall(this);

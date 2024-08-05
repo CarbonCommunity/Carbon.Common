@@ -1,12 +1,9 @@
-﻿/*
- *
- * Copyright (c) 2022-2024 Carbon Community
- * All rights reserved.
- *
- */
+﻿namespace Carbon.Components;
 
-namespace Carbon.Components;
-
+/// <summary>
+/// Carbon component used for tracking gameobject custom monobehavior components in plugins.
+/// </summary>
+/// <typeparam name="T">The type of the MonoBehavior inherited class.</typeparam>
 public class ComponentCacheBank<T> : Dictionary<GameObject, List<T>>, IComponentBank where T : MonoBehaviour
 {
 	public static ComponentCacheBank<T> Instance { get; }
@@ -38,7 +35,7 @@ public class ComponentCacheBank<T> : Dictionary<GameObject, List<T>>, IComponent
 			this[go] = monos = new();
 		}
 
-		var existent = monos.FirstOrDefault(x => x is T);
+		var existent = monos.FirstOrDefault(x => x != null);
 
 		if (existent != null)
 		{

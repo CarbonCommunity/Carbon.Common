@@ -1,22 +1,11 @@
-﻿using System.Collections.Concurrent;
-using System.Diagnostics;
-using System.Text;
+﻿using System.Text;
 using Carbon.Base.Interfaces;
-using ConVar;
-using Facepunch;
 using HarmonyLib;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using static Carbon.HookCallerCommon;
 using Pool = Facepunch.Pool;
-
-/*
- *
- * Copyright (c) 2022-2024 Carbon Community
- * All rights reserved.
- *
- */
 
 namespace Carbon;
 
@@ -44,7 +33,7 @@ public class HookCallerCommon
 
 		public object[] Take()
 		{
-			return _pool.Count != 0 ? _pool.Dequeue() : new object[_length];
+			return _pool.Count > 0 ? _pool.Dequeue() : new object[_length];
 		}
 		public void Return(object[] array)
 		{
@@ -150,7 +139,10 @@ public static class HookCaller
 
 	private static object CallStaticHook(uint hookId, BindingFlags flag = BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public, object[] args = null)
 	{
-		if (Community.Runtime == null || Community.Runtime.ModuleProcessor == null) return null;
+		if (Community.Runtime == null || Community.Runtime.ModuleProcessor == null)
+		{
+			return null;
+		}
 
 		var result = (object)null;
 		var conflicts = Pool.GetList<Conflict>();
@@ -190,7 +182,10 @@ public static class HookCaller
 				{
 					var methodResult = Caller.CallHook(plugin, hookId, flags: flag, args: args);
 
-					if (methodResult == null) continue;
+					if (methodResult == null)
+					{
+						continue;
+					}
 
 					result = methodResult;
 					ResultOverride(conflicts, plugin, hookId, result);
@@ -1421,7 +1416,7 @@ public static class HookCaller
 
 					if (methodName.Contains("."))
 					{
-						using var temp = TemporaryArray<string>.New(methodName.Split('.'));
+						using var temp = TempArray<string>.New(methodName.Split('.'));
 						methodName = temp.Get(temp.Length - 1);
 					}
 				}
@@ -1644,13 +1639,13 @@ partial class {@class.Identifier.ValueText}
 		{
 			var processedDirective = directive.Replace(_ifDirective, string.Empty).Replace(_elifDirective, string.Empty).Trim();
 
-			using var subdirectives = TemporaryArray<string>.New(processedDirective.Split(_operatorsStrings, StringSplitOptions.RemoveEmptyEntries));
+			using var subdirectives = TempArray<string>.New(processedDirective.Split(_operatorsStrings, StringSplitOptions.RemoveEmptyEntries));
 
-			foreach (var subdirective in subdirectives.Array)
+			foreach (var subdirective in subdirectives.array)
 			{
 				var processedSubdirective = subdirective.Trim();
 
-				using var split = TemporaryArray<string>.New(processedSubdirective.Split(_underscoreChar));
+				using var split = TempArray<string>.New(processedSubdirective.Split(_underscoreChar));
 
 				if (split.Length < 3)
 				{
@@ -1683,7 +1678,7 @@ partial class {@class.Identifier.ValueText}
 
 					case "CARBON":
 					{
-						using var protocol = TemporaryArray<string>.New(Community.Runtime.Analytics.Protocol.Split(_dotChar));
+						using var protocol = TempArray<string>.New(Community.Runtime.Analytics.Protocol.Split(_dotChar));
 
 						var current = new VersionNumber(protocol.Get(0).ToInt(), protocol.Get(1).ToInt(), protocol.Get(2).ToInt());
 

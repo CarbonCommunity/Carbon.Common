@@ -4,21 +4,10 @@ using API.Commands;
 using API.Contracts;
 using API.Events;
 using API.Hooks;
-using Carbon.Client;
 using Facepunch;
 using Newtonsoft.Json;
-using Carbon.Extensions;
 using Application = UnityEngine.Application;
-using MathEx = Carbon.Extensions.MathEx;
-using Carbon.Client.SDK;
 using Carbon.Profiler;
-
-/*
- *
- * Copyright (c) 2022-2023 Carbon Community
- * All rights reserved.
- *
- */
 
 namespace Carbon;
 
@@ -89,9 +78,6 @@ public class Community
 	public IModuleProcessor ModuleProcessor
 	{ get; set; }
 
-	public IWebScriptProcessor WebScriptProcessor
-	{ get; set; }
-
 	public IZipScriptProcessor ZipScriptProcessor
 	{ get; set; }
 
@@ -101,9 +87,6 @@ public class Community
 #endif
 
 	public ICarbonProcessor CarbonProcessor
-	{ get; set; }
-
-	public ICarbonClientManager CarbonClientManager
 	{ get; set; }
 
 	public static bool IsServerInitialized { get; internal set; }
@@ -120,36 +103,48 @@ public class Community
 	public Config Config
 	{ get; set; }
 
-	public Carbon.Client.ClientConfig ClientConfig
-	{ get; set; }
-
 	public Carbon.Profiler.MonoProfilerConfig MonoProfilerConfig
 	{ get; set; }
 
 	public CorePlugin Core
 	{ get; set; }
 
-	public ModLoader.ModPackage Plugins
+	public ModLoader.Package Plugins
 	{ get; set; }
 
-	public ModLoader.ModPackage ZipPlugins
+	public ModLoader.Package ZipPlugins
 	{ get; set; }
 
 	public Entities Entities
 	{ get; set; }
 
-	internal static int Tick = DateTime.UtcNow.Year + DateTime.UtcNow.Month + DateTime.UtcNow.Day + DateTime.UtcNow.Hour + DateTime.UtcNow.Minute + DateTime.UtcNow.Second + DateTime.UtcNow.Millisecond;
+	internal static string _runtimeId;
+
+	public static string RuntimeId
+	{
+		get
+		{
+			if (string.IsNullOrEmpty(_runtimeId))
+			{
+				var date = DateTime.Now;
+				_runtimeId = date.Year.ToString() + date.Month + date.Day +
+				             date.Hour + date.Minute + date.Second + date.Millisecond;
+
+			}
+
+			return _runtimeId;
+		}
+	}
 
 	public static string Protect(string name)
 	{
 		if (string.IsNullOrEmpty(name)) return string.Empty;
 
-		using var split = TemporaryArray<string>.New(name.Split(' '));
-		var command = split.Array[0];
-		using var args = TemporaryArray<string>.New(split.Array.Skip(1).ToArray());
-		var arguments = args.Array.ToString(" ");
+		using var split = TempArray<string>.New(name.Split(' '));
+		var command = split.array[0];
+		var arguments = split.array.Skip(1).ToString(" ");
 
-		return $"carbonprotecc_{RandomEx.GetRandomString(16, command + Tick, command.Length + Tick)} {arguments}".TrimEnd();
+		return $"carbonprotecc_{RandomEx.GetRandomString(command.Length, command + RuntimeId, command.Length)} {arguments}".TrimEnd();
 	}
 
 	public void MarkServerInitialized(bool wants, bool hookCall = true)
@@ -321,36 +316,6 @@ public class Community
 		}
 	}
 
-	public void LoadClientConfig()
-	{
-		var needsSave = false;
-
-		if (!OsEx.File.Exists(Defines.GetClientConfigFile()))
-		{
-			ClientConfig ??= new();
-			needsSave = true;
-		}
-		else
-		{
-			ClientConfig = JsonConvert.DeserializeObject<ClientConfig>(OsEx.File.ReadText(Defines.GetClientConfigFile()));
-		}
-
-		if (ClientConfig.Addons.Count == 0)
-		{
-			ClientConfig.Addons.Add(new ClientConfig.AddonEntry { Url = "http//", Enabled = false });
-			needsSave = true;
-		}
-
-		ClientConfig.RefreshNetworkedAddons();
-
-		if (ClientConfig.Enabled)
-		{
-			ConVar.Server.secure = false;
-		}
-
-		if(needsSave) SaveClientConfig();
-	}
-
 	public void LoadMonoProfilerConfig()
 	{
 		var needsSave = false;
@@ -373,13 +338,6 @@ public class Community
 		if (Config == null) Config = new Config();
 
 		OsEx.File.Create(Defines.GetConfigFile(), JsonConvert.SerializeObject(Config, Formatting.Indented));
-	}
-
-	public void SaveClientConfig()
-	{
-		ClientConfig ??= new();
-
-		OsEx.File.Create(Defines.GetClientConfigFile(), JsonConvert.SerializeObject(ClientConfig, Formatting.Indented));
 	}
 
 	public void SaveMonoProfilerConfig()

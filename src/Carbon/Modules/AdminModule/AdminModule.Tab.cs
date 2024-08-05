@@ -1,5 +1,4 @@
-﻿using System.Windows.Media;
-using Facepunch;
+﻿using Facepunch;
 using Oxide.Game.Rust.Cui;
 
 namespace Carbon.Modules;
@@ -209,7 +208,6 @@ public partial class AdminModule
 			option.Callback = callback;
 			option.Options = options;
 			option.OptionsIcons = optionsIcons;
-			option.OptionsIconScale = optionsIconScale;
 			option.Tooltip = tooltip;
 
 			return AddRow(column, option, hidden);
@@ -528,16 +526,14 @@ public partial class AdminModule
 			public Action<PlayerSession, int> Callback;
 			public string[] Options;
 			public string[] OptionsIcons;
-			public float OptionsIconScale;
 
 			public OptionDropdown() { }
-			public OptionDropdown(string name, Func<PlayerSession, int> index, Action<PlayerSession, int> callback, string[] options, string[] optionsIcons, float optionsIconScale, string tooltip = null, bool hidden = false) : base(name, tooltip, hidden)
+			public OptionDropdown(string name, Func<PlayerSession, int> index, Action<PlayerSession, int> callback, string[] options, string[] optionsIcons, string tooltip = null, bool hidden = false) : base(name, tooltip, hidden)
 			{
 				Index = (ap) => { try { return (index?.Invoke(ap)).GetValueOrDefault(0); } catch (Exception ex) { Logger.Error($"Failed OptionRange.Callback callback ({name}): {ex.Message}"); return 0; } };
 				Callback = (ap, value) => { try { callback?.Invoke(ap, value); } catch (Exception ex) { Logger.Error($"Failed OptionRange.Callback callback ({name}): {ex.Message}"); } };
 				Options = options;
 				OptionsIcons = optionsIcons;
-				OptionsIconScale = optionsIconScale;
 			}
 		}
 		public class OptionInputButton : Option

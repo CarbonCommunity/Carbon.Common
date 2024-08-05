@@ -1,15 +1,8 @@
 ﻿using API.Commands;
 
-/*
- *
- * Copyright (c) 2022-2023 Carbon Community
- * All rights reserved.
- *
- */
-
 namespace Carbon.Core;
 
-public partial class CorePlugin : CarbonPlugin
+public partial class CorePlugin
 {
 	[ConsoleCommand("find", "Searches through Carbon-processed console commands.")]
 	[AuthLevel(2)]
