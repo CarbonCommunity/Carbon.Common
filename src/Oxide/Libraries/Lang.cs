@@ -49,7 +49,11 @@ public class Lang : Library
 	{
 		if (string.IsNullOrEmpty(lang) || string.IsNullOrEmpty(userId)) return;
 
-		if (!Interface.Oxide.Permission.UserExists(userId, out var data) || data.Language.Equals(lang)) return;
+		if (!Interface.Oxide.Permission.UserExists(userId, out var data) || (data != null && data.Language.Equals(lang)))
+		{
+			return;
+		}
+
 		data.Language = lang;
 	}
 	public void SetServerLanguage(string lang)
