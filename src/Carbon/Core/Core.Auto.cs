@@ -1,14 +1,8 @@
-﻿/*
- *
- * Copyright (c) 2022-2023 Carbon Community
- * All rights reserved.
- *
- */
+﻿namespace Carbon.Core;
 
-namespace Carbon.Core;
 #pragma warning disable IDE0051
 
-public partial class CorePlugin : CarbonPlugin
+public partial class CorePlugin
 {
 #if !MINIMAL
 	[CommandVar("isforcemodded", help: "Is the server forcefully set to modded due to options affecting significant gameplay changes in Carbon Auto?")]

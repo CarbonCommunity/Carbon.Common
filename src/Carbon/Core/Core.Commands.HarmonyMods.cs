@@ -1,15 +1,8 @@
-﻿/*
- *
- * Copyright (c) 2022-2023 Carbon Community
- * All rights reserved.
- *
- */
-
-using API.Assembly;
+﻿using API.Assembly;
 
 namespace Carbon.Core;
 
-public partial class CorePlugin : CarbonPlugin
+public partial class CorePlugin
 {
 	[ConsoleCommand("harmonyload", "Loads a mod from 'carbon/harmony'. The equivalent of Rust's `harmony.load` that's been stripped away under framework management.")]
 	[AuthLevel(2)]

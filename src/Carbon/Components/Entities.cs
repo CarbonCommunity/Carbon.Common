@@ -1,12 +1,8 @@
-﻿/*
- *
- * Copyright (c) 2022-2024 Carbon Community
- * All rights reserved.
- *
- */
+﻿namespace Carbon;
 
-namespace Carbon;
-
+/// <summary>
+/// Carbon component centralized place of accessing Rust spawned entities.
+/// </summary>
 public class Entities : IDisposable
 {
 	public static void Init()
@@ -65,6 +61,9 @@ public class Entities : IDisposable
 		return assembly.GetTypes().Where(t => baseType.IsAssignableFrom(t));
 	}
 
+	/// <summary>
+	/// Gets a map of a specified entity type, or inherited from provided type (if inherited is true).
+	/// </summary>
 	public static Map<T> Get<T>(bool inherited = false)
 	{
 		var map = new Map<T>
@@ -98,7 +97,11 @@ public class Entities : IDisposable
 
 		return map;
 	}
-	public static Map<BaseEntity> GetAll(bool inherited = false)
+
+	/// <summary>
+	/// Gets all entities of BaseEntity. If inherited is true, it returns everything spawnable on the server, otherwise ONLY entities with BaseEntity as base class.
+	/// </summary>
+	public static Map<BaseEntity> GetAll(bool inherited = true)
 	{
 		var map = new Map<BaseEntity>
 		{
@@ -131,6 +134,10 @@ public class Entities : IDisposable
 
 		return map;
 	}
+
+	/// <summary>
+	/// Gets all entities of BaseEntity with the option of having them filtered out. If inherited is true, it returns everything spawnable on the server, otherwise ONLY entities with BaseEntity as base class.
+	/// </summary>
 	public static Map<BaseEntity> GetAllFiltered(Func<BaseEntity, bool> filter, bool inherited = false)
 	{
 		if (filter == null)
@@ -179,6 +186,10 @@ public class Entities : IDisposable
 
 		return map;
 	}
+
+	/// <summary>
+	/// Get one sample of a specific entity type, or if inherited is true, any entity type with T as inherited type.
+	/// </summary>
 	public static T GetOne<T>(bool inherited = false)
 	{
 		using (var map = Get<T>(inherited))
@@ -186,16 +197,25 @@ public class Entities : IDisposable
 			return map.Pool.FirstOrDefault();
 		}
 	}
+
+	/// <summary>
+	/// Maps and stores an entity instance.
+	/// </summary>
+	/// <param name="entity"></param>
 	public static void AddMap(BaseEntity entity)
 	{
 		if (!Mapping.TryGetValue(entity.GetType(), out var map))
 		{
 			return;
-			// EntityMapping.Add(entity.GetType(), map = new List<BaseEntity> { entity });
 		}
 
 		map.Add(entity);
 	}
+
+	/// <summary>
+	/// Removes an entity instance from the map.
+	/// </summary>
+	/// <param name="entity"></param>
 	public static void RemoveMap(BaseEntity entity)
 	{
 		if (!Mapping.TryGetValue(entity.GetType(), out var map))

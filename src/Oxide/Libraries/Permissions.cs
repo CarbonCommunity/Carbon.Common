@@ -1,11 +1,4 @@
-﻿/*
- *
- * Copyright (c) 2022-2023 Carbon Community
- * All rights reserved.
- *
- */
-
-using Facepunch;
+﻿using Facepunch;
 using Logger = Carbon.Logger;
 
 namespace Oxide.Core.Libraries;
@@ -352,7 +345,10 @@ public class Permission : Library
 	{
 		if (!userdata.TryGetValue(id, out var result))
 		{
-			if (!addIfNotExisting) return _blankUser;
+			if (!addIfNotExisting)
+			{
+				return _blankUser;
+			}
 
 			userdata.Add(id, result = new UserData());
 		}

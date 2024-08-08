@@ -1,5 +1,4 @@
-﻿using System.Collections.Concurrent;
-using System.Text;
+﻿using System.Text;
 using Carbon.Base.Interfaces;
 using HarmonyLib;
 using Microsoft.CodeAnalysis;
@@ -7,13 +6,6 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using static Carbon.HookCallerCommon;
 using Pool = Facepunch.Pool;
-
-/*
- *
- * Copyright (c) 2022-2024 Carbon Community
- * All rights reserved.
- *
- */
 
 namespace Carbon;
 
@@ -1649,7 +1641,7 @@ partial class {@class.Identifier.ValueText}
 
 			using var subdirectives = TempArray<string>.New(processedDirective.Split(_operatorsStrings, StringSplitOptions.RemoveEmptyEntries));
 
-			foreach (var subdirective in subdirectives.Array)
+			foreach (var subdirective in subdirectives.array)
 			{
 				var processedSubdirective = subdirective.Trim();
 

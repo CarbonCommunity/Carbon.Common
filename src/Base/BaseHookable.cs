@@ -1,14 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using Facepunch.Extend;
 using Newtonsoft.Json;
-
-/*
- *
- * Copyright (c) 2022-2024 Carbon Community
- * All rights reserved.
- *
- */
 
 namespace Carbon.Base;
 

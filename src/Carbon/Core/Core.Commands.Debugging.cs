@@ -1,13 +1,6 @@
-﻿/*
- *
- * Copyright (c) 2022-2023 Carbon Community
- * All rights reserved.
- *
- */
+﻿namespace Carbon.Core;
 
-namespace Carbon.Core;
-
-public partial class CorePlugin : CarbonPlugin
+public partial class CorePlugin
 {
 #if DEBUG
 	[CommandVar("scriptdebugorigin", "[For debugging purposes] Overrides the script directory to this value so remote debugging is possible.")]

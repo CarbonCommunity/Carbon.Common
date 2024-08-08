@@ -1,14 +1,4 @@
-﻿/*
- *
- * Copyright (c) 2022-2023 Carbon Community
- * All rights reserved.
- *
- */
-
-using System.Windows.Controls;
-using API.Abstracts;
-using ConVar;
-using Oxide.Game.Rust.Cui;
+﻿using Oxide.Game.Rust.Cui;
 using UnityEngine.UI;
 using static Carbon.Components.CUI;
 using static ConsoleSystem;

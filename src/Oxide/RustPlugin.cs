@@ -1,11 +1,4 @@
-﻿/*
- *
- * Copyright (c) 2022-2023 Carbon Community
- * All rights reserved.
- *
- */
-
-using Logger = Carbon.Logger;
+﻿using Logger = Carbon.Logger;
 using Player = Oxide.Game.Rust.Libraries.Player;
 
 namespace Oxide.Plugins;

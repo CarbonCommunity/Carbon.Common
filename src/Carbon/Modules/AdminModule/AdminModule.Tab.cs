@@ -1,5 +1,4 @@
-﻿using System.Windows.Media;
-using Facepunch;
+﻿using Facepunch;
 using Oxide.Game.Rust.Cui;
 
 namespace Carbon.Modules;

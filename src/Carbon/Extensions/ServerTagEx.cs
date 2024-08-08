@@ -1,11 +1,4 @@
-﻿/*
- *
- * Copyright (c) 2022-2023 Carbon Community
- * All rights reserved.
- *
- */
-
-namespace Carbon.Extensions;
+﻿namespace Carbon.Extensions;
 
 public static class ServerTagEx
 {

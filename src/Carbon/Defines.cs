@@ -1,11 +1,4 @@
-﻿/*
- *
- * Copyright (c) 2022-2024 Carbon Community
- * All rights reserved.
- *
- */
-
-namespace Carbon.Core;
+﻿namespace Carbon.Core;
 
 [Serializable]
 public class Defines
@@ -189,6 +182,14 @@ public class Defines
 	{
 		_initializeCommandLine();
 		var folder = Path.Combine(GetRootFolder(), "managed");
+		Directory.CreateDirectory(folder);
+
+		return folder;
+	}
+	public static string GetHooksFolder()
+	{
+		_initializeCommandLine();
+		var folder = Path.Combine(GetManagedFolder(), "hooks");
 		Directory.CreateDirectory(folder);
 
 		return folder;

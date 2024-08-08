@@ -1,22 +1,15 @@
-﻿/*
- *
- * Copyright (c) 2022-2023 Carbon Community
- * All rights reserved.
- *
- */
-
-using Connection = Network.Connection;
+﻿using Connection = Network.Connection;
 
 namespace Carbon.Core;
+
 #pragma warning disable IDE0051
 
-public partial class CorePlugin : CarbonPlugin
+public partial class CorePlugin
 {
 	internal static object IOnPlayerConnected(BasePlayer player)
 	{
 		var core = Singleton<CorePlugin>();
 
-		core.lang.SetLanguage(player.net.connection.info.GetString("global.language", "en"), player.UserIDString);
 		player.SendEntitySnapshot(CommunityEntity.ServerInstance);
 
 		core.permission.RefreshUser(player);

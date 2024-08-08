@@ -1,12 +1,5 @@
 ﻿using System.Text;
 
-/*
- *
- * Copyright (c) 2022-2023 Carbon Community
- * All rights reserved.
- *
- */
-
 namespace Oxide.Core.Libraries.Covalence
 {
 	public class Formatter
@@ -545,7 +538,7 @@ namespace Oxide.Core.Libraries.Covalence
 		System.Globalization.CultureInfo Language { get; }
 
 		SaveInfo SaveInfo { get; }
-		
+
 		int Players { get; }
 		int MaxPlayers { get; set; }
 

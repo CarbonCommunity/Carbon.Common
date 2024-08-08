@@ -1,26 +1,23 @@
-﻿using System.Collections.Specialized;
-using ConVar;
-using Network;
+﻿using Network;
 using Oxide.Game.Rust.Cui;
 using UnityEngine.UI;
 using static Carbon.Components.CUI;
 using Net = Network.Net;
 
-/*
- *
- * Copyright (c) 2022-2024 Carbon Community
- * All rights reserved.
- *
- */
-
 namespace Carbon.Components;
 
+/// <summary>
+/// Carbon's built-in pooled CUI cache-based structure.
+/// </summary>
 public readonly struct CUI : IDisposable
 {
 	public Handler Manager { get; }
 	public ImageDatabaseModule ImageDatabase { get; }
 	public Handler.Cache CacheInstance => Manager.CacheInstance;
 
+	/// <summary>
+	/// All currently available client-side UI panels.
+	/// </summary>
 	public enum ClientPanels
 	{
 		Overall,
@@ -29,25 +26,23 @@ public readonly struct CUI : IDisposable
 		Hud,
 		HudMenu,
 		Under,
-		UnderNonScaled,
-
-		// C4C-Only
-		LoadingBG,
-		LoadingFG
+		UnderNonScaled
 	}
+
+	/// <summary>
+	/// Gets the Rust-identifiable client-side panel name.
+	/// </summary>
 	public string GetClientPanel(ClientPanels panel)
 	{
 		return panel switch
 		{
 			ClientPanels.Overall => "Overall",
-            ClientPanels.Overlay => "Overlay",
+			ClientPanels.OverlayNonScaled => "OverlayNonScaled",
 			ClientPanels.Hud => "Hud",
 			ClientPanels.HudMenu => "Hud.Menu",
 			ClientPanels.Under => "Under",
 			ClientPanels.UnderNonScaled => "UnderNonScaled",
-			ClientPanels.LoadingBG => "Loading.BG",
-			ClientPanels.LoadingFG => "Loading.FG",
-			_ => "OverlayNonScaled",
+			_ => "Overlay",
 		};
 	}
 
@@ -59,6 +54,9 @@ public readonly struct CUI : IDisposable
 
 	#region Update
 
+	/// <summary>
+	/// Gets a disposable Update pool used to update existent Carbon elements already drawn onto the client.
+	/// </summary>
 	public Handler.UpdatePool UpdatePool()
 	{
 		return new Handler.UpdatePool();
@@ -203,21 +201,35 @@ public readonly struct CUI : IDisposable
 
 	#region ImageDatabase
 
-	public string GetImage(string url)
+	/// <summary>
+	/// Gets an existent image based on a mapped key or full length URL from Carbon's ImageDatabase module.
+	/// </summary>
+	public string GetImage(string keyOrUrl)
 	{
-		return ImageDatabase.GetImageString(url);
+		return ImageDatabase.GetImageString(keyOrUrl);
 	}
 
+	/// <summary>
+	/// Checks if an image is existent in Carbon's ImageDatabase module, using a key identifier or a full length URL.
+	/// </summary>
+	/// <param name="url"></param>
+	/// <returns></returns>
 	public bool HasImage(string url)
 	{
 		return ImageDatabase.HasImage(url);
 	}
 
+	/// <summary>
+	/// Queues up various URLs to be downloaded and stored within Carbon's ImageDatabase module.
+	/// </summary>
 	public void QueueImages(IEnumerable<string> urls)
 	{
 		ImageDatabase.QueueBatch(false, urls);
 	}
 
+	/// <summary>
+	/// Removes all stored images (if they exist) in the provided urls enumerable.
+	/// </summary>
 	public void ClearImages(IEnumerable<string> urls)
 	{
 		foreach (var url in urls)
@@ -230,14 +242,17 @@ public readonly struct CUI : IDisposable
 
 	#region Send
 
+	/// <summary>
+	/// Serializes and networks the Carbon managed pooled container to a specified player.
+	/// </summary>
 	public void Send(CuiElementContainer container, BasePlayer player)
 	{
 		Manager.Send(container, player);
 	}
-	public void Destroy(CuiElementContainer container, BasePlayer player)
-	{
-		Manager.Destroy(container, player);
-	}
+
+	/// <summary>
+	/// Destroys a container using its panel identifier from a specific player.
+	/// </summary>
 	public void Destroy(string name, BasePlayer player)
 	{
 		Manager.Destroy(name, player);
@@ -245,6 +260,10 @@ public readonly struct CUI : IDisposable
 
 	#endregion
 
+	/// <summary>
+	/// Pair of one sub-element. 
+	/// </summary>
+	/// <typeparam name="T1">Key identifier.</typeparam>
 	public struct Pair<T1, T2>
 	{
 		public T1 Id;
@@ -261,6 +280,11 @@ public readonly struct CUI : IDisposable
 			return value.Id.ToString();
 		}
 	}
+
+	/// <summary>
+	/// Pair of two sub-elements.
+	/// </summary>
+	/// <typeparam name="T1">Key identifier.</typeparam>
 	public struct Pair<T1, T2, T3>
 	{
 		public T1 Id;
@@ -280,6 +304,9 @@ public readonly struct CUI : IDisposable
 		}
 	}
 
+	/// <summary>
+	/// Disposes and sends all currently used CUI elements to pool, for further reuse.
+	/// </summary>
 	public void Dispose()
 	{
 		Manager.SendToPool();
