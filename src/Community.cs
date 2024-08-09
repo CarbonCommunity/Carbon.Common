@@ -1,13 +1,5 @@
-﻿using API.Analytics;
-using API.Assembly;
-using API.Commands;
-using API.Contracts;
-using API.Events;
-using API.Hooks;
-using Facepunch;
-using Newtonsoft.Json;
+﻿using API.Events;
 using Application = UnityEngine.Application;
-using Carbon.Profiler;
 
 namespace Carbon;
 
