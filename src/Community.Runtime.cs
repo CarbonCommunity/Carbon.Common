@@ -43,6 +43,12 @@ public partial class Community
 												 && Runtime.ZipDevScriptProcessor.AllPendingScriptsComplete()
 #endif
 		;
+	public static int AllProcesses => Runtime.ScriptProcessor.InstanceBuffer.Count
+		+ Runtime.ZipScriptProcessor.InstanceBuffer.Count
+#if !MINIMAL && DEBUG
+		+ Runtime.ZipDevScriptProcessor.InstanceBuffer.Count
+#endif
+		;
 
 	internal static string _runtimeId;
 
