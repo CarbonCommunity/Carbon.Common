@@ -10,7 +10,6 @@ public partial class CorePlugin
 	{
 		var core = Singleton<CorePlugin>();
 
-		core.lang.SetLanguage(player.net.connection.info.GetString("global.language", "en"), player.UserIDString);
 		player.SendEntitySnapshot(CommunityEntity.ServerInstance);
 
 		core.permission.RefreshUser(player);

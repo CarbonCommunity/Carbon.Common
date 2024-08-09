@@ -255,16 +255,16 @@ public partial class FileModule : CarbonModule<EmptyModuleConfig, EmptyModuleDat
 				}
 				else
 				{
+					Instance.Close(ap.Player);
 					file.SelectedFile = item.Path;
 					file.OnConfirm?.Invoke(ap.Player, file);
-					Instance.Close(ap.Player);
 				}
 				break;
 			}
 
 			case "cancel":
-				file.OnCancel?.Invoke(ap.Player, file);
 				Instance.Close(ap.Player);
+				file.OnCancel?.Invoke(ap.Player, file);
 				break;
 
 			case "delete":
