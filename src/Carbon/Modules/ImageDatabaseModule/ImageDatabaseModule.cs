@@ -211,7 +211,7 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 
 		return false;
 	}
-
+	
 	public void QueueBatch(bool @override, IEnumerable<string> urls)
 	{
 		if (urls == null || !urls.Any())
