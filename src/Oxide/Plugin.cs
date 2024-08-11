@@ -576,7 +576,7 @@ public class Plugin : BaseHookable, IDisposable
 			10 => HookCaller.CallHook<T>(this, HookStringPool.GetOrAdd(hook), args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9]),
 			11 => HookCaller.CallHook<T>(this, HookStringPool.GetOrAdd(hook), args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10]),
 			12 => HookCaller.CallHook<T>(this, HookStringPool.GetOrAdd(hook), args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11]),
-			13 => HookCaller.CallHook<T>(this, HookStringPool.GetOrAdd(hook), args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11], args[13]),
+			13 => HookCaller.CallHook<T>(this, HookStringPool.GetOrAdd(hook), args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11], args[12]),
 			_ => HookCaller.CallHook<T>(this, HookStringPool.GetOrAdd(hook)),
 		};
 	}
