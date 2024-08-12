@@ -6,8 +6,8 @@ namespace Carbon.Core;
 
 public static partial class ModLoader
 {
-	public static bool IsBatchComplete { get; set; }
-	public static PackageBank Packages = new();
+	public static bool IsBatchComplete;
+	public static PackageBank Packages = [];
 	public static Dictionary<string, CompilationResult> FailedCompilations = new();
 
 	internal static Dictionary<string, Type> TypeDictionaryCache { get; } = new();
@@ -621,7 +621,7 @@ public static partial class ModLoader
 
 		foreach (var plugin in temp)
 		{
-			var file = System.IO.Path.GetFileNameWithoutExtension(plugin);
+			var file = Path.GetFileNameWithoutExtension(plugin);
 			Community.Runtime.ScriptProcessor.ClearIgnore(file);
 			Community.Runtime.ScriptProcessor.Prepare(file, plugin);
 		}
