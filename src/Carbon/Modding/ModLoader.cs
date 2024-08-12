@@ -84,6 +84,11 @@ public static partial class ModLoader
 	}
 	public static void AddPostBatchFailedRequiree(string requiree)
 	{
+		if (PostBatchFailedRequirees.Contains(requiree))
+		{
+			return;
+		}
+
 		PostBatchFailedRequirees.Add(requiree);
 	}
 
