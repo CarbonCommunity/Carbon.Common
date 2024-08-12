@@ -4,6 +4,9 @@ namespace Carbon.Core;
 
 public static partial class ModLoader
 {
+	/// <summary>
+	/// Used by the script compilation process, containing debuggin information about errors and warnings.
+	/// </summary>
 	[JsonObject(MemberSerialization.OptIn)]
 	public struct CompilationResult
 	{

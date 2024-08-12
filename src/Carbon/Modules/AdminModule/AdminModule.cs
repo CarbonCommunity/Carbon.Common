@@ -169,7 +169,18 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 				}
 
 				var tab = GetTab(player);
-				tab?.OnChange?.Invoke(ap, tab);
+
+				try
+				{
+					tab?.OnChange?.Invoke(ap, tab);
+				}
+				catch(Exception ex)
+				{
+					Logger.Error($"Failed OnChange callback for tab '{tab?.Name}[{tab?.Id}], falling back to default tab", ex);
+
+					ap.SelectedTab = Tabs.FirstOrDefault(x => HasAccess(player, x.Access));
+					ap.Clear();
+				}
 
 				DrawCursorLocker(player);
 				Draw(player);

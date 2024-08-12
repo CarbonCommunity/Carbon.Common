@@ -1375,6 +1375,19 @@ public static class HookCaller
 			namespaceIndex = classIndex = 0;
 		}
 
+		if(classList.Count == 0)
+		{
+			if (isTemp)
+			{
+				Pool.FreeList(ref classList);
+			}
+
+			output = null;
+			generatedMethod = null;
+			isPartial = default;
+			return;
+		}
+
 		var @class = classList[0];
 
 		if (@namespace == null)
@@ -1581,6 +1594,12 @@ public static class HookCaller
 	public static void GeneratePartial(CompilationUnitSyntax input, out CompilationUnitSyntax output, CSharpParseOptions options, string fileName, List<ClassDeclarationSyntax> classes = null)
 	{
 		GenerateInternalCallHook(input, out _, out var method, out var isPartial, classList: classes);
+
+		if(method == null)
+		{
+			output = null;
+			return;
+		}
 
 		var @namespace = (BaseNamespaceDeclarationSyntax)null;
 		var @class = (ClassDeclarationSyntax)null;

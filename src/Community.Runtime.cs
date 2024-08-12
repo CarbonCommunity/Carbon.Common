@@ -51,6 +51,7 @@ public partial class Community
 		;
 
 	internal static string _runtimeId;
+	internal static Dictionary<string, string> _protectMap = new();
 
 	public static string RuntimeId
 	{
@@ -68,14 +69,27 @@ public partial class Community
 		}
 	}
 
+	/// <summary>
+	/// Returns a unique string for the provided value. The results will be different each time the server reboots.
+	/// </summary>
+	/// <param name="name">Value string input.</param>
+	/// <returns></returns>
 	public static string Protect(string name)
 	{
-		if (string.IsNullOrEmpty(name)) return string.Empty;
+		if (string.IsNullOrEmpty(name))
+		{
+			return string.Empty;
+		}
+
+		if (_protectMap.TryGetValue(name, out var result))
+		{
+			return result;
+		}
 
 		using var split = TempArray<string>.New(name.Split(' '));
 		var command = split.array[0];
 		var arguments = split.array.Skip(1).ToString(" ");
 
-		return $"carbonprotecc_{RandomEx.GetRandomString(command.Length, command + RuntimeId, command.Length)} {arguments}".TrimEnd();
+		return _protectMap[name] = $"carbonprotecc_{RandomEx.GetRandomString(command.Length, command + RuntimeId, command.Length)} {arguments}".TrimEnd();
 	}
 }
