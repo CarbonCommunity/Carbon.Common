@@ -186,6 +186,14 @@ public class Defines
 
 		return folder;
 	}
+	public static string GetHooksFolder()
+	{
+		_initializeCommandLine();
+		var folder = Path.Combine(GetManagedFolder(), "hooks");
+		Directory.CreateDirectory(folder);
+
+		return folder;
+	}
 	public static string GetLogsFolder()
 	{
 		_initializeCommandLine();
