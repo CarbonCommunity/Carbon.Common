@@ -7,8 +7,7 @@ public sealed class Updater
 		var suffix = (Community.Runtime.Analytics.Platform == "linux") ? "unix" : default;
 		var target = (Community.Runtime.Analytics.Branch == "Release") ? "release" : "debug";
 
-		return $"https://carbonmod.gg/redist/server/"
-			+ $"{target}{suffix}/{(protocol is null ? $"{file}" : $"{protocol}/{file}")}";
+		return $"https://carbonmod.gg/redist/server/{target}{suffix}/{(protocol is null ? $"{file}" : $"{protocol}/{file}")}";
 	}
 
 	public static async void DoUpdate(Action<bool> callback = null)
