@@ -136,7 +136,11 @@ public class Lang : Library
 		{
 			try
 			{
-				if (hookable is RustPlugin rustPlugin) rustPlugin.ILoadDefaultMessages();
+				if (hookable is RustPlugin rustPlugin)
+				{
+					rustPlugin.ILoadDefaultMessages();
+				}
+
 				messages = GetMessageFile(hookable.Name, lang);
 
 				if (messages.TryGetValue(key, out phrase))

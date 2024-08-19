@@ -249,9 +249,19 @@ public class RustPlugin : Plugin
 			LogError($"Failed ILoadConfig", ex);
 		}
 	}
+
+	private bool loadedDefaultMessages;
+
 	public void ILoadDefaultMessages()
 	{
+		if (loadedDefaultMessages)
+		{
+			return;
+		}
+
 		CallHook("LoadDefaultMessages");
+
+		loadedDefaultMessages = true;
 	}
 
 	public override string ToPrettyString()
