@@ -68,7 +68,7 @@ public partial class Community
 			}
 			else
 			{
-				var invalidAliases = Pool.GetList<string>();
+				var invalidAliases = Pool.Get<List<string>>();
 				invalidAliases.AddRange(from alias in Config.Aliases
 										where !Config.IsValidAlias(alias.Key, out _)
 										select alias.Key);
@@ -84,7 +84,7 @@ public partial class Community
 					needsSave = true;
 				}
 
-				Pool.FreeList(ref invalidAliases);
+				Pool.FreeUnmanaged(ref invalidAliases);
 			}
 
 			if (Config.Prefixes.Count == 0)

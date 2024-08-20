@@ -132,8 +132,8 @@ public partial class AdminModule
 		{
 			maxPages = 0;
 
-			var resultList = Facepunch.Pool.GetList<Plugin>();
-			var customList = Facepunch.Pool.GetList<Plugin>();
+			var resultList = Facepunch.Pool.Get<List<Plugin>>();
+			var customList = Facepunch.Pool.Get<List<Plugin>>();
 
 			using (TimeMeasure.New("GetPluginsFromVendor"))
 			{
@@ -269,12 +269,12 @@ public partial class AdminModule
 				}
 				catch (Exception ex)
 				{
-					Facepunch.Pool.FreeList(ref resultList);
+					Facepunch.Pool.FreeUnmanaged(ref resultList);
 
 					Logger.Error($"Failed getting plugins.", ex);
 				}
 
-				Facepunch.Pool.FreeList(ref customList);
+				Facepunch.Pool.FreeUnmanaged(ref customList);
 			}
 
 			return resultList;
@@ -284,8 +284,8 @@ public partial class AdminModule
 		{
 			var plugins = GetPlugins(vendor, tab, ap);
 
-			var images = Facepunch.Pool.GetList<string>();
-			var imagesSafe = Facepunch.Pool.GetList<string>();
+			var images = Facepunch.Pool.Get<List<string>>();
+			var imagesSafe = Facepunch.Pool.Get<List<string>>();
 
 			foreach (var element in plugins)
 			{
@@ -305,9 +305,9 @@ public partial class AdminModule
 			if (images.Count > 0) Singleton.ImageDatabase.QueueBatch(eraseAllBeforehand, images);
 			if (imagesSafe.Count > 0) Singleton.ImageDatabase.QueueBatch(eraseAllBeforehand, imagesSafe);
 
-			Facepunch.Pool.FreeList(ref plugins);
-			Facepunch.Pool.FreeList(ref images);
-			Facepunch.Pool.FreeList(ref imagesSafe);
+			Facepunch.Pool.FreeUnmanaged(ref plugins);
+			Facepunch.Pool.FreeUnmanaged(ref images);
+			Facepunch.Pool.FreeUnmanaged(ref imagesSafe);
 		}
 
 		public static void Draw(CUI cui, CuiElementContainer container, string parent, Tab tab, PlayerSession ap)
@@ -515,7 +515,7 @@ public partial class AdminModule
 				var tagOffset = 0f;
 				var tagSpacing = 0.012f;
 				var tags = cui.CreatePanel(container, mainPanel, "0 0 0 0", xMin: 0.48f, xMax: 0.8f, yMin: 0.66f, yMax: 0.7f);
-				var tempTags = Facepunch.Pool.GetList<string>();
+				var tempTags = Facepunch.Pool.Get<List<string>>();
 				var counter = 0;
 
 				if (selectedPlugin.Tags != null && selectedPlugin.Tags.Count() > 0)
@@ -542,7 +542,7 @@ public partial class AdminModule
 					tagOffset += size + tagSpacing;
 				}
 
-				Facepunch.Pool.FreeList(ref tempTags);
+				Facepunch.Pool.FreeUnmanaged(ref tempTags);
 
 				#endregion
 
@@ -723,7 +723,7 @@ public partial class AdminModule
 				}
 			}
 
-			Facepunch.Pool.FreeList(ref plugins);
+			Facepunch.Pool.FreeUnmanaged(ref plugins);
 		}
 
 		#region Vendors
@@ -908,7 +908,7 @@ public partial class AdminModule
 				OutOfDateData = FetchedPlugins.Where(x => x.Status == Status.Approved).Where(x => x.IsInstalled() && !x.IsUpToDate());
 				OwnedData = FetchedPlugins.Where(x => x.Owned);
 
-				var tags = Facepunch.Pool.GetList<string>();
+				var tags = Facepunch.Pool.Get<List<string>>();
 				foreach (var plugin in FetchedPlugins)
 				{
 					if (plugin.Tags == null || plugin.Tags.Count() == 0) continue;
@@ -924,7 +924,7 @@ public partial class AdminModule
 					}
 				}
 				PopularTags = tags;
-				Facepunch.Pool.FreeList(ref tags);
+				Facepunch.Pool.FreeUnmanaged(ref tags);
 			}
 			public override void FetchList(Action<Vendor> callback = null)
 			{
@@ -1425,7 +1425,7 @@ public partial class AdminModule
 				OutOfDateData = FetchedPlugins.Where(x => x.IsInstalled() && !x.IsUpToDate());
 				OwnedData = FetchedPlugins.Where(x => x.Owned);
 
-				var tags = Facepunch.Pool.GetList<string>();
+				var tags = Facepunch.Pool.Get<List<string>>();
 				foreach (var plugin in FetchedPlugins)
 				{
 					foreach (var tag in plugin.Tags)
@@ -1439,7 +1439,7 @@ public partial class AdminModule
 					}
 				}
 				PopularTags = tags;
-				Facepunch.Pool.FreeList(ref tags);
+				Facepunch.Pool.FreeUnmanaged(ref tags);
 			}
 			public override void FetchList(Action<Vendor> callback = null)
 			{
@@ -2175,7 +2175,7 @@ public partial class AdminModule
 		var plugins = PluginsTab.GetPlugins(vendor, tab, ap);
 		var nextPage = plugins.IndexOf(ap.GetStorage<PluginsTab.Plugin>(tab, "selectedplugin")) + args.Args[0].ToInt();
 		ap.SetStorage(tab, "selectedplugin", plugins[nextPage > plugins.Count - 1 ? 0 : nextPage < 0 ? plugins.Count - 1 : nextPage]);
-		Facepunch.Pool.FreeList(ref plugins);
+		Facepunch.Pool.FreeUnmanaged(ref plugins);
 
 		PluginsTab.DownloadThumbnails(vendor, tab, Singleton.GetPlayerSession(args.Player()));
 

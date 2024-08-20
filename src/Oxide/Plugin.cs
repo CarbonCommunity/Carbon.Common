@@ -262,9 +262,9 @@ public class Plugin : BaseHookable, IDisposable
 		{
 			using (TimeMeasure.New($"IUnload.UnloadRequirees on '{ToPrettyString()}'"))
 			{
-				var mods = Pool.GetList<ModLoader.Package>();
+				var mods = Pool.Get<List<ModLoader.Package>>();
 				mods.AddRange(ModLoader.Packages);
-				var plugins = Pool.GetList<Plugin>();
+				var plugins = Pool.Get<List<Plugin>>();
 
 				foreach (var mod in ModLoader.Packages)
 				{
@@ -293,8 +293,8 @@ public class Plugin : BaseHookable, IDisposable
 					}
 				}
 
-				Pool.FreeList(ref mods);
-				Pool.FreeList(ref plugins);
+				Pool.FreeUnmanaged(ref mods);
+				Pool.FreeUnmanaged(ref plugins);
 			}
 
 			return true;
@@ -326,7 +326,7 @@ public class Plugin : BaseHookable, IDisposable
 
 	public static void InternalApplyAllPluginReferences()
 	{
-		var list = Pool.GetList<RustPlugin>();
+		var list = Pool.Get<List<RustPlugin>>();
 
 		foreach (var package in ModLoader.Packages)
 		{
@@ -344,7 +344,7 @@ public class Plugin : BaseHookable, IDisposable
 			ModLoader.UninitializePlugin(plugin);
 		}
 
-		Pool.FreeList(ref list);
+		Pool.FreeUnmanaged(ref list);
 	}
 
 	public void SetProcessor(IBaseProcessor processor)

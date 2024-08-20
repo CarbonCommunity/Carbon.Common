@@ -5,6 +5,7 @@ using Facepunch;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
+using ProtoBuf;
 using UnityEngine.UI;
 
 namespace Carbon.Modules;
@@ -31,7 +32,7 @@ public partial class AdminModule
 				var blur = cui.CreatePanel(container, panel, "0.1 0.1 0.1 0.8", blur: true);
 
 				using var lines = TempArray<string>.New(content.Split('\n'));
-				var temp = Pool.GetList<string>();
+				var temp = Pool.Get<List<string>>();
 
 				var resultContent = lines.array.ToString("\n");
 
@@ -91,7 +92,7 @@ public partial class AdminModule
 					align: TextAnchor.UpperLeft, font: CUI.Handler.FontTypes.DroidSansMono,
 					xMin: 0, xMax: 0, yMin: 1f, yMax: 1f, OxMin: 40, OxMax: 40 + width, OyMax: -7.5f, OyMin: height);
 
-				Pool.FreeList(ref temp);
+				Pool.FreeUnmanaged(ref temp);
 			};
 
 			return tab;

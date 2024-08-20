@@ -443,7 +443,7 @@ public partial class AdminModule
 						else tab.AddText(1, $"You need 'carbon.cmod' permission to kick, ban, sleep or change player hostility.",
 							10, "1 1 1 0.4");
 
-						var temp = Pool.GetList<Tab.OptionButton>();
+						var temp = Pool.Get<List<Tab.OptionButton>>();
 
 						if (Singleton.HasAccess(ap3.Player, "entities.loot_players"))
 						{
@@ -480,7 +480,7 @@ public partial class AdminModule
 
 						tab.AddButtonArray(column, temp.ToArray());
 
-						Pool.FreeList(ref temp);
+						Pool.FreeUnmanaged(ref temp);
 
 						tab.AddText(1, "To loot a backpack, drag the backpack item over any hotbar slots while looting a player", 10, "1 1 1 0.4");
 
@@ -711,7 +711,7 @@ public partial class AdminModule
 			var entity = selectedEntitites[0];
 
 			var counter = 0;
-			var currentButtons = Facepunch.Pool.GetList<Tab.OptionButton>();
+			var currentButtons = Facepunch.Pool.Get<List<Tab.OptionButton>>();
 
 			tab.ClearColumn(column);
 
@@ -738,7 +738,7 @@ public partial class AdminModule
 				}
 			}
 
-			Facepunch.Pool.FreeList(ref currentButtons);
+			Facepunch.Pool.FreeUnmanaged(ref currentButtons);
 
 			void DoAll<T>(Action<T> callback) where T : BaseEntity
 			{

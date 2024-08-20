@@ -396,7 +396,7 @@ public partial class AdminModule
 			tab.ClearColumn(column);
 
 			var counter = 0;
-			var currentButtons = Facepunch.Pool.GetList<Tab.OptionButton>();
+			var currentButtons = Facepunch.Pool.Get<List<Tab.OptionButton>>();
 
 			tab.ClearColumn(column);
 
@@ -422,7 +422,7 @@ public partial class AdminModule
 				}
 			}
 
-			Facepunch.Pool.FreeList(ref currentButtons);
+			Facepunch.Pool.FreeUnmanaged(ref currentButtons);
 		}
 	}
 }

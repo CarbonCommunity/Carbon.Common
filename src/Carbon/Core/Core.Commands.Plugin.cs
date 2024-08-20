@@ -160,7 +160,7 @@ public partial class CorePlugin
 
 				foreach (var mod in ModLoader.Packages)
 				{
-					var plugins = Facepunch.Pool.GetList<RustPlugin>();
+					var plugins = Facepunch.Pool.Get<List<RustPlugin>>();
 					plugins.AddRange(mod.Plugins);
 
 					foreach (var plugin in plugins)
@@ -185,7 +185,7 @@ public partial class CorePlugin
 						}
 					}
 
-					Facepunch.Pool.FreeList(ref plugins);
+					Facepunch.Pool.FreeUnmanaged(ref plugins);
 				}
 
 				if (!pluginFound)
@@ -277,7 +277,7 @@ public partial class CorePlugin
 				// Scripts
 				//
 				{
-					var tempList = Facepunch.Pool.GetList<string>();
+					var tempList = Facepunch.Pool.Get<List<string>>();
 
 					foreach (var bufferInstance in Community.Runtime.ScriptProcessor.InstanceBuffer)
 					{
@@ -311,7 +311,7 @@ public partial class CorePlugin
 
 					foreach (var mod in ModLoader.Packages)
 					{
-						var plugins = Facepunch.Pool.GetList<RustPlugin>();
+						var plugins = Facepunch.Pool.Get<List<RustPlugin>>();
 						plugins.AddRange(mod.Plugins);
 
 						foreach (var plugin in plugins)
@@ -333,7 +333,7 @@ public partial class CorePlugin
 							}
 						}
 
-						Facepunch.Pool.FreeList(ref plugins);
+						Facepunch.Pool.FreeUnmanaged(ref plugins);
 					}
 
 					if (!pluginFound)
@@ -551,7 +551,7 @@ public partial class CorePlugin
 
 					foreach (var mod in ModLoader.Packages)
 					{
-						var plugins = Facepunch.Pool.GetList<RustPlugin>();
+						var plugins = Facepunch.Pool.Get<List<RustPlugin>>();
 						plugins.AddRange(mod.Plugins);
 
 						foreach (var plugin in plugins)
@@ -565,7 +565,7 @@ public partial class CorePlugin
 							}
 						}
 
-						Facepunch.Pool.FreeList(ref plugins);
+						Facepunch.Pool.FreeUnmanaged(ref plugins);
 					}
 
 					if (!pluginFound)
@@ -627,7 +627,7 @@ public partial class CorePlugin
 
 					foreach (var mod in ModLoader.Packages)
 					{
-						var plugins = Facepunch.Pool.GetList<RustPlugin>();
+						var plugins = Facepunch.Pool.Get<List<RustPlugin>>();
 						plugins.AddRange(mod.Plugins);
 
 						foreach (var plugin in plugins.Where(plugin => plugin.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase)))
@@ -640,7 +640,7 @@ public partial class CorePlugin
 							}
 						}
 
-						Facepunch.Pool.FreeList(ref plugins);
+						Facepunch.Pool.FreeUnmanaged(ref plugins);
 					}
 
 					if (!pluginFound)

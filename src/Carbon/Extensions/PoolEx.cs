@@ -13,7 +13,7 @@ public class PoolEx
 	public static void FreeDictionary<TKey, TValue>(ref Dictionary<TKey, TValue> value)
 	{
 		value.Clear();
-		Facepunch.Pool.Free(ref value);
+		Facepunch.Pool.FreeUnmanaged(ref value);
 	}
 
 	public static StringBuilder GetStringBuilder()
@@ -24,7 +24,7 @@ public class PoolEx
 	public static void FreeStringBuilder(ref StringBuilder value)
 	{
 		value.Clear();
-		Facepunch.Pool.Free(ref value);
+		Facepunch.Pool.FreeUnmanaged(ref value);
 	}
 
 	public static Stopwatch GetStopwatch()
@@ -35,6 +35,6 @@ public class PoolEx
 	public static void FreeStopwatch(ref Stopwatch value)
 	{
 		value.Reset();
-		Facepunch.Pool.Free(ref value);
+		Facepunch.Pool.FreeUnsafe(ref value);
 	}
 }

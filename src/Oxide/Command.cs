@@ -129,7 +129,7 @@ public class Command : Library
 	{
 		AddChatCommand(command, plugin, (player, cmd, args) =>
 		{
-			var arguments = Pool.GetList<object>();
+			var arguments = Pool.Get<List<object>>();
 			var result = (object[])null;
 			var arg = (ConsoleSystem.Arg)null;
 
@@ -200,9 +200,16 @@ public class Command : Library
 			}
 			catch (Exception ex) { Logger.Error($"Failed executing chat command '{command}' in '{plugin.ToPrettyString()}' [callback]", ex.InnerException ?? ex); }
 
-			if (arguments != null) Pool.FreeList(ref arguments);
-			if (result != null) Array.Clear(result, 0, result.Length);
-			if (arg != null) arg = null;
+			if (arguments != null)
+			{
+				Pool.FreeUnmanaged(ref arguments);
+			}
+			if (result != null)
+			{
+				Array.Clear(result, 0, result.Length);
+			}
+
+			arg = null;
 		}, help, reference, permissions, groups, authLevel, cooldown, isHidden, @protected, silent);
 	}
 	public void AddConsoleCommand(string command, BaseHookable plugin, Action<BasePlayer, string, string[]> callback, string help = null, object reference = null, string[] permissions = null, string[] groups = null, int authLevel = -1, int cooldown = 0, bool isHidden = false, bool @protected = false, bool silent = false)
@@ -278,7 +285,7 @@ public class Command : Library
 	{
 		AddConsoleCommand(command, plugin, (player, cmd, args) =>
 		{
-			var arguments = Pool.GetList<object>();
+			var arguments = Pool.Get<List<object>>();
 			var result = (object[])null;
 
 			try
@@ -382,15 +389,19 @@ public class Command : Library
 			catch (TargetParameterCountException) { }
 			catch (Exception ex) { Logger.Error ( $"Failed executing chat command '{command}' in '{plugin.ToPrettyString ()}' [internal]", ex.InnerException ?? ex ); }
 
-			Pool.FreeList(ref arguments);
-			if (result != null) Array.Clear(result, 0, result.Length);
+			Pool.FreeUnmanaged(ref arguments);
+
+			if (result != null)
+			{
+				Array.Clear(result, 0, result.Length);
+			}
 		}, help, reference, permissions, groups, authLevel, cooldown, isHidden, @protected, silent);
 	}
 	public void AddConsoleCommand(string command, BaseHookable plugin, Func<Arg, bool> callback, string help = null, object reference = null, string[] permissions = null, string[] groups = null, int authLevel = -1, int cooldown = 0, bool isHidden = false, bool @protected = false, bool silent = false)
 	{
 		AddConsoleCommand(command, plugin, (player, cmd, args) =>
 		{
-			var arguments = Pool.GetList<object>();
+			var arguments = Pool.Get<List<object>>();
 			var result = (object[])null;
 
 			try
@@ -423,8 +434,12 @@ public class Command : Library
 			catch (TargetParameterCountException) { }
 			catch (Exception ex) { Logger.Error ( $"Failed executing chat command '{command}' in '{plugin.ToPrettyString ()}' [callback]", ex.InnerException ?? ex ); }
 
-			Pool.FreeList(ref arguments);
-			if (result != null) Array.Clear(result, 0, result.Length);
+			Pool.FreeUnmanaged(ref arguments);
+
+			if (result != null)
+			{
+                Array.Clear(result, 0, result.Length);
+            }
 		}, help, reference, permissions, groups, authLevel, cooldown, isHidden, @protected, silent);
 	}
 	public void AddCovalenceCommand(string command, BaseHookable plugin, string method, string help = null, object reference = null, string[] permissions = null, string[] groups = null, int authLevel = -1, int cooldown = 0, bool isHidden = false, bool @protected = false, bool silent = true)

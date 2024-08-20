@@ -24,7 +24,7 @@ public partial class CorePlugin
 	{
 		Logger.Log($"Saving plugin configuration and data..");
 
-		var temp = Pool.GetList<BaseHookable>();
+		var temp = Pool.Get<List<BaseHookable>>();
 		temp.AddRange(Community.Runtime.ModuleProcessor.Modules);
 
 		foreach (var module in temp)
@@ -42,7 +42,7 @@ public partial class CorePlugin
 			}
 		}
 
-		Pool.FreeList(ref temp);
+		Pool.FreeUnmanaged(ref temp);
 
 		// OnServerShutdown
 		HookCaller.CallStaticHook(2414711472);

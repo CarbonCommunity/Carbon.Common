@@ -77,13 +77,13 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 	[AuthLevel(2)]
 	private void ClearInvalid(ConsoleSystem.Arg arg)
 	{
-		var toDelete = Facepunch.Pool.GetList<KeyValuePair<uint, FileStorage.CacheData>>();
+		var toDelete = Facepunch.Pool.Get<Dictionary<uint, FileStorage.CacheData>>();
 
 		foreach (var file in FileStorage.server._cache)
 		{
 			if (file.Value.data.Length >= MaximumBytes)
 			{
-				toDelete.Add(new KeyValuePair<uint, FileStorage.CacheData>(file.Key, file.Value));
+				toDelete.Add(file.Key, file.Value);
 			}
 		}
 
@@ -93,7 +93,7 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 		}
 
 		arg.ReplyWith($"Removed {toDelete.Count:n0} invalid stored files from FileStorage (above the maximum size of {ByteEx.Format(MaximumBytes, shortName: true).ToUpper()}).");
-		Facepunch.Pool.FreeList(ref toDelete);
+		Facepunch.Pool.FreeUnmanaged(ref toDelete);
 	}
 
 	public override void Init()
@@ -248,7 +248,7 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 		}
 
 		var queue = new ImageQueue();
-		var existent = Pool.GetList<ImageQueueResult>();
+		var existent = Pool.Get<List<ImageQueueResult>>();
 		var urlCount = urls.Count();
 
 		try
@@ -306,7 +306,7 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 					onComplete?.Invoke(results);
 				}
 
-				Pool.FreeList(ref existent);
+				Pool.FreeUnmanaged(ref existent);
 			}
 			catch (Exception ex)
 			{

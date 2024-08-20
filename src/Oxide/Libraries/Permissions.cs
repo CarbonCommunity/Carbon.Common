@@ -541,7 +541,7 @@ public class Permission : Library
 
 		var result = hashSet.ToArray();
 		hashSet.Clear();
-		Pool.Free(ref hashSet);
+		Pool.FreeUnmanaged(ref hashSet);
 		return result;
 	}
 	public virtual string[] GetPermissionGroups(string perm)
@@ -563,7 +563,7 @@ public class Permission : Library
 		}
 		var result = hashSet.ToArray();
 		hashSet.Clear();
-		Pool.Free(ref hashSet);
+		Pool.FreeUnmanaged(ref hashSet);
 		return result;
 	}
 
@@ -1041,7 +1041,7 @@ public class Permission : Library
 		void Cleanup()
 		{
 			hashSet.Clear();
-			Pool.Free(ref hashSet);
+			Pool.FreeUnmanaged(ref hashSet);
 		}
 
 		while (!string.IsNullOrEmpty(groupData.ParentGroup))
