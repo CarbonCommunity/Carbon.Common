@@ -636,11 +636,6 @@ public static partial class ModLoader
 		temp.Clear();
 		Facepunch.Pool.FreeUnmanaged(ref temp);
 
-		if (ConVar.Global.skipAssetWarmup_crashes)
-		{
-			Community.Runtime.MarkServerInitialized(true);
-		}
-
 		if (!Community.IsServerInitialized)
 		{
 			return;
