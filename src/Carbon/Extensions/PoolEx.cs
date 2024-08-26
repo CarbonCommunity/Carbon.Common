@@ -12,7 +12,6 @@ public class PoolEx
 
 	public static void FreeDictionary<TKey, TValue>(ref Dictionary<TKey, TValue> value)
 	{
-		value.Clear();
 		Facepunch.Pool.FreeUnmanaged(ref value);
 	}
 
@@ -23,7 +22,6 @@ public class PoolEx
 
 	public static void FreeStringBuilder(ref StringBuilder value)
 	{
-		value.Clear();
 		Facepunch.Pool.FreeUnmanaged(ref value);
 	}
 
