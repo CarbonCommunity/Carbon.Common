@@ -368,6 +368,29 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 		Queue(false, onComplete, mappedUrls);
 	}
 
+	public void Queue(bool @override, string key, string url)
+	{
+		if(string.IsNullOrEmpty(key) || string.IsNullOrEmpty(url))
+		{
+			return;
+		}
+
+		AddMap(key, url);
+		QueueBatch(@override, [url]);
+	}
+	public void Queue(bool @override, string url)
+	{
+		Queue(@override, url, url);
+	}
+	public void Queue(string key, string url)
+	{
+		Queue(false, key, url);
+	}
+	public void Queue(string url)
+	{
+		Queue(false, url);
+	}
+
 	public void AddImage(string keyOrUrl, byte[] imageData, FileStorage.Type type = FileStorage.Type.png)
 	{
 		_protoData.Map[keyOrUrl] = FileStorage.server.Store(imageData, type, RelationshipManager.ServerInstance.net.ID);

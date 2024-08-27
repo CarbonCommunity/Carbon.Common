@@ -18,7 +18,7 @@ public partial class AdminModule
 	{
 		public enum VendorTypes
 		{
-			Local,
+			Installed,
 			Codefling,
 			uMod,
 		}
@@ -76,7 +76,7 @@ public partial class AdminModule
 				case VendorTypes.uMod:
 					return uModInstance;
 
-				case VendorTypes.Local:
+				case VendorTypes.Installed:
 					return LocalInstance;
 			}
 
@@ -289,7 +289,7 @@ public partial class AdminModule
 
 			foreach (var element in plugins)
 			{
-				if (element.NoImage()) continue;
+				if (element.HasNoImage()) continue;
 
 				if (element.HasInvalidImage())
 				{
@@ -357,15 +357,23 @@ public partial class AdminModule
 					cui.CreateImage(container, card, "glow", "1 1 1 0.5", OxMin: -20, OxMax: 20, OyMin: -20, OyMax: 20);
 				}
 
-				if (plugin.NoImage() || Singleton.DataInstance.HidePluginIcons)
+				if (plugin.HasNoImage() || Singleton.DataInstance.HidePluginIcons)
 				{
 					cui.CreatePanel(container, card, "0.2 0.2 0.2 0.5");
 					cui.CreateImage(container, card, vendor.Logo, "0.2 0.2 0.2 0.85", xMin: 0.2f, xMax: 0.8f, yMin: 0.2f + vendor.LogoRatio, yMax: 0.8f - vendor.LogoRatio);
 				}
 				else
 				{
-					if (Singleton.ImageDatabase.HasImage(plugin.Thumbnail)) cui.CreateImage(container, card, plugin.Thumbnail, "1 1 1 1");
-					else cui.CreateClientImage(container, card, plugin.Thumbnail, "1 1 1 1");
+					var thumbnailUrl = $"https://codefling.com/cdn-cgi/image/width=246,height=246,quality=75,fit=cover,format=jpeg/{plugin.Image}";
+
+					if (Singleton.ImageDatabase.HasImage(thumbnailUrl))
+					{
+						cui.CreateImage(container, card, thumbnailUrl, "1 1 1 1");
+					}
+					else
+					{
+						cui.CreateClientImage(container, card, thumbnailUrl, "1 1 1 1");
+					}
 				}
 
 				var cardTitle = cui.CreatePanel(container, card, "0 0 0 0.9", yMax: 0.25f);
@@ -481,14 +489,21 @@ public partial class AdminModule
 				cui.CreatePanel(container, mainPanel, "0 0 0 0.9");
 
 				var image = cui.CreatePanel(container, parent, "0 0 0 0.5", xMin: 0.08f, xMax: 0.45f, yMin: 0.15f, yMax: 0.85f);
+				var thumbnailUrl = $"https://codefling.com/cdn-cgi/image/width=512,height=512,quality=100,fit=cover,format=jpeg/{selectedPlugin.Image}";
 
-				if (selectedPlugin.NoImage() || !Singleton.ImageDatabase.HasImage(selectedPlugin.Image))
+				if (selectedPlugin.HasNoImage())
 				{
+					cui.ImageDatabase.Queue(thumbnailUrl);
 					cui.CreateImage(container, image, vendor.Logo, "0.2 0.2 0.2 0.4", xMin: 0.2f, xMax: 0.8f, yMin: 0.2f + vendor.LogoRatio, yMax: 0.8f - vendor.LogoRatio);
+				}
+				else if (!cui.ImageDatabase.HasImage(thumbnailUrl))
+				{
+					cui.ImageDatabase.Queue(thumbnailUrl);
+					cui.CreateClientImage(container, image, thumbnailUrl, "1 1 1 1", xMin: 0.05f, xMax: 0.95f, yMin: 0.05f, yMax: 0.95f);
 				}
 				else
 				{
-					cui.CreateClientImage(container, image, selectedPlugin.Image, "1 1 1 1", xMin: 0.05f, xMax: 0.95f, yMin: 0.05f, yMax: 0.95f);
+					cui.CreateImage(container, image, thumbnailUrl, "1 1 1 1", xMin: 0.05f, xMax: 0.95f, yMin: 0.05f, yMax: 0.95f);
 				}
 
 				var pluginName = cui.CreateText(container, mainPanel, "1 1 1 1", selectedPlugin.Name, 25, xMin: 0.505f, yMax: 0.8f, align: TextAnchor.UpperLeft, font: CUI.Handler.FontTypes.RobotoCondensedBold);
@@ -976,7 +991,6 @@ public partial class AdminModule
 									Changelog = token["changelog"]?.ToString().Replace(_backSlashes, string.Empty),
 									File = token["fileName"]?.ToString(),
 									Image = token["primaryScreenshot"]?.ToString(),
-									Thumbnail = token["thumbnailScreenshot"]?.ToString(),
 									Tags = token["tags"]?.Select(x => x.ToString()),
 									DownloadCount = (token["downloads"]?.ToString().ToInt()).GetValueOrDefault(),
 									// Dependencies = token["file_depends"]?.ToString().Split(),
@@ -1590,7 +1604,6 @@ public partial class AdminModule
 							OriginalPrice = "FREE",
 							File = $"{plugin["name"]?.ToString()}.cs",
 							Image = image,
-							Thumbnail = image,
 							ImageSize = 0,
 							DownloadCount = (plugin["downloads"]?.ToString().ToInt()).GetValueOrDefault(),
 							UpdateDate = plugin["updated_at"]?.ToString(),
@@ -1823,7 +1836,6 @@ public partial class AdminModule
 			public string[] Dependencies { get; set; }
 			public string File { get; set; }
 			public string Image { get; set; }
-			public string Thumbnail { get; set; }
 			public int ImageSize { get; set; }
 			public IEnumerable<string> Tags { get; set; }
 			public int DownloadCount { get; set; }
@@ -1841,7 +1853,7 @@ public partial class AdminModule
 			{
 				return ImageSize >= 2504304;
 			}
-			public bool NoImage()
+			public bool HasNoImage()
 			{
 				return string.IsNullOrEmpty(Image);
 			}

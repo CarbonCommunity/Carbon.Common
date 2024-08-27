@@ -19,7 +19,7 @@ public static partial class ModLoader
 	internal const string RUST_PLUGIN = "RustPlugin";
 	internal const string COVALENCE_PLUGIN = "CovalencePlugin";
 
-	public static CompilationResult GetOrCreateFailedCompilation(string file, bool clear = false)
+	public static CompilationResult GetCompilationResult(string file, bool clear = false)
 	{
 		if (!FailedCompilations.TryGetValue(file, out var result))
 		{
