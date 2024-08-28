@@ -43,25 +43,7 @@ public sealed class Logger : ILogger
 
 		static void PrintLog(string text, Severity severity)
 		{
-			if (ThreadEx.IsOnMainThread())
-			{
-				switch (severity)
-				{
-					case Severity.Error:
-						UnityEngine.Debug.LogError(text);
-						break;
-
-					case Severity.Warning:
-						UnityEngine.Debug.LogWarning(text);
-						break;
-
-					case Severity.Notice:
-					case Severity.Debug:
-						UnityEngine.Debug.Log(text);
-						break;
-				}
-			}
-			else
+			if(!ThreadEx.IsOnMainThread())
 			{
 				var threadedColor = Console.ForegroundColor;
 
@@ -84,6 +66,22 @@ public sealed class Logger : ILogger
 				Console.ForegroundColor = threadedColor;
 				Console.WriteLine(text);
 				Console.ForegroundColor = color;
+			}
+
+			switch (severity)
+			{
+				case Severity.Error:
+					UnityEngine.Debug.LogError(text);
+					break;
+
+				case Severity.Warning:
+					UnityEngine.Debug.LogWarning(text);
+					break;
+
+				case Severity.Notice:
+				case Severity.Debug:
+					UnityEngine.Debug.Log(text);
+					break;
 			}
 		}
 

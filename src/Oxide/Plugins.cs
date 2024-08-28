@@ -35,14 +35,14 @@ public class Plugins : Library
 
 	public Plugin[] GetAll()
 	{
-		var list = Pool.GetList<Plugin>();
+		var list = Pool.Get<List<Plugin>>();
 		foreach (var mod in ModLoader.Packages)
 		{
 			list.AddRange(mod.Plugins);
 		}
 
 		var result = list.ToArray();
-		Pool.FreeList(ref list);
+		Pool.FreeUnmanaged(ref list);
 		return result;
 	}
 

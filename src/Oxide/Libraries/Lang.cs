@@ -31,7 +31,7 @@ public class Lang : Library
 	}
 	public string[] GetLanguages(Plugin plugin = null)
 	{
-		var list = Facepunch.Pool.GetList<string>();
+		var list = Facepunch.Pool.Get<List<string>>();
 
 		foreach (string text in Directory.GetDirectories(Interface.Oxide.LangDirectory))
 		{
@@ -42,7 +42,7 @@ public class Lang : Library
 		}
 
 		var result = list.ToArray();
-		Facepunch.Pool.FreeList(ref list);
+		Facepunch.Pool.FreeUnmanaged(ref list);
 		return result;
 	}
 	public void SetLanguage(string lang, string userId)
@@ -136,7 +136,11 @@ public class Lang : Library
 		{
 			try
 			{
-				if (hookable is RustPlugin rustPlugin) rustPlugin.ILoadDefaultMessages();
+				if (hookable is RustPlugin rustPlugin)
+				{
+					rustPlugin.ILoadDefaultMessages();
+				}
+
 				messages = GetMessageFile(hookable.Name, lang);
 
 				if (messages.TryGetValue(key, out phrase))

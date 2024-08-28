@@ -86,7 +86,7 @@ public static class StringArrayEx
 			.Select(i => text.Substring(i * chunkSize, chunkSize));
 
 		var remainingText = text.Replace(splits.ToString(""), "");
-		var splitsList = Pool.GetList<string>();
+		var splitsList = Pool.Get<List<string>>();
 		splitsList.AddRange(splits);
 
 		if (includeLeftovers && !string.IsNullOrEmpty(remainingText))
@@ -95,7 +95,7 @@ public static class StringArrayEx
 		}
 
 		var result = splitsList.ToArray();
-		Pool.FreeList(ref splitsList);
+		Pool.FreeUnmanaged(ref splitsList);
 
 		return result;
 	}
