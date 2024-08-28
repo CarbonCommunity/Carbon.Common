@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Oxide.Game.Rust.Cui;
 using ProtoBuf;
+using static Carbon.Modules.AdminModule.PluginsTab;
 using static ConsoleSystem;
 using Timer = Oxide.Plugins.Timer;
 
@@ -116,7 +117,7 @@ public partial class AdminModule
 				});
 			}
 
-			LocalInstance = new Local();
+			LocalInstance = new Installed();
 			LocalInstance.Refresh();
 
 			ServerOwner.Load();
@@ -312,12 +313,12 @@ public partial class AdminModule
 
 		public static void Draw(CUI cui, CuiElementContainer container, string parent, Tab tab, PlayerSession ap)
 		{
-			ap.SetDefaultStorage(tab, "vendor", "Local");
+			ap.SetDefaultStorage(tab, "vendor", VendorTypes.Installed.ToString());
 
 			var header = cui.CreatePanel(container, parent, "0.2 0.2 0.2 0.5",
 				xMin: 0f, xMax: 1f, yMin: 0.95f, yMax: 1f);
 
-			var vendorName = ap.GetStorage(tab, "vendor", "Local");
+			var vendorName = ap.GetStorage(tab, "vendor", VendorTypes.Installed.ToString());
 			var vendor = GetVendor((VendorTypes)Enum.Parse(typeof(VendorTypes), vendorName));
 
 			var vendors = Enum.GetNames(typeof(VendorTypes));
@@ -467,13 +468,13 @@ public partial class AdminModule
 				cui.CreateProtectedButton(container, user, auth.IsLoggedIn ? "0.8 0.1 0 0.8" : "0.1 0.8 0 0.8", "1 1 1 0.5", auth.IsLoggedIn ? "<b>LOGOUT</b>" : "<b>LOGIN</b>", 8, xMin: 0.75f, xMax: 0.975f, command: "pluginbrowser.login");
 			}
 
-			var isLocal = vendor is Local;
+			var isInstalled = vendor is Installed;
 			var searchQuery = ap.GetStorage<string>(tab, "search");
 			var search = cui.CreatePanel(container, topbar, "0 0 0 0", xMin: 0.6f, xMax: 0.855f, yMin: 0f, OyMax: -0.5f);
 			cui.CreateProtectedInputField(container, search, string.IsNullOrEmpty(searchQuery) ? "0.8 0.8 0.8 0.6" : "1 1 1 1", string.IsNullOrEmpty(searchQuery) ? "Search..." : searchQuery, 10, 20, false, xMin: 0.06f, align: TextAnchor.MiddleLeft, needsKeyboard: Singleton.HandleEnableNeedsKeyboard(ap), command: "pluginbrowser.search  ");
 			cui.CreateProtectedButton(container, search, string.IsNullOrEmpty(searchQuery) ? "0.2 0.2 0.2 0.8" : "#d43131", "1 1 1 0.6", "X", 10, xMin: 0.95f, yMin: topbarYScale, yMax: 1f - topbarYScale, OxMin: -30, OxMax: -22.5f, command: "pluginbrowser.search  ");
 
-			var reloadButton = cui.CreateProtectedButton(container, search, isLocal ? "0.2 0.2 0.2 0.4" : "0.2 0.2 0.2 0.8", "1 1 1 0.6", string.Empty, 0, xMin: 0.9f, xMax: 1, yMin: topbarYScale, yMax: 1f - topbarYScale, command: "pluginbrowser.refreshvendor");
+			var reloadButton = cui.CreateProtectedButton(container, search, isInstalled ? "0.2 0.2 0.2 0.4" : "0.2 0.2 0.2 0.8", "1 1 1 0.6", string.Empty, 0, xMin: 0.9f, xMax: 1, yMin: topbarYScale, yMax: 1f - topbarYScale, command: "pluginbrowser.refreshvendor");
 			cui.CreateImage(container, reloadButton, "reload", "1 1 1 0.4", xMin: 0.225f, xMax: 0.775f, yMin: 0.25f, yMax: 0.75f);
 
 			if (TagFilter.Contains("peanus")) cui.CreateClientImage(container, grid, "https://media.discordapp.net/attachments/1078801277565272104/1085062151221293066/15ox1d_1.jpg?width=827&height=675", "1 1 1 1", xMax: 0.8f);
@@ -636,7 +637,7 @@ public partial class AdminModule
 						}
 					}
 
-					if (vendor is not Local)
+					if (vendor is not Installed)
 					{
 						if (isAdmin || selectedPlugin.Owned || !selectedPlugin.IsPaid() || selectedPlugin.IsInstalled())
 						{
@@ -1681,7 +1682,7 @@ public partial class AdminModule
 		#endregion
 
 		[ProtoContract]
-		public class Local : Vendor
+		public class Installed : Vendor
 		{
 			public override string Type => "All";
 			public override string Url => "none";
@@ -1909,7 +1910,7 @@ public partial class AdminModule
 		var ap = Singleton.GetPlayerSession(player);
 		var tab = Singleton.GetTab(ap.Player);
 
-		var vendor = PluginsTab.GetVendor((PluginsTab.VendorTypes)Enum.Parse(typeof(PluginsTab.VendorTypes), ap.GetStorage(tab, "vendor", "Local")));
+		var vendor = PluginsTab.GetVendor((PluginsTab.VendorTypes)Enum.Parse(typeof(PluginsTab.VendorTypes), ap.GetStorage(tab, "vendor", VendorTypes.Installed.ToString())));
 		var arg = new string[args.Args.Length];
 		Array.Copy(args.Args, arg, args.Args.Length);
 
@@ -2030,7 +2031,7 @@ public partial class AdminModule
 		var ap = Singleton.GetPlayerSession(args.Player());
 		var tab = Singleton.GetTab(ap.Player);
 
-		var vendor = PluginsTab.GetVendor((PluginsTab.VendorTypes)Enum.Parse(typeof(PluginsTab.VendorTypes), ap.GetStorage(tab, "vendor", "Local")));
+		var vendor = PluginsTab.GetVendor((PluginsTab.VendorTypes)Enum.Parse(typeof(PluginsTab.VendorTypes), ap.GetStorage(tab, "vendor", VendorTypes.Installed.ToString())));
 		vendor.Refresh();
 		PluginsTab.GetPlugins(vendor, tab, ap, out var maxPages);
 
@@ -2067,7 +2068,7 @@ public partial class AdminModule
 		var ap = Singleton.GetPlayerSession(args.Player());
 		var tab = Singleton.GetTab(ap.Player);
 
-		var vendor = PluginsTab.GetVendor((PluginsTab.VendorTypes)Enum.Parse(typeof(PluginsTab.VendorTypes), ap.GetStorage(tab, "vendor", "Local")));
+		var vendor = PluginsTab.GetVendor((PluginsTab.VendorTypes)Enum.Parse(typeof(PluginsTab.VendorTypes), ap.GetStorage(tab, "vendor", VendorTypes.Installed.ToString())));
 		vendor.Refresh();
 
 		var filter = args.Args.ToString(" ");
@@ -2087,7 +2088,7 @@ public partial class AdminModule
 		var ap = Singleton.GetPlayerSession(args.Player());
 		var tab = Singleton.GetTab(ap.Player);
 
-		var vendor = PluginsTab.GetVendor((PluginsTab.VendorTypes)Enum.Parse(typeof(PluginsTab.VendorTypes), ap.GetStorage(tab, "vendor", "Local")));
+		var vendor = PluginsTab.GetVendor((PluginsTab.VendorTypes)Enum.Parse(typeof(PluginsTab.VendorTypes), ap.GetStorage(tab, "vendor", VendorTypes.Installed.ToString())));
 		vendor.Refresh();
 
 		var search = ap.SetStorage(tab, "search", args.Args.ToString(" "));
@@ -2107,9 +2108,9 @@ public partial class AdminModule
 		var ap = Singleton.GetPlayerSession(args.Player());
 		var tab = Singleton.GetTab(ap.Player);
 
-		var vendor = PluginsTab.GetVendor((PluginsTab.VendorTypes)Enum.Parse(typeof(PluginsTab.VendorTypes), ap.GetStorage(tab, "vendor", "Local")));
+		var vendor = PluginsTab.GetVendor((PluginsTab.VendorTypes)Enum.Parse(typeof(PluginsTab.VendorTypes), ap.GetStorage(tab, "vendor", VendorTypes.Installed.ToString())));
 
-		if (vendor is PluginsTab.Local) return;
+		if (vendor is PluginsTab.Installed) return;
 
 		tab.CreateDialog("Are you sure you want to redownload the plugin list?\nThis might take a while.", ap =>
 		{
@@ -2151,7 +2152,7 @@ public partial class AdminModule
 		var ap = Singleton.GetPlayerSession(args.Player());
 		var tab = Singleton.GetTab(ap.Player);
 
-		var vendor = PluginsTab.GetVendor((PluginsTab.VendorTypes)Enum.Parse(typeof(PluginsTab.VendorTypes), ap.GetStorage(tab, "vendor", "Local")));
+		var vendor = PluginsTab.GetVendor((PluginsTab.VendorTypes)Enum.Parse(typeof(PluginsTab.VendorTypes), ap.GetStorage(tab, "vendor", VendorTypes.Installed.ToString())));
 		vendor.Refresh();
 
 		ap.SetStorage(tab, "selectedplugin", vendor.FetchedPlugins.FirstOrDefault(x => x.Id == args.Args[0]));
@@ -2166,7 +2167,7 @@ public partial class AdminModule
 		var ap = Singleton.GetPlayerSession(args.Player());
 		var tab = Singleton.GetTab(ap.Player);
 
-		var vendor = PluginsTab.GetVendor((PluginsTab.VendorTypes)Enum.Parse(typeof(PluginsTab.VendorTypes), ap.GetStorage(tab, "vendor", "Local")));
+		var vendor = PluginsTab.GetVendor((PluginsTab.VendorTypes)Enum.Parse(typeof(PluginsTab.VendorTypes), ap.GetStorage(tab, "vendor", VendorTypes.Installed.ToString())));
 		vendor.Refresh();
 
 		ap.SetStorage(tab, "selectedplugin", (PluginsTab.Plugin)null);
@@ -2181,7 +2182,7 @@ public partial class AdminModule
 		var ap = Singleton.GetPlayerSession(args.Player());
 		var tab = Singleton.GetTab(ap.Player);
 
-		var vendor = PluginsTab.GetVendor((PluginsTab.VendorTypes)Enum.Parse(typeof(PluginsTab.VendorTypes), ap.GetStorage(tab, "vendor", "Local")));
+		var vendor = PluginsTab.GetVendor((PluginsTab.VendorTypes)Enum.Parse(typeof(PluginsTab.VendorTypes), ap.GetStorage(tab, "vendor", VendorTypes.Installed.ToString())));
 		vendor.Refresh();
 
 		var plugins = PluginsTab.GetPlugins(vendor, tab, ap);
@@ -2200,7 +2201,7 @@ public partial class AdminModule
 	{
 		var ap = Singleton.GetPlayerSession(args.Player());
 		var tab = Singleton.GetTab(ap.Player);
-		var vendor = PluginsTab.GetVendor((PluginsTab.VendorTypes)Enum.Parse(typeof(PluginsTab.VendorTypes), ap.GetStorage(tab, "vendor", "Local")));
+		var vendor = PluginsTab.GetVendor((PluginsTab.VendorTypes)Enum.Parse(typeof(PluginsTab.VendorTypes), ap.GetStorage(tab, "vendor", VendorTypes.Installed.ToString())));
 
 		switch (args.Args[0])
 		{
