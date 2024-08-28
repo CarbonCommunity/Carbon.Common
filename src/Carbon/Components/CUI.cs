@@ -794,6 +794,7 @@ public readonly struct CUI : IDisposable
 				FontTypes.RobotoCondensedRegular => "robotocondensed-regular.ttf",
 				FontTypes.PermanentMarker => "permanentmarker.ttf",
 				FontTypes.DroidSansMono => "droidsansmono.ttf",
+				FontTypes.NotoSansArabicBold => "NotoSansArabic-Bold.ttf",
 				_ => "robotocondensed-regular.ttf"
 			};
 		}
