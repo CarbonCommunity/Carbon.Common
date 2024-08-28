@@ -392,7 +392,7 @@ public class CuiCountdownComponent : ICuiComponent
 
 	[JsonConverter(typeof(StringEnumConverter))]
 	[JsonProperty("timerFormat", NullValueHandling = NullValueHandling.Ignore, DefaultValueHandling = DefaultValueHandling.Ignore)]
-	public TimerFormats TimerFormat { get; set; }
+	public TimerFormat TimerFormat { get; set; }
 
 	[JsonProperty("numberFormat", NullValueHandling = NullValueHandling.Ignore, DefaultValueHandling = DefaultValueHandling.Ignore)]
 	public string NumberFormat { get; set; }
@@ -401,14 +401,19 @@ public class CuiCountdownComponent : ICuiComponent
 	public bool DestroyIfDone { get; set; }
 }
 
-public enum TimerFormats
+public enum TimerFormat
 {
 	None,
 	SecondsHundreth,
 	MinutesSeconds,
 	MinutesSecondsHundreth,
 	HoursMinutes,
-	HoursMinutesSeconds
+	HoursMinutesSeconds,
+	HoursMinutesSecondsMilliseconds,
+	HoursMinutesSecondsTenths,
+	DaysHoursMinutes,
+	DaysHoursMinutesSeconds,
+	Custom
 }
 
 public class CuiTextComponent : ICuiComponent, ICuiColor

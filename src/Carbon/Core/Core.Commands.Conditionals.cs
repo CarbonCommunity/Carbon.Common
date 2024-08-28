@@ -21,7 +21,7 @@ public partial class CorePlugin
 
 		foreach (var mod in ModLoader.Packages)
 		{
-			var plugins = Facepunch.Pool.GetList<RustPlugin>();
+			var plugins = Facepunch.Pool.Get<List<RustPlugin>>();
 			plugins.AddRange(mod.Plugins);
 
 			foreach (var plugin in plugins)
@@ -34,7 +34,7 @@ public partial class CorePlugin
 				}
 			}
 
-			Facepunch.Pool.FreeList(ref plugins);
+			Facepunch.Pool.FreeUnmanaged(ref plugins);
 		}
 	}
 
@@ -57,7 +57,7 @@ public partial class CorePlugin
 
 		foreach (var mod in ModLoader.Packages)
 		{
-			var plugins = Facepunch.Pool.GetList<RustPlugin>();
+			var plugins = Facepunch.Pool.Get<List<RustPlugin>>();
 			plugins.AddRange(mod.Plugins);
 
 			foreach (var plugin in plugins)
@@ -70,7 +70,7 @@ public partial class CorePlugin
 				}
 			}
 
-			Facepunch.Pool.FreeList(ref plugins);
+			Facepunch.Pool.FreeUnmanaged(ref plugins);
 		}
 	}
 

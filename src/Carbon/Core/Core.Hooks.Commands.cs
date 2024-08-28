@@ -53,7 +53,6 @@ public partial class CorePlugin
 
 				Community.Runtime.CommandManager.Execute(cmd, commandArgs);
 
-				commandArgs.Dispose();
 				Facepunch.Pool.Free(ref commandArgs);
 				return Cache.False;
 			}

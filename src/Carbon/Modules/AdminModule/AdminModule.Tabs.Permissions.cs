@@ -1,5 +1,7 @@
 ﻿#if !MINIMAL
 
+using ProtoBuf;
+
 namespace Carbon.Modules;
 
 public partial class AdminModule
@@ -243,14 +245,14 @@ public partial class AdminModule
 					}, null);
 				}, (ap) => Tab.OptionButton.Types.Important), new Tab.OptionButton("Edit", ap =>
 				{
-					var temp = Facepunch.Pool.GetList<string>();
+					var temp = Facepunch.Pool.Get<List<string>>();
 					var groups = Community.Runtime.Core.permission.GetGroups();
 					temp.Add("None");
 					temp.AddRange(groups);
 					temp.Remove(selectedGroup);
 
 					var array = temp.ToArray();
-					Facepunch.Pool.FreeList(ref temp);
+					Facepunch.Pool.FreeUnmanaged(ref temp);
 
 					var parent = permission.GetGroupParent(selectedGroup);
 					var parentIndex = Array.IndexOf(array, parent);
@@ -280,13 +282,13 @@ public partial class AdminModule
 				tab.AddButtonArray(2,
 					new Tab.OptionButton("Duplicate Group", ap =>
 					{
-						var temp = Facepunch.Pool.GetList<string>();
+						var temp = Facepunch.Pool.Get<List<string>>();
 						var groups = Community.Runtime.Core.permission.GetGroups();
 						temp.Add("None");
 						temp.AddRange(groups);
 
 						var array = temp.ToArray();
-						Facepunch.Pool.FreeList(ref temp);
+						Facepunch.Pool.FreeUnmanaged(ref temp);
 
 						Singleton.Modal.Open(ap.Player, "Duplicate Group", new Dictionary<string, ModalModule.Modal.Field>
 						{
@@ -598,13 +600,13 @@ public partial class AdminModule
 
 				tab.AddButton(1, "Add Group", ap =>
 				{
-					var temp = Facepunch.Pool.GetList<string>();
+					var temp = Facepunch.Pool.Get<List<string>>();
 					var groups = Community.Runtime.Core.permission.GetGroups();
 					temp.Add("None");
 					temp.AddRange(groups);
 
 					var array = temp.ToArray();
-					Facepunch.Pool.FreeList(ref temp);
+					Facepunch.Pool.FreeUnmanaged(ref temp);
 
 					Singleton.Modal.Open(ap.Player, "Create Group", new Dictionary<string, ModalModule.Modal.Field>()
 					{

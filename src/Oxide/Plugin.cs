@@ -262,9 +262,9 @@ public class Plugin : BaseHookable, IDisposable
 		{
 			using (TimeMeasure.New($"IUnload.UnloadRequirees on '{ToPrettyString()}'"))
 			{
-				var mods = Pool.GetList<ModLoader.Package>();
+				var mods = Pool.Get<List<ModLoader.Package>>();
 				mods.AddRange(ModLoader.Packages);
-				var plugins = Pool.GetList<Plugin>();
+				var plugins = Pool.Get<List<Plugin>>();
 
 				foreach (var mod in ModLoader.Packages)
 				{
@@ -293,8 +293,8 @@ public class Plugin : BaseHookable, IDisposable
 					}
 				}
 
-				Pool.FreeList(ref mods);
-				Pool.FreeList(ref plugins);
+				Pool.FreeUnmanaged(ref mods);
+				Pool.FreeUnmanaged(ref plugins);
 			}
 
 			return true;
@@ -326,7 +326,7 @@ public class Plugin : BaseHookable, IDisposable
 
 	public static void InternalApplyAllPluginReferences()
 	{
-		var list = Pool.GetList<RustPlugin>();
+		var list = Pool.Get<List<RustPlugin>>();
 
 		foreach (var package in ModLoader.Packages)
 		{
@@ -344,7 +344,7 @@ public class Plugin : BaseHookable, IDisposable
 			ModLoader.UninitializePlugin(plugin);
 		}
 
-		Pool.FreeList(ref list);
+		Pool.FreeUnmanaged(ref list);
 	}
 
 	public void SetProcessor(IBaseProcessor processor)
@@ -422,7 +422,7 @@ public class Plugin : BaseHookable, IDisposable
 			10 => HookCaller.CallHook<T>(this, HookStringPool.GetOrAdd(hook), args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9]),
 			11 => HookCaller.CallHook<T>(this, HookStringPool.GetOrAdd(hook), args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10]),
 			12 => HookCaller.CallHook<T>(this, HookStringPool.GetOrAdd(hook), args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11]),
-			13 => HookCaller.CallHook<T>(this, HookStringPool.GetOrAdd(hook), args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11], args[13]),
+			13 => HookCaller.CallHook<T>(this, HookStringPool.GetOrAdd(hook), args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11], args[12]),
 			_ => HookCaller.CallHook<T>(this, HookStringPool.GetOrAdd(hook)),
 		};
 	}
@@ -576,7 +576,7 @@ public class Plugin : BaseHookable, IDisposable
 			10 => HookCaller.CallHook<T>(this, HookStringPool.GetOrAdd(hook), args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9]),
 			11 => HookCaller.CallHook<T>(this, HookStringPool.GetOrAdd(hook), args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10]),
 			12 => HookCaller.CallHook<T>(this, HookStringPool.GetOrAdd(hook), args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11]),
-			13 => HookCaller.CallHook<T>(this, HookStringPool.GetOrAdd(hook), args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11], args[13]),
+			13 => HookCaller.CallHook<T>(this, HookStringPool.GetOrAdd(hook), args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11], args[12]),
 			_ => HookCaller.CallHook<T>(this, HookStringPool.GetOrAdd(hook)),
 		};
 	}

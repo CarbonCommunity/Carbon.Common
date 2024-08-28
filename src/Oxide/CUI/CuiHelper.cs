@@ -1,5 +1,6 @@
 ﻿using Facepunch;
 using Newtonsoft.Json;
+using ProtoBuf;
 using Formatting = Newtonsoft.Json.Formatting;
 
 namespace Oxide.Game.Rust.Cui;
@@ -25,7 +26,7 @@ public static class CuiHelper
 
 	public static void DestroyActivePanelList(BasePlayer player, string[] except = null)
 	{
-		var temp = Pool.GetList<string>();
+		var temp = Pool.Get<List<string>>();
 		temp.AddRange(GetActivePanelList(player));
 
 		foreach (var element in temp.Where(x => except == null || except.Length == 0 ? true : !except.Any(y => x.StartsWith(y))))
@@ -33,7 +34,7 @@ public static class CuiHelper
 			DestroyUi(player, element);
 		}
 
-		Pool.FreeList(ref temp);
+		Pool.FreeUnmanaged(ref temp);
 	}
 
 	public static string ToJson(List<CuiElement> elements, bool format = false)

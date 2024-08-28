@@ -362,7 +362,7 @@ public partial class AdminModule
 								null, hidden: true);
 						}
 
-						if (!multiSelection && (Singleton.Permissions.UserHasPermission(ap3?.Player.UserIDString, "carbon.cmod") ||
+						if (!multiSelection && (ap3.Player.IsAdmin || Singleton.Permissions.UserHasPermission(ap3?.Player.UserIDString, "carbon.cmod") ||
 						                        player.userID.IsSteamId()))
 						{
 							tab.AddButtonArray(1, new Tab.OptionButton("Kick", ap =>
@@ -444,7 +444,7 @@ public partial class AdminModule
 						else tab.AddText(1, $"You need 'carbon.cmod' permission to kick, ban, sleep or change player hostility.",
 							10, "1 1 1 0.4");
 
-						var temp = Pool.GetList<Tab.OptionButton>();
+						var temp = Pool.Get<List<Tab.OptionButton>>();
 
 						if (Singleton.HasAccess(ap3.Player, "entities.loot_players"))
 						{
@@ -501,7 +501,7 @@ public partial class AdminModule
 
 						tab.AddButtonArray(column, temp.ToArray());
 
-						Pool.FreeList(ref temp);
+						Pool.FreeUnmanaged(ref temp);
 
 						if (Singleton.HasAccess(ap3.Player, "players.inventory_management"))
 						{
@@ -696,10 +696,20 @@ public partial class AdminModule
 
 						if (entity is BasePlayer)
 						{
-							tab.AddRange(column, "Thirst", 0, player.metabolism.hydration.max, ap => player.metabolism.hydration.value, (ap, value) => DoAll<BasePlayer>(e => e.metabolism.hydration.SetValue(value)), ap => $"{player.metabolism.hydration.value:0}");
-							tab.AddRange(column, "Hunger", 0, player.metabolism.calories.max, ap => player.metabolism.calories.value, (ap, value) => DoAll<BasePlayer>(e => e.metabolism.calories.SetValue(value)), ap => $"{player.metabolism.calories.value:0}");
-							tab.AddRange(column, "Radiation", 0, player.metabolism.radiation_poison.max, ap => player.metabolism.radiation_poison.value, (ap, value) => DoAll<BasePlayer>(e => e.metabolism.radiation_poison.SetValue(value)), ap => $"{player.metabolism.radiation_poison.value:0}");
-							tab.AddRange(column, "Bleeding", 0, player.metabolism.bleeding.max, ap => player.metabolism.bleeding.value, (ap, value) => DoAll<BasePlayer>(e => e.metabolism.bleeding.SetValue(value)), ap => $"{player.metabolism.bleeding.value:0}");
+							tab.AddRange(column, "Thirst", 0, player.metabolism.hydration.max, _ => player.metabolism.hydration.value, (ap, value) => DoAll<BasePlayer>(e => e.metabolism.hydration.SetValue(value)), _ => $"{player.metabolism.hydration.value:0}");
+							tab.AddRange(column, "Hunger", 0, player.metabolism.calories.max, _ => player.metabolism.calories.value, (ap, value) => DoAll<BasePlayer>(e => e.metabolism.calories.SetValue(value)), _ => $"{player.metabolism.calories.value:0}");
+							tab.AddRange(column, "Radiation", 0, player.metabolism.radiation_poison.max, _ => player.metabolism.radiation_poison.value, (ap, value) => DoAll<BasePlayer>(e => e.metabolism.radiation_poison.SetValue(value)), _ => $"{player.metabolism.radiation_poison.value:0}");
+							tab.AddRange(column, "Bleeding", 0, player.metabolism.bleeding.max, _ => player.metabolism.bleeding.value, (ap, value) => DoAll<BasePlayer>(e => e.metabolism.bleeding.SetValue(value)), _ => $"{player.metabolism.bleeding.value:0}");
+							tab.AddRange(column, "Wetness", 0, player.metabolism.wetness.max, _ => player.metabolism.wetness.value, (ap, value) => DoAll<BasePlayer>(e => e.metabolism.wetness.SetValue(value)), _ => $"{player.metabolism.wetness.value:0}");
+							tab.AddButton(column, "Empower Stats", _ =>
+							{
+								player.SetHealth(player.MaxHealth());
+								player.metabolism.hydration.SetValue(player.metabolism.hydration.max);
+								player.metabolism.calories.SetValue(player.metabolism.calories.max);
+								player.metabolism.radiation_poison.SetValue(0);
+								player.metabolism.bleeding.SetValue(0);
+								player.metabolism.wetness.SetValue(0);
+							});
 						}
 					}
 				}
@@ -730,7 +740,7 @@ public partial class AdminModule
 			var entity = selectedEntitites[0];
 
 			var counter = 0;
-			var currentButtons = Facepunch.Pool.GetList<Tab.OptionButton>();
+			var currentButtons = Facepunch.Pool.Get<List<Tab.OptionButton>>();
 
 			tab.ClearColumn(column);
 
@@ -757,7 +767,7 @@ public partial class AdminModule
 				}
 			}
 
-			Facepunch.Pool.FreeList(ref currentButtons);
+			Facepunch.Pool.FreeUnmanaged(ref currentButtons);
 
 			void DoAll<T>(Action<T> callback) where T : BaseEntity
 			{

@@ -48,7 +48,6 @@ public static class CommandLine
 
 					Community.Runtime.CommandManager.Execute(cmd, commandArgs);
 
-					commandArgs.Dispose();
 					Facepunch.Pool.Free(ref commandArgs);
 				}
 				catch (Exception ex)

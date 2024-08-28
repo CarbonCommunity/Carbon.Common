@@ -7,8 +7,7 @@ public sealed class Updater
 		var suffix = (Community.Runtime.Analytics.Platform == "linux") ? "unix" : default;
 		var target = (Community.Runtime.Analytics.Branch == "Release") ? "release" : "debug";
 
-		return $"https://carbonmod.gg/redist/server/"
-			+ $"{target}{suffix}/{(protocol is null ? $"{file}" : $"{protocol}/{file}")}";
+		return $"https://carbonmod.gg/redist/server/{target}{suffix}/{(protocol is null ? $"{file}" : $"{protocol}/{file}")}";
 	}
 
 	public static async void DoUpdate(Action<bool> callback = null)
@@ -24,29 +23,30 @@ public sealed class Updater
 		int failed = 0;
 		foreach (string file in files)
 		{
-			Logger.Warn($"Updating component '{Path.GetFileName(file)}@{Community.Runtime.Analytics.Protocol}' on {Community.Runtime.Analytics.Platform} [{Community.Runtime.Analytics.Branch}]");
+			var fileName = Path.GetFileName(file);
+
+			Logger.Warn($"Updating component '{fileName}@{Community.Runtime.Analytics.Protocol}' on {Community.Runtime.Analytics.Platform} [{Community.Runtime.Analytics.Branch}]");
 			byte[] buffer = await Community.Runtime.Downloader.Download(GithubReleaseUrl(file, Community.Runtime.Analytics.Protocol));
 
 			if (buffer is { Length: < 1 })
 			{
-				Logger.Warn($"Retrying component update '{Path.GetFileName(file)}' on {Community.Runtime.Analytics.Platform} [{Community.Runtime.Analytics.Branch}]...");
+				Logger.Warn($"Retrying component update '{fileName}' on {Community.Runtime.Analytics.Platform} [{Community.Runtime.Analytics.Branch}]...");
 				buffer = await Community.Runtime.Downloader.Download(GithubReleaseUrl(file));
 			}
 
 			if (buffer is { Length: < 1 })
 			{
-				Logger.Warn($"Unable to update component '{Path.GetFileName(file)}', please try again later");
+				Logger.Warn($"Unable to update component '{fileName}', please try again later");
 				failed++; continue;
 			}
 
 			try
 			{
-				string destination = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, file));
-				File.WriteAllBytes(destination, buffer);
+				File.WriteAllBytes(Path.Combine(Defines.GetHooksFolder(), fileName), buffer);
 			}
 			catch (System.Exception e)
 			{
-				Logger.Error($"Error while updating component '{Path.GetFileName(file)}'", e);
+				Logger.Error($"Error while updating component '{fileName}'", e);
 				failed++;
 			}
 		}

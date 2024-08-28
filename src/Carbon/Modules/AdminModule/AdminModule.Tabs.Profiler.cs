@@ -257,7 +257,7 @@ public partial class AdminModule
 
 			var searchInput = session.GetStorage(this, "bsearch", string.Empty);
 			var sortIndex = session.GetStorage(this, "bsort", 1);
-			var filtered = Pool.GetList<MonoProfiler.AssemblyRecord>();
+			var filtered = Pool.Get<List<MonoProfiler.AssemblyRecord>>();
 			var maxVal = 0f;
 
 			filtered.AddRange(GetSortedAssemblies(sortIndex, searchInput));
@@ -366,7 +366,7 @@ public partial class AdminModule
 				AddText(0, "No assemblies available", 8, "1 1 1 0.5");
 			}
 
-			Pool.FreeList(ref filtered);
+			Pool.FreeUnmanaged(ref filtered);
 		}
 		public void DrawSubtabs(PlayerSession session, string assembly)
 		{
@@ -702,9 +702,9 @@ public partial class AdminModule
 			Func<MonoProfiler.AssemblyRecord, ulong> value, Func<ulong, string> valueFormat,
 			int valueCuts, int assemblyCount, out Components.Graphics.Chart.Layer[] layers, out string[] vLabels, out string[] hLabels)
 		{
-			var pooledLayers = Pool.GetList<Components.Graphics.Chart.Layer>();
-			var pooledVerticalLabels = Pool.GetList<string>();
-			var pooledHorizontalLabels = Pool.GetList<string>();
+			var pooledLayers = Pool.Get<List<Components.Graphics.Chart.Layer>>();
+			var pooledVerticalLabels = Pool.Get<List<string>>();
+			var pooledHorizontalLabels = Pool.Get<List<string>>();
 			pooledHorizontalLabels.AddRange(recording.Timeline.Select(sample => $"{sample.Key.Hour:00}:{sample.Key.Minute:00}:{sample.Key.Second:00}"));
 
 			var records = recording.Timeline.SelectMany(x => x.Value.Assemblies.OrderByDescending(value));
@@ -744,18 +744,18 @@ public partial class AdminModule
 			vLabels = [.. pooledVerticalLabels];
 			hLabels = [.. pooledHorizontalLabels];
 
-			Pool.FreeList(ref pooledVerticalLabels);
-			Pool.FreeList(ref pooledHorizontalLabels);
-			Pool.FreeList(ref pooledLayers);
+			Pool.FreeUnmanaged(ref pooledVerticalLabels);
+			Pool.FreeUnmanaged(ref pooledHorizontalLabels);
+			Pool.FreeUnmanaged(ref pooledLayers);
 		}
 
 		public static void GenerateProfilerDataChart_Call(MonoProfiler.TimelineRecording recording,
 			Func<MonoProfiler.CallRecord, ulong> callValue, Func<MonoProfiler.AssemblyRecord, ulong> assemblyValue, Func<ulong, string> valueFormat,
 			int valueCuts, int callCount, out Components.Graphics.Chart.Layer[] layers, out string[] vLabels, out string[] hLabels)
 		{
-			var pooledLayers = Pool.GetList<Components.Graphics.Chart.Layer>();
-			var pooledVerticalLabels = Pool.GetList<string>();
-			var pooledHorizontalLabels = Pool.GetList<string>();
+			var pooledLayers = Pool.Get<List<Components.Graphics.Chart.Layer>>();
+			var pooledVerticalLabels = Pool.Get<List<string>>();
+			var pooledHorizontalLabels = Pool.Get<List<string>>();
 			pooledHorizontalLabels.AddRange(recording.Timeline.Select(sample => $"{sample.Key.Hour:00}:{sample.Key.Minute:00}:{sample.Key.Second:00}"));
 
 			var records = recording.Timeline.SelectMany(x =>
@@ -798,18 +798,18 @@ public partial class AdminModule
 			vLabels = [.. pooledVerticalLabels];
 			hLabels = [.. pooledHorizontalLabels];
 
-			Pool.FreeList(ref pooledVerticalLabels);
-			Pool.FreeList(ref pooledHorizontalLabels);
-			Pool.FreeList(ref pooledLayers);
+			Pool.FreeUnmanaged(ref pooledVerticalLabels);
+			Pool.FreeUnmanaged(ref pooledHorizontalLabels);
+			Pool.FreeUnmanaged(ref pooledLayers);
 		}
 
 		public static void GenerateProfilerDataChart_Memory(MonoProfiler.TimelineRecording recording,
 			Func<MonoProfiler.MemoryRecord, ulong> value, Func<ulong, string> valueFormat,
 			int valueCuts, int memoryCount, out Components.Graphics.Chart.Layer[] layers, out string[] vLabels, out string[] hLabels)
 		{
-			var pooledLayers = Pool.GetList<Components.Graphics.Chart.Layer>();
-			var pooledVerticalLabels = Pool.GetList<string>();
-			var pooledHorizontalLabels = Pool.GetList<string>();
+			var pooledLayers = Pool.Get<List<Components.Graphics.Chart.Layer>>();
+			var pooledVerticalLabels = Pool.Get<List<string>>();
+			var pooledHorizontalLabels = Pool.Get<List<string>>();
 			pooledHorizontalLabels.AddRange(recording.Timeline.Select(sample => $"{sample.Key.Hour:00}:{sample.Key.Minute:00}:{sample.Key.Second:00}"));
 
 			var records = recording.Timeline.SelectMany(x =>
@@ -850,9 +850,9 @@ public partial class AdminModule
 			vLabels = [.. pooledVerticalLabels];
 			hLabels = [.. pooledHorizontalLabels];
 
-			Pool.FreeList(ref pooledVerticalLabels);
-			Pool.FreeList(ref pooledHorizontalLabels);
-			Pool.FreeList(ref pooledLayers);
+			Pool.FreeUnmanaged(ref pooledVerticalLabels);
+			Pool.FreeUnmanaged(ref pooledHorizontalLabels);
+			Pool.FreeUnmanaged(ref pooledLayers);
 		}
 	}
 

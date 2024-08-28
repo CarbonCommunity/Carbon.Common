@@ -16,7 +16,7 @@ public class Suggestions
 
 	public static IEnumerable<SuggestionResult> Lookup(string input, IEnumerable<string> values, int count = 3, int minimumConfidence = -1)
 	{
-		var buffer = Pool.GetList<SuggestionResult>();
+		var buffer = Pool.Get<List<SuggestionResult>>();
 		var minDistance = int.MaxValue;
 		var closestMatch = string.Empty;
 
@@ -45,7 +45,7 @@ public class Suggestions
 			yield return value;
 		}
 
-		Pool.FreeList(ref buffer);
+		Pool.FreeUnmanaged(ref buffer);
 	}
 
 	public class BufferBank : List<BufferInstance>

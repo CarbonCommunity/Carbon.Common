@@ -145,7 +145,7 @@ public static class HookCaller
 		}
 
 		var result = (object)null;
-		var conflicts = Pool.GetList<Conflict>();
+		var conflicts = Pool.Get<List<Conflict>>();
 
 		for (int i = 0; i < Community.Runtime.ModuleProcessor.Modules.Count; i++)
 		{
@@ -201,7 +201,7 @@ public static class HookCaller
 
 		ConflictCheck(conflicts, ref result, hookId);
 
-		Pool.FreeList(ref conflicts);
+		Pool.FreeUnmanaged(ref conflicts);
 
 		return result;
 	}
@@ -1364,7 +1364,7 @@ public static class HookCaller
 
 		if (classList == null)
 		{
-			classList = Pool.GetList<ClassDeclarationSyntax>();
+			classList = Pool.Get<List<ClassDeclarationSyntax>>();
 			isTemp = true;
 			FindPluginInfo(input, out @namespace, out _, out _, classList);
 		}
@@ -1373,6 +1373,19 @@ public static class HookCaller
 			FindPluginInfo(input, out @namespace, out _, out _, null);
 
 			namespaceIndex = classIndex = 0;
+		}
+
+		if(classList.Count == 0)
+		{
+			if (isTemp)
+			{
+				Pool.FreeUnmanaged(ref classList);
+			}
+
+			output = null;
+			generatedMethod = null;
+			isPartial = default;
+			return;
 		}
 
 		var @class = classList[0];
@@ -1389,7 +1402,7 @@ public static class HookCaller
 
 		if (isTemp)
 		{
-			Pool.FreeList(ref classList);
+			Pool.FreeUnmanaged(ref classList);
 		}
 
 		var hookableMethods = new Dictionary<uint, List<MethodDeclarationSyntax>>();
@@ -1582,16 +1595,22 @@ public static class HookCaller
 	{
 		GenerateInternalCallHook(input, out _, out var method, out var isPartial, classList: classes);
 
+		if(method == null)
+		{
+			output = null;
+			return;
+		}
+
 		var @namespace = (BaseNamespaceDeclarationSyntax)null;
 		var @class = (ClassDeclarationSyntax)null;
 
 		if (classes == null)
 		{
-			classes = Facepunch.Pool.GetList<ClassDeclarationSyntax>();
+			classes = Facepunch.Pool.Get<List<ClassDeclarationSyntax>>();
 			FindPluginInfo(input, out @namespace, out _, out _, classes);
 
 			@class = classes[0];
-			Facepunch.Pool.FreeList(ref classes);
+			Facepunch.Pool.FreeUnmanaged(ref classes);
 		}
 		else
 		{

@@ -345,7 +345,10 @@ public class Permission : Library
 	{
 		if (!userdata.TryGetValue(id, out var result))
 		{
-			if (!addIfNotExisting) return _blankUser;
+			if (!addIfNotExisting)
+			{
+				return _blankUser;
+			}
 
 			userdata.Add(id, result = new UserData());
 		}
@@ -538,7 +541,7 @@ public class Permission : Library
 
 		var result = hashSet.ToArray();
 		hashSet.Clear();
-		Pool.Free(ref hashSet);
+		Pool.FreeUnmanaged(ref hashSet);
 		return result;
 	}
 	public virtual string[] GetPermissionGroups(string perm)
@@ -560,7 +563,7 @@ public class Permission : Library
 		}
 		var result = hashSet.ToArray();
 		hashSet.Clear();
-		Pool.Free(ref hashSet);
+		Pool.FreeUnmanaged(ref hashSet);
 		return result;
 	}
 
@@ -1038,7 +1041,7 @@ public class Permission : Library
 		void Cleanup()
 		{
 			hashSet.Clear();
-			Pool.Free(ref hashSet);
+			Pool.FreeUnmanaged(ref hashSet);
 		}
 
 		while (!string.IsNullOrEmpty(groupData.ParentGroup))

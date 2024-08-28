@@ -44,13 +44,13 @@ public class Harmony
 	{
 		assembly += ".dll";
 
-		var patches = Pool.GetList<PatchInfoEntry>();
+		var patches = Pool.Get<List<PatchInfoEntry>>();
 		patches.AddRange(CurrentPatches.Where(x => x.ParentAssemblyName.Equals(assembly)));
 
 		var count = patches.Sum(a => a.Unpatch());
 
 		CurrentPatches.RemoveAll(x => x.ParentAssemblyName.Equals(assembly));
-		Pool.FreeList(ref patches);
+		Pool.FreeUnmanaged(ref patches);
 		return count;
 	}
 
