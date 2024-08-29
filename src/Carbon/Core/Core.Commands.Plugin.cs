@@ -128,11 +128,14 @@ public partial class CorePlugin
 	[AuthLevel(2)]
 	private void Reload(ConsoleSystem.Arg arg)
 	{
-		if (!arg.HasArgs(1)) return;
+		if (!arg.HasArgs(1))
+		{
+			return;
+		}
 
 		RefreshOrderedFiles();
 
-		var name = arg.GetString(0);
+		var name = arg.FullString;
 		switch (name)
 		{
 			case "*":
@@ -140,61 +143,78 @@ public partial class CorePlugin
 				break;
 
 			default:
-				var path = GetPluginPath(name);
-
-				if (!string.IsNullOrEmpty(path.Value))
+				if (name.Contains(' '))
 				{
-					Community.Runtime.ScriptProcessor.ClearIgnore(path.Value);
-
-					if (Community.Runtime.ScriptProcessor.InstanceBuffer.TryGetValue(path.Key, out IScriptProcessor.IProcess instance))
+					foreach (var argValue in arg.Args)
 					{
-						instance.Clear();
+						Do(argValue);
 					}
-
-					Community.Runtime.ScriptProcessor.Prepare(path.Key, path.Value);
-					return;
+				}
+				else
+				{
+					Do(name);
 				}
 
-				var pluginFound = false;
-				var pluginPrecompiled = false;
-
-				foreach (var mod in ModLoader.Packages)
+				static void Do(string name)
 				{
-					var plugins = Facepunch.Pool.Get<List<RustPlugin>>();
-					plugins.AddRange(mod.Plugins);
-
-					foreach (var plugin in plugins)
+					var path = GetPluginPath(name);
+					if (!string.IsNullOrEmpty(path.Value))
 					{
-						if (plugin.IsPrecompiled) continue;
+						Community.Runtime.ScriptProcessor.ClearIgnore(path.Value);
 
-						if (plugin.Name == name)
+						if (Community.Runtime.ScriptProcessor.InstanceBuffer.TryGetValue(path.Key, out var instance))
 						{
-							pluginFound = true;
+							instance.Clear();
+						}
 
+						Community.Runtime.ScriptProcessor.Prepare(path.Key, path.Value);
+						return;
+					}
+
+					var pluginFound = false;
+					var pluginPrecompiled = false;
+
+					foreach (var mod in ModLoader.Packages)
+					{
+						var plugins = Facepunch.Pool.Get<List<RustPlugin>>();
+						plugins.AddRange(mod.Plugins);
+
+						foreach (var plugin in plugins)
+						{
 							if (plugin.IsPrecompiled)
 							{
-								pluginPrecompiled = true;
+								continue;
 							}
-							else
+
+							if (plugin.Name == name)
 							{
-								plugin.ProcessorProcess.Clear();
-								plugin.ProcessorProcess.Dispose();
-								plugin.ProcessorProcess.Execute(plugin.Processor);
-								mod.Plugins.Remove(plugin);
+								pluginFound = true;
+
+								if (plugin.IsPrecompiled)
+								{
+									pluginPrecompiled = true;
+								}
+								else
+								{
+									plugin.ProcessorProcess.Clear();
+									plugin.ProcessorProcess.Dispose();
+									plugin.ProcessorProcess.Execute(plugin.Processor);
+									mod.Plugins.Remove(plugin);
+								}
 							}
 						}
+
+						Facepunch.Pool.FreeUnmanaged(ref plugins);
 					}
 
-					Facepunch.Pool.FreeUnmanaged(ref plugins);
-				}
-
-				if (!pluginFound)
-				{
-					Logger.Warn($"Plugin {name} was not found or was typed incorrectly.");
-				}
-				else if (pluginPrecompiled)
-				{
-					Logger.Warn($"Plugin {name} is a precompiled plugin which can only be reloaded programmatically.");
+					if (!pluginFound)
+					{
+						Logger.Warn($"Plugin {name} was not found or was typed incorrectly.");
+					}
+					else if (pluginPrecompiled)
+					{
+						Logger.Warn($"Plugin {name} is a precompiled plugin which can only be reloaded programmatically.");
+					}
 				}
 				break;
 		}
@@ -212,34 +232,42 @@ public partial class CorePlugin
 
 		RefreshOrderedFiles();
 
-		var name = arg.GetString(0);
+		var name = arg.FullString;
 		switch (name)
 		{
 			case "*":
-				//
-				// Scripts
-				//
+				var except = arg.Args.Skip(1);
+
+				Community.Runtime.ScriptProcessor.IgnoreList.RemoveAll(x => !except.Any() || except.Any(x.Contains));
+
+				foreach (var plugin in OrderedFiles)
 				{
-					var except = arg.Args.Skip(1);
-
-					Community.Runtime.ScriptProcessor.IgnoreList.RemoveAll(x => !except.Any() || except.Any(x.Contains));
-
-					foreach (var plugin in OrderedFiles)
+					if (except.Any(plugin.Value.Contains) || Community.Runtime.ScriptProcessor.InstanceBuffer.ContainsKey(plugin.Key))
 					{
-						if (except.Any(plugin.Value.Contains) || Community.Runtime.ScriptProcessor.InstanceBuffer.ContainsKey(plugin.Key))
-						{
-							continue;
-						}
-
-						if (!Community.Runtime.ScriptProcessor.Exists(plugin.Value))
-						{
-							Community.Runtime.ScriptProcessor.Prepare(plugin.Key, plugin.Value);
-						}
+						continue;
 					}
-					break;
+
+					if (!Community.Runtime.ScriptProcessor.Exists(plugin.Value))
+					{
+						Community.Runtime.ScriptProcessor.Prepare(plugin.Key, plugin.Value);
+					}
 				}
+				break;
 
 			default:
+				if (name.Contains(' '))
+				{
+					foreach (var argValue in arg.Args)
+					{
+						Do(argValue);
+					}
+				}
+				else
+				{
+					Do(name);
+				}
+
+				static void Do(string name)
 				{
 					var path = GetPluginPath(name);
 					if (!string.IsNullOrEmpty(path.Value))
@@ -250,8 +278,9 @@ public partial class CorePlugin
 					}
 
 					Logger.Warn($"Plugin {name} was not found or was typed incorrectly.");
-					break;
 				}
+				break;
+			
 		}
 	}
 
@@ -267,15 +296,11 @@ public partial class CorePlugin
 
 		RefreshOrderedFiles();
 
-		var name = arg.GetString(0);
+		var name = arg.FullString;
 		switch (name)
 		{
 			case "*":
 				var except = arg.Args.Skip(1);
-
-				//
-				// Scripts
-				//
 				{
 					var tempList = Facepunch.Pool.Get<List<string>>();
 
@@ -299,6 +324,19 @@ public partial class CorePlugin
 				}
 				break;
 			default:
+				if (name.Contains(' '))
+				{
+					foreach (var argValue in arg.Args)
+					{
+						Do(argValue);
+					}
+				}
+				else
+				{
+					Do(name);
+				}
+
+				static void Do(string name)
 				{
 					var path = GetPluginPath(name);
 					if (!string.IsNullOrEmpty(path.Value))
@@ -345,8 +383,8 @@ public partial class CorePlugin
 					{
 						Logger.Warn($"Plugin {name} is a precompiled plugin which can only be unloaded programmatically.");
 					}
-					break;
 				}
+				break;
 		}
 	}
 
