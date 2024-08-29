@@ -124,7 +124,7 @@ public partial class CorePlugin
 		}
 	}
 
-	[ConsoleCommand("reload", "Reloads all or specific mods / plugins. E.g 'c.reload * <except[]>'' to reload everything.")]
+	[ConsoleCommand("reload", "Reloads all or specific mods / plugins. E.g 'c.reload * <except[]>' to reload everything, 'c.reload PluginA [PluginB..]' to reload multiple..")]
 	[AuthLevel(2)]
 	private void Reload(ConsoleSystem.Arg arg)
 	{
@@ -220,7 +220,7 @@ public partial class CorePlugin
 		}
 	}
 
-	[ConsoleCommand("load", "Loads all mods and/or plugins. E.g 'c.load * <except[]>'' to load everything you've unloaded.")]
+	[ConsoleCommand("load", "Loads all mods and/or plugins. E.g 'c.load * <except[]>' to load everything, 'c.load PluginA [PluginB..]' to load multiple.")]
 	[AuthLevel(2)]
 	private void LoadPlugin(ConsoleSystem.Arg arg)
 	{
@@ -284,7 +284,7 @@ public partial class CorePlugin
 		}
 	}
 
-	[ConsoleCommand("unload", "Unloads all mods and/or plugins. E.g 'c.unload * <except[]>' to unload everything. They'll be marked as 'ignored'.")]
+	[ConsoleCommand("unload", "Unloads all mods and/or plugins. E.g 'c.unload * <except[]>' to unload everything, 'c.unload PluginA [PluginB..]' to unload multiple. They'll be marked as 'ignored'.")]
 	[AuthLevel(2)]
 	private void UnloadPlugin(ConsoleSystem.Arg arg)
 	{
