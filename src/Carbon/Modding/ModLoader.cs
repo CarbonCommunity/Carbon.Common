@@ -167,26 +167,6 @@ public static partial class ModLoader
 		return true;
 	}
 
-	public static void InitializePlugins(Package mod)
-	{
-		Logger.Warn($"Initializing mod '{mod.Name}'");
-
-		foreach (var type in mod.AllTypes)
-		{
-			try
-			{
-				if (!(type.Namespace.Equals("Oxide.Plugins") || type.Namespace.Equals("Carbon.Plugins"))) continue;
-
-				if (!IsValidPlugin(type, true)) continue;
-
-				if (!InitializePlugin(type, out var plugin, mod)) continue;
-				plugin.HasInitialized = true;
-
-				OnPluginProcessFinished();
-			}
-			catch (Exception ex) { Logger.Error($"Failed loading '{mod.Name}'", ex); }
-		}
-	}
 	public static void UninitializePlugins(Package mod)
 	{
 		var plugins = Facepunch.Pool.Get<List<RustPlugin>>();
@@ -204,6 +184,23 @@ public static partial class ModLoader
 		Facepunch.Pool.FreeUnmanaged(ref plugins);
 	}
 
+	public static void InitializePlugin(Assembly assembly, Package package = default, Action<RustPlugin> preInit = null, bool precompiled = false)
+	{
+		foreach (var type in assembly.GetTypes())
+		{
+			if(type.BaseType == null)
+			{
+				continue;
+			}
+
+			if(!IsValidPlugin(type.BaseType, false))
+			{
+				continue;
+			}
+
+			InitializePlugin(type, out _, package, preInit, precompiled);
+		}
+	}
 	public static bool InitializePlugin(Type type, out RustPlugin plugin, Package package = default, Action<RustPlugin> preInit = null, bool precompiled = false)
 	{
 		var constructor = type.GetConstructor(Type.EmptyTypes);
@@ -230,7 +227,7 @@ public static partial class ModLoader
 			UninitializePlugin(existentPlugin);
 		}
 
-		plugin.SetProcessor(Community.Runtime.ScriptProcessor);
+		plugin.SetProcessor(Community.Runtime.ScriptProcessor, null);
 		plugin.SetupMod(package, title, author, version, description);
 
 		plugin.IsPrecompiled = precompiled;
@@ -294,7 +291,7 @@ public static partial class ModLoader
 
 		return true;
 	}
-	public static bool UninitializePlugin(RustPlugin plugin, bool premature = false)
+	public static bool UninitializePlugin(RustPlugin plugin, bool premature = false, bool unloadDependantPlugins = true)
 	{
 		if (!premature && !plugin.IsLoaded)
 		{
@@ -302,7 +299,11 @@ public static partial class ModLoader
 		}
 
 		plugin.IProcessUnpatches();
-		plugin.IUnloadDependantPlugins();
+
+		if (unloadDependantPlugins)
+		{
+			plugin.IUnloadDependantPlugins();
+		}
 
 		if (!premature)
 		{
@@ -382,8 +383,16 @@ public static partial class ModLoader
 
 	public static bool IsValidPlugin(Type type, bool recursive)
 	{
-		if (type == null) return false;
-		if (type.Name is CARBON_PLUGIN or RUST_PLUGIN or COVALENCE_PLUGIN) return true;
+		if (type == null)
+		{
+			return false;
+		}
+
+		if (type.Name is CARBON_PLUGIN or RUST_PLUGIN or COVALENCE_PLUGIN)
+		{
+			return true;
+		}
+
 		return recursive && IsValidPlugin(type.BaseType, recursive);
 	}
 
