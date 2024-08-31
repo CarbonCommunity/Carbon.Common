@@ -63,7 +63,7 @@ public static partial class ModLoader
 			return RollbackType == null ? string.Empty : RollbackType.GetCustomAttribute<InfoAttribute>()?.Title?.Replace(" ", string.Empty);
 		}
 
-		public bool IsValid()
+		public bool HasFailed()
 		{
 			return Errors is { Count: > 0 };
 		}

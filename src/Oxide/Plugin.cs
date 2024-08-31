@@ -156,28 +156,6 @@ public class Plugin : BaseHookable, IDisposable
 			Logger.Error($"Failed calling Plugin.IUnload.UnprocessHooks on {this}", ex);
 		}
 
-		try
-		{
-			using (TimeMeasure.New($"IUnload.Disposal on '{this}'"))
-			{
-				IgnoredHooks?.Clear();
-				HookPool?.Clear();
-				Hooks?.Clear();
-				HookMethods?.Clear();
-				PluginReferences?.Clear();
-
-				IgnoredHooks = null;
-				HookPool = null;
-				Hooks = null;
-				HookMethods = null;
-				PluginReferences = null;
-			}
-		}
-		catch (Exception ex)
-		{
-			Logger.Error($"Failed calling Plugin.IUnload.Disposal on {this}", ex);
-		}
-
 		HasInitialized = false;
 	}
 
@@ -256,7 +234,7 @@ public class Plugin : BaseHookable, IDisposable
 
 		return true;
 	}
-	internal bool IUnloadDependantPlugins()
+	internal void IUnloadDependantPlugins()
 	{
 		try
 		{
@@ -271,24 +249,23 @@ public class Plugin : BaseHookable, IDisposable
 					plugins.Clear();
 					plugins.AddRange(mod.Plugins);
 
-					foreach (Plugin plugin in plugins.Where(plugin => plugin.Requires != null && plugin.Requires.Contains(this)))
+					foreach (var plugin in plugins.Where(plugin => plugin.Requires != null && plugin.Requires.Contains(this)))
 					{
+						Logger.Warn($" [{Name}] Unloading '{plugin.ToPrettyString()}' because parent '{ToPrettyString()}' has been unloaded.");
+						ModLoader.AddPendingRequiree(this, plugin);
+
 						switch (plugin.Processor)
 						{
 							case IScriptProcessor script:
 							{
-								Logger.Warn($" [{Name}] Unloading '{plugin.ToPrettyString()}' because parent '{ToPrettyString()}' has been unloaded.");
-								ModLoader.AddPendingRequiree(this, plugin);
-
 								script.Get<IScriptProcessor.IScript>(plugin.FileName)?.Dispose();
-
-								if (plugin is RustPlugin rustPlugin)
-								{
-									ModLoader.UninitializePlugin(rustPlugin);
-								}
-
 								break;
 							}
+						}
+
+						if (plugin is RustPlugin rustPlugin)
+						{
+							ModLoader.UninitializePlugin(rustPlugin);
 						}
 					}
 				}
@@ -296,13 +273,10 @@ public class Plugin : BaseHookable, IDisposable
 				Pool.FreeUnmanaged(ref mods);
 				Pool.FreeUnmanaged(ref plugins);
 			}
-
-			return true;
 		}
 		catch (Exception ex)
 		{
 			Logger.Error($"Failed calling Plugin.IUnload.UnloadRequirees on {ToPrettyString()}", ex);
-			return false;
 		}
 	}
 	internal bool IClearMemory()
@@ -311,7 +285,10 @@ public class Plugin : BaseHookable, IDisposable
 		{
 			foreach (var member in HookableType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static))
 			{
-				if (member.IsLiteral) continue;
+				if (member.IsLiteral)
+				{
+					continue;
+				}
 
 				member.SetValue(null, null);
 			}
@@ -347,9 +324,10 @@ public class Plugin : BaseHookable, IDisposable
 		Pool.FreeUnmanaged(ref list);
 	}
 
-	public void SetProcessor(IBaseProcessor processor)
+	public void SetProcessor(IBaseProcessor processor, IBaseProcessor.IProcess process)
 	{
 		Processor = processor;
+		ProcessorProcess = process;
 	}
 
 	#region Calls
@@ -767,6 +745,28 @@ public class Plugin : BaseHookable, IDisposable
 
 	public virtual void Dispose()
 	{
+		try
+		{
+			using (TimeMeasure.New($"IUnload.Disposal on '{this}'"))
+			{
+				IgnoredHooks?.Clear();
+				HookPool?.Clear();
+				Hooks?.Clear();
+				HookMethods?.Clear();
+				PluginReferences?.Clear();
+
+				IgnoredHooks = null;
+				HookPool = null;
+				Hooks = null;
+				HookMethods = null;
+				PluginReferences = null;
+			}
+		}
+		catch (Exception ex)
+		{
+			Logger.Error($"Failed calling Plugin.IUnload.Disposal on {this}", ex);
+		}
+
 		IsLoaded = false;
 	}
 }
