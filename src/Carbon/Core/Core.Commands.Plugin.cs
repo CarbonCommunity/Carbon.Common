@@ -146,6 +146,11 @@ public partial class CorePlugin
 
 				foreach(var plugin in plugins)
 				{
+					if (!plugin.HasInitialized)
+					{
+						continue;
+					}
+
 					var hooks = Pool.Get<List<uint>>();
 					var hookMethods = Pool.Get<List<HookMethodAttribute>>();
 					var pluginReferences = Pool.Get<List<PluginReferenceAttribute>>();
@@ -156,7 +161,7 @@ public partial class CorePlugin
 					pluginReferences.AddRange(plugin.PluginReferences);
 					requires.AddRange(plugin.Requires);
 
-					ModLoader.UninitializePlugin(plugin, unloadDependantPlugins: false);
+					ModLoader.UninitializePlugin(plugin);
 					ModLoader.InitializePlugin(plugin.GetType(), out var newPlugin, plugin.Package, p =>
 					{
 						p.IsCorePlugin = plugin.IsCorePlugin;
@@ -228,6 +233,11 @@ public partial class CorePlugin
 						}
 						else if (plugin != null && !plugin.IsPrecompiled)
 						{
+							if (!plugin.HasInitialized)
+							{
+								return;
+							}
+
 							var hooks = Pool.Get<List<uint>>();
 							var hookMethods = Pool.Get<List<HookMethodAttribute>>();
 							var pluginReferences = Pool.Get<List<PluginReferenceAttribute>>();
