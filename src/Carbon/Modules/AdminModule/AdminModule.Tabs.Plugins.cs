@@ -33,38 +33,47 @@ public partial class AdminModule
 			Owned
 		}
 
-		public static bool DropdownShow { get; set; }
-		public static string[] DropdownOptions { get; } = new[] { "A-Z", "Price", "Author", "Installed", "Pending Update", "Favourites", "Owned" };
+		public static bool DropdownShow;
+		public static string[] DropdownOptions { get; } =
+		[
+			"A-Z",
+			"Price",
+			"Author",
+			"Installed",
+			"Pending Update",
+			"Favourites",
+			"Owned"
+		];
 		public static PlayerSession.Page PlaceboPage { get; } = new PlayerSession.Page();
-		public static List<string> TagFilter { get; set; } = new();
-		public static string[] PopularTags { get; } = new[]
-		{
-				"gui",
-				"admin",
-				"moderation",
-				"chat",
-				"building",
-				"discord",
-				"libraries",
-				"loot",
-				"pve",
-				"event",
-				"logging",
-				"anti-cheat",
-				"economics",
-				"npc",
-				"info",
-				"limitations",
-				"statistics",
-				"monuments",
-				"seasonal",
-				"banan",
-				"peanus"
-		};
+		public static List<string> TagFilter = new();
+		public static string[] PopularTags { get; } =
+		[
+			"gui",
+			"admin",
+			"moderation",
+			"chat",
+			"building",
+			"discord",
+			"libraries",
+			"loot",
+			"pve",
+			"event",
+			"logging",
+			"anti-cheat",
+			"economics",
+			"npc",
+			"info",
+			"limitations",
+			"statistics",
+			"monuments",
+			"seasonal",
+			"banan",
+			"peanus"
+		];
 
-		public static Vendor CodeflingInstance { get; set; }
-		public static Vendor uModInstance { get; set; }
-		public static Vendor LocalInstance { get; set; }
+		public static Vendor CodeflingInstance;
+		public static Vendor uModInstance;
+		public static Vendor LocalInstance;
 
 		public static Vendor GetVendor(VendorTypes vendor)
 		{
@@ -364,15 +373,13 @@ public partial class AdminModule
 				}
 				else
 				{
-					var thumbnailUrl = $"https://codefling.com/cdn-cgi/image/width=246,height=246,quality=75,fit=cover,format=jpeg/{plugin.Image}";
-
-					if (Singleton.ImageDatabase.HasImage(thumbnailUrl))
+					if (Singleton.ImageDatabase.HasImage(plugin.ImageThumbnail))
 					{
-						cui.CreateImage(container, card, thumbnailUrl, "1 1 1 1");
+						cui.CreateImage(container, card, plugin.ImageThumbnail, "1 1 1 1");
 					}
 					else
 					{
-						cui.CreateClientImage(container, card, thumbnailUrl, "1 1 1 1");
+						cui.CreateClientImage(container, card, plugin.ImageThumbnail, "1 1 1 1");
 					}
 				}
 
@@ -489,21 +496,20 @@ public partial class AdminModule
 				cui.CreatePanel(container, mainPanel, "0 0 0 0.9");
 
 				var image = cui.CreatePanel(container, parent, "0 0 0 0.5", xMin: 0.08f, xMax: 0.45f, yMin: 0.15f, yMax: 0.85f);
-				var thumbnailUrl = $"https://codefling.com/cdn-cgi/image/width=512,height=512,quality=100,fit=cover,format=jpeg/{selectedPlugin.Image}";
 
 				if (selectedPlugin.HasNoImage())
 				{
-					cui.ImageDatabase.Queue(thumbnailUrl);
+					cui.ImageDatabase.Queue(selectedPlugin.Image);
 					cui.CreateImage(container, image, vendor.Logo, "0.2 0.2 0.2 0.4", xMin: 0.2f, xMax: 0.8f, yMin: 0.2f + vendor.LogoRatio, yMax: 0.8f - vendor.LogoRatio);
 				}
-				else if (!cui.ImageDatabase.HasImage(thumbnailUrl))
+				else if (!cui.ImageDatabase.HasImage(selectedPlugin.Image))
 				{
-					cui.ImageDatabase.Queue(thumbnailUrl);
-					cui.CreateClientImage(container, image, thumbnailUrl, "1 1 1 1", xMin: 0.05f, xMax: 0.95f, yMin: 0.05f, yMax: 0.95f);
+					cui.ImageDatabase.Queue(selectedPlugin.Image);
+					cui.CreateClientImage(container, image, selectedPlugin.Image, "1 1 1 1", xMin: 0.05f, xMax: 0.95f, yMin: 0.05f, yMax: 0.95f);
 				}
 				else
 				{
-					cui.CreateImage(container, image, thumbnailUrl, "1 1 1 1", xMin: 0.05f, xMax: 0.95f, yMin: 0.05f, yMax: 0.95f);
+					cui.CreateImage(container, image, selectedPlugin.Image, "1 1 1 1", xMin: 0.05f, xMax: 0.95f, yMin: 0.05f, yMax: 0.95f);
 				}
 
 				var pluginName = cui.CreateText(container, mainPanel, "1 1 1 1", selectedPlugin.Name, 25, xMin: 0.505f, yMax: 0.8f, align: TextAnchor.UpperLeft, font: CUI.Handler.FontTypes.RobotoCondensedBold);
@@ -756,22 +762,22 @@ public partial class AdminModule
 
 			public virtual string BarInfo { get; }
 
-			public IEnumerable<Plugin> PriceData { get; set; }
-			public IEnumerable<Plugin> AuthorData { get; set; }
-			public IEnumerable<Plugin> InstalledData { get; set; }
-			public IEnumerable<Plugin> OutOfDateData { get; set; }
-			public IEnumerable<Plugin> OwnedData { get; set; }
-			public IEnumerable<string> PopularTags { get; set; }
+			public IEnumerable<Plugin> PriceData;
+			public IEnumerable<Plugin> AuthorData;
+			public IEnumerable<Plugin> InstalledData;
+			public IEnumerable<Plugin> OutOfDateData;
+			public IEnumerable<Plugin> OwnedData;
+			public IEnumerable<string> PopularTags;
 
 			public virtual string ListEndpoint { get; }
 			public virtual string DownloadEndpoint { get; }
 			public virtual string PluginLookupEndpoint { get; }
 
 			[ProtoMember(1)]
-			public List<Plugin> FetchedPlugins { get; set; } = new();
+			public List<Plugin> FetchedPlugins = new();
 
 			[ProtoMember(2)]
-			public long LastTick { get; set; }
+			public long LastTick;
 
 			public abstract void Refresh();
 			public abstract void FetchList(Action<Vendor> callback = null);
@@ -822,29 +828,29 @@ public partial class AdminModule
 		public class LoggedInUser
 		{
 			[ProtoMember(1)]
-			public int Id { get; set; }
+			public int Id;
 			[ProtoMember(2)]
-			public string Authority { get; set; }
+			public string Authority;
 			[ProtoMember(3)]
-			public string DisplayName { get; set; }
+			public string DisplayName;
 			[ProtoMember(4)]
-			public string AvatarUrl { get; set; }
+			public string AvatarUrl;
 			[ProtoMember(5)]
-			public string AccessTokenEncoded { get; set; }
+			public string AccessTokenEncoded;
 			[ProtoMember(6)]
-			public string CoverUrl { get; set; }
+			public string CoverUrl;
 
 			[ProtoMember(500)]
-			public bool PendingAccessToken { get; set; }
+			public bool PendingAccessToken;
 			[ProtoMember(501)]
-			public RequestResult PendingResult { get; set; }
+			public RequestResult PendingResult;
 			[ProtoMember(502)]
-			public bool IsAdmin { get; set; }
+			public bool IsAdmin;
 
 			[ProtoMember(600)]
 			public List<string> OwnedFiles { get; } = new();
 
-			public string AccessToken { get; set; }
+			public string AccessToken;
 
 			public enum RequestResult
 			{
@@ -990,7 +996,8 @@ public partial class AdminModule
 									UpdateDate = token["updated"]?.ToString(),
 									Changelog = token["changelog"]?.ToString().Replace(_backSlashes, string.Empty),
 									File = token["fileName"]?.ToString(),
-									Image = token["primaryScreenshot"]?.ToString(),
+									Image = $"https://codefling.com/cdn-cgi/image/width=512,height=512,quality=100,fit=cover,format=jpeg/{token["primaryScreenshot"]?.ToString()}",
+									ImageThumbnail = $"https://codefling.com/cdn-cgi/image/width=246,height=246,quality=75,fit=cover,format=jpeg/{token["primaryScreenshot"]?.ToString()}",
 									Tags = token["tags"]?.Select(x => x.ToString()),
 									DownloadCount = (token["downloads"]?.ToString().ToInt()).GetValueOrDefault(),
 									// Dependencies = token["file_depends"]?.ToString().Split(),
@@ -1771,10 +1778,10 @@ public partial class AdminModule
 			public static ServerOwner Singleton { get; internal set; } = new ServerOwner();
 
 			[ProtoMember(1)]
-			public List<string> FavouritePlugins { get; set; } = new();
+			public List<string> FavouritePlugins = new();
 
 			[ProtoMember(2)]
-			public List<string> AutoUpdate { get; set; } = new();
+			public List<string> AutoUpdate = new();
 
 			public bool IsAutoUpdatable(string pluginName)
 			{
@@ -1825,29 +1832,30 @@ public partial class AdminModule
 		[ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
 		public class Plugin
 		{
-			public string Id { get; set; }
-			public string Name { get; set; }
-			public string Author { get; set; }
-			public string Version { get; set; }
-			public string Description { get; set; }
-			public string Changelog { get; set; }
-			public string OriginalPrice { get; set; }
-			public string SalePrice { get; set; }
-			public string[] Dependencies { get; set; }
-			public string File { get; set; }
-			public string Image { get; set; }
-			public int ImageSize { get; set; }
-			public IEnumerable<string> Tags { get; set; }
-			public int DownloadCount { get; set; }
-			public float Rating { get; set; }
-			public string UpdateDate { get; set; }
-			public bool HasLookup { get; set; } = false;
-			public Status Status { get; set; } = Status.Approved;
-			public bool CarbonCompatible { get; set; } = false;
-			public bool Owned { get; set; }
+			public string Id;
+			public string Name;
+			public string Author;
+			public string Version;
+			public string Description;
+			public string Changelog;
+			public string OriginalPrice;
+			public string SalePrice;
+			public string[] Dependencies;
+			public string File;
+			public string Image;
+			public string ImageThumbnail;
+			public int ImageSize;
+			public IEnumerable<string> Tags;
+			public int DownloadCount;
+			public float Rating;
+			public string UpdateDate;
+			public bool HasLookup = false;
+			public Status Status = Status.Approved;
+			public bool CarbonCompatible = false;
+			public bool Owned;
 
-			internal RustPlugin ExistentPlugin { get; set; }
-			internal bool IsBusy { get; set; }
+			internal RustPlugin ExistentPlugin;
+			internal bool IsBusy;
 
 			public bool HasInvalidImage()
 			{
