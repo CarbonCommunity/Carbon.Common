@@ -24,23 +24,28 @@ public static class CuiHelper
 		return panels;
 	}
 
-	public static void DestroyActivePanelList(BasePlayer player, string[] except = null)
+	public static int DestroyActivePanelList(BasePlayer player, string[] except = null)
 	{
 		var temp = Pool.Get<List<string>>();
 		temp.AddRange(GetActivePanelList(player));
 
-		foreach (var element in temp.Where(x => except == null || except.Length == 0 ? true : !except.Any(y => x.StartsWith(y))))
+		var count = 0;
+
+		foreach (var element in temp.Where(x => except == null || except.Length == 0 || !except.Any(y => x.StartsWith(y))))
 		{
 			DestroyUi(player, element);
+			count++;
 		}
 
 		Pool.FreeUnmanaged(ref temp);
+		return count;
 	}
 
 	public static string ToJson(List<CuiElement> elements, bool format = false)
 	{
 		return JsonConvert.SerializeObject(elements, format ? Formatting.Indented : Formatting.None, _cuiSettings).Replace("\\n", "\n");
 	}
+
 	public static string ToJson(CuiElement element, bool format = false)
 	{
 		return JsonConvert.SerializeObject(element, format ? Formatting.Indented : Formatting.None, _cuiSettings).Replace("\\n", "\n");
