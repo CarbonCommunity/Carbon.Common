@@ -151,7 +151,7 @@ public partial class CorePlugin
 						continue;
 					}
 
-					if(Community.Runtime.MonoProfilerConfig.IsWhitelisted(Profiler.MonoProfilerConfig.ProfileTypes.Plugin, plugin.Name) != Assemblies.Plugins.Get(plugin.Name).IsProfiledAssembly)
+					if (!Community.Runtime.Config.Watchers.ScriptWatchers || Community.Runtime.MonoProfilerConfig.IsWhitelisted(Profiler.MonoProfilerConfig.ProfileTypes.Plugin, plugin.Name) != Assemblies.Plugins.Get(plugin.Name).IsProfiledAssembly)
 					{
 						plugin.ProcessorProcess.MarkDirty();
 						continue;
@@ -244,7 +244,7 @@ public partial class CorePlugin
 								return;
 							}
 
-							if (Community.Runtime.MonoProfilerConfig.IsWhitelisted(Profiler.MonoProfilerConfig.ProfileTypes.Plugin, plugin.Name) != Assemblies.Plugins.Get(plugin.Name).IsProfiledAssembly)
+							if (!Community.Runtime.Config.Watchers.ScriptWatchers || Community.Runtime.MonoProfilerConfig.IsWhitelisted(Profiler.MonoProfilerConfig.ProfileTypes.Plugin, plugin.Name) != Assemblies.Plugins.Get(plugin.Name).IsProfiledAssembly)
 							{
 								plugin.ProcessorProcess.MarkDirty();
 								return;
