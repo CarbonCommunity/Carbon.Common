@@ -38,8 +38,6 @@ public class Assemblies
 				return;
 			}
 
-			Logger.Log($"Upd: {key} isProfiledAssembly:{isProfiledAssembly}");
-
 			AddOrUpdate(key, _ => new RuntimeAssembly
 			{
 				CurrentAssembly = assembly,
