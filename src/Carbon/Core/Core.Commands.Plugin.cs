@@ -151,6 +151,12 @@ public partial class CorePlugin
 						continue;
 					}
 
+					if(Community.Runtime.MonoProfilerConfig.IsWhitelisted(Profiler.MonoProfilerConfig.ProfileTypes.Plugin, plugin.Name) != Assemblies.Plugins.Get(plugin.Name).IsProfiledAssembly)
+					{
+						plugin.ProcessorProcess.MarkDirty();
+						continue;
+					}
+
 					var hooks = Pool.Get<List<uint>>();
 					var hookMethods = Pool.Get<List<HookMethodAttribute>>();
 					var pluginReferences = Pool.Get<List<PluginReferenceAttribute>>();
@@ -235,6 +241,12 @@ public partial class CorePlugin
 						{
 							if (!plugin.HasInitialized)
 							{
+								return;
+							}
+
+							if (Community.Runtime.MonoProfilerConfig.IsWhitelisted(Profiler.MonoProfilerConfig.ProfileTypes.Plugin, plugin.Name) != Assemblies.Plugins.Get(plugin.Name).IsProfiledAssembly)
+							{
+								plugin.ProcessorProcess.MarkDirty();
 								return;
 							}
 
