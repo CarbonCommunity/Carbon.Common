@@ -30,7 +30,10 @@ public class FileLogger : IDisposable
 	/// <param name="backup">If true, it'll back up the existent log file.</param>
 	public virtual void Init(bool archive = false, bool backup = false)
 	{
-		if (HasInit && !archive) return;
+		if (HasInit && !archive)
+		{
+			return;
+		}
 
 		var path = Path.Combine(Defines.GetLogsFolder(), $"{Name}.log");
 		var archiveFolder = Path.Combine(Defines.GetLogsFolder(), "archive");
