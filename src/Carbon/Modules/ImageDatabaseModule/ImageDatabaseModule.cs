@@ -586,6 +586,7 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 				return;
 			}
 
+			Client = new();
 			Client.Headers.Add("User-Agent", Community.Runtime.Analytics.UserAgent);
 			Client.Credentials = CredentialCache.DefaultCredentials;
 			Client.Proxy = null;
