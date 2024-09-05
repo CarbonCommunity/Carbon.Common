@@ -185,6 +185,7 @@ public partial class CorePlugin
 						p.InternalCallHookSource = plugin.InternalCallHookSource;
 						p.FilePath = plugin.FilePath;
 						p.FileName = plugin.FileName;
+						p.HasInitialized = true;
 					});
 
 					Pool.FreeUnmanaged(ref hooks);
@@ -278,6 +279,7 @@ public partial class CorePlugin
 								p.InternalCallHookSource = plugin.InternalCallHookSource;
 								p.FilePath = plugin.FilePath;
 								p.FileName = plugin.FileName;
+								p.HasInitialized = true;
 							});
 
 							Pool.FreeUnmanaged(ref hooks);
