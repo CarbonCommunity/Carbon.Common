@@ -110,13 +110,13 @@ public class ClientEntity : IDisposable
 		{
 			Proto.baseNetworkable.prefabID = value;
 
-			var temporaryWatchers = Facepunch.Pool.GetList<Connection>();
-			temporaryWatchers.AddRange(watchers);
+			var temp = Facepunch.Pool.Get<List<Connection>>();
+			temp.AddRange(watchers);
 
 			KillAll();
-			SpawnAll(temporaryWatchers);
+			SpawnAll(temp);
 
-			Facepunch.Pool.FreeList(ref temporaryWatchers);
+			Facepunch.Pool.FreeUnmanaged(ref temp);
 		}
 	}
 	public NetworkableId ParentID
@@ -223,11 +223,11 @@ public class ClientEntity : IDisposable
 	/// </summary>
 	public virtual void SendNetworkUpdate()
 	{
-		var connections = Facepunch.Pool.GetList<Network.Connection>();
+		var connections = Facepunch.Pool.Get<List<Connection>>();
 		foreach (var connection in watchers) connections.Add(connection);
 
 		_sendNetworkUpdateImmediate(connections);
-		Facepunch.Pool.FreeList(ref connections);
+		Facepunch.Pool.FreeUnmanaged(ref connections);
 	}
 
 	/// <summary>

@@ -1,4 +1,6 @@
-﻿namespace Carbon.Modules;
+﻿using Facepunch;
+
+namespace Carbon.Modules;
 
 public partial class AdminModule
 {
@@ -106,7 +108,7 @@ public partial class AdminModule
 			if (ColumnPages.TryGetValue(column, out var page)) return page;
 			else
 			{
-				ColumnPages[column] = page = new Page();
+				ColumnPages[column] = page = Pool.Get<Page>();
 				return page;
 			}
 		}
@@ -116,15 +118,31 @@ public partial class AdminModule
 			Clear();
 		}
 
-		public class Page
+		public class Page : Pool.IPooled
 		{
 			public int CurrentPage { get; set; }
 			public int TotalPages { get; set; }
 
 			public void Check()
 			{
-				if (CurrentPage < 0) CurrentPage = TotalPages;
-				else if (CurrentPage > TotalPages) CurrentPage = 0;
+				if (CurrentPage < 0)
+				{
+					CurrentPage = TotalPages;
+				}
+				else if (CurrentPage > TotalPages)
+				{
+					CurrentPage = 0;
+				}
+			}
+
+			public void EnterPool()
+			{
+			}
+
+			public void LeavePool()
+			{
+				CurrentPage = 0;
+				TotalPages = 0;
 			}
 		}
 	}
