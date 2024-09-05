@@ -145,7 +145,7 @@ public static class HookCaller
 		}
 
 		var result = (object)null;
-		var conflicts = Pool.GetList<Conflict>();
+		var conflicts = Pool.Get<List<Conflict>>();
 
 		for (int i = 0; i < Community.Runtime.ModuleProcessor.Modules.Count; i++)
 		{
@@ -201,7 +201,7 @@ public static class HookCaller
 
 		ConflictCheck(conflicts, ref result, hookId);
 
-		Pool.FreeList(ref conflicts);
+		Pool.FreeUnmanaged(ref conflicts);
 
 		return result;
 	}
@@ -1364,7 +1364,7 @@ public static class HookCaller
 
 		if (classList == null)
 		{
-			classList = Pool.GetList<ClassDeclarationSyntax>();
+			classList = Pool.Get<List<ClassDeclarationSyntax>>();
 			isTemp = true;
 			FindPluginInfo(input, out @namespace, out _, out _, classList);
 		}
@@ -1379,7 +1379,7 @@ public static class HookCaller
 		{
 			if (isTemp)
 			{
-				Pool.FreeList(ref classList);
+				Pool.FreeUnmanaged(ref classList);
 			}
 
 			output = null;
@@ -1402,7 +1402,7 @@ public static class HookCaller
 
 		if (isTemp)
 		{
-			Pool.FreeList(ref classList);
+			Pool.FreeUnmanaged(ref classList);
 		}
 
 		var hookableMethods = new Dictionary<uint, List<MethodDeclarationSyntax>>();
@@ -1606,11 +1606,11 @@ public static class HookCaller
 
 		if (classes == null)
 		{
-			classes = Facepunch.Pool.GetList<ClassDeclarationSyntax>();
+			classes = Facepunch.Pool.Get<List<ClassDeclarationSyntax>>();
 			FindPluginInfo(input, out @namespace, out _, out _, classes);
 
 			@class = classes[0];
-			Facepunch.Pool.FreeList(ref classes);
+			Facepunch.Pool.FreeUnmanaged(ref classes);
 		}
 		else
 		{
@@ -1753,29 +1753,39 @@ partial class {@class.Identifier.ValueText}
 		namespaceIndex = 0;
 		classIndex = 0;
 
-		foreach (var ns in input.Members.OfType<BaseNamespaceDeclarationSyntax>())
+		for(int n = 0; n < input.Members.Count; n++)
 		{
-			var nsClasses = ns.Members.OfType<ClassDeclarationSyntax>();
+			var memberA = input.Members[n];
 
-			for(int i = 0; i < nsClasses.Count(); i++)
+			if (memberA is not BaseNamespaceDeclarationSyntax ns)
 			{
-				var cls = nsClasses.ElementAt(i);
+				continue;
+			}
+
+			for(int c = 0; c < ns.Members.Count; c++)
+			{
+				var memberB = ns.Members[c];
+
+				if (memberB is not ClassDeclarationSyntax cls)
+				{
+					continue;
+				}
 
 				if (cls.AttributeLists.Count > 0)
 				{
-					foreach(var attribute in cls.AttributeLists)
+					foreach (var attribute in cls.AttributeLists)
 					{
-						if (attribute.Attributes[0].Name is IdentifierNameSyntax nameSyntax && nameSyntax.Identifier.Text == "Info")
+						if (attribute.Attributes[0].Name is IdentifierNameSyntax nameSyntax && nameSyntax.Identifier.Text.Equals("Info"))
 						{
-							@namespaceIndex = input.Members.IndexOf(ns);
+							@namespaceIndex = n;
 							@namespace = ns;
-							classIndex = i;
+							classIndex = c;
 							@class = cls;
 							classes?.Insert(0, @class);
 						}
 					}
 				}
-				else if(cls.Modifiers.Any(x => x.IsKind(SyntaxKind.PartialKeyword)))
+				else if (cls.Modifiers.Any(x => x.IsKind(SyntaxKind.PartialKeyword)))
 				{
 					classes?.Add(cls);
 				}

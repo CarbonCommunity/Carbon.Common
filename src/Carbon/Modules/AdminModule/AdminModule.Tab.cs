@@ -104,7 +104,7 @@ public partial class AdminModule
 			option.Name = name;
 			option.Align = align;
 
-			return AddRow(column, new OptionName(name, align), hidden);
+			return AddRow(column, option, hidden);
 		}
 		public Tab AddButton(int column, string name, Action<PlayerSession> callback, Func<PlayerSession, OptionButton.Types> type = null, TextAnchor align = TextAnchor.MiddleCenter, bool hidden = false)
 		{
@@ -386,7 +386,7 @@ public partial class AdminModule
 			}
 		}
 
-		public class Option
+		public class Option : Pool.IPooled
 		{
 			public string Name;
 			public string Tooltip;
@@ -399,6 +399,16 @@ public partial class AdminModule
 				Name = name;
 				Tooltip = tooltip;
 				CurrentlyHidden = Hidden = hidden;
+			}
+
+			public void EnterPool()
+			{
+
+			}
+
+			public void LeavePool()
+			{
+
 			}
 		}
 		public class OptionName : Option

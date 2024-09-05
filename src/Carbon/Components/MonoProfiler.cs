@@ -998,20 +998,20 @@ public static unsafe partial class MonoProfiler
 		PoolEx.FreeDictionary(ref temp);
 	}
 
-	public static void TryStartProfileFor(MonoProfilerConfig.ProfileTypes profileType, Assembly assembly, string value, bool incremental = false)
+	public static bool TryStartProfileFor(MonoProfilerConfig.ProfileTypes profileType, Assembly assembly, string value, bool incremental = false)
 	{
 		if (!Community.Runtime.MonoProfilerConfig.IsWhitelisted(profileType, value))
 		{
-			return;
+			return false;
 		}
 
-		ProfileAssembly(assembly, value, incremental, profileType);
+		return ProfileAssembly(assembly, value, incremental, profileType);
 	}
-	public static void ProfileAssembly(Assembly assembly, string assemblyName, bool incremental, MonoProfilerConfig.ProfileTypes profileType)
+	public static bool ProfileAssembly(Assembly assembly, string assemblyName, bool incremental, MonoProfilerConfig.ProfileTypes profileType)
 	{
 		if (!Enabled)
 		{
-			return;
+			return false;
 		}
 
 		var incrementedValue = assemblyName;
@@ -1032,6 +1032,8 @@ public static unsafe partial class MonoProfiler
 		};
 
 		register_profiler_assembly(handle);
+
+		return true;
 	}
 
 	#region PInvokes

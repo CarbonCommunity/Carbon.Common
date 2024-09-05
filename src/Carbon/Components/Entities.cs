@@ -64,11 +64,11 @@ public class Entities : IDisposable
 	/// <summary>
 	/// Gets a map of a specified entity type, or inherited from provided type (if inherited is true).
 	/// </summary>
-	public static Map<T> Get<T>(bool inherited = false)
+	public static Map<T> Get<T>(bool inherited = false) where T : class, new()
 	{
 		var map = new Map<T>
 		{
-			Pool = Facepunch.Pool.GetList<T>()
+			Pool = Facepunch.Pool.Get<List<T>>()
 		};
 
 		if (inherited)
@@ -101,11 +101,11 @@ public class Entities : IDisposable
 	/// <summary>
 	/// Gets all entities of BaseEntity. If inherited is true, it returns everything spawnable on the server, otherwise ONLY entities with BaseEntity as base class.
 	/// </summary>
-	public static Map<BaseEntity> GetAll(bool inherited = true)
+	public static Map<BaseEntity> GetAll(bool inherited = true) 
 	{
 		var map = new Map<BaseEntity>
 		{
-			Pool = Facepunch.Pool.GetList<BaseEntity>()
+			Pool = Facepunch.Pool.Get<List<BaseEntity>>()
 		};
 
 		if (inherited)
@@ -147,7 +147,7 @@ public class Entities : IDisposable
 
 		var map = new Map<BaseEntity>
 		{
-			Pool = Facepunch.Pool.GetList<BaseEntity>()
+			Pool = Facepunch.Pool.Get<List<BaseEntity>>()
 		};
 
 		if (inherited)
@@ -190,7 +190,7 @@ public class Entities : IDisposable
 	/// <summary>
 	/// Get one sample of a specific entity type, or if inherited is true, any entity type with T as inherited type.
 	/// </summary>
-	public static T GetOne<T>(bool inherited = false)
+	public static T GetOne<T>(bool inherited = false) where T : class, new()
 	{
 		using (var map = Get<T>(inherited))
 		{
@@ -227,7 +227,7 @@ public class Entities : IDisposable
 		ComponentCacheBankNonGeneric.OnEntityDestruct(entity);
 	}
 
-	public struct Map<T> : IDisposable
+	public struct Map<T> : IDisposable where T : class, new()
 	{
 		public List<T> Pool;
 
@@ -267,7 +267,7 @@ public class Entities : IDisposable
 #if DEBUG
 			Logger.Debug($"Cleaned {typeof(T).Name}", 2);
 #endif
-			Facepunch.Pool.FreeList(ref Pool);
+			Facepunch.Pool.FreeUnmanaged(ref Pool);
 		}
 	}
 }

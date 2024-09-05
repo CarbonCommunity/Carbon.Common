@@ -39,13 +39,13 @@ public partial class AdminModule
 			AddColumn(0);
 			AddColumn(1);
 
-			var list = Facepunch.Pool.GetList<OptionButton>();
+			var list = Facepunch.Pool.Get<List<OptionButton>>();
 			if (OnCancel != null) list.Add(new OptionButton("Cancel", ap => { OnCancel?.Invoke(ap, Entry); }));
 			if (OnSave != null) list.Add(new OptionButton("Save", ap => { OnSave?.Invoke(ap, Entry); }));
 			if (OnSaveAndReload != null) list.Add(new OptionButton("Save & Reload", ap => { OnSaveAndReload?.Invoke(ap, Entry); }));
 
 			AddButtonArray(0, list.ToArray());
-			Facepunch.Pool.FreeList(ref list);
+			Facepunch.Pool.FreeUnmanaged(ref list);
 
 			foreach (var token in Entry)
 			{
