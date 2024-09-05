@@ -1611,6 +1611,7 @@ public partial class AdminModule
 							OriginalPrice = "FREE",
 							File = $"{plugin["name"]?.ToString()}.cs",
 							Image = image,
+							ImageThumbnail = image,
 							ImageSize = 0,
 							DownloadCount = (plugin["downloads"]?.ToString().ToInt()).GetValueOrDefault(),
 							UpdateDate = plugin["updated_at"]?.ToString(),

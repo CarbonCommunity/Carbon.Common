@@ -1,8 +1,10 @@
 ﻿using System.Drawing.Imaging;
+using System.Management.Instrumentation;
 using System.Net;
 using Facepunch;
 using ProtoBuf;
 using QRCoder;
+using static Carbon.Modules.ImageDatabaseModule;
 using Color = System.Drawing.Color;
 using Defines = Carbon.Core.Defines;
 using Timer = Oxide.Plugins.Timer;
@@ -247,7 +249,7 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 			return;
 		}
 
-		var queue = new ImageQueue();
+		var queue = Pool.Get<ImageQueue>();
 		var existent = Pool.Get<List<ImageQueueResult>>();
 		var urlCount = urls.Count();
 
@@ -497,41 +499,19 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 	public static IEnumerator RunQueue(ImageQueue imageQueue, Action<List<ImageQueueResult>> callback)
 	{
 		imageQueue.Init();
-		imageQueue.Client = new WebRequests.WebRequest.Client();
+		imageQueue.DoNext();
+
+		while (!imageQueue.IsDone)
 		{
-			imageQueue.Client.Headers.Add("User-Agent", Community.Runtime.Analytics.UserAgent);
-			imageQueue.Client.Credentials = CredentialCache.DefaultCredentials;
-			imageQueue.Client.Proxy = null;
-
-			imageQueue.Client.DownloadDataCompleted += (_, e) =>
-			{
-				imageQueue.DoNext();
-
-				if (e.Error != null)
-				{
-					return;
-				}
-
-				imageQueue.Result.Add(new ImageQueueResult
-				{
-					Url = (string)e.UserState,
-					Data = e.Result
-				});
-			};
-
-			imageQueue.DoNext();
-
-			while (!imageQueue.IsDone)
-			{
-				yield return CoroutineEx.waitForSeconds(0.5f);
-			}
-
-			callback?.Invoke(imageQueue.Result);
-			imageQueue.Dispose();
+			yield return null;
 		}
+
+		callback?.Invoke(imageQueue.Result);
+
+		Pool.Free(ref imageQueue);
 	}
 
-	public class ImageQueue : IDisposable
+	public class ImageQueue : Pool.IPooled
 	{
 		public List<string> ImageUrls { get; internal set; } = new();
 		public List<ImageQueueResult> Result { get; internal set; } = new();
@@ -541,8 +521,9 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 		public int Processed;
 		public WebRequests.WebRequest.Client Client;
 
-		private Timer _timer;
+		private Timer Timer;
 		private int _index;
+		private bool _poolInit;
 
 		public void Init()
 		{
@@ -565,7 +546,9 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 		}
 		public void DoTimer()
 		{
-			_timer = Community.Runtime.Core.timer.In(Singleton.ConfigInstance.TimeoutPerUrl * ImageUrls.Count, () =>
+			var instance = this;
+
+			Timer = Community.Runtime.Core.timer.In(Singleton.ConfigInstance.TimeoutPerUrl * ImageUrls.Count, () =>
 			{
 				if (IsDone)
 				{
@@ -578,8 +561,6 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 					{
 						ResultAction?.Invoke(Result);
 					}
-
-					Dispose();
 				}
 				catch (Exception ex)
 				{
@@ -588,25 +569,53 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 			});
 		}
 
-		public void Dispose()
+		public void EnterPool()
 		{
-			_timer?.Dispose();
-			Client?.Dispose();
+			Timer?.Reset();
+			ImageUrls.Clear();
+			Result.Clear();
+			ResultAction = null;
+			Processed = 0;
+			_index = 0;
+		}
+
+		public void LeavePool()
+		{
+			if (_poolInit)
+			{
+				return;
+			}
+
+			Client = new();
+			Client.Headers.Add("User-Agent", Community.Runtime.Analytics.UserAgent);
+			Client.Credentials = CredentialCache.DefaultCredentials;
+			Client.Proxy = null;
+
+			Client.DownloadDataCompleted += (_, e) =>
+			{
+				DoNext();
+
+				if (e.Error != null)
+				{
+					return;
+				}
+
+				Result.Add(new ImageQueueResult
+				{
+					Url = (string)e.UserState,
+					Data = e.Result
+				});
+			};
+
+			_poolInit = true;
 		}
 	}
-	public class ImageQueueResult : IDisposable
+	public struct ImageQueueResult
 	{
-		public string Url { get; set; }
-		public byte[] Data { get; set; }
-		public uint CRC { get; set; }
-		public bool Success { get; set; }
-
-		public void Dispose()
-		{
-			Url = null;
-			Data = null;
-			Success = default;
-		}
+		public string Url;
+		public byte[] Data;
+		public uint CRC;
+		public bool Success;
 	}
 }
 

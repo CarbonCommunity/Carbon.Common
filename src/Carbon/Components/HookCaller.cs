@@ -1753,29 +1753,39 @@ partial class {@class.Identifier.ValueText}
 		namespaceIndex = 0;
 		classIndex = 0;
 
-		foreach (var ns in input.Members.OfType<BaseNamespaceDeclarationSyntax>())
+		for(int n = 0; n < input.Members.Count; n++)
 		{
-			var nsClasses = ns.Members.OfType<ClassDeclarationSyntax>();
+			var memberA = input.Members[n];
 
-			for(int i = 0; i < nsClasses.Count(); i++)
+			if (memberA is not BaseNamespaceDeclarationSyntax ns)
 			{
-				var cls = nsClasses.ElementAt(i);
+				continue;
+			}
+
+			for(int c = 0; c < ns.Members.Count; c++)
+			{
+				var memberB = ns.Members[c];
+
+				if (memberB is not ClassDeclarationSyntax cls)
+				{
+					continue;
+				}
 
 				if (cls.AttributeLists.Count > 0)
 				{
-					foreach(var attribute in cls.AttributeLists)
+					foreach (var attribute in cls.AttributeLists)
 					{
-						if (attribute.Attributes[0].Name is IdentifierNameSyntax nameSyntax && nameSyntax.Identifier.Text == "Info")
+						if (attribute.Attributes[0].Name is IdentifierNameSyntax nameSyntax && nameSyntax.Identifier.Text.Equals("Info"))
 						{
-							@namespaceIndex = input.Members.IndexOf(ns);
+							@namespaceIndex = n;
 							@namespace = ns;
-							classIndex = i;
+							classIndex = c;
 							@class = cls;
 							classes?.Insert(0, @class);
 						}
 					}
 				}
-				else if(cls.Modifiers.Any(x => x.IsKind(SyntaxKind.PartialKeyword)))
+				else if (cls.Modifiers.Any(x => x.IsKind(SyntaxKind.PartialKeyword)))
 				{
 					classes?.Add(cls);
 				}
