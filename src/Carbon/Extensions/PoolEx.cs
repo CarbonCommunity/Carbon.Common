@@ -35,4 +35,9 @@ public class PoolEx
 		value.Reset();
 		Facepunch.Pool.FreeUnsafe(ref value);
 	}
+
+	public static void FreeRaycastHitList(ref List<RaycastHit> hitList)
+	{
+		Facepunch.Pool.FreeUnmanaged(ref hitList);
+	}
 }

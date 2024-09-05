@@ -12,7 +12,7 @@ public partial class CorePlugin
 	{
 		if (arg.Player() is BasePlayer player)
 		{
-			CuiHelper.DestroyActivePanelList(player);
+			arg.ReplyWith($"Cleared {CuiHelper.DestroyActivePanelList(player):n0} CUI panels");
 		}
 		else
 		{
