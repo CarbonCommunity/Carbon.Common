@@ -1,4 +1,6 @@
-﻿namespace Carbon.Core;
+﻿using Newtonsoft.Json;
+
+namespace Carbon.Core;
 
 #pragma warning disable IDE0051
 
@@ -107,6 +109,24 @@ public partial class CorePlugin
 
 	#region Vanilla
 
+	public bool NoGiveNoticesCache;
+
+	[CarbonAutoVar("nogivenotices", "No 'Give' Notices", help: "Will prohibit 'gave' messages to be printed to chat when admins give items.")]
+	[AuthLevel(2)]
+	public string NoGiveNotices
+	{
+		get => NoGiveNoticesCache ? "1" : "-1";
+		set
+		{
+			if (string.IsNullOrEmpty(value))
+			{
+				NoGiveNoticesCache = default;
+				return;
+			}
+
+			NoGiveNoticesCache = value.ToBool(false);
+		}
+	}
 	private string _customMapName = "-1";
 
 	[CarbonAutoVar("defaultserverchatname", "Server Chat Name", help: "Default server chat name.")]
