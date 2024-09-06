@@ -538,8 +538,7 @@ public partial class AdminModule
 								{
 									tab.AddInputButton(1, cache.Value.Variable.ForceModded ? $"<color=orange>{cache.Value.Variable.DisplayName}</color>" : cache.Value.Variable.DisplayName, 0.2f,
 										new OptionInput(string.Empty, ap => $"{cache.Value.GetValue()}", 0,
-											false,
-											(ap, args) => cache.Value.SetValue(args.ToString(" ").ToFloat())),
+											false, (ap, args) => cache.Value.SetValue(args.ToString(" ").ToFloat())),
 										new OptionButton($"<size=8>-1</size>",
 											ap => cache.Value.SetValue(-1)),
 										tooltip: $"{cache.Value.Variable.Help} ({cache.Key})");

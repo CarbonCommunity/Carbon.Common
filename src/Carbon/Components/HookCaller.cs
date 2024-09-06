@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System;
+using System.Text;
 using Carbon.Base.Interfaces;
 using HarmonyLib;
 using Microsoft.CodeAnalysis;
@@ -896,7 +897,15 @@ public static class HookCaller
 		Caller.ReturnBuffer(buffer);
 		return result == null ? default : (T)TypeEx.ConvertType<T>(result);
 	}
-
+	public static object CallHook(BaseHookable plugin, uint hookId, object[] args)
+	{
+		return Caller.CallHook(plugin, hookId, BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public, args);
+	}
+	public static T CallHook<T>(BaseHookable plugin, uint hookId, object[] args)
+	{
+		var result = Caller.CallHook(plugin, hookId, BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public, args);
+		return result == null ? default : (T)TypeEx.ConvertType<T>(result);
+	}
 	#endregion
 
 	#region Static Hook Overrides

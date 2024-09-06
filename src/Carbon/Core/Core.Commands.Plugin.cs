@@ -196,6 +196,11 @@ public partial class CorePlugin
 
 					Plugin.InternalApplyAllPluginReferences();
 
+					if (Community.AllProcessorsFinalized)
+					{
+						ModLoader.OnPluginProcessFinished();
+					}
+
 					// OnPluginLoaded
 					HookCaller.CallStaticHook(3051933177, newPlugin);
 				}
@@ -288,6 +293,11 @@ public partial class CorePlugin
 							Community.Runtime.Events.Trigger(CarbonEvent.PluginPreload, new CarbonEventArgs(newPlugin));
 
 							Plugin.InternalApplyAllPluginReferences();
+
+							if (Community.AllProcessorsFinalized)
+							{
+								ModLoader.OnPluginProcessFinished();
+							}
 
 							// OnPluginLoaded
 							HookCaller.CallStaticHook(3051933177, newPlugin);
