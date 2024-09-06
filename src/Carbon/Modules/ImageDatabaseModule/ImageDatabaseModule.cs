@@ -508,7 +508,7 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 
 		callback?.Invoke(imageQueue.Result);
 
-		Pool.Free(ref imageQueue);
+		Pool.FreeUnsafe(ref imageQueue);
 	}
 
 	public class ImageQueue : Pool.IPooled
@@ -593,18 +593,16 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 
 			Client.DownloadDataCompleted += (_, e) =>
 			{
-				DoNext();
-
-				if (e.Error != null)
+				if (e.Error == null)
 				{
-					return;
+					Result.Add(new ImageQueueResult
+					{
+						Url = (string)e.UserState,
+						Data = e.Result
+					});
 				}
 
-				Result.Add(new ImageQueueResult
-				{
-					Url = (string)e.UserState,
-					Data = e.Result
-				});
+				Community.Runtime.Core.NextFrame(() => DoNext());
 			};
 
 			_poolInit = true;
