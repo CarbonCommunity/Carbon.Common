@@ -124,7 +124,7 @@ public partial class CorePlugin
 				return;
 			}
 
-			NoGiveNoticesCache = value != "-1";
+			NoGiveNoticesCache = value.ToBool(false);
 		}
 	}
 	private string _customMapName = "-1";
