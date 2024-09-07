@@ -125,6 +125,17 @@ public partial class CorePlugin
 	[Conditional("!MINIMAL")]
 	private void IResearchDuration() { }
 
+	[Conditional("!MINIMAL")]
+	private object CanUnlockTechTreeNode()
+	{
+		if (NoTechTreeUnlockCache)
+		{
+			return false;
+		}
+
+		return null;
+	}
+
 	#endregion
 
 #endif

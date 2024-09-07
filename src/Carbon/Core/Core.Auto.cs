@@ -105,6 +105,25 @@ public partial class CorePlugin
 	[AuthLevel(2)]
 	public float OvenBlacklistTemperatureMultiplier = -1;
 
+	public bool NoTechTreeUnlockCache;
+
+	[CarbonAutoVar("notechtreeunlock", "No TechTree Unlocks", help: "Players will no longer be able to progress on any tech trees.")]
+	[AuthLevel(2)]
+	public string NoTechTreeUnlock
+	{
+		get => NoTechTreeUnlockCache ? "1" : "-1";
+		set
+		{
+			if (string.IsNullOrEmpty(value))
+			{
+				NoTechTreeUnlockCache = default;
+				return;
+			}
+
+			NoTechTreeUnlockCache = value.ToBool(false);
+		}
+	}
+
 	#endregion
 
 	#region Vanilla
@@ -127,6 +146,7 @@ public partial class CorePlugin
 			NoGiveNoticesCache = value.ToBool(false);
 		}
 	}
+
 	private string _customMapName = "-1";
 
 	[CarbonAutoVar("defaultserverchatname", "Server Chat Name", help: "Default server chat name.")]
