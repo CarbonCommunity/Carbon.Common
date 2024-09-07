@@ -2191,7 +2191,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		}
 
 		var skip = arg.GetInt(0);
-		var players = BasePlayer.allPlayerList.Concat(BasePlayer.bots).Where(x => x != player);
+		var players = BasePlayer.allPlayerList.Where(x => x != player);
 		var index = players.IndexOf(spectatedPlayer) + skip;
 
 		var lastIndex = players.Count() - 1;
