@@ -216,6 +216,7 @@ public partial class AdminModule
 								_applyChangesTimeSince = 0;
 								Refresh(tab, session);
 								Singleton.Draw(ap.Player);
+								Singleton.Save();
 							}
 						},
 						ap => _applyChangesTimeSince > _applyChangesCooldown

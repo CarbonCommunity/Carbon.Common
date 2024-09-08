@@ -88,16 +88,17 @@ public partial class AdminModule
 					"This module is a bundle of very helpful and often usable moderation tools that can grant the ability to players with regular authority level to use noclip and god-mode and nothing else (use the 'carbon.admin' permission to allow the use of the '/cadmin' command).\n" +
 					"There's also a permission ('carbon.cmod') that allows players to kick, ban or mute players with defined reasons.", "", FindModule("ModerationTools"));
 			}));
-			tab.Pages.Add(new Page("Optimisations", (cui, t, container, panel, ap) =>
+			tab.Pages.Add(new Page("Circular Networking", (cui, t, container, panel, ap) =>
 			{
 				tab.ModuleInfoTemplate(cui, t, container, panel, ap,
-					"Optimisations Module",
-					"A Carbon built-in version of the Circular Network Distance from Codefling.", "", FindModule("Optimisations"));
+					"Circular Networking Module",
+					"This module modifies Rust's network system to use a more performant circular version. Using this on maximum settings with lower network distance offers an extreme performance boost over vanilla settings, and it has allowed huge server networks to push an extra 100 server pop on wipe with minimal lag.\n" +
+					"It's not a catch-all solution, but it works well for network lag with almost no downside.", "", FindModule("CircularNetworking"));
 
 			}));
 			tab.Pages.Add(new Page("Plugin Browser", (cui, t, container, panel, ap) =>
 			{
-				cui.CreateClientImage(container, panel, null, "https://i.imgur.com/mFxaU99.png", "1 1 1 0.7",
+				cui.CreateClientImage(container, panel, null, "https://carbonmod.gg/assets/media/cui/wizard/pluginstab_sample.jpg", "1 1 1 0.7",
 					xMin: 0.35f, xMax: 0.65f, yMin: 0.1f, yMax: 0.425f, fadeIn: 1f);
 
 				var cfPaidPluginCount = PluginsTab.CodeflingInstance?.FetchedPlugins.Count(x => x.IsPaid());
