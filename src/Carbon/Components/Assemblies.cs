@@ -24,6 +24,26 @@ public class Assemblies
 			TryGetValue(key, out var existent);
 			return existent;
 		}
+		public KeyValuePair<string, RuntimeAssembly> Find(Assembly assembly)
+		{
+			foreach(var a in this)
+			{
+				if(a.Value.CurrentAssembly == assembly)
+				{
+					return a;
+				}
+
+				foreach(var aHistory in a.Value.History)
+				{
+					if(aHistory.CurrentAssembly == assembly)
+					{
+						return new(a.Key, aHistory);
+					}
+				}
+			}
+
+			return default;
+		}
 		public void Update(string key, Assembly assembly, string location, bool isProfiledAssembly = false)
 		{
 			if (string.IsNullOrEmpty(key))

@@ -993,10 +993,11 @@ public partial class AdminModule
 									Description = token["description"]?.ToString().Replace(_backSlashes, string.Empty),
 									Version = token["version"]?.ToString(),
 									OriginalPrice = price == null || !price.HasValues ? "FREE" : price["USD"]?.ToString(),
+									Date = token["date"]?.ToString(),
 									UpdateDate = token["updated"]?.ToString(),
 									Changelog = token["changelog"]?.ToString().Replace(_backSlashes, string.Empty),
 									File = token["fileName"]?.ToString(),
-									Image = $"https://codefling.com/cdn-cgi/image/width=512,height=512,quality=100,fit=cover,format=jpeg/{token["primaryScreenshot"]?.ToString()}",
+									Image = $"https://codefling.com/cdn-cgi/image/width=1250,height=1250,quality=100,blur=25,fit=cover,format=jpeg/{token["primaryScreenshot"]?.ToString()}",
 									ImageThumbnail = $"https://codefling.com/cdn-cgi/image/width=246,height=246,quality=75,fit=cover,format=jpeg/{token["primaryScreenshot"]?.ToString()}",
 									Tags = token["tags"]?.Select(x => x.ToString()),
 									DownloadCount = (token["downloads"]?.ToString().ToInt()).GetValueOrDefault(),
@@ -1007,8 +1008,10 @@ public partial class AdminModule
 									HasLookup = true
 								};
 
-								var date = DateTimeOffset.FromUnixTimeSeconds(plugin.UpdateDate.ToLong());
-								plugin.UpdateDate = date.UtcDateTime.ToString();
+								var updateDate = DateTimeOffset.FromUnixTimeSeconds(plugin.UpdateDate.ToLong());
+								var date = DateTimeOffset.FromUnixTimeSeconds(plugin.Date.ToLong());
+								plugin.UpdateDate = updateDate.UtcDateTime.ToString();
+								plugin.Date = date.UtcDateTime.ToString();
 
 								try { plugin.Description = plugin.Description.TrimStart('\t').Replace("\t", "\n").Split('\n')[0]; } catch { }
 
@@ -1614,6 +1617,7 @@ public partial class AdminModule
 							ImageThumbnail = image,
 							ImageSize = 0,
 							DownloadCount = (plugin["downloads"]?.ToString().ToInt()).GetValueOrDefault(),
+							Date = plugin["published_at"]?.ToString(),
 							UpdateDate = plugin["updated_at"]?.ToString(),
 							Tags = plugin["tags_all"]?.ToString().Split(',')
 						};
@@ -1849,6 +1853,7 @@ public partial class AdminModule
 			public IEnumerable<string> Tags;
 			public int DownloadCount;
 			public float Rating;
+			public string Date;
 			public string UpdateDate;
 			public bool HasLookup = false;
 			public Status Status = Status.Approved;

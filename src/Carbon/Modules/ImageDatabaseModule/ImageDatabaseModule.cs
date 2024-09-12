@@ -263,8 +263,18 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 				{
 					var image = GetImage(url);
 
-					if (image == 0) continue;
-					existent.Add(new ImageQueueResult { CRC = image, Url = url, Success = true });
+					if (image == 0)
+					{
+						continue;
+					}
+
+					existent.Add(new ImageQueueResult
+					{
+						CRC = image,
+						Url = url,
+						Success = true
+					});
+
 					queue.ImageUrls.Remove(url);
 				}
 			}
@@ -307,13 +317,13 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 
 					onComplete?.Invoke(results);
 				}
-
-				Pool.FreeUnmanaged(ref existent);
 			}
 			catch (Exception ex)
 			{
 				PutsError($"Failed QueueBatch of {urls.Count():n0}", ex);
 			}
+
+			Pool.FreeUnmanaged(ref existent);
 		}));
 	}
 
@@ -499,7 +509,6 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 	public static IEnumerator RunQueue(ImageQueue imageQueue, Action<List<ImageQueueResult>> callback)
 	{
 		imageQueue.Init();
-		imageQueue.DoNext();
 
 		while (!imageQueue.IsDone)
 		{
@@ -518,22 +527,20 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 		public Action<List<ImageQueueResult>> ResultAction { get; set; }
 
 		public bool IsDone;
-		public int Processed;
 		public WebRequests.WebRequest.Client Client;
 
-		private Timer Timer;
+		private Timer _timeout;
 		private int _index;
 		private bool _poolInit;
 
 		public void Init()
 		{
-			DoTimer();
+			CreateTimeout();
+			MoveNext();
 		}
-		public void DoNext()
+		public void MoveNext()
 		{
-			Processed++;
-
-			if (Processed > ImageUrls.Count)
+			if (_index >= ImageUrls.Count)
 			{
 				IsDone = true;
 				return;
@@ -542,13 +549,14 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 			var url = ImageUrls[_index];
 
 			Client.DownloadDataAsync(new Uri(url), url);
+
 			_index++;
 		}
-		public void DoTimer()
+		public void CreateTimeout()
 		{
 			var instance = this;
 
-			Timer = Community.Runtime.Core.timer.In(Singleton.ConfigInstance.TimeoutPerUrl * ImageUrls.Count, () =>
+			_timeout = Community.Runtime.Core.timer.In(Singleton.ConfigInstance.TimeoutPerUrl * ImageUrls.Count, () =>
 			{
 				if (IsDone)
 				{
@@ -571,11 +579,11 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 
 		public void EnterPool()
 		{
-			Timer?.Reset();
+			IsDone = false;
 			ImageUrls.Clear();
 			Result.Clear();
 			ResultAction = null;
-			Processed = 0;
+			_timeout?.Reset();
 			_index = 0;
 		}
 
@@ -590,7 +598,6 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 			Client.Headers.Add("User-Agent", Community.Runtime.Analytics.UserAgent);
 			Client.Credentials = CredentialCache.DefaultCredentials;
 			Client.Proxy = null;
-
 			Client.DownloadDataCompleted += (_, e) =>
 			{
 				if (e.Error == null)
@@ -602,7 +609,7 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 					});
 				}
 
-				Community.Runtime.Core.NextFrame(() => DoNext());
+				Community.Runtime.Core.NextFrame(MoveNext);
 			};
 
 			_poolInit = true;

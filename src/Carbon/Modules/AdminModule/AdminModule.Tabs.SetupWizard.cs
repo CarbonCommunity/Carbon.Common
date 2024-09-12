@@ -98,7 +98,7 @@ public partial class AdminModule
 			}));
 			tab.Pages.Add(new Page("Plugin Browser", (cui, t, container, panel, ap) =>
 			{
-				cui.CreateClientImage(container, panel, null, "https://carbonmod.gg/assets/media/cui/wizard/pluginstab_sample.jpg", "1 1 1 0.7",
+				cui.CreateClientImage(container, panel, "https://carbonmod.gg/assets/media/cui/wizard/pluginstab_sample.jpg", "1 1 1 0.7",
 					xMin: 0.35f, xMax: 0.65f, yMin: 0.1f, yMax: 0.425f, fadeIn: 1f);
 
 				var cfPaidPluginCount = PluginsTab.CodeflingInstance?.FetchedPlugins.Count(x => x.IsPaid());
