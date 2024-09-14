@@ -98,7 +98,7 @@ public partial class AdminModule
 
 			var tab = new Tab("plugins", "Plugins", Community.Runtime.Core, (ap, t) =>
 			{
-				ap.SetStorage(t, "selectedplugin", (Plugin)null);
+				ap.SetStorage(t, "selectedplugin", (Plugin)default);
 				LocalInstance?.Refresh();
 			}, "plugins.use")
 			{
@@ -488,7 +488,7 @@ public partial class AdminModule
 
 			var selectedPlugin = ap.GetStorage<Plugin>(tab, "selectedplugin");
 
-			if (selectedPlugin != null)
+			if (selectedPlugin.IsValid)
 			{
 				vendor.CheckMetadata(selectedPlugin.Id, () => { Singleton.Draw(ap.Player); });
 
@@ -692,7 +692,6 @@ public partial class AdminModule
 
 					var image = cui.CreatePanel(container, parent, "1 1 1 1", xMin: 0.12f, xMax: 0.45f, yMin: 0.2f, yMax: 0.8f);
 
-					cui.QueueImages(vendor.LogoEnumerable);
 					var code = string.Format(auth.AuthRequestEndpoint, auth.AuthCode);
 					var qr = cui.CreateQRCodeImage(container, image, code,
 						brandUrl: vendor.Logo,
@@ -757,8 +756,8 @@ public partial class AdminModule
 			public virtual string Type { get; }
 			public virtual string Url { get; }
 			public virtual string Logo { get; }
-			public IEnumerable<string> LogoEnumerable;
 			public virtual float LogoRatio { get; }
+			public virtual string Hero { get; }
 
 			public virtual string BarInfo { get; }
 
@@ -875,6 +874,7 @@ public partial class AdminModule
 			public override string Url => "https://codefling.com";
 			public override string Logo => "cflogo";
 			public override float LogoRatio => 0f;
+			public override string Hero => "cf_hero";
 
 			public override string BarInfo => $"{FetchedPlugins.Count(x => !x.IsPaid()):n0} free, {FetchedPlugins.Count(x => x.IsPaid()):n0} paid";
 
@@ -890,11 +890,6 @@ public partial class AdminModule
 			{
 				if (FetchedPlugins == null) return;
 
-				if (LogoEnumerable == null)
-				{
-					LogoEnumerable = new[] { Logo };
-				}
-
 				var plugins = Community.Runtime.Core.plugins.GetAll();
 				var auth = this as IVendorAuthenticated;
 
@@ -903,13 +898,13 @@ public partial class AdminModule
 					try
 					{
 						var name = Path.GetFileName(plugin.File);
-						plugin.Owned = auth.User != null && auth.User.OwnedFiles.Contains(plugin.Id);
+						plugin.SetOwned(auth.User != null && auth.User.OwnedFiles.Contains(plugin.Id));
 
 						foreach (var existentPlugin in plugins)
 						{
 							if (existentPlugin.FileName == name)
 							{
-								plugin.ExistentPlugin = (RustPlugin)existentPlugin;
+								plugin.SetExistentPlugin((RustPlugin)existentPlugin);
 								break;
 							}
 						}
@@ -1408,6 +1403,8 @@ public partial class AdminModule
 			public override string Url => "https://umod.org";
 			public override string Logo => "umodlogo";
 			public override float LogoRatio => 0.2f;
+			public override string Hero => "umod_hero";
+
 
 			public override string BarInfo => $"{FetchedPlugins.Count:n0} free";
 
@@ -1419,12 +1416,8 @@ public partial class AdminModule
 			{
 				if (FetchedPlugins == null) return;
 
-				if (LogoEnumerable == null)
-				{
-					LogoEnumerable = new[] { Logo };
-				}
-
-				var plugins = Community.Runtime.Core.plugins.GetAll();
+				var plugins = Facepunch.Pool.Get<List<RustPlugin>>();
+				Community.Runtime.Core.plugins.GetAllNonAlloc(plugins);
 
 				foreach (var plugin in FetchedPlugins)
 				{
@@ -1434,14 +1427,13 @@ public partial class AdminModule
 					{
 						if (existentPlugin.FileName == name)
 						{
-							plugin.ExistentPlugin = (RustPlugin)existentPlugin;
+							plugin.SetExistentPlugin(existentPlugin);
 							break;
 						}
 					}
 				}
 
-				Array.Clear(plugins, 0, plugins.Length);
-				plugins = null;
+				Facepunch.Pool.FreeUnmanaged(ref plugins);
 
 				PriceData = FetchedPlugins.OrderBy(x => x.OriginalPrice);
 				AuthorData = FetchedPlugins.OrderBy(x => x.Author);
@@ -1695,16 +1687,17 @@ public partial class AdminModule
 		[ProtoContract]
 		public class Installed : Vendor
 		{
-			public override string Type => "All";
+			public override string Type => "Installed";
 			public override string Url => "none";
 			public override string Logo => "carbonw";
+			public override string Hero => "installed_hero";
 
 			public override float LogoRatio => 0.23f;
 			public override string ListEndpoint => string.Empty;
 			public override string DownloadEndpoint => string.Empty;
 			public override string BarInfo => $"{FetchedPlugins.Count:n0} loaded";
 
-			internal string[] _defaultTags = new[] { "carbon", "oxide" };
+			internal string[] _defaultTags = ["carbon", "oxide"];
 
 			public override void CheckMetadata(string id, Action callback)
 			{
@@ -1727,11 +1720,6 @@ public partial class AdminModule
 			{
 				FetchedPlugins.Clear();
 
-				if (LogoEnumerable == null)
-				{
-					LogoEnumerable = new[] { Logo };
-				}
-
 				foreach (var package in ModLoader.Packages)
 				{
 					foreach (var plugin in package.Plugins)
@@ -1740,20 +1728,34 @@ public partial class AdminModule
 
 						var existent = FetchedPlugins.FirstOrDefault(x => x.ExistentPlugin == plugin);
 
-						if (existent == null) FetchedPlugins.Add(CodeflingInstance.FetchedPlugins.FirstOrDefault(x => x.ExistentPlugin == plugin) ??
-							uModInstance.FetchedPlugins.FirstOrDefault(x => x.ExistentPlugin == plugin)
-							?? (existent = new Plugin
+						if (!existent.IsValid)
+						{
+							existent = CodeflingInstance.FetchedPlugins.FirstOrDefault(x => x.ExistentPlugin == plugin);
+
+							if (!existent.IsValid)
 							{
-								Name = plugin.Name,
-								Author = plugin.Author,
-								Version = plugin.Version.ToString(),
-								ExistentPlugin = plugin,
-								Description = "This is an unlisted plugin.",
-								Tags = _defaultTags,
-								File = plugin.FileName,
-								Id = plugin.Name,
-								UpdateDate = DateTime.UtcNow.ToString()
-							}));
+								existent = uModInstance.FetchedPlugins.FirstOrDefault(x => x.ExistentPlugin == plugin);
+
+								if (!existent.IsValid)
+								{
+									existent = new Plugin
+									{
+										Name = plugin.Name,
+										Author = plugin.Author,
+										Version = plugin.Version.ToString(),
+										ExistentPlugin = plugin,
+										Description = "This is an unlisted plugin.",
+										Tags = _defaultTags,
+										File = plugin.FileName,
+										Id = plugin.Name,
+										UpdateDate = DateTime.UtcNow.ToString()
+									};
+								}
+
+							}
+
+							FetchedPlugins.Add(existent);
+						}
 					}
 				}
 
@@ -1835,7 +1837,7 @@ public partial class AdminModule
 		}
 
 		[ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
-		public class Plugin
+		public struct Plugin
 		{
 			public string Id;
 			public string Name;
@@ -1855,13 +1857,20 @@ public partial class AdminModule
 			public float Rating;
 			public string Date;
 			public string UpdateDate;
-			public bool HasLookup = false;
+			public bool HasLookup;
 			public Status Status = Status.Approved;
-			public bool CarbonCompatible = false;
+			public bool CarbonCompatible;
 			public bool Owned;
 
 			internal RustPlugin ExistentPlugin;
 			internal bool IsBusy;
+
+			public Plugin()
+			{
+			}
+
+			[ProtoIgnore]
+			public bool IsValid => !string.IsNullOrEmpty(Id);
 
 			public bool HasInvalidImage()
 			{
@@ -1869,7 +1878,7 @@ public partial class AdminModule
 			}
 			public bool HasNoImage()
 			{
-				return string.IsNullOrEmpty(Image);
+				return string.IsNullOrEmpty(Image) || Image.Equals("Null");
 			}
 			public bool IsInstalled()
 			{
@@ -1891,6 +1900,9 @@ public partial class AdminModule
 
 				return ExistentPlugin.Version.ToString() == Version;
 			}
+
+			public void SetOwned(bool wants) => Owned = wants;
+			public void SetExistentPlugin(RustPlugin plugin) => ExistentPlugin = plugin;
 		}
 	}
 
@@ -2183,7 +2195,7 @@ public partial class AdminModule
 		var vendor = PluginsTab.GetVendor((PluginsTab.VendorTypes)Enum.Parse(typeof(PluginsTab.VendorTypes), ap.GetStorage(tab, "vendor", PluginsTab.VendorTypes.Installed.ToString())));
 		vendor.Refresh();
 
-		ap.SetStorage(tab, "selectedplugin", (PluginsTab.Plugin)null);
+		ap.SetStorage(tab, "selectedplugin", (PluginsTab.Plugin)default);
 
 		Singleton.Draw(args.Player());
 	}
@@ -2339,7 +2351,8 @@ public partial class AdminModule
 		}
 
 		var plugin = vendor.FetchedPlugins.FirstOrDefault(x => x.Name.Equals(args.GetString(1), StringComparison.InvariantCultureIgnoreCase));
-		if (plugin == null)
+
+		if (!plugin.IsValid)
 		{
 			Singleton.PutsWarn($"Cannot find that plugin.");
 			return;

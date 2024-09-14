@@ -48,7 +48,15 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 		["maximize"] = "https://carbonmod.gg/assets/media/cui/maximize.png",
 		["minimize"] = "https://carbonmod.gg/assets/media/cui/minimize.png",
 		["folder"] = "https://carbonmod.gg/assets/media/cui/folder.png",
-		["file"] = "https://carbonmod.gg/assets/media/cui/file.png"
+		["file"] = "https://carbonmod.gg/assets/media/cui/file.png",
+		["cf_hero"] = "https://carbonmod.gg/assets/media/cui/pluginstab/cf_hero.png",
+		["umod_hero"] = "https://carbonmod.gg/assets/media/cui/pluginstab/umod_hero.png",
+		["installed_hero"] = "https://carbonmod.gg/assets/media/cui/pluginstab/installed_hero.png",
+		["hero_fade"] = "https://carbonmod.gg/assets/media/cui/pluginstab/hero_fade.png",
+		["fade_flip"] = "https://carbonmod.gg/assets/media/cui/pluginstab/fade_flip.png",
+		["empty_star"] = "https://carbonmod.gg/assets/media/cui/pluginstab/empty_star.png",
+		["half_star"] = "https://carbonmod.gg/assets/media/cui/pluginstab/half_star.png",
+		["full_star"] = "https://carbonmod.gg/assets/media/cui/pluginstab/full_star.png"
 	};
 
 	internal string _getProtoDataPath()
@@ -62,7 +70,7 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 	[AuthLevel(2)]
 	private void LoadDefaults(ConsoleSystem.Arg arg)
 	{
-		LoadDefaultImages();
+		LoadDefaultImages(true);
 		arg.ReplyWith($"Loading all default images.");
 	}
 
@@ -168,10 +176,9 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 		Array.Clear(result,0,result.Length);
 		result = null;
 	}
-	private void LoadDefaultImages()
+	private void LoadDefaultImages(bool forced = false)
 	{
-		Queue(_defaultImages.Where(x => !HasImage(x.Key))
-			.ToDictionary(x => x.Key, x => x.Value));
+		Queue(forced, _defaultImages);
 	}
 
 	public override bool PreLoadShouldSave(bool newConfig, bool newData)
@@ -416,6 +423,15 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 		if (_protoData.CustomMap.ContainsKey(key)) _protoData.CustomMap.Remove(key);
 	}
 
+	public string GetKeyImage(string key)
+	{
+		if(_protoData.CustomMap.TryGetValue(key, out var keyImage))
+		{
+			return keyImage;
+		}
+
+		return null;
+	}
 	public uint GetImage(string keyOrUrl)
 	{
 		if (string.IsNullOrEmpty(keyOrUrl))
