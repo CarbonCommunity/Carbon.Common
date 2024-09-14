@@ -8,11 +8,12 @@ public class Harmony
 	public static Dictionary<Assembly, List<object>> ModHooks = new();
 	public static List<PatchInfoEntry> CurrentPatches = new();
 
-	public static int PatchAll(Assembly assembly)
+	public static int PatchAll(Assembly assembly) => PatchAll(assembly, null);
+	public static int PatchAll(Assembly assembly, string fileName)
 	{
 		var patchCount = 0;
 		var assemblyName = assembly.GetName().Name;
-		var harmony = new HarmonyLib.Harmony($"com.compat-harmony.{assemblyName}");
+		var harmony = new HarmonyLib.Harmony($"com.compat-harmony.{(string.IsNullOrEmpty(fileName) ? assemblyName : fileName)}");
 
 		foreach (var type in assembly.GetTypes().Where(x => x.GetCustomAttribute<HarmonyPatch>() != null))
 		{
@@ -54,7 +55,7 @@ public class Harmony
 		return count;
 	}
 
-	public class PatchInfoEntry
+	public struct PatchInfoEntry
 	{
 		public string ParentAssemblyName;
 		public string AssemblyName;

@@ -19,7 +19,7 @@ public partial class AdminModule
 
 		internal static ConfigurationTab _instance;
 		internal const float _applyChangesCooldown = 60;
-		internal static TimeSince _applyChangesTimeSince = _applyChangesCooldown / 2;
+		internal static TimeSince _applyChangesTimeSince = _applyChangesCooldown;
 
 		public static readonly string[] AuthLevels = new[] { "User", "Moderator", "Admin", "Developer" };
 
@@ -216,6 +216,7 @@ public partial class AdminModule
 								_applyChangesTimeSince = 0;
 								Refresh(tab, session);
 								Singleton.Draw(ap.Player);
+								Singleton.Save();
 							}
 						},
 						ap => _applyChangesTimeSince > _applyChangesCooldown
