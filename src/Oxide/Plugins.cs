@@ -46,6 +46,14 @@ public class Plugins : Library
 		return result;
 	}
 
+	public void GetAllNonAlloc(List<RustPlugin> buffer)
+	{
+		foreach (var mod in ModLoader.Packages)
+		{
+			buffer.AddRange(mod.Plugins);
+		}
+	}
+
 	public object CallHook(string hook)
 	{
 		return HookCaller.CallStaticHook(HookStringPool.GetOrAdd(hook));
