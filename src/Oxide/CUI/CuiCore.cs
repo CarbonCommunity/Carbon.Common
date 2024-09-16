@@ -85,18 +85,14 @@ public class CuiButtonComponent : ICuiComponent, ICuiColor
 	[JsonProperty("close")]
 	public string Close { get; set; }
 
-	[DefaultValue("Assets/Content/UI/UI.Background.Tile.psd")]
 	[JsonProperty("sprite")]
-	public string Sprite { get; set; } = "Assets/Content/UI/UI.Background.Tile.psd";
+	public string Sprite { get; set; }
 
 	[JsonProperty("material")]
 	public string Material { get; set; }
 
-	[DefaultValue("1 1 1 1")]
-	[JsonProperty("color")]
-	public string Color { get; set; } = "1 1 1 1";
+	public string Color { get; set; }
 
-	[DefaultValue(Image.Type.Simple)]
 	[JsonConverter(typeof(StringEnumConverter))]
 	[JsonProperty("imagetype")]
 	public Image.Type ImageType { get; set; }
@@ -218,14 +214,12 @@ public class CuiImageComponent : ICuiComponent, ICuiColor
 	public string Type => "UnityEngine.UI.Image";
 
 	[JsonProperty("sprite")]
-	public string Sprite { get; set; } = "Assets/Content/UI/UI.Background.Tile.psd";
+	public string Sprite { get; set; }
 
 	[JsonProperty("material")]
 	public string Material { get; set; }
 
-	[DefaultValue("1 1 1 1")]
-	[JsonProperty("color")]
-	public string Color { get; set; } = "1 1 1 1";
+	public string Color { get; set; }
 
 	[JsonConverter(typeof(StringEnumConverter))]
 	[JsonProperty("imagetype")]
@@ -248,46 +242,37 @@ public class CuiInputFieldComponent : ICuiComponent, ICuiColor
 	public string Type => "UnityEngine.UI.InputField";
 
 	[JsonProperty("text")]
-	public string Text { get; set; } = "";
+	public string Text { get; set; } = string.Empty;
 
-	[DefaultValue(14)]
 	[JsonProperty("fontSize")]
-	public int FontSize { get; set; } = 14;
+	public int FontSize { get; set; }
 
-	[DefaultValue("RobotoCondensed-Bold.ttf")]
 	[JsonProperty("font")]
-	public string Font { get; set; } = "RobotoCondensed-Bold.ttf";
+	public string Font { get; set; }
 
-	[DefaultValue(TextAnchor.UpperLeft)]
 	[JsonConverter(typeof(StringEnumConverter))]
 	[JsonProperty("align")]
 	public TextAnchor Align { get; set; }
 
-	[DefaultValue("1 1 1 1")]
-	[JsonProperty("color")]
-	public string Color { get; set; } = "1 1 1 1";
+	public string Color { get; set; }
 
-	[DefaultValue(100)]
 	[JsonProperty("characterLimit")]
-	public int CharsLimit { get; set; } = 100;
+	public int CharsLimit { get; set; }
 
 	[JsonProperty("command")]
 	public string Command { get; set; }
 
-	[DefaultValue(false)]
 	[JsonProperty("password")]
 	public bool IsPassword { get; set; }
 
 	[JsonProperty("readOnly")]
 	public bool ReadOnly { get; set; }
 
-	[DefaultValue(false)]
-	[JsonProperty("needsCursor")]
-	public bool NeedsCursor { get; set; }
-
-	[DefaultValue(false)]
 	[JsonProperty("needsKeyboard")]
 	public bool NeedsKeyboard { get; set; }
+
+	[JsonProperty("needsCursor")]
+	public bool NeedsCursor { get; set; }
 
 	[JsonConverter(typeof(StringEnumConverter))]
 	[JsonProperty("lineType")]
@@ -311,15 +296,11 @@ public class CuiOutlineComponent : ICuiComponent, ICuiColor
 {
 	public string Type => "UnityEngine.UI.Outline";
 
-	[DefaultValue("1 1 1 1")]
-	[JsonProperty("color")]
-	public string Color { get; set; } = "1 1 1 1";
+	public string Color { get; set; }
 
-	[DefaultValue("1.0 -1.0")]
 	[JsonProperty("distance")]
-	public string Distance { get; set; } = "1.0 -1.0";
+	public string Distance { get; set; }
 
-	[DefaultValue(false)]
 	[JsonProperty("useGraphicAlpha")]
 	public bool UseGraphicAlpha { get; set; }
 }
@@ -328,11 +309,9 @@ public class CuiRawImageComponent : ICuiComponent, ICuiColor
 	public string Type => "UnityEngine.UI.RawImage";
 
 	[JsonProperty("sprite")]
-	public string Sprite { get; set; } = "assets/content/textures/generic/fulltransparent.tga";
+	public string Sprite { get; set; }
 
-	[DefaultValue("1 1 1 1")]
-	[JsonProperty("color")]
-	public string Color { get; set; } = "1 1 1 1";
+	public string Color { get; set; }
 
 	[JsonProperty("material")]
 	public string Material { get; set; }
@@ -353,13 +332,11 @@ public class CuiRectTransformComponent : CuiRectTransform, ICuiComponent
 }
 public class CuiRectTransform
 {
-	[DefaultValue("0 0")]
 	[JsonProperty("anchormin")]
-	public string AnchorMin { get; set; } = "0 0";
+	public string AnchorMin { get; set; }
 
-	[DefaultValue("1 1")]
 	[JsonProperty("anchormax")]
-	public string AnchorMax { get; set; } = "1 1";
+	public string AnchorMax { get; set; }
 
 	[JsonProperty("offsetmin")]
 	public string OffsetMin { get; set; }
@@ -371,9 +348,6 @@ public class CuiCountdownComponent : ICuiComponent
 {
 	public string Type => "Countdown";
 
-	[JsonProperty("command")]
-	public string Command { get; set; }
-
 	[JsonProperty("endTime")]
 	public float EndTime { get; set; }
 
@@ -381,10 +355,7 @@ public class CuiCountdownComponent : ICuiComponent
 	public float StartTime { get; set; }
 
 	[JsonProperty("step")]
-	public int Step { get; set; }
-
-	[JsonProperty("fadeIn")]
-	public float FadeIn { get; set; }
+	public float Step { get; set; }
 
 	[JsonProperty("interval")]
 	public float Interval { get; set; }
@@ -398,6 +369,12 @@ public class CuiCountdownComponent : ICuiComponent
 
 	[JsonProperty("destroyIfDone")]
 	public bool DestroyIfDone { get; set; }
+
+	[JsonProperty("command")]
+	public string Command { get; set; }
+
+	[JsonProperty("fadeIn")]
+	public float FadeIn { get; set; }
 }
 
 public enum TimerFormat
@@ -420,31 +397,26 @@ public class CuiTextComponent : ICuiComponent, ICuiColor
 	public string Type => "UnityEngine.UI.Text";
 
 	[JsonProperty("text")]
-	public string Text { get; set; } = "";
+	public string Text { get; set; }
 
-	[DefaultValue(14)]
 	[JsonProperty("fontSize")]
-	public int FontSize { get; set; } = 14;
+	public int FontSize { get; set; }
 
-	[DefaultValue("RobotoCondensed-Bold.ttf")]
 	[JsonProperty("font")]
-	public string Font { get; set; } = "RobotoCondensed-Bold.ttf";
+	public string Font { get; set; }
 
-	[DefaultValue(TextAnchor.UpperLeft)]
 	[JsonConverter(typeof(StringEnumConverter))]
 	[JsonProperty("align")]
 	public TextAnchor Align { get; set; }
 
-	[DefaultValue("1 1 1 1")]
-	[JsonProperty("color")]
-	public string Color { get; set; } = "1 1 1 1";
-
-	[JsonProperty("fadeIn")]
-	public float FadeIn { get; set; }
+	public string Color { get; set; }
 
 	[JsonConverter(typeof(StringEnumConverter))]
 	[JsonProperty("verticalOverflow")]
 	public VerticalWrapMode VerticalOverflow { get; set; }
+
+	[JsonProperty("fadeIn")]
+	public float FadeIn { get; set; }
 }
 public class CuiScrollViewComponent : ICuiComponent
 {

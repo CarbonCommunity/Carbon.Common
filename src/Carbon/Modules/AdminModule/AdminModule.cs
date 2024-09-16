@@ -13,12 +13,12 @@ namespace Carbon.Modules;
 public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 {
 	public override string Name => "Admin";
-	public override VersionNumber Version => new(1, 7, 0);
+	public override VersionNumber Version => new(1, 8, 0);
 	public override Type Type => typeof(AdminModule);
 
-	#if MINIMAL
+#if MINIMAL
 	public override bool ForceDisabled => true;
-	#endif
+#endif
 
 #if !MINIMAL
 	public override bool ForceEnabled => true;
@@ -2187,7 +2187,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		}
 
 		var skip = arg.GetInt(0);
-		var players = BasePlayer.allPlayerList.Concat(BasePlayer.bots).Where(x => x != player);
+		var players = BasePlayer.allPlayerList.Where(x => x != player);
 		var index = players.IndexOf(spectatedPlayer) + skip;
 
 		var lastIndex = players.Count() - 1;

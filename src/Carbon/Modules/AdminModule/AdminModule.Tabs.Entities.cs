@@ -696,11 +696,11 @@ public partial class AdminModule
 
 						if (entity is BasePlayer)
 						{
-							tab.AddRange(column, "Thirst", 0, player.metabolism.hydration.max, _ => player.metabolism.hydration.value, (ap, value) => DoAll<BasePlayer>(e => e.metabolism.hydration.SetValue(value)), _ => $"{player.metabolism.hydration.value:0}");
-							tab.AddRange(column, "Hunger", 0, player.metabolism.calories.max, _ => player.metabolism.calories.value, (ap, value) => DoAll<BasePlayer>(e => e.metabolism.calories.SetValue(value)), _ => $"{player.metabolism.calories.value:0}");
-							tab.AddRange(column, "Radiation", 0, player.metabolism.radiation_poison.max, _ => player.metabolism.radiation_poison.value, (ap, value) => DoAll<BasePlayer>(e => e.metabolism.radiation_poison.SetValue(value)), _ => $"{player.metabolism.radiation_poison.value:0}");
-							tab.AddRange(column, "Bleeding", 0, player.metabolism.bleeding.max, _ => player.metabolism.bleeding.value, (ap, value) => DoAll<BasePlayer>(e => e.metabolism.bleeding.SetValue(value)), _ => $"{player.metabolism.bleeding.value:0}");
-							tab.AddRange(column, "Wetness", 0, player.metabolism.wetness.max, _ => player.metabolism.wetness.value, (ap, value) => DoAll<BasePlayer>(e => e.metabolism.wetness.SetValue(value)), _ => $"{player.metabolism.wetness.value:0}");
+							tab.AddRange(column, "Thirst", 0, player.metabolism.hydration.max, _ => player.metabolism.hydration.value, (_, value) => DoAll<BasePlayer>(e => e.metabolism.hydration.SetValue(value)), _ => $"{player.metabolism.hydration.value:0}");
+							tab.AddRange(column, "Hunger", 0, player.metabolism.calories.max, _ => player.metabolism.calories.value, (_, value) => DoAll<BasePlayer>(e => e.metabolism.calories.SetValue(value)), _ => $"{player.metabolism.calories.value:0}");
+							tab.AddRange(column, "Radiation", 0, player.metabolism.radiation_poison.max, _ => player.metabolism.radiation_poison.value, (_, value) => DoAll<BasePlayer>(e => e.metabolism.radiation_poison.SetValue(value)), _ => $"{player.metabolism.radiation_poison.value:0}");
+							tab.AddRange(column, "Bleeding", 0, player.metabolism.bleeding.max, _ => player.metabolism.bleeding.value, (_, value) => DoAll<BasePlayer>(e => e.metabolism.bleeding.SetValue(value)), _ => $"{player.metabolism.bleeding.value:0}");
+							tab.AddRange(column, "Wetness", 0, player.metabolism.wetness.max * 10f, ap => player.metabolism.wetness.value * 10f, (_, value) => player.metabolism.wetness.SetValue(value * 0.1f), _ => $"{player.metabolism.wetness.value * 100f:0}%");
 							tab.AddButton(column, "Empower Stats", _ =>
 							{
 								player.SetHealth(player.MaxHealth());
