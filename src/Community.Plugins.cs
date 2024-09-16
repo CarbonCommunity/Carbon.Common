@@ -13,9 +13,9 @@ public partial class Community
 		ModLoader.ClearAllRequirees();
 	}
 
-	public void ClearPlugins(bool full = false)
+	public void ClearPlugins(bool all = false)
 	{
-		Runtime.ClearCommands(full);
+		Runtime.ClearCommands(all);
 		ModLoader.UnloadCarbonMods();
 	}
 }

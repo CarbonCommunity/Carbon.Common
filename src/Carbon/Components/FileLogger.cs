@@ -30,7 +30,10 @@ public class FileLogger : IDisposable
 	/// <param name="backup">If true, it'll back up the existent log file.</param>
 	public virtual void Init(bool archive = false, bool backup = false)
 	{
-		if (HasInit && !archive) return;
+		if (HasInit && !archive)
+		{
+			return;
+		}
 
 		var path = Path.Combine(Defines.GetLogsFolder(), $"{Name}.log");
 		var archiveFolder = Path.Combine(Defines.GetLogsFolder(), "archive");
@@ -103,7 +106,7 @@ public class FileLogger : IDisposable
 	/// </summary>
 	public virtual void Flush()
 	{
-		var buffer = Facepunch.Pool.GetList<string>();
+		var buffer = Facepunch.Pool.Get<List<string>>();
 		buffer.AddRange(_buffer);
 
 		foreach (var line in buffer)
@@ -113,7 +116,7 @@ public class FileLogger : IDisposable
 
 		_file.Flush();
 		_buffer.Clear();
-		Facepunch.Pool.FreeList(ref buffer);
+		Facepunch.Pool.FreeUnmanaged(ref buffer);
 
 		if (_file.BaseStream.Length > SplitSize)
 		{

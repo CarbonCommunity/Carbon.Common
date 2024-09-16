@@ -4,6 +4,9 @@ namespace Carbon.Core;
 
 public static partial class ModLoader
 {
+	/// <summary>
+	/// Used by the script compilation process, containing debuggin information about errors and warnings.
+	/// </summary>
 	[JsonObject(MemberSerialization.OptIn)]
 	public struct CompilationResult
 	{
@@ -60,7 +63,7 @@ public static partial class ModLoader
 			return RollbackType == null ? string.Empty : RollbackType.GetCustomAttribute<InfoAttribute>()?.Title?.Replace(" ", string.Empty);
 		}
 
-		public bool IsValid()
+		public bool HasFailed()
 		{
 			return Errors is { Count: > 0 };
 		}

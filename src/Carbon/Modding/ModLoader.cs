@@ -6,8 +6,8 @@ namespace Carbon.Core;
 
 public static partial class ModLoader
 {
-	public static bool IsBatchComplete { get; set; }
-	public static PackageBank Packages = new();
+	public static bool IsBatchComplete;
+	public static PackageBank Packages = [];
 	public static Dictionary<string, CompilationResult> FailedCompilations = new();
 
 	internal static Dictionary<string, Type> TypeDictionaryCache { get; } = new();
@@ -19,7 +19,7 @@ public static partial class ModLoader
 	internal const string RUST_PLUGIN = "RustPlugin";
 	internal const string COVALENCE_PLUGIN = "CovalencePlugin";
 
-	public static CompilationResult GetOrCreateFailedCompilation(string file, bool clear = false)
+	public static CompilationResult GetCompilationResult(string file, bool clear = false)
 	{
 		if (!FailedCompilations.TryGetValue(file, out var result))
 		{
@@ -84,6 +84,11 @@ public static partial class ModLoader
 	}
 	public static void AddPostBatchFailedRequiree(string requiree)
 	{
+		if (PostBatchFailedRequirees.Contains(requiree))
+		{
+			return;
+		}
+
 		PostBatchFailedRequirees.Add(requiree);
 	}
 
@@ -137,7 +142,7 @@ public static partial class ModLoader
 	{
 		ClearAllRequirees();
 
-		var list = Facepunch.Pool.GetList<Package>();
+		var list = Facepunch.Pool.Get<List<Package>>();
 		list.AddRange(Packages);
 
 		foreach (var mod in list)
@@ -147,7 +152,7 @@ public static partial class ModLoader
 			UnloadCarbonMod(mod.Name);
 		}
 
-		Facepunch.Pool.FreeList(ref list);
+		Facepunch.Pool.FreeUnmanaged(ref list);
 	}
 	public static bool UnloadCarbonMod(string name)
 	{
@@ -162,29 +167,9 @@ public static partial class ModLoader
 		return true;
 	}
 
-	public static void InitializePlugins(Package mod)
-	{
-		Logger.Warn($"Initializing mod '{mod.Name}'");
-
-		foreach (var type in mod.AllTypes)
-		{
-			try
-			{
-				if (!(type.Namespace.Equals("Oxide.Plugins") || type.Namespace.Equals("Carbon.Plugins"))) continue;
-
-				if (!IsValidPlugin(type, true)) continue;
-
-				if (!InitializePlugin(type, out var plugin, mod)) continue;
-				plugin.HasInitialized = true;
-
-				OnPluginProcessFinished();
-			}
-			catch (Exception ex) { Logger.Error($"Failed loading '{mod.Name}'", ex); }
-		}
-	}
 	public static void UninitializePlugins(Package mod)
 	{
-		var plugins = Facepunch.Pool.GetList<RustPlugin>();
+		var plugins = Facepunch.Pool.Get<List<RustPlugin>>();
 		plugins.AddRange(mod.Plugins);
 
 		foreach (var plugin in plugins)
@@ -196,9 +181,31 @@ public static partial class ModLoader
 			catch (Exception ex) { Logger.Error($"Failed unloading '{mod.Name}'", ex); }
 		}
 
-		Facepunch.Pool.FreeList(ref plugins);
+		Facepunch.Pool.FreeUnmanaged(ref plugins);
 	}
 
+	public static RustPlugin InitializePlugin(Assembly assembly, Package package = default, Action<RustPlugin> preInit = null, bool precompiled = false)
+	{
+		foreach (var type in assembly.GetTypes())
+		{
+			if(type.BaseType == null)
+			{
+				continue;
+			}
+
+			if(!IsValidPlugin(type.BaseType, false))
+			{
+				continue;
+			}
+
+			if(InitializePlugin(type, out var plugin, package, preInit, precompiled))
+			{
+				return plugin;
+			}
+		}
+
+		return null;
+	}
 	public static bool InitializePlugin(Type type, out RustPlugin plugin, Package package = default, Action<RustPlugin> preInit = null, bool precompiled = false)
 	{
 		var constructor = type.GetConstructor(Type.EmptyTypes);
@@ -225,7 +232,7 @@ public static partial class ModLoader
 			UninitializePlugin(existentPlugin);
 		}
 
-		plugin.SetProcessor(Community.Runtime.ScriptProcessor);
+		plugin.SetProcessor(Community.Runtime.ScriptProcessor, null);
 		plugin.SetupMod(package, title, author, version, description);
 
 		plugin.IsPrecompiled = precompiled;
@@ -289,7 +296,7 @@ public static partial class ModLoader
 
 		return true;
 	}
-	public static bool UninitializePlugin(RustPlugin plugin, bool premature = false)
+	public static bool UninitializePlugin(RustPlugin plugin, bool premature = false, bool unloadDependantPlugins = true)
 	{
 		if (!premature && !plugin.IsLoaded)
 		{
@@ -297,7 +304,11 @@ public static partial class ModLoader
 		}
 
 		plugin.IProcessUnpatches();
-		plugin.IUnloadDependantPlugins();
+
+		if (unloadDependantPlugins)
+		{
+			plugin.IUnloadDependantPlugins();
+		}
 
 		if (!premature)
 		{
@@ -317,11 +328,6 @@ public static partial class ModLoader
 
 		if (!premature)
 		{
-			if (!plugin.IsPrecompiled)
-			{
-				Assemblies.Plugins.Eliminate(Path.GetFileNameWithoutExtension(plugin.FilePath));
-			}
-
 			Logger.Log($"Unloaded plugin {plugin.ToPrettyString()}");
 			Interface.Oxide.RootPluginManager.RemovePlugin(plugin);
 
@@ -377,8 +383,16 @@ public static partial class ModLoader
 
 	public static bool IsValidPlugin(Type type, bool recursive)
 	{
-		if (type == null) return false;
-		if (type.Name is CARBON_PLUGIN or RUST_PLUGIN or COVALENCE_PLUGIN) return true;
+		if (type == null)
+		{
+			return false;
+		}
+
+		if (type.Name is CARBON_PLUGIN or RUST_PLUGIN or COVALENCE_PLUGIN)
+		{
+			return true;
+		}
+
 		return recursive && IsValidPlugin(type.BaseType, recursive);
 	}
 
@@ -611,12 +625,12 @@ public static partial class ModLoader
 
 	public static void OnPluginProcessFinished()
 	{
-		var temp = Facepunch.Pool.GetList<string>();
+		var temp = Facepunch.Pool.Get<List<string>>();
 		temp.AddRange(PostBatchFailedRequirees);
 
 		foreach (var plugin in temp)
 		{
-			var file = System.IO.Path.GetFileNameWithoutExtension(plugin);
+			var file = Path.GetFileNameWithoutExtension(plugin);
 			Community.Runtime.ScriptProcessor.ClearIgnore(file);
 			Community.Runtime.ScriptProcessor.Prepare(file, plugin);
 		}
@@ -629,12 +643,7 @@ public static partial class ModLoader
 		}
 
 		temp.Clear();
-		Facepunch.Pool.FreeList(ref temp);
-
-		if (ConVar.Global.skipAssetWarmup_crashes)
-		{
-			Community.Runtime.MarkServerInitialized(true);
-		}
+		Facepunch.Pool.FreeUnmanaged(ref temp);
 
 		if (!Community.IsServerInitialized)
 		{
@@ -642,7 +651,7 @@ public static partial class ModLoader
 		}
 
 		var counter = 0;
-		var plugins = Facepunch.Pool.GetList<RustPlugin>();
+		var plugins = Facepunch.Pool.Get<List<RustPlugin>>();
 		plugins.AddRange(Packages.SelectMany(mod => mod.Plugins));
 
 		foreach (var plugin in plugins)
@@ -667,7 +676,7 @@ public static partial class ModLoader
 
 		FirstLoadSinceStartup = false;
 
-		Facepunch.Pool.FreeList(ref plugins);
+		Facepunch.Pool.FreeUnmanaged(ref plugins);
 
 		if (counter > 1)
 		{

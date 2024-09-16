@@ -782,9 +782,8 @@ public readonly struct CUI : IDisposable
 
 		public enum FontTypes
 		{
-			Arial,
 			RobotoCondensedBold, RobotoCondensedRegular,
-			PermanentMarker, DroidSansMono
+			PermanentMarker, DroidSansMono, NotoSansArabicBold
 		}
 
 		public string GetFont(FontTypes type)
@@ -795,6 +794,7 @@ public readonly struct CUI : IDisposable
 				FontTypes.RobotoCondensedRegular => "robotocondensed-regular.ttf",
 				FontTypes.PermanentMarker => "permanentmarker.ttf",
 				FontTypes.DroidSansMono => "droidsansmono.ttf",
+				FontTypes.NotoSansArabicBold => "NotoSansArabic-Bold.ttf",
 				_ => "robotocondensed-regular.ttf"
 			};
 		}
@@ -1382,8 +1382,8 @@ public static class CUIStatics
 		write.UInt64(0UL);
 		write.String(container.ToJson());
 
-		var bytes = new byte[write._length];
-		Array.Copy(write.Data, bytes, write._length);
+		var bytes = new byte[write.Length];
+		Array.Copy(write.Data, bytes, write.Length);
 
 		Facepunch.Pool.Free(ref write);
 
@@ -1400,12 +1400,12 @@ public static class CUIStatics
 	}
 	public static void SendUpdate(this Pair<string, CuiElement> pair, BasePlayer player)
 	{
-		var elements = Facepunch.Pool.GetList<CuiElement>();
+		var elements = Facepunch.Pool.Get<List<CuiElement>>();
 		elements.Add(pair.Element);
 
 		CuiHelper.AddUi(player, elements);
 
-		Facepunch.Pool.Free(ref elements);
+		Facepunch.Pool.FreeUnmanaged(ref elements);
 	}
 	public static void Destroy(this CuiElementContainer container, BasePlayer player)
 	{

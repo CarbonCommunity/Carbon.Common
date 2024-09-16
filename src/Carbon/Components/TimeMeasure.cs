@@ -39,7 +39,7 @@ public struct TimeMeasure : IDisposable
 		}
 
 		_watch.Reset();
-		Pool.Free(ref _watch);
+		Pool.FreeUnsafe(ref _watch);
 #endif
 	}
 }

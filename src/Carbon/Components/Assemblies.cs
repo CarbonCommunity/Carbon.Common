@@ -12,9 +12,9 @@ public class Assemblies
 	public class RuntimeAssembly
 	{
 		public Assembly CurrentAssembly { get; internal set; }
+		public bool IsProfiledAssembly { get; internal set; }
 		public string Location { get; internal set; }
-
-		public List<Assembly> History { get; } = new();
+		public List<RuntimeAssembly> History { get; internal set; }
 	}
 
 	public class RuntimeAssemblyBank : ConcurrentDictionary<string, RuntimeAssembly>
@@ -24,7 +24,27 @@ public class Assemblies
 			TryGetValue(key, out var existent);
 			return existent;
 		}
-		public void Update(string key, Assembly assembly, string location)
+		public KeyValuePair<string, RuntimeAssembly> Find(Assembly assembly)
+		{
+			foreach(var a in this)
+			{
+				if(a.Value.CurrentAssembly == assembly)
+				{
+					return a;
+				}
+
+				foreach(var aHistory in a.Value.History)
+				{
+					if(aHistory.CurrentAssembly == assembly)
+					{
+						return new(a.Key, aHistory);
+					}
+				}
+			}
+
+			return default;
+		}
+		public void Update(string key, Assembly assembly, string location, bool isProfiledAssembly = false)
 		{
 			if (string.IsNullOrEmpty(key))
 			{
@@ -38,34 +58,30 @@ public class Assemblies
 				return;
 			}
 
-			AddOrUpdate(key, _ => new RuntimeAssembly { CurrentAssembly = assembly, Location = location },
+			AddOrUpdate(key, _ => new RuntimeAssembly
+			{
+				CurrentAssembly = assembly,
+				IsProfiledAssembly = isProfiledAssembly,
+				Location = location,
+				History = []
+			},
 				(_, existent) =>
 				{
 					if (existent.CurrentAssembly != null)
 					{
-						existent.History.Add(existent.CurrentAssembly);
+						existent.History.Insert(0, new RuntimeAssembly
+						{
+							CurrentAssembly = existent.CurrentAssembly,
+							IsProfiledAssembly = existent.IsProfiledAssembly,
+							Location = existent.Location
+						});
 					}
 
 					existent.CurrentAssembly = assembly;
 					existent.Location = location;
+					existent.IsProfiledAssembly = isProfiledAssembly;
 					return existent;
 				});
-		}
-		public void Eliminate(string key)
-		{
-			if (string.IsNullOrEmpty(key))
-			{
-				Logger.Warn($"RuntimeAssemblyBank.Eliminate key == null");
-				return;
-			}
-
-			if (!TryGetValue(key, out var existent) || existent.CurrentAssembly == null)
-			{
-				return;
-			}
-
-			existent.History.Add(existent.CurrentAssembly);
-			existent.CurrentAssembly = null;
 		}
 	}
 }

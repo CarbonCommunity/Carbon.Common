@@ -14,6 +14,10 @@ public partial class Community
 	public Config Config { get; set; }
 	public MonoProfilerConfig MonoProfilerConfig { get; set; }
 
+	/// <summary>
+	/// Load Carbon config from disk.
+	/// </summary>
+	/// <param name="postProcess">Ensures that default mandatory values are properly present in the config after it's been loaded.</param>
 	public void LoadConfig(bool postProcess = true)
 	{
 		var needsSave = false;
@@ -64,7 +68,7 @@ public partial class Community
 			}
 			else
 			{
-				var invalidAliases = Pool.GetList<string>();
+				var invalidAliases = Pool.Get<List<string>>();
 				invalidAliases.AddRange(from alias in Config.Aliases
 										where !Config.IsValidAlias(alias.Key, out _)
 										select alias.Key);
@@ -80,7 +84,7 @@ public partial class Community
 					needsSave = true;
 				}
 
-				Pool.FreeList(ref invalidAliases);
+				Pool.FreeUnmanaged(ref invalidAliases);
 			}
 
 			if (Config.Prefixes.Count == 0)
@@ -118,6 +122,10 @@ public partial class Community
 			Logger.Error($"Carbon Analytics are OFF.");
 		}
 	}
+
+	/// <summary>
+	/// Save Carbon config to disk.
+	/// </summary>
 	public void SaveConfig()
 	{
 		if (Config == null) Config = new Config();
@@ -125,6 +133,9 @@ public partial class Community
 		OsEx.File.Create(Defines.GetConfigFile(), JsonConvert.SerializeObject(Config, Formatting.Indented));
 	}
 
+	/// <summary>
+	/// Load Carbon MonoProfiler config from disk.
+	/// </summary>
 	public void LoadMonoProfilerConfig()
 	{
 		var needsSave = false;
@@ -141,6 +152,10 @@ public partial class Community
 
 		if (needsSave) SaveMonoProfilerConfig();
 	}
+
+	/// <summary>
+	/// Save Carbon MonoProfiler config to disk.
+	/// </summary>
 	public void SaveMonoProfilerConfig()
 	{
 		MonoProfilerConfig ??= new();

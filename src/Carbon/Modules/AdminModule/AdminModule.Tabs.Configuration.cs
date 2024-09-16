@@ -19,7 +19,7 @@ public partial class AdminModule
 
 		internal static ConfigurationTab _instance;
 		internal const float _applyChangesCooldown = 60;
-		internal static TimeSince _applyChangesTimeSince = _applyChangesCooldown / 2;
+		internal static TimeSince _applyChangesTimeSince = _applyChangesCooldown;
 
 		public static readonly string[] AuthLevels = new[] { "User", "Moderator", "Admin", "Developer" };
 
@@ -216,6 +216,7 @@ public partial class AdminModule
 								_applyChangesTimeSince = 0;
 								Refresh(tab, session);
 								Singleton.Draw(ap.Player);
+								Singleton.Save();
 							}
 						},
 						ap => _applyChangesTimeSince > _applyChangesCooldown
@@ -538,8 +539,7 @@ public partial class AdminModule
 								{
 									tab.AddInputButton(1, cache.Value.Variable.ForceModded ? $"<color=orange>{cache.Value.Variable.DisplayName}</color>" : cache.Value.Variable.DisplayName, 0.2f,
 										new OptionInput(string.Empty, ap => $"{cache.Value.GetValue()}", 0,
-											false,
-											(ap, args) => cache.Value.SetValue(args.ToString(" ").ToFloat())),
+											false, (ap, args) => cache.Value.SetValue(args.ToString(" ").ToFloat())),
 										new OptionButton($"<size=8>-1</size>",
 											ap => cache.Value.SetValue(-1)),
 										tooltip: $"{cache.Value.Variable.Help} ({cache.Key})");
