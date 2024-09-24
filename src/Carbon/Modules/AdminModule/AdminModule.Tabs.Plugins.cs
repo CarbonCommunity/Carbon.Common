@@ -1872,10 +1872,13 @@ public partial class AdminModule
 			}
 
 			[ProtoIgnore]
-			public bool HasRating => Rating != -1;
+			public readonly bool HasRating => Rating != -1;
 
 			[ProtoIgnore]
-			public bool IsValid => !string.IsNullOrEmpty(Id);
+			public readonly bool HasPrice => OriginalPrice != "Null";
+
+			[ProtoIgnore]
+			public readonly bool IsValid => !string.IsNullOrEmpty(Id);
 
 			public bool HasInvalidImage()
 			{
