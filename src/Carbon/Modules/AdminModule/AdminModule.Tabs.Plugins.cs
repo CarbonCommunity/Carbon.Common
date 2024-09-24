@@ -1611,7 +1611,8 @@ public partial class AdminModule
 							DownloadCount = (plugin["downloads"]?.ToString().ToInt()).GetValueOrDefault(),
 							Date = plugin["published_at"]?.ToString(),
 							UpdateDate = plugin["updated_at"]?.ToString(),
-							Tags = plugin["tags_all"]?.ToString().Split(',')
+							Tags = plugin["tags_all"]?.ToString().Split(','),
+							Rating = -1
 						};
 
 						if (!string.IsNullOrEmpty(p.Description) && !p.Description.EndsWith(".")) p.Description += ".";
@@ -1748,7 +1749,8 @@ public partial class AdminModule
 										Tags = _defaultTags,
 										File = plugin.FileName,
 										Id = plugin.Name,
-										UpdateDate = DateTime.UtcNow.ToString()
+										UpdateDate = DateTime.UtcNow.ToString(),
+										Rating = -1
 									};
 								}
 
@@ -1870,6 +1872,9 @@ public partial class AdminModule
 			}
 
 			[ProtoIgnore]
+			public bool HasRating => Rating != -1;
+
+			[ProtoIgnore]
 			public bool IsValid => !string.IsNullOrEmpty(Id);
 
 			public bool HasInvalidImage()
@@ -1892,7 +1897,7 @@ public partial class AdminModule
 			}
 			public bool IsPaid()
 			{
-				return OriginalPrice != "FREE";
+				return OriginalPrice != "FREE" && OriginalPrice != "Null";
 			}
 			public bool IsUpToDate()
 			{
