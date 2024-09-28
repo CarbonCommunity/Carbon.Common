@@ -759,6 +759,8 @@ public partial class AdminModule
 			public virtual float LogoRatio { get; }
 			public virtual string Hero { get; }
 
+			public virtual bool CanRefresh { get; } = true;
+
 			public virtual string BarInfo { get; }
 
 			public IEnumerable<Plugin> PriceData;
@@ -1697,6 +1699,8 @@ public partial class AdminModule
 			public override string ListEndpoint => string.Empty;
 			public override string DownloadEndpoint => string.Empty;
 			public override string BarInfo => $"{FetchedPlugins.Count:n0} loaded";
+
+			public override bool CanRefresh => false;
 
 			internal string[] _defaultTags = ["carbon", "oxide"];
 
