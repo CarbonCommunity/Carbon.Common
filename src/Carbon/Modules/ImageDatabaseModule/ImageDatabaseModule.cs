@@ -39,16 +39,26 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 		["reload"] = "https://carbonmod.gg/assets/media/cui/reload.png",
 		["update-pending"] = "https://carbonmod.gg/assets/media/cui/update-pending.png",
 		["magnifying-glass"] = "https://carbonmod.gg/assets/media/cui/magnifying-glass.png",
+		["filter"] = "https://carbonmod.gg/assets/media/cui/filter.png",
 		["star"] = "https://carbonmod.gg/assets/media/cui/star.png",
 		["glow"] = "https://carbonmod.gg/assets/media/cui/glow.png",
 		["gear"] = "https://carbonmod.gg/assets/media/cui/gear.png",
+		["sort"] = "https://carbonmod.gg/assets/media/cui/sort.png",
 		["close"] = "https://carbonmod.gg/assets/media/cui/close.png",
 		["fade"] = "https://carbonmod.gg/assets/media/cui/fade.png",
 		["graph"] = "https://carbonmod.gg/assets/media/cui/graph.png",
 		["maximize"] = "https://carbonmod.gg/assets/media/cui/maximize.png",
 		["minimize"] = "https://carbonmod.gg/assets/media/cui/minimize.png",
 		["folder"] = "https://carbonmod.gg/assets/media/cui/folder.png",
-		["file"] = "https://carbonmod.gg/assets/media/cui/file.png"
+		["file"] = "https://carbonmod.gg/assets/media/cui/file.png",
+		["cf_hero"] = "https://carbonmod.gg/assets/media/cui/pluginstab/cf_hero.png",
+		["umod_hero"] = "https://carbonmod.gg/assets/media/cui/pluginstab/umod_hero.png",
+		["installed_hero"] = "https://carbonmod.gg/assets/media/cui/pluginstab/installed_hero.png",
+		["hero_fade"] = "https://carbonmod.gg/assets/media/cui/pluginstab/hero_fade.png",
+		["fade_flip"] = "https://carbonmod.gg/assets/media/cui/pluginstab/fade_flip.png",
+		["empty_star"] = "https://carbonmod.gg/assets/media/cui/pluginstab/empty_star.png",
+		["half_star"] = "https://carbonmod.gg/assets/media/cui/pluginstab/half_star.png",
+		["full_star"] = "https://carbonmod.gg/assets/media/cui/pluginstab/full_star.png"
 	};
 
 	internal string _getProtoDataPath()
@@ -62,7 +72,7 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 	[AuthLevel(2)]
 	private void LoadDefaults(ConsoleSystem.Arg arg)
 	{
-		LoadDefaultImages();
+		LoadDefaultImages(true);
 		arg.ReplyWith($"Loading all default images.");
 	}
 
@@ -168,10 +178,9 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 		Array.Clear(result,0,result.Length);
 		result = null;
 	}
-	private void LoadDefaultImages()
+	private void LoadDefaultImages(bool forced = false)
 	{
-		Queue(_defaultImages.Where(x => !HasImage(x.Key))
-			.ToDictionary(x => x.Key, x => x.Value));
+		Queue(forced, _defaultImages);
 	}
 
 	public override bool PreLoadShouldSave(bool newConfig, bool newData)
@@ -263,8 +272,18 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 				{
 					var image = GetImage(url);
 
-					if (image == 0) continue;
-					existent.Add(new ImageQueueResult { CRC = image, Url = url, Success = true });
+					if (image == 0)
+					{
+						continue;
+					}
+
+					existent.Add(new ImageQueueResult
+					{
+						CRC = image,
+						Url = url,
+						Success = true
+					});
+
 					queue.ImageUrls.Remove(url);
 				}
 			}
@@ -307,13 +326,13 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 
 					onComplete?.Invoke(results);
 				}
-
-				Pool.FreeUnmanaged(ref existent);
 			}
 			catch (Exception ex)
 			{
 				PutsError($"Failed QueueBatch of {urls.Count():n0}", ex);
 			}
+
+			Pool.FreeUnmanaged(ref existent);
 		}));
 	}
 
@@ -406,6 +425,15 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 		if (_protoData.CustomMap.ContainsKey(key)) _protoData.CustomMap.Remove(key);
 	}
 
+	public string GetKeyImage(string key)
+	{
+		if(_protoData.CustomMap.TryGetValue(key, out var keyImage))
+		{
+			return keyImage;
+		}
+
+		return null;
+	}
 	public uint GetImage(string keyOrUrl)
 	{
 		if (string.IsNullOrEmpty(keyOrUrl))
@@ -499,7 +527,6 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 	public static IEnumerator RunQueue(ImageQueue imageQueue, Action<List<ImageQueueResult>> callback)
 	{
 		imageQueue.Init();
-		imageQueue.DoNext();
 
 		while (!imageQueue.IsDone)
 		{
@@ -518,22 +545,20 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 		public Action<List<ImageQueueResult>> ResultAction { get; set; }
 
 		public bool IsDone;
-		public int Processed;
 		public WebRequests.WebRequest.Client Client;
 
-		private Timer Timer;
+		private Timer _timeout;
 		private int _index;
 		private bool _poolInit;
 
 		public void Init()
 		{
-			DoTimer();
+			CreateTimeout();
+			MoveNext();
 		}
-		public void DoNext()
+		public void MoveNext()
 		{
-			Processed++;
-
-			if (Processed > ImageUrls.Count)
+			if (_index >= ImageUrls.Count)
 			{
 				IsDone = true;
 				return;
@@ -542,13 +567,14 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 			var url = ImageUrls[_index];
 
 			Client.DownloadDataAsync(new Uri(url), url);
+
 			_index++;
 		}
-		public void DoTimer()
+		public void CreateTimeout()
 		{
 			var instance = this;
 
-			Timer = Community.Runtime.Core.timer.In(Singleton.ConfigInstance.TimeoutPerUrl * ImageUrls.Count, () =>
+			_timeout = Community.Runtime.Core.timer.In(Singleton.ConfigInstance.TimeoutPerUrl * ImageUrls.Count, () =>
 			{
 				if (IsDone)
 				{
@@ -571,11 +597,11 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 
 		public void EnterPool()
 		{
-			Timer?.Reset();
+			IsDone = false;
 			ImageUrls.Clear();
 			Result.Clear();
 			ResultAction = null;
-			Processed = 0;
+			_timeout?.Reset();
 			_index = 0;
 		}
 
@@ -590,7 +616,6 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 			Client.Headers.Add("User-Agent", Community.Runtime.Analytics.UserAgent);
 			Client.Credentials = CredentialCache.DefaultCredentials;
 			Client.Proxy = null;
-
 			Client.DownloadDataCompleted += (_, e) =>
 			{
 				if (e.Error == null)
@@ -602,7 +627,7 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 					});
 				}
 
-				Community.Runtime.Core.NextFrame(() => DoNext());
+				Community.Runtime.Core.NextFrame(MoveNext);
 			};
 
 			_poolInit = true;

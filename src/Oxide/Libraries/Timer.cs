@@ -37,7 +37,10 @@ public class Timers : Library
 
 	public Timer In(float time, Action action)
 	{
-		if (!IsValid()) return null;
+		if (!IsValid())
+		{
+			return null;
+		}
 
 		var timer = new Timer(Persistence, action, Plugin);
 		var activity = new Action(() =>
@@ -70,7 +73,10 @@ public class Timers : Library
 	}
 	public Timer Every(float time, Action action)
 	{
-		if (!IsValid()) return null;
+		if (!IsValid())
+		{
+			return null;
+		}
 
 		var timer = new Timer(Persistence, action, Plugin);
 		var activity = new Action(() =>
