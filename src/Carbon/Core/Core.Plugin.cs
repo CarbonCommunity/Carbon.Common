@@ -19,10 +19,17 @@ public partial class CorePlugin : CarbonPlugin
 
 		foreach (var file in OsEx.Folder.GetFilesWithExtension(Defines.GetScriptsFolder(), "cs", config.Watchers.ScriptWatcherOption))
 		{
-			if (processor.IsBlacklisted(file)) continue;
+			if (processor.IsBlacklisted(file))
+			{
+				continue;
+			}
 
 			var id = Path.GetFileNameWithoutExtension(file);
-			if (!OrderedFiles.ContainsKey(id)) OrderedFiles.Add(id, file);
+
+			if (!OrderedFiles.ContainsKey(id))
+			{
+				OrderedFiles.Add(id, file);
+			}
 		}
 	}
 
@@ -74,7 +81,11 @@ public partial class CorePlugin : CarbonPlugin
 
 		timer.Every(5f, () =>
 		{
-			if (Community.Runtime == null || Logger.CoreLog == null || !Logger.CoreLog.HasInit || Logger.CoreLog._buffer.Count == 0 || Community.Runtime.Config.Logging.LogFileMode != 1) return;
+			if (Community.Runtime == null || Logger.CoreLog == null || !Logger.CoreLog.HasInit || Logger.CoreLog._buffer.Count == 0 || Community.Runtime.Config.Logging.LogFileMode != 1)
+			{
+				return;
+			}
+
 			Logger.CoreLog.Flush();
 		});
 
