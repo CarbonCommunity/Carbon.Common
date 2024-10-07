@@ -78,7 +78,10 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 		base.Name ??= Name;
 		base.HookableType ??= Type;
 
-		if (ForceDisabled) return;
+		if (ForceDisabled)
+		{
+			return;
+		}
 
 		Permissions = Interface.Oxide.Permission;
 
@@ -86,7 +89,10 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 	}
 	public virtual bool InitEnd()
 	{
-		if (ForceDisabled || HasInitialized) return false;
+		if (ForceDisabled || HasInitialized)
+		{
+			return false;
+		}
 
 		Community.Runtime.HookManager.LoadHooksFromType(Type);
 
@@ -99,7 +105,11 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 				Community.Runtime.HookManager.Subscribe(method.Name, Name);
 
 				var hash = HookStringPool.GetOrAdd(method.Name);
-				if (!Hooks.Contains(hash)) Hooks.Add(hash);
+
+				if (!Hooks.Contains(hash))
+				{
+					Hooks.Add(hash);
+				}
 			}
 		}
 
@@ -364,7 +374,10 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 		UnsubscribeAll();
 		Permissions.UnregisterPermissions(this);
 
-		if (Hooks.Count > 0) Puts($"Unsubscribed from {Hooks.Count:n0} {Hooks.Count.Plural("hook", "hooks")}.");
+		if (Hooks.Count > 0)
+		{
+			Puts($"Unsubscribed from {Hooks.Count:n0} {Hooks.Count.Plural("hook", "hooks")}.");
+		}
 
 		DoHarmonyUnpatch();
 	}

@@ -1,4 +1,5 @@
 ﻿using API.Events;
+using Facepunch;
 using Application = UnityEngine.Application;
 using CommandLine = Carbon.Components.CommandLine;
 
@@ -171,11 +172,17 @@ public partial class CorePlugin : CarbonPlugin
 	}
 	private void OnPluginLoaded(Plugin plugin)
 	{
-		Community.Runtime.Events.Trigger(CarbonEvent.PluginLoaded, new CarbonEventArgs(plugin));
+		var eventArg = Pool.Get<CarbonEventArgs>();
+		eventArg.Init(plugin);
+		Community.Runtime.Events.Trigger(CarbonEvent.PluginLoaded, eventArg);
+		Pool.Free(ref eventArg);
 	}
 	private void OnPluginUnloaded(Plugin plugin)
 	{
-		Community.Runtime.Events.Trigger(CarbonEvent.PluginUnloaded, new CarbonEventArgs(plugin));
+		var eventArg = Pool.Get<CarbonEventArgs>();
+		eventArg.Init(plugin);
+		Community.Runtime.Events.Trigger(CarbonEvent.PluginUnloaded, eventArg);
+		Pool.Free(ref eventArg);
 	}
 	private void OnEntitySpawned(BaseEntity entity)
 	{
