@@ -9,9 +9,13 @@ public partial class CorePlugin
 	[AuthLevel(2)]
 	private string DefaultPlayerGroup { get { return Community.Runtime.Config.Permissions.PlayerDefaultGroup; } set { Community.Runtime.Config.Permissions.PlayerDefaultGroup = value; } }
 
-	[CommandVar("defaultadmingroup", "The default group players with the admin flag get assigned to.")]
+	[CommandVar("defaultadmingroup", "The default group players with auth-level 2 get assigned to.")]
 	[AuthLevel(2)]
 	private string DefaultAdminGroup { get { return Community.Runtime.Config.Permissions.AdminDefaultGroup; } set { Community.Runtime.Config.Permissions.AdminDefaultGroup = value; } }
+
+	[CommandVar("defaultmoderatorgroup", "The default group players with auth-level 1 get assigned to.")]
+	[AuthLevel(2)]
+	private string DefaultModeratorGroup { get { return Community.Runtime.Config.Permissions.ModeratorDefaultGroup; } set { Community.Runtime.Config.Permissions.ModeratorDefaultGroup = value; } }
 
 	[ConsoleCommand("grant", "Grant one or more permissions to users or groups. Do 'c.grant' for syntax info.")]
 	[AuthLevel(2)]
