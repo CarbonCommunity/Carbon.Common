@@ -79,6 +79,7 @@ public class Config
 	{
 		public string PlayerDefaultGroup { get; set; } = "default";
 		public string AdminDefaultGroup { get; set; } = "admin";
+		public string ModeratorDefaultGroup { get; set; } = "moderator";
 		public bool BypassAdminCooldowns { get; set; } = false;
 		public Permission.SerializationMode PermissionSerialization { get; set; } = Permission.SerializationMode.Protobuf;
 	}

@@ -6,13 +6,13 @@ namespace Carbon;
 /// <summary>
 /// Carbon component centralized place of accessing Rust spawned entities.
 /// </summary>
-public class Entities : IDisposable
+public class Entities
 {
 	public static void Init()
 	{
 		try
 		{
-			Community.Runtime.Entities?.Dispose();
+			Dispose();
 
 			foreach (var type in _findAssignablesFrom<BaseEntity>())
 			{
@@ -43,7 +43,7 @@ public class Entities : IDisposable
 		}
 	}
 
-	public void Dispose()
+	public static void Dispose()
 	{
 		foreach (var map in Mapping)
 		{

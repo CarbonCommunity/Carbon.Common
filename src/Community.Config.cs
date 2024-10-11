@@ -46,6 +46,9 @@ public partial class Community
 			if (string.IsNullOrEmpty(Config.Permissions.PlayerDefaultGroup))
 				Config.Permissions.PlayerDefaultGroup = "default";
 
+			if (string.IsNullOrEmpty(Config.Permissions.ModeratorDefaultGroup))
+				Config.Permissions.ModeratorDefaultGroup = "moderator";
+
 			if (!Config.Compiler.ConditionalCompilationSymbols.Contains("CARBON"))
 				Config.Compiler.ConditionalCompilationSymbols.Add("CARBON");
 
