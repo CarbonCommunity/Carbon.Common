@@ -1,6 +1,7 @@
-﻿namespace Carbon.Client;
-
-public class Protocol
+﻿namespace Carbon.Client
 {
-	public const int VERSION = 100;
+	public class Protocol
+	{
+		public const int VERSION = 100;
+	}
 }
