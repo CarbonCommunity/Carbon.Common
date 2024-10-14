@@ -1,19 +1,22 @@
-﻿namespace Carbon;
+﻿using System.Data.Entity.Core.Objects;
+using UnityEngine;
+
+namespace Carbon;
 
 /// <summary>
 /// Carbon component centralized place of accessing Rust spawned entities.
 /// </summary>
-public class Entities : IDisposable
+public class Entities
 {
 	public static void Init()
 	{
 		try
 		{
-			Community.Runtime.Entities?.Dispose();
+			Dispose();
 
 			foreach (var type in _findAssignablesFrom<BaseEntity>())
 			{
-				Mapping.Add(type, new List<object>(100000));
+				Mapping.Add(new(type), new List<object>(100000));
 			}
 
 			if (Community.IsServerInitialized)
@@ -25,8 +28,7 @@ public class Entities : IDisposable
 			{
 				foreach (var type in Mapping)
 				{
-					type.Value.AddRange(BaseNetworkable.serverEntities.Where(x => x.GetType() == type.Key)
-						.Select(x => x as BaseEntity));
+					type.Value.AddRange(BaseNetworkable.serverEntities.Where(x => x.GetType() == type.Key.type).Select(x => x as BaseEntity));
 				}
 			}
 
@@ -41,7 +43,7 @@ public class Entities : IDisposable
 		}
 	}
 
-	public void Dispose()
+	public static void Dispose()
 	{
 		foreach (var map in Mapping)
 		{
@@ -51,7 +53,7 @@ public class Entities : IDisposable
 		Mapping.Clear();
 	}
 
-	public static Dictionary<Type, List<object>> Mapping { get; internal set; } = new();
+	public static Dictionary<EntityType, List<object>> Mapping { get; internal set; } = new();
 
 	internal static IEnumerable<Type> _findAssignablesFrom<TBaseType>()
 	{
@@ -75,7 +77,7 @@ public class Entities : IDisposable
 		{
 			foreach (var entry in Mapping)
 			{
-				if (typeof(T).IsAssignableFrom(entry.Key))
+				if (typeof(T).IsAssignableFrom(entry.Key.type))
 				{
 					foreach (T entity in entry.Value)
 					{
@@ -86,7 +88,7 @@ public class Entities : IDisposable
 		}
 		else
 		{
-			if (Mapping.TryGetValue(typeof(T), out var mapping))
+			if (Mapping.TryGetValue(new(typeof(T)), out var mapping))
 			{
 				foreach (var entity in mapping)
 				{
@@ -112,7 +114,7 @@ public class Entities : IDisposable
 		{
 			foreach (var entry in Mapping)
 			{
-				if (typeof(BaseEntity).IsAssignableFrom(entry.Key))
+				if (typeof(BaseEntity).IsAssignableFrom(entry.Key.type))
 				{
 					foreach (var entity in entry.Value)
 					{
@@ -123,7 +125,7 @@ public class Entities : IDisposable
 		}
 		else
 		{
-			if (Mapping.TryGetValue(typeof(BaseEntity), out var mapping))
+			if (Mapping.TryGetValue(new(typeof(BaseEntity)), out var mapping))
 			{
 				foreach (var entity in mapping)
 				{
@@ -154,7 +156,7 @@ public class Entities : IDisposable
 		{
 			foreach (var entry in Mapping)
 			{
-				if (typeof(BaseEntity).IsAssignableFrom(entry.Key))
+				if (typeof(BaseEntity).IsAssignableFrom(entry.Key.type))
 				{
 					foreach (var entity in entry.Value)
 					{
@@ -172,7 +174,7 @@ public class Entities : IDisposable
 		}
 		else
 		{
-			if (Mapping.TryGetValue(typeof(BaseEntity), out var mapping))
+			if (Mapping.TryGetValue(new(typeof(BaseEntity)), out var mapping))
 			{
 				foreach (var entity in mapping)
 				{
@@ -204,7 +206,7 @@ public class Entities : IDisposable
 	/// <param name="entity"></param>
 	public static void AddMap(BaseEntity entity)
 	{
-		if (!Mapping.TryGetValue(entity.GetType(), out var map))
+		if (!Mapping.TryGetValue(new(entity.GetType()), out var map))
 		{
 			return;
 		}
@@ -218,13 +220,48 @@ public class Entities : IDisposable
 	/// <param name="entity"></param>
 	public static void RemoveMap(BaseEntity entity)
 	{
-		if (!Mapping.TryGetValue(entity.GetType(), out var map))
+		if (!Mapping.TryGetValue(new(entity.GetType()), out var map))
 		{
 			return;
 		}
 
 		map.Remove(entity);
 		ComponentCacheBankNonGeneric.OnEntityDestruct(entity);
+	}
+
+	public struct EntityType : IEqualityComparer<EntityType>
+	{
+		public Type type;
+
+		public EntityType(Type type)
+		{
+			this.type = type;
+		}
+
+		public override int GetHashCode()
+		{
+			return (type).GetHashCode();
+		}
+
+		public override bool Equals(object obj)
+		{
+			if (obj is EntityType other)
+			{
+				return other.type == type;
+			}
+
+			return base.Equals(obj);
+		}
+
+		public bool Equals(EntityType x, EntityType y)
+		{
+			return x.type == y.type;
+		}
+
+		public int GetHashCode(EntityType obj)
+		{
+			return (obj.type).GetHashCode();
+		}
 	}
 
 	public struct Map<T> : IDisposable where T : class, new()

@@ -97,9 +97,9 @@ public partial class AdminModule
 						ap => $"{Community.Runtime.Analytics.InformationalVersion}", null);
 
 					var loadedHooks = Community.Runtime.HookManager.LoadedDynamicHooks.Count(x => x.IsInstalled) +
-					                  Community.Runtime.HookManager.LoadedStaticHooks.Count(x => x.IsInstalled);
+									  Community.Runtime.HookManager.LoadedStaticHooks.Count(x => x.IsInstalled);
 					var totalHooks = Community.Runtime.HookManager.LoadedDynamicHooks.Count() +
-					                 Community.Runtime.HookManager.LoadedStaticHooks.Count();
+									 Community.Runtime.HookManager.LoadedStaticHooks.Count();
 					tab.AddInput(0, Singleton.GetPhrase("hooks", ap.Player.UserIDString),
 						ap => $"<b>{loadedHooks:n0}</b> / {totalHooks:n0} loaded", null);
 					tab.AddInput(0, Singleton.GetPhrase("statichooks", ap.Player.UserIDString),
@@ -322,75 +322,76 @@ public partial class AdminModule
 						Community.Runtime.SaveConfig();
 					}, ap => Config.Permissions.PermissionSerialization.ToString());
 				}
-					#if WIN
-					tab.AddToggle(1, Singleton.GetPhrase("consoleinfo", ap.Player.UserIDString), ap =>
+#if WIN
+				tab.AddToggle(1, Singleton.GetPhrase("consoleinfo", ap.Player.UserIDString), ap =>
+				{
+					Config.Misc.ShowConsoleInfo = !Config.Misc.ShowConsoleInfo;
+
+					if (Config.Misc.ShowConsoleInfo)
 					{
-						Config.Misc.ShowConsoleInfo = !Config.Misc.ShowConsoleInfo;
-
-						if (Config.Misc.ShowConsoleInfo)
-						{
-							Community.Runtime.RefreshConsoleInfo();
-						}
-						else
-						{
-							if (ServerConsole.Instance != null && ServerConsole.Instance.input != null)
-							{
-								ServerConsole.Instance.input.statusText = new string[3];
-							}
-						};
-
-						Community.Runtime.SaveConfig();
-					}, ap => Config.Misc.ShowConsoleInfo, Singleton.GetPhrase("consoleinfo_help", ap.Player.UserIDString));
-					#endif
-
-					tab.AddName(1, Singleton.GetPhrase("permissions", ap.Player.UserIDString), TextAnchor.MiddleLeft);
-					tab.AddInput(1, Singleton.GetPhrase("playerdefgroup", ap.Player.UserIDString), ap => Config.Permissions.PlayerDefaultGroup, (ap, args) => { Config.Permissions.PlayerDefaultGroup = args.ToString(string.Empty); if(string.IsNullOrEmpty(Config.Permissions.PlayerDefaultGroup)) Config.Permissions.PlayerDefaultGroup = "default"; Community.Runtime.SaveConfig(); });
-					tab.AddInput(1, Singleton.GetPhrase("admindefgroup", ap.Player.UserIDString), ap => Config.Permissions.AdminDefaultGroup, (ap, args) => { Config.Permissions.AdminDefaultGroup = args.ToString(string.Empty); if(string.IsNullOrEmpty(Config.Permissions.AdminDefaultGroup)) Config.Permissions.AdminDefaultGroup = "admin"; Community.Runtime.SaveConfig(); });
-
-					tab.AddName(1, Singleton.GetPhrase("conditionals", ap.Player.UserIDString), TextAnchor.MiddleLeft);
-
-					for(int i = 0; i < Config.Compiler.ConditionalCompilationSymbols.Count; i++)
-					{
-						var index = i;
-						var symbol = Config.Compiler.ConditionalCompilationSymbols[i];
-
-						tab.AddInputButton(1, string.Empty, 0.075f,
-							new Tab.OptionInput(null, ap => symbol, 0, false,
-								(ap, args) =>
-								{
-									Config.Compiler.ConditionalCompilationSymbols[index] = args.ToString(string.Empty).ToUpper().Trim();
-									Refresh(tab, ap);
-									Community.Runtime.SaveConfig();
-								}),
-							new Tab.OptionButton("X", ap =>
-							{
-								Config.Compiler.ConditionalCompilationSymbols.RemoveAt(index);
-								Refresh(tab, ap);
-								Community.Runtime.SaveConfig();
-							}, ap => Tab.OptionButton.Types.Important));
+						Community.Runtime.RefreshConsoleInfo();
 					}
+					else
+					{
+						if (ServerConsole.Instance != null && ServerConsole.Instance.input != null)
+						{
+							ServerConsole.Instance.input.statusText = new string[3];
+						}
+					};
+
+					Community.Runtime.SaveConfig();
+				}, ap => Config.Misc.ShowConsoleInfo, Singleton.GetPhrase("consoleinfo_help", ap.Player.UserIDString));
+#endif
+
+				tab.AddName(1, Singleton.GetPhrase("permissions", ap.Player.UserIDString), TextAnchor.MiddleLeft);
+				tab.AddInput(1, Singleton.GetPhrase("playerdefgroup", ap.Player.UserIDString), ap => Config.Permissions.PlayerDefaultGroup, (ap, args) => { Config.Permissions.PlayerDefaultGroup = args.ToString(string.Empty); if (string.IsNullOrEmpty(Config.Permissions.PlayerDefaultGroup)) Config.Permissions.PlayerDefaultGroup = "default"; Community.Runtime.SaveConfig(); });
+				tab.AddInput(1, Singleton.GetPhrase("admindefgroup", ap.Player.UserIDString), ap => Config.Permissions.AdminDefaultGroup, (ap, args) => { Config.Permissions.AdminDefaultGroup = args.ToString(string.Empty); if (string.IsNullOrEmpty(Config.Permissions.AdminDefaultGroup)) Config.Permissions.AdminDefaultGroup = "admin"; Community.Runtime.SaveConfig(); });
+				tab.AddInput(1, Singleton.GetPhrase("moderatordefgroup", ap.Player.UserIDString), ap => Config.Permissions.ModeratorDefaultGroup, (ap, args) => { Config.Permissions.ModeratorDefaultGroup = args.ToString(string.Empty); if (string.IsNullOrEmpty(Config.Permissions.ModeratorDefaultGroup)) Config.Permissions.ModeratorDefaultGroup = "moderator"; Community.Runtime.SaveConfig(); });
+
+				tab.AddName(1, Singleton.GetPhrase("conditionals", ap.Player.UserIDString), TextAnchor.MiddleLeft);
+
+				for (int i = 0; i < Config.Compiler.ConditionalCompilationSymbols.Count; i++)
+				{
+					var index = i;
+					var symbol = Config.Compiler.ConditionalCompilationSymbols[i];
 
 					tab.AddInputButton(1, string.Empty, 0.075f,
-						new Tab.OptionInput(null, ap => ap.GetStorage<string>(tab, "conditional"), 0, false,
+						new Tab.OptionInput(null, ap => symbol, 0, false,
 							(ap, args) =>
 							{
-								ap.SetStorage(tab, "conditional", args.ToString(string.Empty).ToUpper().Trim());
-							}),
-						new Tab.OptionButton("+", ap =>
-						{
-							var value = ap.GetStorage<string>(tab, "conditional");
-							if (!string.IsNullOrEmpty(value))
-							{
-								Config.Compiler.ConditionalCompilationSymbols.Add(value);
-								ap.SetStorage(tab, "conditional", string.Empty);
+								Config.Compiler.ConditionalCompilationSymbols[index] = args.ToString(string.Empty).ToUpper().Trim();
 								Refresh(tab, ap);
 								Community.Runtime.SaveConfig();
-							}
-						}, ap => Tab.OptionButton.Types.Selected));
-
-					tab.AddName(1, Singleton.GetPhrase("debugging", ap.Player.UserIDString), TextAnchor.MiddleLeft);
-					tab.AddInput(1, Singleton.GetPhrase("scriptdebugorigin", ap.Player.UserIDString), ap => Config.Debugging.ScriptDebuggingOrigin, (ap, args) => { Config.Debugging.ScriptDebuggingOrigin = args.ToString(string.Empty); Community.Runtime.SaveConfig(); }, Singleton.GetPhrase("scriptdebugorigin_help", ap.Player.UserIDString));
+							}),
+						new Tab.OptionButton("X", ap =>
+						{
+							Config.Compiler.ConditionalCompilationSymbols.RemoveAt(index);
+							Refresh(tab, ap);
+							Community.Runtime.SaveConfig();
+						}, ap => Tab.OptionButton.Types.Important));
 				}
+
+				tab.AddInputButton(1, string.Empty, 0.075f,
+					new Tab.OptionInput(null, ap => ap.GetStorage<string>(tab, "conditional"), 0, false,
+						(ap, args) =>
+						{
+							ap.SetStorage(tab, "conditional", args.ToString(string.Empty).ToUpper().Trim());
+						}),
+					new Tab.OptionButton("+", ap =>
+					{
+						var value = ap.GetStorage<string>(tab, "conditional");
+						if (!string.IsNullOrEmpty(value))
+						{
+							Config.Compiler.ConditionalCompilationSymbols.Add(value);
+							ap.SetStorage(tab, "conditional", string.Empty);
+							Refresh(tab, ap);
+							Community.Runtime.SaveConfig();
+						}
+					}, ap => Tab.OptionButton.Types.Selected));
+
+				tab.AddName(1, Singleton.GetPhrase("debugging", ap.Player.UserIDString), TextAnchor.MiddleLeft);
+				tab.AddInput(1, Singleton.GetPhrase("scriptdebugorigin", ap.Player.UserIDString), ap => Config.Debugging.ScriptDebuggingOrigin, (ap, args) => { Config.Debugging.ScriptDebuggingOrigin = args.ToString(string.Empty); Community.Runtime.SaveConfig(); }, Singleton.GetPhrase("scriptdebugorigin_help", ap.Player.UserIDString));
+			}
 		}
 	}
 }

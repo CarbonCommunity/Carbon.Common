@@ -5,7 +5,7 @@
 /// </summary>
 public static class ComponentCacheBankNonGeneric
 {
-	public static List<IComponentBank> All = new();
+	public static List<IComponentBank> All = [];
 
 	public static T AddComponentCache<T>(this GameObject go) where T : MonoBehaviour
 	{
@@ -39,6 +39,9 @@ public static class ComponentCacheBankNonGeneric
 			return;
 		}
 
-		All.ForEach(cache => cache.Remove(entity.gameObject));
+		foreach(var element in All)
+		{
+			element.Remove(entity.gameObject);
+		}
 	}
 }
