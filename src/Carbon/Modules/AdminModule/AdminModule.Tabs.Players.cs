@@ -382,7 +382,7 @@ public partial class AdminModule
 							0, true, null),
 						new Tab.OptionButton("X", TextAnchor.MiddleCenter, ap =>
 						{
-							player.inventory.crafting.CancelTask(craft.taskUID);
+							player.inventory.crafting.CancelTask(craft.taskUID, true);
 							ShowInfo(column, tab, ap, player);
 						}, _ => Tab.OptionButton.Types.Important));
 				}
