@@ -759,6 +759,8 @@ public partial class AdminModule
 			public virtual float LogoRatio { get; }
 			public virtual string Hero { get; }
 
+			public virtual bool CanRefresh { get; } = true;
+
 			public virtual string BarInfo { get; }
 
 			public IEnumerable<Plugin> PriceData;
@@ -1611,7 +1613,8 @@ public partial class AdminModule
 							DownloadCount = (plugin["downloads"]?.ToString().ToInt()).GetValueOrDefault(),
 							Date = plugin["published_at"]?.ToString(),
 							UpdateDate = plugin["updated_at"]?.ToString(),
-							Tags = plugin["tags_all"]?.ToString().Split(',')
+							Tags = plugin["tags_all"]?.ToString().Split(','),
+							Rating = -1
 						};
 
 						if (!string.IsNullOrEmpty(p.Description) && !p.Description.EndsWith(".")) p.Description += ".";
@@ -1697,6 +1700,8 @@ public partial class AdminModule
 			public override string DownloadEndpoint => string.Empty;
 			public override string BarInfo => $"{FetchedPlugins.Count:n0} loaded";
 
+			public override bool CanRefresh => false;
+
 			internal string[] _defaultTags = ["carbon", "oxide"];
 
 			public override void CheckMetadata(string id, Action callback)
@@ -1748,7 +1753,8 @@ public partial class AdminModule
 										Tags = _defaultTags,
 										File = plugin.FileName,
 										Id = plugin.Name,
-										UpdateDate = DateTime.UtcNow.ToString()
+										UpdateDate = DateTime.UtcNow.ToString(),
+										Rating = -1
 									};
 								}
 
@@ -1870,7 +1876,13 @@ public partial class AdminModule
 			}
 
 			[ProtoIgnore]
-			public bool IsValid => !string.IsNullOrEmpty(Id);
+			public readonly bool HasRating => Rating != -1;
+
+			[ProtoIgnore]
+			public readonly bool HasPrice => OriginalPrice != "Null";
+
+			[ProtoIgnore]
+			public readonly bool IsValid => !string.IsNullOrEmpty(Id);
 
 			public bool HasInvalidImage()
 			{
@@ -1892,7 +1904,7 @@ public partial class AdminModule
 			}
 			public bool IsPaid()
 			{
-				return OriginalPrice != "FREE";
+				return OriginalPrice != "FREE" && OriginalPrice != "Null";
 			}
 			public bool IsUpToDate()
 			{

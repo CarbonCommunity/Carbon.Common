@@ -238,6 +238,8 @@ public class BaseHookable
 
 			instance.Hooks.Add(CachedHook.Make(method.Name, id, this, method));
 			instance.RefreshPrimary();
+
+			InternalHooks.Handle(method.Name, true);
 		}
 
 		var methodAttributes = HookableType.GetMethods(flag | BindingFlags.Public);
@@ -246,7 +248,10 @@ public class BaseHookable
 		{
 			var methodAttribute = method.GetCustomAttribute<HookMethodAttribute>();
 
-			if (methodAttribute == null) continue;
+			if (methodAttribute == null)
+			{
+				continue;
+			}
 
 			var id = HookStringPool.GetOrAdd(string.IsNullOrEmpty(methodAttribute.Name) ? method.Name : methodAttribute.Name);
 
@@ -280,22 +285,34 @@ public class BaseHookable
 
 	public void Subscribe(string hook)
 	{
-		if (IgnoredHooks == null) return;
+		if (IgnoredHooks == null)
+		{
+			return;
+		}
 
 		var hash = HookStringPool.GetOrAdd(hook);
 
-		if (!IgnoredHooks.Contains(hash)) return;
+		if (!IgnoredHooks.Contains(hash))
+		{
+			return;
+		}
 
 		Community.Runtime.HookManager.Subscribe(hook, Name);
 		IgnoredHooks.Remove(hash);
 	}
 	public void Unsubscribe(string hook)
 	{
-		if (IgnoredHooks == null) return;
+		if (IgnoredHooks == null)
+		{
+			return;
+		}
 
 		var hash = HookStringPool.GetOrAdd(hook);
 
-		if (IgnoredHooks.Contains(hash)) return;
+		if (IgnoredHooks.Contains(hash))
+		{
+			return;
+		}
 
 		Community.Runtime.HookManager.Unsubscribe(hook, Name);
 		IgnoredHooks.Add(hash);

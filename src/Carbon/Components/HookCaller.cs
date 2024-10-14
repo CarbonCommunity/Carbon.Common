@@ -1364,7 +1364,7 @@ public static class HookCaller
 
 	public static void GenerateInternalCallHook(CompilationUnitSyntax input, out CompilationUnitSyntax output, out MethodDeclarationSyntax generatedMethod, out bool isPartial, bool baseCall = false, string baseName = "plugin", List<ClassDeclarationSyntax> classList = null)
 	{
-		var methodContents = $"\n\tvar result = {(baseCall ? "base.InternalCallHook(hook, args)" : "(object)null")};\n\tvar length = args?.Length;\ntry {{ switch(hook) {{ ";
+		var methodContents = $"\n\tvar length = args?.Length;\ntry {{ switch(hook) {{ ";
 
 		var @namespace = (BaseNamespaceDeclarationSyntax)null;
 		var namespaceIndex = 0;
@@ -1549,8 +1549,8 @@ public static class HookCaller
 				}
 
 				methodContents += $"{(string.IsNullOrEmpty(conditional) ? string.Empty : $"\n#if {conditional}")}\t\t\t\n\t\t\t\t" +
-					$"{varText}{(string.IsNullOrEmpty(parameterText) ? string.Empty : $"if({parameterText}) {{")} {(method.ReturnType.ToString() != "void" ? $"var result{overrideCount} = " : string.Empty)}" +
-					$"{methodName}({string.Join(", ", parameters)}); {refSets} {(method.ReturnType.ToString() != "void" ? $"if(result == null) {{ result = result{overrideCount}; }}" : string.Empty)} " +
+					$"{varText}{(string.IsNullOrEmpty(parameterText) ? string.Empty : $"if({parameterText}) {{")} {(method.ReturnType.ToString() != "void" ? $"return " : string.Empty)}" +
+					$"{methodName}({string.Join(", ", parameters)}); {refSets} " +
 					$"{(string.IsNullOrEmpty(parameterText) ? string.Empty : $"}}")}{(string.IsNullOrEmpty(conditional) ? string.Empty : $"\n#endif")}\n";
 
 				Array.Clear(parameters, 0, parameters.Length);
@@ -1564,7 +1564,8 @@ public static class HookCaller
 			methodContents += "\t\t\t\tbreak;\n\t\t\t}";
 		}
 
-		methodContents += "}\n}\ncatch (System.Exception ex)\n{\nCarbon.Logger.Error($\"Failed to call internal hook '{Carbon.Pooling.HookStringPool.GetOrAdd(hook)}' on " + baseName + " '{" + (baseName == "plugin" ? "base.Name" : "this.Name") + "} v{ " + (baseName == "plugin" ? "base.Version" : "this.Version") + "}' [{hook}]\", ex);\n}\nreturn result;";
+		methodContents += "}\n}\ncatch (System.Exception ex)\n{\nCarbon.Logger.Error($\"Failed to call internal hook '{Carbon.Pooling.HookStringPool.GetOrAdd(hook)}' on " + baseName + " '{" + (baseName == "plugin" ? "base.Name" : "this.Name") + "} v{ " + (baseName == "plugin" ? "base.Version" : "this.Version") + "}' [{hook}]\", ex);\n}\n" +
+			$"return {(baseCall ? "base.InternalCallHook(hook, args)" : "(object)null")};";
 
 		generatedMethod = SyntaxFactory.MethodDeclaration(
 			SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword).WithTrailingTrivia(SyntaxFactory.Space)),

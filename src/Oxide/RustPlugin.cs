@@ -66,16 +66,6 @@ public class RustPlugin : Plugin
 		base.Dispose();
 	}
 
-	public override bool IInit()
-	{
-		if (!base.IInit())
-		{
-			return false;
-		}
-
-		return true;
-	}
-
 	public static T Singleton<T>()
 	{
 		foreach (var mod in ModLoader.Packages)
