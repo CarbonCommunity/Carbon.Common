@@ -5,11 +5,11 @@ namespace Carbon.Extensions;
 
 public static class ClientEx
 {
-	public static ICarbonClient ToCarbonClient(this BasePlayer player)
+	public static ICarbonConnection ToCarbonClient(this BasePlayer player)
 	{
 		return Community.Runtime.CarbonClient.Get(player);
 	}
-	public static ICarbonClient ToCarbonClient(this Network.Connection connection)
+	public static ICarbonConnection ToCarbonClient(this Network.Connection connection)
 	{
 		return Community.Runtime.CarbonClient.Get(connection);
 	}
