@@ -41,12 +41,17 @@ public partial class CorePlugin
 			return Cache.True;
 		}
 
-		Community.Runtime.CarbonClient.OnConnected(connection);
+		if (Community.Runtime.ClientConfig.Enabled)
+		{
+			Community.Runtime.CarbonClient.OnConnected(connection);
+		}
 
 		// OnUserApprove
 		if (HookCaller.CallStaticHook(2666432541, connection) != null)
+		{
 			// OnUserApproved
 			return HookCaller.CallStaticHook(1330253375, username, text, obj);
+		}
 
 		return null;
 	}
@@ -67,7 +72,7 @@ public partial class CorePlugin
 		{
 			var newPosition = player.transform.position;
 
-			if (UnityEngine.Physics.Raycast(newPosition, Vector3.down, out var hit, float.MaxValue, ~0, queryTriggerInteraction: QueryTriggerInteraction.Ignore))
+			if (Physics.Raycast(newPosition, Vector3.down, out var hit, float.MaxValue, ~0, queryTriggerInteraction: QueryTriggerInteraction.Ignore))
 			{
 				newPosition.y = hit.point.y;
 
@@ -88,7 +93,10 @@ public partial class CorePlugin
 			}
 		}
 
-		Community.Runtime.CarbonClient.OnDisconnected(player.Connection);
+		if (Community.Runtime.ClientConfig.Enabled)
+		{
+			Community.Runtime.CarbonClient.OnDisconnected(player.Connection);
+		}
 	}
 	private void OnPlayerKicked(BasePlayer basePlayer, string reason)
 	{
