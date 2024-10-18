@@ -41,6 +41,8 @@ public partial class CorePlugin
 			return Cache.True;
 		}
 
+		Community.Runtime.CarbonClient.OnConnected(connection);
+
 		// OnUserApprove
 		if (HookCaller.CallStaticHook(2666432541, connection) != null)
 			// OnUserApproved
@@ -56,6 +58,38 @@ public partial class CorePlugin
 		return null;
 	}
 
+	private void OnPlayerDisconnected(BasePlayer player, string reason)
+	{
+		// OnUserDisconnected
+		HookCaller.CallStaticHook(649612044, player?.AsIPlayer(), reason);
+
+		if (player.IsAdmin && !player.IsOnGround())
+		{
+			var newPosition = player.transform.position;
+
+			if (UnityEngine.Physics.Raycast(newPosition, Vector3.down, out var hit, float.MaxValue, ~0, queryTriggerInteraction: QueryTriggerInteraction.Ignore))
+			{
+				newPosition.y = hit.point.y;
+
+				if (Vector3.Distance(player.transform.position, newPosition) > 3.5f)
+				{
+					player.SetServerFall(false);
+					player.Teleport(newPosition);
+					player.estimatedVelocity = Vector3.zero;
+					NextFrame(() =>
+					{
+						if (player != null)
+						{
+							player.SetServerFall(true);
+						}
+					});
+					Logger.Warn($"Moved admin player {player.net.connection} on the object underneath so it doesn't die from fall damage.");
+				}
+			}
+		}
+
+		Community.Runtime.CarbonClient.OnDisconnected(player.Connection);
+	}
 	private void OnPlayerKicked(BasePlayer basePlayer, string reason)
 	{
 		// OnUserKicked
