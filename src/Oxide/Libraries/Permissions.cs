@@ -413,13 +413,25 @@ public class Permission : Library
 
 		if (!string.IsNullOrEmpty(Community.Runtime.Config.Permissions.AdminDefaultGroup))
 		{
-			if (player.IsAdmin || (player.net.connection != null && player.net.connection.authLevel >= 2))
+			if (player.IsAdmin || (player.net.connection != null && player.net.connection.authLevel == 2))
 			{
 				AddUserGroup(player.UserIDString, Community.Runtime.Config.Permissions.AdminDefaultGroup);
 			}
 			else if (UserHasGroup(player.UserIDString, Community.Runtime.Config.Permissions.AdminDefaultGroup))
 			{
 				RemoveUserGroup(player.UserIDString, Community.Runtime.Config.Permissions.AdminDefaultGroup);
+			}
+		}
+
+		if (!string.IsNullOrEmpty(Community.Runtime.Config.Permissions.ModeratorDefaultGroup))
+		{
+			if (player.IsAdmin || (player.net.connection != null && player.net.connection.authLevel == 1))
+			{
+				AddUserGroup(player.UserIDString, Community.Runtime.Config.Permissions.ModeratorDefaultGroup);
+			}
+			else if (UserHasGroup(player.UserIDString, Community.Runtime.Config.Permissions.ModeratorDefaultGroup))
+			{
+				RemoveUserGroup(player.UserIDString, Community.Runtime.Config.Permissions.ModeratorDefaultGroup);
 			}
 		}
 

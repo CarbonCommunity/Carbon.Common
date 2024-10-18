@@ -192,9 +192,12 @@ public partial class CorePlugin
 					Pool.FreeUnmanaged(ref pluginReferences);
 					Pool.FreeUnmanaged(ref requires);
 
-					Community.Runtime.Events.Trigger(CarbonEvent.PluginPreload, new CarbonEventArgs(newPlugin));
+					var eventArg = Pool.Get<CarbonEventArgs>();
+					eventArg.Init(newPlugin);
+					Community.Runtime.Events.Trigger(CarbonEvent.PluginPreload, eventArg);
+					Pool.Free(ref eventArg);
 
-					Plugin.InternalApplyAllPluginReferences();
+					InternalApplyAllPluginReferences();
 
 					if (Community.AllProcessorsFinalized)
 					{
@@ -290,9 +293,12 @@ public partial class CorePlugin
 							Pool.FreeUnmanaged(ref pluginReferences);
 							Pool.FreeUnmanaged(ref requires);
 
-							Community.Runtime.Events.Trigger(CarbonEvent.PluginPreload, new CarbonEventArgs(newPlugin));
+							var eventArg = Pool.Get<CarbonEventArgs>();
+							eventArg.Init(newPlugin);
+							Community.Runtime.Events.Trigger(CarbonEvent.PluginPreload, eventArg);
+							Pool.Free(ref eventArg);
 
-							Plugin.InternalApplyAllPluginReferences();
+							InternalApplyAllPluginReferences();
 
 							if (Community.AllProcessorsFinalized)
 							{
