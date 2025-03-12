@@ -2271,7 +2271,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 	#endregion
 
-	internal static void StartSpectating(BasePlayer player, BaseEntity target)
+	public static void StartSpectating(BasePlayer player, BaseEntity target)
 	{
 		if (!string.IsNullOrEmpty(player.spectateFilter))
 		{
@@ -2298,43 +2298,11 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		player.SendNetworkUpdate();
 		player.spectateFilter = targetPlayer != null ? targetPlayer.UserIDString : target.net.ID.ToString();
 
-		using var cui = new CUI(Singleton.Handler);
-		var container = cui.CreateContainer(SpectatePanelId, color: Cache.CUI.BlankColor, needsCursor: targetPlayer != null && targetPlayer.IsSleeping(), parent: ClientPanels.Overlay, destroyUi: SpectatePanelId);
-		var panel = cui.CreatePanel(container, SpectatePanelId, Cache.CUI.BlankColor);
-
-		if (Singleton.ConfigInstance.SpectatingInfoOverlay)
-		{
-			var item = target.GetItem();
-			cui.CreateText(container, panel,
-				color: "1 1 1 0.2",
-				text: $"YOU'RE SPECTATING ".SpacedString(1, false) +
-				      $"<b>{(targetPlayer == null ? item != null ? item.info.displayName.english.ToUpper().SpacedString(1) : target.ShortPrefabName.ToUpper().SpacedString(1) : targetPlayer.displayName.ToUpper().SpacedString(1))}</b>",
-				15);
-		}
-
-		if (targetPlayer != null)
-		{
-			cui.CreateProtectedButton(container, panel,
-				color: "0.3 0.3 0.3 0.9", textColor: "0.7 0.7 0.7 1",
-				text: "<", 10,
-				xMin: 0.425f, xMax: 0.445f, yMin: 0.15f, yMax: 0.19f, command: "carbongg.skipspectate -1");
-
-			cui.CreateProtectedButton(container, panel,
-				color: "0.3 0.3 0.3 0.9", textColor: "0.7 0.7 0.7 1",
-				text: ">", 10,
-				xMin: 0.555f, xMax: 0.575f, yMin: 0.15f, yMax: 0.19f, command: "carbongg.skipspectate 1");
-		}
-
-		cui.CreateProtectedButton(container, panel,
-			color: "0.3 0.3 0.3 0.9", textColor: "0.7 0.7 0.7 1",
-			text: "END SPECTATE".SpacedString(1), 10,
-			xMin: 0.45f, xMax: 0.55f, yMin: 0.15f, yMax: 0.19f, command: "carbongg.endspectate");
-
-		cui.Send(container, player);
+		StartSpectating_CUI(player, target);
 
 		Community.Runtime.Core.NextTick(() => Singleton.Close(player));
 	}
-	internal static void StopSpectating(BasePlayer player, bool clearUi = true)
+	public static void StopSpectating(BasePlayer player, bool clearUi = true)
 	{
 		if (clearUi)
 		{
@@ -2375,7 +2343,46 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		}
 	}
 
-	internal static void OpenPlayerContainer(PlayerSession ap, BasePlayer player, Tab tab)
+	public static void StartSpectating_CUI(BasePlayer player, BaseEntity target)
+	{
+		var targetPlayer = target as BasePlayer;
+
+		using var cui = new CUI(Singleton.Handler);
+		var container = cui.CreateContainer(SpectatePanelId, color: Cache.CUI.BlankColor, needsCursor: targetPlayer != null && targetPlayer.IsSleeping(), parent: ClientPanels.Overlay, destroyUi: SpectatePanelId);
+		var panel = cui.CreatePanel(container, SpectatePanelId, Cache.CUI.BlankColor);
+
+		if (Singleton.ConfigInstance.SpectatingInfoOverlay)
+		{
+			var item = target.GetItem();
+			cui.CreateText(container, panel,
+				color: "1 1 1 0.2",
+				text: $"YOU'RE SPECTATING ".SpacedString(1, false) +
+				      $"<b>{(targetPlayer == null ? item != null ? item.info.displayName.english.ToUpper().SpacedString(1) : target.ShortPrefabName.ToUpper().SpacedString(1) : targetPlayer.displayName.ToUpper().SpacedString(1))}</b>",
+				15);
+		}
+
+		if (targetPlayer != null)
+		{
+			cui.CreateProtectedButton(container, panel,
+				color: "0.3 0.3 0.3 0.9", textColor: "0.7 0.7 0.7 1",
+				text: "<", 10,
+				xMin: 0.425f, xMax: 0.445f, yMin: 0.15f, yMax: 0.19f, command: "carbongg.skipspectate -1");
+
+			cui.CreateProtectedButton(container, panel,
+				color: "0.3 0.3 0.3 0.9", textColor: "0.7 0.7 0.7 1",
+				text: ">", 10,
+				xMin: 0.555f, xMax: 0.575f, yMin: 0.15f, yMax: 0.19f, command: "carbongg.skipspectate 1");
+		}
+
+		cui.CreateProtectedButton(container, panel,
+			color: "0.3 0.3 0.3 0.9", textColor: "0.7 0.7 0.7 1",
+			text: "END SPECTATE".SpacedString(1), 10,
+			xMin: 0.45f, xMax: 0.55f, yMin: 0.15f, yMax: 0.19f, command: "carbongg.endspectate");
+
+		cui.Send(container, player);
+	}
+
+	public static void OpenPlayerContainer(PlayerSession ap, BasePlayer player, Tab tab)
 	{
 		Singleton.Subscribe("OnEntityVisibilityCheck");
 		Singleton.Subscribe("OnEntityDistanceCheck");
@@ -2403,7 +2410,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			ap.Player.ClientRPC(RpcTarget.Player("RPC_OpenLootPanel", ap.Player), "player_corpse");
 		});
 	}
-	internal static void OpenContainer(PlayerSession ap, ItemContainer container, Tab tab)
+	public static void OpenContainer(PlayerSession ap, ItemContainer container, Tab tab)
 	{
 		EntitiesTab.LastContainerLooter = null;
 		ap.ClearStorage(tab, "lootedent");

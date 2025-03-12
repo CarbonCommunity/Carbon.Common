@@ -69,6 +69,30 @@ public partial class AdminModule
 	}
 
 	[Conditional("!MINIMAL")]
+	private void OnPlayerSleep(BasePlayer player)
+	{
+		foreach (var spectator in BasePlayer.activePlayerList)
+		{
+			if (spectator.IsSpectating() && spectator.spectateFilter == player.UserIDString)
+			{
+				Community.Runtime.Core.NextTick(() => StartSpectating_CUI(spectator, player));
+			}
+		}
+	}
+
+	[Conditional("!MINIMAL")]
+	private void OnPlayerSleepEnded(BasePlayer player)
+	{
+		foreach (var spectator in BasePlayer.activePlayerList)
+		{
+			if (spectator.IsSpectating() && spectator.spectateFilter == player.UserIDString)
+			{
+				Community.Runtime.Core.NextTick(() => StartSpectating_CUI(spectator, player));
+			}
+		}
+	}
+
+	[Conditional("!MINIMAL")]
 	private object CanAcceptItem(ItemContainer container, Item item, int targetPos)
 	{
 		var owner = container.playerOwner;
