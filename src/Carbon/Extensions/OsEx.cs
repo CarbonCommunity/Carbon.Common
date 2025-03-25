@@ -91,6 +91,14 @@ public class OsEx
 
 			return null;
 		}
+		
+		public static void Append(string file, string content)
+		{
+			if (!string.IsNullOrEmpty(file))
+			{
+				System.IO.File.AppendAllText(file, content);
+			}
+		}
 
 		public static readonly string EMPTY_STRING = string.Empty;
 		public static readonly string[] EMPTY_STRARRAY = new string[0];
