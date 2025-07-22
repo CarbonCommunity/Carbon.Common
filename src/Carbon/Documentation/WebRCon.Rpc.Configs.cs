@@ -39,7 +39,9 @@ public static partial class WebRCon
 
 		var configsFolder = Defines.GetConfigsFolder();
 
-		// todo prevent path traversal
+		if (!IsPathSave(configsFolder, fileName))
+			return Response(new RConError(RConErrorEnum.InvalidArgs, "Invalid path arg"));
+
 		var filePath = Path.Combine(configsFolder, fileName);
 
 		if (!File.Exists(filePath))
@@ -61,7 +63,9 @@ public static partial class WebRCon
 
 		var configsFolder = Defines.GetConfigsFolder();
 
-		// todo prevent path traversal
+		if (!IsPathSave(configsFolder, fileName))
+			return Response(new RConError(RConErrorEnum.InvalidArgs, "Invalid path arg"));
+
 		var filePath = Path.Combine(configsFolder, fileName);
 
 		if (!File.Exists(filePath))
@@ -79,7 +83,6 @@ public static partial class WebRCon
 		return Response(data);
 	}
 
-
 	[DocsRpc]
 	[UsedImplicitly]
 	private static DocsRpcResponse SetConfigContent(ConsoleSystem.Arg arg)
@@ -90,6 +93,9 @@ public static partial class WebRCon
 			return Response(new RConError(RConErrorEnum.InvalidArgs, "Invalid args"));
 
 		var configsFolder = Defines.GetConfigsFolder();
+
+		if (!IsPathSave(configsFolder, fileName))
+			return Response(new RConError(RConErrorEnum.InvalidArgs, "Invalid path arg"));
 
 		var filePath = Path.Combine(configsFolder, fileName);
 
@@ -106,6 +112,32 @@ public static partial class WebRCon
 		File.WriteAllText(filePath, data);
 
 		return Response(Ok);
+	}
+
+	private static bool IsPathSave(string basePath, string secondPath)
+	{
+		// prevents `../some.json`, `/root/some`
+		try
+		{
+			var normalizedBasePath = Path.GetFullPath(basePath).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+			var combinedPath = Path.Combine(normalizedBasePath, secondPath);
+			var resolvedPath = Path.GetFullPath(combinedPath);
+			if (string.IsNullOrEmpty(resolvedPath))
+				return false;
+
+			if (resolvedPath.StartsWith(normalizedBasePath + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+				return true;
+
+			if (resolvedPath.StartsWith(normalizedBasePath + Path.AltDirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+				return true;
+		}
+		// other errors will throw, as we can't know whether it is intentional error or ~system one
+		catch (ArgumentException)
+		{
+			return false;
+		}
+
+		return false;
 	}
 
 	private struct RConFileInfo
