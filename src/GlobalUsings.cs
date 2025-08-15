@@ -9,16 +9,6 @@ global using Carbon.Oxide;
 global using Carbon.Plugins;
 global using Carbon.Pooling;
 
-global using Oxide.Core;
-global using Oxide.Plugins;
-global using Oxide.Core.Libraries;
-global using Oxide.Core.Libraries.Covalence;
-global using Oxide.Core.Configuration;
-global using Oxide.Core.Database;
-global using Oxide.Core.Plugins;
-global using Oxide.Game.Rust.Libraries;
-global using Oxide.Game.Rust.Libraries.Covalence;
-
 global using System;
 global using System.IO;
 global using System.Collections.Generic;
