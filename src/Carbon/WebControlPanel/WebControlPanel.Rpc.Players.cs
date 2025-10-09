@@ -1,4 +1,6 @@
-﻿namespace Carbon;
+﻿using Facepunch;
+
+namespace Carbon;
 
 public static partial class WebControlPanel
 {
@@ -13,6 +15,21 @@ public static partial class WebControlPanel
 		{
 			new PlayerInfo(BasePlayer.activePlayerList[i]).Serialize(write, !canSeeIps);
 		}
+		using var sleepers = Pool.Get<PooledList<BasePlayer>>();
+		for (int i = 0; i < BasePlayer.sleepingPlayerList.Count; i++)
+		{
+			var sleeper = BasePlayer.sleepingPlayerList[i];
+			if (sleeper.IsConnected)
+			{
+				continue;
+			}
+			sleepers.Add(sleeper);
+		}
+		write.WriteObject(sleepers.Count);
+		for (int i = 0; i < sleepers.Count; i++)
+		{
+			new PlayerInfo(sleepers[i]).Serialize(write, !canSeeIps);
+		}
 		SendRpcResponse(read.Connection, write);
 	}
 
@@ -22,13 +39,14 @@ public static partial class WebControlPanel
 		private ulong ownerSteamId = player.OwnerID;
 		private string displayName = player.displayName;
 		private int ping = player.IsConnected ? Network.Net.sv.GetAveragePing(player.Connection) : -1;
-		private string address = player.Connection.ipaddress;
+		private string address = player.IsConnected ? player.Connection.ipaddress : string.Empty;
 		private ulong entityId = player.net.ID.Value;
 		private int connectedSeconds = player.secondsConnected;
 		private float violationLevel = player.violationLevel;
 		private int currentLevel = 0;
 		private int unspentXp = 0;
 		private float health = player.health;
+		private TeamInfo team = new(player.Team);
 
 		public void Serialize(BridgeWrite write, bool excludeIps)
 		{
@@ -43,6 +61,28 @@ public static partial class WebControlPanel
 			write.WriteObject(currentLevel);
 			write.WriteObject(unspentXp);
 			write.WriteObject(health);
+			team.Serialize(write);
+		}
+	}
+
+	public struct TeamInfo(RelationshipManager.PlayerTeam team)
+	{
+		private bool hasTeam = team != null;
+		private List<ulong> members = team?.members;
+		private ulong leader = team?.teamLeader ?? 0;
+
+		public void Serialize(BridgeWrite write)
+		{
+			write.WriteObject(hasTeam);
+			if (hasTeam)
+			{
+				write.WriteObject(leader);
+				write.WriteObject(members.Count);
+				for (int i = 0; i < members.Count; i++)
+				{
+					write.WriteObject(members[i]);
+				}
+			}
 		}
 	}
 }
