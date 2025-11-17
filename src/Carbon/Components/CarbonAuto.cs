@@ -167,8 +167,10 @@ public class CarbonAuto : API.Abstracts.CarbonAuto
 				var lines = OsEx.File.ReadTextLines(file);
 				var option = ConsoleSystem.Option.Server;
 
-				Logger.Log($"Initialized Carbon Auto ({lines.Length:n0} {lines.Length.Plural("variable", "variables")})");
-
+				if (!Community.Runtime.Config.Logging.ReducedLogging)
+				{
+					Logger.Log($"Initialized Carbon Auto ({lines.Length:n0} {lines.Length.Plural("variable", "variables")})");
+				}
 
 				foreach (var line in lines)
 				{
@@ -181,7 +183,11 @@ public class CarbonAuto : API.Abstracts.CarbonAuto
 						if (AutoCache.TryGetValue(convar, out var auto))
 						{
 							auto.SetValue(conval);
-							Logger.Warn($" {convar} \"{auto.GetValue()}\"{(auto.Variable.ForceModded ? " [modded]" : string.Empty)}");
+
+							if (!Community.Runtime.Config.Logging.ReducedLogging)
+							{
+								Logger.Warn($" {convar} \"{auto.GetValue()}\"{(auto.Variable.ForceModded ? " [modded]" : string.Empty)}");
+							}
 						}
 					}
 					catch (Exception ex)

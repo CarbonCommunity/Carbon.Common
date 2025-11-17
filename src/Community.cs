@@ -14,8 +14,11 @@ public partial class Community
 		{
 			Events.Subscribe(CarbonEvent.CarbonStartup, args =>
 			{
-				Logger.Log($"Carbon fingerprint: {Analytics.ClientID}");
-				Logger.Log($"System fingerprint: {Analytics.SystemID}");
+				if (!Config.Logging.ReducedLogging)
+				{
+					Logger.Log($"Carbon fingerprint: {Analytics.ClientID}");
+					Logger.Log($"System fingerprint: {Analytics.SystemID}");
+				}
 				Analytics.SessionStart();
 			});
 

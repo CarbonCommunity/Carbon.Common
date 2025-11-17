@@ -121,7 +121,11 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 			}
 		}
 
-		Puts("Initialized.");
+		if (!Community.Runtime.Config.Logging.ReducedLogging)
+		{
+			Puts("Initialized.");
+		}
+
 		HasInitialized = true;
 
 		return true;
@@ -341,9 +345,12 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 		{
 			SubscribeAll();
 
-			if (Hooks.Count > 0)
+			if (!Community.Runtime.Config.Logging.ReducedLogging)
 			{
-				Puts($"Subscribed to {Hooks.Count:n0} {Hooks.Count.Plural("hook", "hooks")}.");
+				if (Hooks.Count > 0)
+            	{
+            		Puts($"Subscribed to {Hooks.Count:n0} {Hooks.Count.Plural("hook", "hooks")}.");
+            	}
 			}
 		}
 
@@ -383,10 +390,14 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 		UnsubscribeAll();
 		Permissions?.UnregisterPermissions(this);
 
-		if (Hooks.Count > 0)
+		if (!Community.Runtime.Config.Logging.ReducedLogging)
 		{
-			Puts($"Unsubscribed from {Hooks.Count:n0} {Hooks.Count.Plural("hook", "hooks")}.");
+			if (Hooks.Count > 0)
+            {
+            	Puts($"Unsubscribed from {Hooks.Count:n0} {Hooks.Count.Plural("hook", "hooks")}.");
+            }
 		}
+
 		UnapplyOrderedPatches(AutoPatchAttribute.Orders.Delayed, false);
 		UnapplyOrderedPatches(AutoPatchAttribute.Orders.AfterOnServerInitialized, false);
 		UnapplyOrderedPatches(AutoPatchAttribute.Orders.AfterPluginLoad, false);

@@ -24,7 +24,10 @@ public class Defines
 			Logger.Warn($"Failed clearing up the temporary folder. ({ex.Message})\n{ex.StackTrace}");
 		}
 
-		Logger.Log("Loaded folders");
+		if (!Community.Runtime.Config.Logging.ReducedLogging)
+		{
+			Logger.Log("Loaded folders");
+		}
 	}
 
 	internal static string _customRootFolder;

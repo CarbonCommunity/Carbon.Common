@@ -9,6 +9,22 @@ public static partial class ModLoader
 			return this.FirstOrDefault(x => x.Name.Equals(name, StringComparison.InvariantCulture));
 		}
 
+		public int FindPackageIndex(string name)
+		{
+			return this.FindIndex(x => x.Name.Equals(name, StringComparison.InvariantCulture));
+		}
+
+		public bool RemovePackage(string name)
+		{
+			var index = FindPackageIndex(name);
+			if (index == -1)
+			{
+				return false;
+			}
+			RemoveAt(index);
+			return true;
+		}
+
 		public RustPlugin FindPlugin(string name)
 		{
 			return this.Select(package => package.FindPlugin(name)).FirstOrDefault(plugin => plugin != null);
