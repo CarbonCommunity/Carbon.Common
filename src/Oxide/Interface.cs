@@ -10,13 +10,16 @@ public class Interface
 	public static void Initialize()
 	{
 		Oxide.Load();
-		Logger.Log($"  Instance Directory: {Oxide.InstanceDirectory}");
-		Logger.Log($"  Root Directory: {Oxide.RootDirectory}");
-		Logger.Log($"  Config Directory: {Oxide.ConfigDirectory}");
-		Logger.Log($"  Data Directory: {Oxide.DataDirectory}");
-		Logger.Log($"  Lang Directory: {Oxide.LangDirectory}");
-		Logger.Log($"  Log Directory: {Oxide.LogDirectory}");
-		Logger.Log($"  Plugin Directory: {Oxide.PluginDirectory}");
+		if (!Community.Runtime.Config.Logging.ReducedLogging)
+		{
+			Logger.Log($"  Instance Directory: {Oxide.InstanceDirectory}");
+			Logger.Log($"  Root Directory: {Oxide.RootDirectory}");
+			Logger.Log($"  Config Directory: {Oxide.ConfigDirectory}");
+			Logger.Log($"  Data Directory: {Oxide.DataDirectory}");
+			Logger.Log($"  Lang Directory: {Oxide.LangDirectory}");
+			Logger.Log($"  Log Directory: {Oxide.LogDirectory}");
+			Logger.Log($"  Plugin Directory: {Oxide.PluginDirectory}");
+		}
 	}
 
 	public static OxideMod GetMod() => Oxide;

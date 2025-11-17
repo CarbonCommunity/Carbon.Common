@@ -136,7 +136,7 @@ public partial class CorePlugin
 		return null;
 	}
 
-	[AutoPatch, HarmonyPatch]
+	[AutoPatch(Silent = true), HarmonyPatch]
 	public class GivePatch
 	{
 		public static List<BasePlayer> giverPlayers = new();
@@ -167,7 +167,7 @@ public partial class CorePlugin
 		}
 	}
 
-	[AutoPatch, HarmonyPatch(typeof(Item), nameof(Item.SetItemOwnership), typeof(BasePlayer), typeof(Translate.Phrase))]
+	[AutoPatch(Silent = true), HarmonyPatch(typeof(Item), nameof(Item.SetItemOwnership), typeof(BasePlayer), typeof(Translate.Phrase))]
 	public class OwnershipPatch
 	{
 		public static bool Prefix(BasePlayer player, Translate.Phrase reason)

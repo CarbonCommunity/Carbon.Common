@@ -164,6 +164,7 @@ public partial class Community
 			// Mandatory for across the board access
 			API.Commands.Command.Prefixes = Config.Prefixes;
 
+			Logger.CoreLog ??= new();
 			Logger.CoreLog.SplitSize = (int)(Config.Logging.LogSplitSize * 1000000f);
 
 			if (needsSave)
