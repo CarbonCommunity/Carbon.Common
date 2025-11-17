@@ -487,7 +487,6 @@ public class BaseHookable : Integrations.ITestable
 		}
 
 		HasBuiltHookCache = true;
-		Logger.Debug(Name, $"Built hook cache", 2);
 
 		InternalCallHook(0, null);
 	}

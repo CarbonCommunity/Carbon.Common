@@ -197,7 +197,6 @@ public partial class CorePlugin : CarbonPlugin
 	}
 	private void OnServerSave()
 	{
-		Logger.Debug($"Saving Carbon state..", 1);
 		Interface.Oxide.Permission.SaveData();
 		Community.Runtime.ModuleProcessor.OnServerSave();
 

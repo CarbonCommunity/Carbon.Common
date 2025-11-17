@@ -85,7 +85,6 @@ public static class AccessToolsEx
 		}
 		catch (ReflectionTypeLoadException ex)
 		{
-			Logger.Debug($"AccessTools.GetTypesFromAssembly: assembly {assembly} => {ex}");
 			return ex.Types.Where((Type type) => (object)type != null).ToArray();
 		}
 	}
