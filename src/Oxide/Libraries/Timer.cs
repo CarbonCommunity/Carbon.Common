@@ -59,12 +59,7 @@ public class Timers : Library
 
 		timer.Delay = time;
 		timer.Callback = activity;
-
-		if (Community.IsServerInitialized)
-		{
-			Persistence.Invoke(activity, time);
-		}
-
+		Persistence.Invoke(activity, time);
 		return timer;
 	}
 	public Timer Once(float time, Action action)
