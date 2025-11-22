@@ -208,21 +208,6 @@ public partial class CorePlugin : CarbonPlugin
 #endif
 	}
 
-	private void OnPluginLoaded(Plugin plugin)
-	{
-		var eventArg = Pool.Get<CarbonEventArgs>();
-		eventArg.Init(plugin);
-		Community.Runtime.Events.Trigger(CarbonEvent.PluginLoaded, eventArg);
-		Pool.Free(ref eventArg);
-	}
-	private void OnPluginUnloaded(Plugin plugin)
-	{
-		var eventArg = Pool.Get<CarbonEventArgs>();
-		eventArg.Init(plugin);
-		Community.Runtime.Events.Trigger(CarbonEvent.PluginUnloaded, eventArg);
-		Pool.Free(ref eventArg);
-	}
-
 	internal static StackTraceLogType _defaultLogTrace;
 	internal static StackTraceLogType _defaultWarningTrace;
 	internal static StackTraceLogType _defaultErrorTrace;

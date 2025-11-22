@@ -312,6 +312,11 @@ public static partial class ModLoader
 		           $"{(precompiled ? string.Empty : $" [{plugin.CompileTime.TotalMilliseconds:0}ms]")}" +
 		           $"{(isProfiled ? " [PROFILING]" : string.Empty)}");
 
+		var eventArg = Pool.Get<CarbonEventArgs>();
+		eventArg.Init(plugin);
+		Community.Runtime.Events.Trigger(CarbonEvent.PluginLoaded, eventArg);
+		Pool.Free(ref eventArg);
+
 		if (Community.IsServerInitialized)
 		{
 			plugin.HasInitialized = true;
@@ -346,6 +351,11 @@ public static partial class ModLoader
 		{
 			plugin.CallHook("Unload");
 		}
+
+		var eventArg = Pool.Get<CarbonEventArgs>();
+		eventArg.Init(plugin);
+		Community.Runtime.Events.Trigger(CarbonEvent.PluginUnloaded, eventArg);
+		Pool.Free(ref eventArg);
 
 		RemoveCommands(plugin);
 		plugin.IUnload();
