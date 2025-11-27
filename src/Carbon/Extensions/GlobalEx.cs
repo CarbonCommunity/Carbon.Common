@@ -29,6 +29,7 @@ public static class GlobalEx
 			{
 				continue;
 			}
+			behaviour.CancelInvokeFixedTime(invoke.action);
 			behaviour.CancelInvoke(invoke.action);
 		}
 	}
