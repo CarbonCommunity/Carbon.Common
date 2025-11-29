@@ -396,7 +396,7 @@ public class Command : Library
 				catch (Exception ex) { Logger.Error($"Failed executing console command '{command}' in '{plugin.ToPrettyString()}' [callback]", ex.InnerException ?? ex); }
 			}
 			catch (TargetParameterCountException) { }
-			catch (Exception ex) { Logger.Error ( $"Failed executing chat command '{command}' in '{plugin.ToPrettyString ()}' [internal]", ex.InnerException ?? ex ); }
+			catch (Exception ex) { Logger.Error ( $"Failed executing console command '{command}' in '{plugin.ToPrettyString ()}' [internal]", ex.InnerException ?? ex ); }
 
 			Pool.FreeUnmanaged(ref arguments);
 
@@ -457,6 +457,7 @@ public class Command : Library
 					{
 						return;
 					}
+
 					callback?.Invoke(arg);
 					args.Reply = arg.Reply;
 					args.PrintOutput = arg.Option.PrintOutput;

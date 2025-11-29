@@ -487,12 +487,25 @@ public static partial class ModLoader
 						{
 							argBuffer[0] = arg;
 						}
+
 						try
 						{
 							var result = method.Invoke(hookable, argBuffer);
 							if (result != null && arg.Option.PrintOutput)
 							{
 								Logger.Log(result);
+							}
+						}
+						catch (Exception ex)
+						{
+							ex = ex.InnerException;
+							if (arg.IsRcon)
+							{
+								arg.ReplyWith($"Failed executing command ({ex.Message})\n{ex.StackTrace}");
+							}
+							else
+							{
+								Logger.Error($"Failed executing command", ex);
 							}
 						}
 						finally
