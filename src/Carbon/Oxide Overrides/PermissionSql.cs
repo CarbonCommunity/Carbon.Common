@@ -370,13 +370,13 @@ public class PermissionSql : Permission
 		}
 	}
 
-	public override void AddUserGroup(string id, string name)
+	public override void AddUserGroup(string id, string name, bool addIfNotExisting = false)
 	{
 		if (!name.IsLower())
 		{
 			name = name.ToLower();
 		}
-		if (!GroupExists(name) || !GetUserData(id).Groups.Add(name))
+		if (!GroupExists(name) || !GetUserData(id, addIfNotExisting).Groups.Add(name))
 		{
 			return;
 		}

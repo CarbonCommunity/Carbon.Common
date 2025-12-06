@@ -645,9 +645,9 @@ public class Permission : Library
 		return result;
 	}
 
-	public virtual void AddUserGroup(string id, string name)
+	public virtual void AddUserGroup(string id, string name, bool addIfNotExisting = false)
 	{
-		if (!GroupExists(name) || !GetUserData(id).Groups.Add(name.ToLower()))
+		if (!GroupExists(name) || !GetUserData(id, addIfNotExisting).Groups.Add(name.ToLower()))
 		{
 			return;
 		}
