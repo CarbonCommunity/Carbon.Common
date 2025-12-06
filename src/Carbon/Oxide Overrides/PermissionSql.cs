@@ -216,15 +216,17 @@ public class PermissionSql : Permission
 	{
 		if (!UserExists(id))
 		{
-			if (db.QueryUser(id) is (string userId, UserData data))
+			(string userId, UserData data) = db.QueryUser(id);
+
+			if (!string.IsNullOrEmpty(userId) && data != null)
 			{
 				userdata.Add(userId, data);
 			}
 			else if (addIfNotExisting && id.IsSteamId())
 			{
-				data = new UserData();
-				userdata[id] = data;
-				CommitUser(id, data);
+				UserData newData = new UserData();
+				userdata[id] = newData;
+				CommitUser(id, newData);
 			}
 		}
 		return base.GetUserData(id, addIfNotExisting);
@@ -370,13 +372,13 @@ public class PermissionSql : Permission
 		}
 	}
 
-	public override void AddUserGroup(string id, string name)
+	public override void AddUserGroup(string id, string name, bool addIfNotExisting = false)
 	{
 		if (!name.IsLower())
 		{
 			name = name.ToLower();
 		}
-		if (!GroupExists(name) || !GetUserData(id).Groups.Add(name))
+		if (!GroupExists(name) || !GetUserData(id, addIfNotExisting).Groups.Add(name))
 		{
 			return;
 		}
