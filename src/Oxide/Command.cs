@@ -458,9 +458,9 @@ public class Command : Library
 						return;
 					}
 
+					args.PrintOutput = arg.Option.PrintOutput;
 					callback?.Invoke(arg);
 					args.Reply = arg.Reply;
-					args.PrintOutput = arg.Option.PrintOutput;
 				},
 				Help = help,
 				Token = reference,
