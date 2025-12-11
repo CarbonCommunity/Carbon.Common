@@ -284,6 +284,9 @@ public class CuiImageComponent : ICuiComponent, ICuiColor, ICuiEnableable, ICuiG
 	[JsonProperty("imagetype")]
 	public Image.Type ImageType { get; set; }
 
+	[JsonProperty("fillCenter")]
+	public bool? FillCenter { get; set; }
+
 	[JsonProperty("png")]
 	public string Png { get; set; }
 
