@@ -340,6 +340,9 @@ public class CuiInputFieldComponent : ICuiComponent, ICuiColor, ICuiEnableable, 
 	[JsonProperty("readOnly", DefaultValueHandling = DefaultValueHandling.Include)]
 	public bool ReadOnly { get; set; }
 
+	[JsonProperty("placeholderId")]
+	public string PlaceholderId { get; set; }
+
 	[JsonProperty("needsKeyboard", DefaultValueHandling = DefaultValueHandling.Include)]
 	public bool NeedsKeyboard { get; set; }
 
