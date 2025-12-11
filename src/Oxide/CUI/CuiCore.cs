@@ -284,6 +284,9 @@ public class CuiImageComponent : ICuiComponent, ICuiColor, ICuiEnableable, ICuiG
 	[JsonProperty("imagetype")]
 	public Image.Type ImageType { get; set; }
 
+	[JsonProperty("fillCenter")]
+	public bool? FillCenter { get; set; }
+
 	[JsonProperty("png")]
 	public string Png { get; set; }
 
@@ -336,6 +339,9 @@ public class CuiInputFieldComponent : ICuiComponent, ICuiColor, ICuiEnableable, 
 
 	[JsonProperty("readOnly", DefaultValueHandling = DefaultValueHandling.Include)]
 	public bool ReadOnly { get; set; }
+
+	[JsonProperty("placeholderId")]
+	public string PlaceholderId { get; set; }
 
 	[JsonProperty("needsKeyboard", DefaultValueHandling = DefaultValueHandling.Include)]
 	public bool NeedsKeyboard { get; set; }

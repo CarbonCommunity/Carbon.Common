@@ -389,6 +389,8 @@ public readonly struct CUI : IDisposable
 		private CuiTextComponent _defaultText = new();
 		private CuiButtonComponent _defaultButton = new();
 		private CuiInputFieldComponent _defaultInputField = new();
+		private CuiNeedsCursorComponent _defaultNeedsCursor = new();
+		private CuiNeedsKeyboardComponent _defaultNeedsKeyboard = new();
 		private CuiCountdownComponent _defaultCountdown = new();
 		private CuiOutlineComponent _defaultOutline = new();
 		private CuiScrollViewComponent _defaultScrollView = new();
@@ -511,16 +513,20 @@ public readonly struct CUI : IDisposable
 			}
 			else
 			{
-				element = _images[0] as CuiImageComponent;
+				element = (_images[0] as CuiImageComponent)!;
 				element.Sprite = _defaultImage.Sprite;
 				element.Material = _defaultImage.Material;
 				element.Color = _defaultImage.Color;
 				element.SkinId = _defaultImage.SkinId;
 				element.ImageType = _defaultImage.ImageType;
+				element.FillCenter = _defaultImage.FillCenter;
 				element.Png = _defaultImage.Png;
+				element.Slice = _defaultImage.Slice;
 				element.FadeIn = _defaultImage.FadeIn;
 				element.ItemId = _defaultImage.ItemId;
 				element.SkinId = _defaultImage.SkinId;
+				element.PlaceholderParentId = element.PlaceholderParentId;
+				element.Enabled = _defaultImage.Enabled;
 				_images.RemoveAt(0);
 			}
 
@@ -537,13 +543,16 @@ public readonly struct CUI : IDisposable
 			}
 			else
 			{
-				element = _rawImages[0] as CuiRawImageComponent;
+				element = (_rawImages[0] as CuiRawImageComponent)!;
 				element.Sprite = _defaultRawImage.Sprite;
 				element.Color = _defaultRawImage.Color;
 				element.Material = _defaultRawImage.Material;
 				element.Url = _defaultRawImage.Url;
 				element.Png = _defaultRawImage.Png;
 				element.FadeIn = _defaultRawImage.FadeIn;
+				element.SteamId = _defaultRawImage.SteamId;
+				element.PlaceholderParentId = _defaultRawImage.PlaceholderParentId;
+				element.Enabled = _defaultRawImage.Enabled;
 				_rawImages.RemoveAt(0);
 			}
 
@@ -560,11 +569,15 @@ public readonly struct CUI : IDisposable
 			}
 			else
 			{
-				element = _rects[0] as CuiRectTransformComponent;
+				element = (_rects[0] as CuiRectTransformComponent)!;
 				element.AnchorMin = DefaultRectTransformComponent.AnchorMin;
 				element.AnchorMax = DefaultRectTransformComponent.AnchorMax;
 				element.OffsetMin = DefaultRectTransformComponent.OffsetMin;
 				element.OffsetMax = DefaultRectTransformComponent.OffsetMax;
+				element.Rotation = DefaultRectTransformComponent.Rotation;
+				element.Pivot = DefaultRectTransformComponent.Pivot;
+				element.SetParent = DefaultRectTransformComponent.SetParent;
+				element.SetTransformIndex = DefaultRectTransformComponent.SetTransformIndex;
 				_rects.RemoveAt(0);
 			}
 
@@ -581,7 +594,7 @@ public readonly struct CUI : IDisposable
 			}
 			else
 			{
-				element = _texts[0] as CuiTextComponent;
+				element = (_texts[0] as CuiTextComponent)!;
 				element.Text = _defaultText.Text;
 				element.FontSize = _defaultText.FontSize;
 				element.Font = _defaultText.Font;
@@ -589,6 +602,8 @@ public readonly struct CUI : IDisposable
 				element.Color = _defaultText.Color;
 				element.FadeIn = _defaultText.FadeIn;
 				element.VerticalOverflow = _defaultText.VerticalOverflow;
+				element.PlaceholderParentId = _defaultText.PlaceholderParentId;
+				element.Enabled = _defaultText.Enabled;
 				_texts.RemoveAt(0);
 			}
 
@@ -605,14 +620,23 @@ public readonly struct CUI : IDisposable
 			}
 			else
 			{
-				element = _buttons[0] as CuiButtonComponent;
+				element = (_buttons[0] as CuiButtonComponent)!;
 				element.Command = _defaultButton.Command;
 				element.Close = _defaultButton.Close;
 				element.Sprite = _defaultButton.Sprite;
 				element.Material = _defaultButton.Material;
 				element.Color = _defaultButton.Color;
 				element.ImageType = _defaultButton.ImageType;
+				element.NormalColor = _defaultButton.NormalColor;
+				element.HighlightedColor = _defaultButton.HighlightedColor;
+				element.PressedColor = _defaultButton.PressedColor;
+				element.SelectedColor = _defaultButton.SelectedColor;
+				element.DisabledColor = _defaultButton.DisabledColor;
+				element.ColorMultiplier = _defaultButton.ColorMultiplier;
+				element.FadeDuration = _defaultButton.FadeDuration;
 				element.FadeIn = _defaultButton.FadeIn;
+				element.PlaceholderParentId = _defaultButton.PlaceholderParentId;
+				element.Enabled = _defaultButton.Enabled;
 				_buttons.RemoveAt(0);
 			}
 
@@ -629,7 +653,7 @@ public readonly struct CUI : IDisposable
 			}
 			else
 			{
-				element = _inputFields[0] as CuiInputFieldComponent;
+				element = (_inputFields[0] as CuiInputFieldComponent)!;
 				element.Text = _defaultInputField.Text;
 				element.FontSize = _defaultInputField.FontSize;
 				element.Font = _defaultInputField.Font;
@@ -639,10 +663,14 @@ public readonly struct CUI : IDisposable
 				element.Command = _defaultInputField.Command;
 				element.IsPassword = _defaultInputField.IsPassword;
 				element.ReadOnly = _defaultInputField.ReadOnly;
+				element.PlaceholderId = _defaultInputField.PlaceholderId;
 				element.NeedsKeyboard = _defaultInputField.NeedsKeyboard;
 				element.LineType = _defaultInputField.LineType;
 				element.Autofocus = _defaultInputField.Autofocus;
 				element.HudMenuInput = _defaultInputField.HudMenuInput;
+				element.FadeIn = _defaultInputField.FadeIn;
+				element.PlaceholderParentId = _defaultInputField.PlaceholderParentId;
+				element.Enabled = _defaultInputField.Enabled;
 				_inputFields.RemoveAt(0);
 			}
 
@@ -659,7 +687,8 @@ public readonly struct CUI : IDisposable
 			}
 			else
 			{
-				element = _needsCursors[0] as CuiNeedsCursorComponent;
+				element = (_needsCursors[0] as CuiNeedsCursorComponent)!;
+				element.Enabled = _defaultNeedsCursor.Enabled;
 				_needsCursors.RemoveAt(0);
 			}
 
@@ -676,7 +705,8 @@ public readonly struct CUI : IDisposable
 			}
 			else
 			{
-				element = _needsKeyboards[0] as CuiNeedsKeyboardComponent;
+				element = (_needsKeyboards[0] as CuiNeedsKeyboardComponent)!;
+				element.Enabled = _defaultNeedsKeyboard.Enabled;
 				_needsKeyboards.RemoveAt(0);
 			}
 
@@ -693,12 +723,17 @@ public readonly struct CUI : IDisposable
 			}
 			else
 			{
-				element = _countdowns[0] as CuiCountdownComponent;
+				element = (_countdowns[0] as CuiCountdownComponent)!;
 				element.EndTime = _defaultCountdown.EndTime;
 				element.StartTime = _defaultCountdown.StartTime;
 				element.Step = _defaultCountdown.Step;
 				element.Command = _defaultCountdown.Command;
 				element.FadeIn = _defaultCountdown.FadeIn;
+				element.Interval = _defaultCountdown.Interval;
+				element.TimerFormat = _defaultCountdown.TimerFormat;
+				element.NumberFormat = _defaultCountdown.NumberFormat;
+				element.DestroyIfDone = _defaultCountdown.DestroyIfDone;
+				element.Enabled = _defaultCountdown.Enabled;
 				_countdowns.RemoveAt(0);
 			}
 
@@ -715,10 +750,11 @@ public readonly struct CUI : IDisposable
 			}
 			else
 			{
-				element = _outlines[0] as CuiOutlineComponent;
+				element = (_outlines[0] as CuiOutlineComponent)!;
 				element.Color = _defaultOutline.Color;
 				element.Distance = _defaultOutline.Distance;
 				element.UseGraphicAlpha = _defaultOutline.UseGraphicAlpha;
+				element.Enabled = _defaultOutline.Enabled;
 				_outlines.RemoveAt(0);
 			}
 
@@ -738,7 +774,7 @@ public readonly struct CUI : IDisposable
 			}
 			else
 			{
-				element = _scrollViews[0] as CuiScrollViewComponent;
+				element = (_scrollViews[0] as CuiScrollViewComponent)!;
 				element.Vertical = _defaultScrollView.Vertical;
 				element.Horizontal = _defaultScrollView.Horizontal;
 				element.MovementType = _defaultScrollView.MovementType;
@@ -753,6 +789,9 @@ public readonly struct CUI : IDisposable
 				element.ContentTransform.OffsetMax = "0 0";
 				element.HorizontalScrollbar = TakeFromPoolScrollbar();
 				element.VerticalScrollbar = TakeFromPoolScrollbar();
+				element.HorizontalNormalizedPosition = _defaultScrollView.HorizontalNormalizedPosition;
+				element.VerticalNormalizedPosition = _defaultScrollView.VerticalNormalizedPosition;
+				element.Enabled = _defaultScrollView.Enabled;
 
 				_scrollViews.RemoveAt(0);
 			}
@@ -770,7 +809,7 @@ public readonly struct CUI : IDisposable
 			}
 			else
 			{
-				element = _scrollbars[0] as CuiScrollbar;
+				element = (_scrollbars[0] as CuiScrollbar)!;
 				element.Invert = _defaultScrollBar.Invert;
 				element.AutoHide = _defaultScrollBar.AutoHide;
 				element.HandleSprite = _defaultScrollBar.HandleSprite;
@@ -780,6 +819,7 @@ public readonly struct CUI : IDisposable
 				element.PressedColor = _defaultScrollBar.PressedColor;
 				element.TrackSprite = _defaultScrollBar.TrackSprite;
 				element.TrackColor = _defaultScrollBar.TrackColor;
+				element.Enabled = _defaultScrollBar.Enabled;
 
 				_scrollbars.RemoveAt(0);
 			}
