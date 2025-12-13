@@ -77,6 +77,7 @@ public class Command : Library
 
 					if (!(Community.Runtime.Config.Permissions.BypassAdminCooldowns && player.Connection.authLevel > 1) && CarbonPlugin.IsCommandCooledDown(player, cmd.Name, authenticatedCommand.Auth.Cooldown, out var timeLeft, doCooldownPenalty: authenticatedCommand.Auth.DoCooldownPenalty))
 					{
+						if (timeLeft < 2f) return false;
 						if (isChat) player.ChatMessage(Localisation.Get("cooldown_player", player.UserIDString, TimeEx.Format(timeLeft).ToLower()));
 						else player.ConsoleMessage(Localisation.Get("cooldown_player", player.UserIDString, TimeEx.Format(timeLeft).ToLower()));
 						return false;
