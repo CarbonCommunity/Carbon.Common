@@ -42,14 +42,4 @@ public partial class CorePlugin
 			__instance.networkEntityScale = true;
 		}
 	}
-
-	[AutoPatch(Silent = true), HarmonyPatch(typeof(Application), nameof(Application.Quit), [])]
-	public class Application_Quit
-	{
-		public static bool Prefix()
-		{
-			Application.Quit(Environment.ExitCode);
-			return false;
-		}
-	}
 }

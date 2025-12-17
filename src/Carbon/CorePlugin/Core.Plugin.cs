@@ -195,6 +195,7 @@ public partial class CorePlugin : CarbonPlugin
 
 		WebControlPanel.ServerInit();
 	}
+
 	private void OnServerSave()
 	{
 		Interface.Oxide.Permission.SaveData();
