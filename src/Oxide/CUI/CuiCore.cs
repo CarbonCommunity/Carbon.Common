@@ -455,7 +455,8 @@ public class CuiRectTransform
 	public string SetParent { get; set; }
 
 	[JsonProperty("setTransformIndex")]
-	public int SetTransformIndex { get; set; }
+	[DefaultValue(-1)]
+	public int SetTransformIndex { get; set; } = -1;
 }
 public class CuiCountdownComponent : ICuiComponent, ICuiEnableable
 {
