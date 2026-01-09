@@ -62,6 +62,10 @@ public static partial class WebControlPanel
 		while (reads.Count > 0)
 		{
 			var read = reads.Dequeue();
+			if (read == null)
+			{
+				continue;
+			}
 			RunRpc(read);
 			BridgeRead.Return(ref read);
 		}
