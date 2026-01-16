@@ -197,6 +197,7 @@ public static partial class WebControlPanel
 	{
 		private string name = instance.PrimaryHook.Name;
 		private uint id = instance.PrimaryHook.Id;
+		private float time = (float)instance.Hooks.Sum(x => x.HookTime.TotalMilliseconds);
 		private int fires = instance.Hooks.Sum(x => x.TimesFired);
 		private int memoryUsage = (int)instance.Hooks.Sum(x => x.MemoryUsage);
 		private int lagSpikes = instance.Hooks.Sum(x => x.LagSpikes);
@@ -207,6 +208,7 @@ public static partial class WebControlPanel
 		{
 			write.WriteObject(name);
 			write.WriteObject(id);
+			write.WriteObject(time);
 			write.WriteObject(fires);
 			write.WriteObject(memoryUsage);
 			write.WriteObject(lagSpikes);
