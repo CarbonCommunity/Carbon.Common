@@ -16,7 +16,7 @@ public partial class CorePlugin
 			for(int i = 1; i < factory.Count; i++)
 			{
 				var item = factory[i];
-				table.AddRow(string.Empty, string.Empty, Vault.Pool.Get(item.id), item.encrypted, item.encrypted ? string.Empty : item.cache);
+				table.AddRow(string.Empty, Vault.Pool.Get(item.id), item.encrypted, item.encrypted ? string.Empty : item.cache);
 			}
 		}
 
