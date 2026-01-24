@@ -238,6 +238,7 @@ public class Vault
 	    using var memoryStream = new MemoryStream(OsEx.File.ReadBytes(Defines.GetVaultFile()));
 	    using var gzipStream = new GZipStream(memoryStream, CompressionMode.Decompress);
 	    using var reader = new BinaryReader(gzipStream);
+		var preCachedItems = 0;
 
 	    try
 	    {
@@ -261,13 +262,18 @@ public class Vault
 					    item.salt = reader.ReadBytes(reader.ReadInt32());
 				    }
 				    item.encrypted = reader.ReadBoolean();
+					if (!item.encrypted)
+					{
+						item.cache = Encoding.UTF8.GetString(item.hash);
+						preCachedItems++;
+					}
 				    item.runtimeId = "{" + Pool.Get(factory.id) + ":" + Pool.Get(item.id) + "}";
 				    factory.AddItem(item);
 			    }
 			    FACTORIES.Add(factory);
 		    }
 
-		    if (!silent) Logger.Log($"Loaded Carbon.Vault with {factoryCount:n0} {factoryCount.Plural("factory", "factories")} and {items:n0} {items.Plural("item", "items")}");
+		    if (!silent) Logger.Log($"Loaded Carbon.Vault with {factoryCount:n0} {factoryCount.Plural("factory", "factories")} and {items:n0} {items.Plural("item", "items")} ({preCachedItems:n0} pre-cached)");
 	    }
 	    catch (Exception ex)
 	    {
