@@ -19,22 +19,22 @@ public partial class CorePlugin
 			arg.ReplyWith($"Conditional '{value}' already exists.");
 		}
 
-		foreach (var mod in ModLoader.Packages)
+		for(int i = 0; i < ModLoader.Packages.Count; i++)
 		{
-			var plugins = Facepunch.Pool.Get<List<RustPlugin>>();
-			plugins.AddRange(mod.Plugins);
-
-			foreach (var plugin in plugins)
+			var package = ModLoader.Packages[i];
+			using var plugins = Facepunch.Pool.Get<PooledList<RustPlugin>>();
+			plugins.AddRange(package.Plugins);
+			for(int p = 0; p < plugins.Count; p++)
 			{
-				if (plugin.HasConditionals)
+				var plugin = plugins[p];
+				if (!plugin.HasConditionals)
 				{
-					plugin.ProcessorProcess.Dispose();
-					plugin.ProcessorProcess.Execute(plugin.Processor);
-					mod.Plugins.Remove(plugin);
+					continue;
 				}
+				plugin.ProcessorProcess.Dispose();
+				plugin.ProcessorProcess.Execute(plugin.Processor);
+				package.Plugins.Remove(plugin);
 			}
-
-			Facepunch.Pool.FreeUnmanaged(ref plugins);
 		}
 	}
 
@@ -55,22 +55,22 @@ public partial class CorePlugin
 			arg.ReplyWith($"Conditional '{value}' does not exist.");
 		}
 
-		foreach (var mod in ModLoader.Packages)
+		for(int i = 0; i < ModLoader.Packages.Count; i++)
 		{
-			var plugins = Facepunch.Pool.Get<List<RustPlugin>>();
-			plugins.AddRange(mod.Plugins);
-
-			foreach (var plugin in plugins)
+			var package = ModLoader.Packages[i];
+			using var plugins = Facepunch.Pool.Get<PooledList<RustPlugin>>();
+			plugins.AddRange(package.Plugins);
+			for(int p = 0; p < plugins.Count; p++)
 			{
-				if (plugin.HasConditionals)
+				var plugin = plugins[p];
+				if (!plugin.HasConditionals)
 				{
-					plugin.ProcessorProcess.Dispose();
-					plugin.ProcessorProcess.Execute(plugin.Processor);
-					mod.Plugins.Remove(plugin);
+					continue;
 				}
+				plugin.ProcessorProcess.Dispose();
+				plugin.ProcessorProcess.Execute(plugin.Processor);
+				package.Plugins.Remove(plugin);
 			}
-
-			Facepunch.Pool.FreeUnmanaged(ref plugins);
 		}
 	}
 
