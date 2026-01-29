@@ -740,7 +740,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 			color: DataInstance.Colors.OptionColor,
 			xMin: DataInstance.Colors.OptionWidth, OxMax: Option_RightOffset, yMin: 0, yMax: 1);
 
-		var icon = optionsIcons != null && index <= optionsIcons.Length - 1 ? optionsIcons[index] : null;
+		var icon = optionsIcons != null && index < optionsIcons.Length ? optionsIcons[index] : null;
 		const float iconXmin = 0.015f;
 		const float iconXmax = 0.072f;
 		const float iconYmin = 0.2f;
@@ -757,7 +757,7 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 		cui.CreateImage(container, button, "fade", Cache.CUI.WhiteColor);
 
-		cui.CreateText(container, button, "1 1 1 0.7", options[index], 10,
+		cui.CreateText(container, button, "1 1 1 0.7", index >= options.Length ? "Out of bounds" : options[index], 10,
 			xMin: string.IsNullOrEmpty(icon) ? 0.035f : 0.09f, xMax: 1f, yMin: 0f, yMax: 1f, align: TextAnchor.MiddleLeft);
 
 		cui.CreateText(container, button, "1 1 1 0.4", "▼", 8,
