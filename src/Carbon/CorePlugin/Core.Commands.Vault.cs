@@ -12,8 +12,9 @@ public partial class CorePlugin
 		foreach (var factory in factories)
 		{
 			var first = factory.Count > 0 ? factory[0] : null;
-			table.AddRow(" " + Vault.Pool.Get(factory.id), first == null ? string.Empty : Vault.Pool.Get(first.id), first?.encrypted, first == null || first.encrypted ? string.Empty : first.cache);
-			for(int i = 1; i < factory.Count; i++)
+			table.AddRow(" " + Vault.Pool.Get(factory.id), first == null ? string.Empty : Vault.Pool.Get(first.id), first?.encrypted,
+				first == null || first.encrypted ? string.Empty : first.cache);
+			for (int i = 1; i < factory.Count; i++)
 			{
 				var item = factory[i];
 				table.AddRow(string.Empty, Vault.Pool.Get(item.id), item.encrypted, item.encrypted ? string.Empty : item.cache);
@@ -38,10 +39,11 @@ public partial class CorePlugin
 		var encrypted = arg.GetBool(2, true);
 		var factory = arg.GetString(3, Vault.Global);
 		var isOverriden = (Vault.GetFactory(Vault.Pool.Get(factory))?.HasItem(Vault.Pool.Get(key))).GetValueOrDefault();
-		arg.ReplyWith(Vault.Add(factory, key, value, encrypted) ? isOverriden
+		arg.ReplyWith(Vault.Add(factory, key, value, encrypted)
+			? isOverriden
 				? $"Updated vault factory {(encrypted ? "encrypted" : "unencrypted")} item '{key}' for factory '{factory}'"
 				: $"Added new vault factory {(encrypted ? "encrypted" : "unencrypted")} item '{key}' for factory '{factory}'"
-				: "Couldn't add a new vault factory item in Carbon.Vault, probably because invalid parameters");
+			: "Couldn't add a new vault factory item in Carbon.Vault, probably because invalid parameters");
 	}
 
 	[AuthLevel(2)]
