@@ -12,12 +12,19 @@ public partial class CorePlugin
 		foreach (var factory in factories)
 		{
 			var first = factory.Count > 0 ? factory[0] : null;
-			table.AddRow(" " + Vault.Pool.Get(factory.id), first == null ? string.Empty : Vault.Pool.Get(first.id), first?.encrypted,
+			table.AddRow(
+				" " + Vault.Pool.Get(factory.id),
+				first == null ? string.Empty : Vault.Pool.Get(first.id),
+				first?.encrypted,
 				first == null || first.encrypted ? string.Empty : first.cache);
 			for (int i = 1; i < factory.Count; i++)
 			{
 				var item = factory[i];
-				table.AddRow(string.Empty, Vault.Pool.Get(item.id), item.encrypted, item.encrypted ? string.Empty : item.cache);
+				table.AddRow(
+					string.Empty,
+					Vault.Pool.Get(item.id),
+					item.encrypted,
+					item.encrypted ? string.Empty : item.cache);
 			}
 		}
 

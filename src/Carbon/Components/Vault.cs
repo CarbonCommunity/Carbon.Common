@@ -202,7 +202,7 @@ public class Vault
 			return null;
 		}
 
-		return item.GetCache();
+		return item.cache;
 	}
 
 	public static void Save(bool silent = false)
@@ -258,7 +258,6 @@ public class Vault
 		using var memoryStream = new MemoryStream(OsEx.File.ReadBytes(Defines.GetVaultFile()));
 		using var gzipStream = new GZipStream(memoryStream, CompressionMode.Decompress);
 		using var reader = new BinaryReader(gzipStream);
-		var preCachedItems = 0;
 
 		try
 		{
@@ -283,11 +282,6 @@ public class Vault
 					}
 
 					item.encrypted = reader.ReadBoolean();
-					if (!item.encrypted)
-					{
-						item.cache = Encoding.UTF8.GetString(item.hash);
-						preCachedItems++;
-					}
 
 					item.runtimeId = "{" + Pool.Get(factory.id) + ":" + Pool.Get(item.id) + "}";
 					factory.AddItem(item);
@@ -297,8 +291,10 @@ public class Vault
 			}
 
 			if (!silent)
+			{
 				Logger.Log(
-					$"Loaded Carbon.Vault with {factoryCount:n0} {factoryCount.Plural("factory", "factories")} and {items:n0} {items.Plural("item", "items")} ({preCachedItems:n0} pre-cached)");
+					$"Loaded Carbon.Vault with {factoryCount:n0} {factoryCount.Plural("factory", "factories")} and {items:n0} {items.Plural("item", "items")}");
+			}
 		}
 		catch (Exception ex)
 		{
@@ -324,7 +320,7 @@ public class Vault
 					continue;
 				}
 
-				if (item.GetCache().Equals(source))
+				if (item.cache.Equals(source))
 				{
 					return item.runtimeId;
 				}
@@ -354,7 +350,7 @@ public class Vault
 
 				if (source.Equals(item.runtimeId))
 				{
-					return item.GetCache();
+					return item.cache;
 				}
 			}
 		}
@@ -433,15 +429,23 @@ public class Vault
 		public uint id;
 		public bool encrypted;
 		internal string runtimeId;
-		internal string cache;
+
+		internal string cache
+		{
+			get
+			{
+				if (string.IsNullOrEmpty(field))
+				{
+					field = Encoding.UTF8.GetString(encrypted ? DecryptData(hash, CARBON_ID, salt) : hash);
+				}
+
+				return field;
+			}
+			set;
+		}
+
 		internal byte[] salt;
 		internal byte[] hash;
-
-		public string GetCache()
-		{
-			if (string.IsNullOrEmpty(cache)) cache = Encoding.UTF8.GetString(encrypted ? DecryptData(hash, CARBON_ID, salt) : hash);
-			return cache;
-		}
 
 		public void EnterPool()
 		{
