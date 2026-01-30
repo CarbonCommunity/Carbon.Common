@@ -446,6 +446,11 @@ public class Vault
 			set;
 		}
 
+		public string GetCache()
+		{
+			return Cache;
+		}
+
 		public void EnterPool()
 		{
 			id = 0;
