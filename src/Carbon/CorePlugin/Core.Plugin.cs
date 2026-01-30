@@ -185,7 +185,6 @@ public partial class CorePlugin : CarbonPlugin
 				{
 					continue;
 				}
-
 				player.AsIPlayer();
 			}
 			catch (Exception ex)
@@ -193,10 +192,12 @@ public partial class CorePlugin : CarbonPlugin
 				Logger.Error($"Failed getting IPlayer object for {player.displayName}[{player.UserIDString}]", ex);
 			}
 		}
+
+		WebControlPanel.ServerInit();
 	}
+
 	private void OnServerSave()
 	{
-		Logger.Debug($"Saving Carbon state..", 1);
 		Interface.Oxide.Permission.SaveData();
 		Community.Runtime.ModuleProcessor.OnServerSave();
 
@@ -206,21 +207,6 @@ public partial class CorePlugin : CarbonPlugin
 #if !MINIMAL
 		API.Abstracts.CarbonAuto.Singleton?.Save();
 #endif
-	}
-
-	private void OnPluginLoaded(Plugin plugin)
-	{
-		var eventArg = Pool.Get<CarbonEventArgs>();
-		eventArg.Init(plugin);
-		Community.Runtime.Events.Trigger(CarbonEvent.PluginLoaded, eventArg);
-		Pool.Free(ref eventArg);
-	}
-	private void OnPluginUnloaded(Plugin plugin)
-	{
-		var eventArg = Pool.Get<CarbonEventArgs>();
-		eventArg.Init(plugin);
-		Community.Runtime.Events.Trigger(CarbonEvent.PluginUnloaded, eventArg);
-		Pool.Free(ref eventArg);
 	}
 
 	internal static StackTraceLogType _defaultLogTrace;

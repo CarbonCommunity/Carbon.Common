@@ -111,8 +111,19 @@ public static partial class WebControlPanel
 		public int Port;
 	}
 
+	public class PanelConfig
+	{
+		public float MapImageScale = 1f;
+	}
+
 	public class Server : BridgeServer
 	{
+		public override void OnServerConnected()
+		{
+			base.OnServerConnected();
+			Analytics.webcontrolpanel_serverconnect();
+		}
+
 		public override bool OnPasswordValidate(string password)
 		{
 			return true;
@@ -127,6 +138,7 @@ public static partial class WebControlPanel
 		{
 			if (TryFindAccount(connection.Socket.ConnectionInfo.Path.TrimStart('/'), out var account))
 			{
+				Analytics.webcontrolpanel_clientconnect();
 				connection.Reference = account;
 			}
 		}
@@ -138,6 +150,8 @@ public static partial class WebControlPanel
 
 	public class ServerMessages : BridgeMessages
 	{
+		public override bool ShouldPool => false;
+
 		protected override void OnCommand(BridgeRead read)
 		{
 
@@ -150,7 +164,7 @@ public static partial class WebControlPanel
 
 		protected override void OnRpc(BridgeRead read)
 		{
-			RunRpc(read);
+			EnqueueRpc(read);
 		}
 
 		protected override void OnUnhandled(BridgeRead read)

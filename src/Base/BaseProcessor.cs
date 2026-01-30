@@ -25,7 +25,10 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 
 	public void Awake()
 	{
-		Logger.Log($"- Installed {Name}");
+		if (!Community.Runtime.Config.Logging.ReducedLogging)
+		{
+			Logger.Log($"- Installed {Name}");
+		}
 	}
 	public virtual void Start()
 	{
@@ -65,7 +68,10 @@ public abstract class BaseProcessor : FacepunchBehaviour, IDisposable, IBaseProc
 			Watcher.EnableRaisingEvents = true;
 		}
 
-		Logger.Log($" Initialized {(IndexedType?.Name ?? Name)} processor...");
+		if (!Community.Runtime.Config.Logging.ReducedLogging)
+		{
+			Logger.Log($" Initialized {(IndexedType?.Name ?? Name)} processor...");
+		}
 	}
 	public virtual void OnDestroy()
 	{

@@ -32,6 +32,8 @@ public static class Bridge
 /// </summary>
 public abstract class BridgeMessages
 {
+	public virtual bool ShouldPool => true;
+
 	protected abstract void OnRpc(BridgeRead read);
 	protected abstract void OnCommand(BridgeRead read);
 	protected abstract void OnCustom(BridgeRead read);
@@ -159,7 +161,7 @@ public abstract class BridgeServer
 						};
 						socket.OnBinary += data =>
 						{
-							using var stream = Pool.Get<BufferStream>().Initialize();
+							var stream = Pool.Get<BufferStream>().Initialize();
 							stream._buffer = BufferStream.RentBuffer(data.Length);
 							stream._length = stream._buffer.Length;
 							stream._isBufferOwned = true;
@@ -170,7 +172,10 @@ public abstract class BridgeServer
 
 							var read = BridgeRead.Rent(stream, bridgeConnection);
 							Messages.HandleChannelRead(read);
-							BridgeRead.Return(ref read);
+							if (Messages.ShouldPool)
+							{
+								BridgeRead.Return(ref read);
+							}
 						};
 						socket.OnError = e =>
 						{
@@ -181,6 +186,7 @@ public abstract class BridgeServer
 			};
 			Logger.Log($"Started Carbon.Bridge on port {port} ({_context})");
 			_isConnected = true;
+			OnServerConnected();
 		}
 		catch(Exception ex)
 		{
@@ -206,6 +212,7 @@ public abstract class BridgeServer
 		OnClosedConnection = null;
 		Messages = null;
 		_isConnected = false;
+		OnServerDisconnected();
 	}
 
 	public bool IsConnected()
@@ -213,6 +220,8 @@ public abstract class BridgeServer
 		return Listener != null && _isConnected;
 	}
 
+	public virtual void OnServerConnected() { }
+	public virtual void OnServerDisconnected() { }
 	public virtual bool OnPasswordValidate(string password)
 	{
 		return password is not (null or "unset" or "password");
@@ -284,7 +293,7 @@ public sealed class BridgeClient
 	{
 		while (Socket.State == WebSocketState.Open && !CancellationToken.IsCancellationRequested)
 		{
-			using var stream = Pool.Get<BufferStream>().Initialize();
+			var stream = Pool.Get<BufferStream>().Initialize();
 			stream._isBufferOwned = true;
 			stream._buffer = BufferStream.RentBuffer(MaxBufferSize);
 			stream._length = stream._buffer.Length;
@@ -308,7 +317,11 @@ public sealed class BridgeClient
 						{
 							Logger.Error("Carbon.Bridge.ReceiveLoop[OnRead] failure", ex);
 						}
-						BridgeRead.Return(ref read);
+
+						if (Messages.ShouldPool)
+						{
+							BridgeRead.Return(ref read);
+						}
 						break;
 
 					case WebSocketMessageType.Close:
@@ -318,6 +331,7 @@ public sealed class BridgeClient
 			}
 			catch (Exception ex)
 			{
+				Pool.Free(ref stream);
 				Logger.Error("Carbon.Bridge.ReceiveLoop failure", ex);
 			}
 		}
@@ -344,6 +358,10 @@ public sealed class BridgeConnection : Pool.IPooled
 
 	public void Send(BridgeWrite write)
 	{
+		if (Socket == null)
+		{
+			return;
+		}
 		Socket.Send(write.GetMemory());
 	}
 
@@ -374,7 +392,12 @@ public sealed class BridgeRead : NetRead
 
 	public static void Return(ref BridgeRead read)
 	{
-		read.stream = null;
+		if (read.stream != null)
+		{
+			var stream = read.stream;
+			Pool.Free(ref stream);
+			read.stream = null;
+		}
 		Pool.Free(ref read);
 	}
 

@@ -90,9 +90,6 @@ public partial class CorePlugin
 	private void Commit(ConsoleSystem.Arg arg)
 	{
 		var builder = Pool.Get<StringBuilder>();
-		var added = Build.Git.Changes.Count(x => x.Type == Build.Git.AssetChange.ChangeTypes.Added);
-		var modified = Build.Git.Changes.Count(x => x.Type == Build.Git.AssetChange.ChangeTypes.Modified);
-		var deleted = Build.Git.Changes.Count(x => x.Type == Build.Git.AssetChange.ChangeTypes.Deleted);
 
 		builder.AppendLine($"  Branch:  {Build.Git.Branch}");
 		builder.AppendLine($"  Author:  {Build.Git.Author}");
@@ -102,7 +99,6 @@ public partial class CorePlugin
 		builder.AppendLine($"    Hash:  {Build.Git.HashShort} ({Build.Git.HashLong})");
 		builder.AppendLine($"     Url:  {Build.Git.Url}");
 		builder.AppendLine($"   Debug:  {Build.IsDebug}");
-		builder.AppendLine($" Changes:  {added} added, {modified} modified, {deleted} deleted");
 
 		arg.ReplyWith(builder.ToString());
 		Pool.FreeUnmanaged(ref builder);

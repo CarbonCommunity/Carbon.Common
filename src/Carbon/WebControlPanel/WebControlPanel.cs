@@ -1,4 +1,7 @@
 ﻿using Facepunch;
+using ProtoBuf;
+using Object = UnityEngine.Object;
+using Ping = ConVar.Ping;
 
 namespace Carbon;
 
@@ -11,6 +14,7 @@ public static partial class WebControlPanel
 
 	private static uint currentRpcId;
 	private static object[] args = [1];
+	private static Queue<BridgeRead> reads = new();
 
 	public static void Init()
 	{
@@ -29,6 +33,17 @@ public static partial class WebControlPanel
 			rpcs[rpc.MethodId] = rpc;
 		}
 		Output.OnPostMessage += OnLog;
+
+		var webObject = new GameObject(nameof(WebControlPanel)).AddComponent<WebBehaviour>();
+		Object.DontDestroyOnLoad(webObject.gameObject);
+	}
+
+	public static void ServerInit()
+	{
+		if (config.ShouldStartServer())
+		{
+			MAPINFO_CACHE = MapInfo.Get(config.Panel.MapImageScale);
+		}
 	}
 
 	public static void Shutdown()
@@ -42,21 +57,17 @@ public static partial class WebControlPanel
 		server = null;
 	}
 
-	internal static void RunCommand(ConsoleSystem.Arg arg)
+	public static void Frame()
 	{
-		currentRpcId = arg.GetUInt(0);
-		if(!rpcs.TryGetValue(currentRpcId, out WebCall rpc))
+		while (reads.Count > 0)
 		{
-			return;
-		}
-		try
-		{
-			args[0] = arg;
-			arg.ReplyWithObject(((Response)rpc.Method.Invoke(null, args)).WithRpcId(currentRpcId));
-		}
-		catch(Exception ex)
-		{
-			Logger.Error($"Failed WebControlPanel.RunCommand", ex.InnerException);
+			var read = reads.Dequeue();
+			if (read == null)
+			{
+				continue;
+			}
+			RunRpc(read);
+			BridgeRead.Return(ref read);
 		}
 	}
 
@@ -89,28 +100,9 @@ public static partial class WebControlPanel
 		}
 	}
 
-	public static Response GetResponse(object value = null)
+	private static void EnqueueRpc(BridgeRead read)
 	{
-		Response response = default;
-		response.value = value;
-		return response.WithValue(value);
-	}
-
-	public struct Response
-	{
-		public uint rpcId;
-		public object value;
-
-		public Response WithRpcId(uint rpcId)
-		{
-			this.rpcId = rpcId;
-			return this;
-		}
-		public Response WithValue(object value)
-		{
-			this.value = value;
-			return this;
-		}
+		reads.Enqueue(read);
 	}
 
 	[AttributeUsage(AttributeTargets.Method)]
@@ -144,6 +136,18 @@ public static partial class WebControlPanel
 					return Account.HasPermission(connection, PermissionType);
 				}
 			}
+		}
+	}
+
+	public class WebBehaviour : FacepunchBehaviour
+	{
+		public void Update()
+		{
+			if (server == null)
+			{
+				return;
+			}
+			Frame();
 		}
 	}
 }

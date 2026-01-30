@@ -310,8 +310,9 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 			{
 				if (results != null)
 				{
-					foreach (var result in results)
+					for (var index = 0; index < results.Count; index++)
 					{
+						var result = results[index];
 						if (result.Data.Length >= MaximumBytes)
 						{
 							Puts($"Failed storing {urlCount:n0} jobs: {result.Data.Length} more or equal than {MaximumBytes}");
@@ -323,6 +324,9 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 						if (id != 0)
 						{
 							_protoData.Map[GetId(result.Url)] = id;
+							result.Success = true;
+							result.CRC = id;
+							results[index] = result;
 						}
 					}
 
@@ -418,7 +422,7 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 
 	public void AddImage(string keyOrUrl, byte[] imageData, FileStorage.Type type = FileStorage.Type.png)
 	{
-		_protoData.Map[keyOrUrl] = FileStorage.server.Store(imageData, type, RelationshipManager.ServerInstance.net.ID);
+		_protoData.Map[keyOrUrl] = FileStorage.server.Store(imageData, type, new NetworkableId(_protoData.Identifier));
 	}
 	public void AddMap(string key, string url)
 	{
@@ -460,7 +464,7 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 	}
 	public bool HasImage(string keyOrUrl)
 	{
-		return FileStorage.server.Get(GetImage(keyOrUrl), FileStorage.Type.png, CommunityEntity.ServerInstance.net.ID) != null;
+		return FileStorage.server.Get(GetImage(keyOrUrl), FileStorage.Type.png, new NetworkableId(_protoData.Identifier)) != null;
 	}
 	public bool DeleteImage(string url)
 	{

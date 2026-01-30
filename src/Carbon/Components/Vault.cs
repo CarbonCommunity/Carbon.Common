@@ -231,7 +231,6 @@ public class Vault
     {
 	    if (!OsEx.File.Exists(Defines.GetVaultFile()))
 	    {
-		    Logger.Warn($"Carbon.Vault does not exist yet");
 		    return;
 	    }
 

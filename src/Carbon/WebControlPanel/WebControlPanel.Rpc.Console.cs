@@ -12,9 +12,10 @@ public static partial class WebControlPanel
 	private static void RPC_ConsoleTail(BridgeRead read)
 	{
 		var count = Math.Min(0, Output.HistoryOutput.Count - read.Int32());
-		var logs = Output.HistoryOutput.Skip(count);
+		using var logs = Pool.Get<PooledList<Output.Entry>>();
+		logs.AddRange(Output.HistoryOutput.Skip(count));
 		var write = StartRpcResponse();
-		write.WriteObject(logs.Count());
+		write.WriteObject(logs.Count);
 		foreach (var log in logs)
 		{
 			write.WriteObject(log.Message);
@@ -30,14 +31,11 @@ public static partial class WebControlPanel
 	{
 		var message = read.String();
 		var connection = read.Connection;
-		Community.Runtime.Core.NextFrame(() =>
+		string result = ConsoleSystem.Run(ConsoleSystem.Option.Server.Quiet(), message);
+		if (!string.IsNullOrEmpty(result))
 		{
-			string result = ConsoleSystem.Run(ConsoleSystem.Option.Server.Quiet(), message);
-			if (!string.IsNullOrEmpty(result))
-			{
-				connection.Reply(result);
-			}
-		});
+			connection.Reply(result);
+		}
 	}
 
 	private static void OnLog(string message, string stacktrace, LogType type)

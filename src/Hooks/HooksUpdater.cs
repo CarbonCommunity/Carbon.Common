@@ -24,7 +24,11 @@ public sealed class Updater
 		{
 			var fileName = Path.GetFileName(file);
 
-			Logger.Warn($"Updating component '{fileName}@{Community.Runtime.Analytics.Protocol}' on {Community.Runtime.Analytics.Platform} [{Community.Runtime.Analytics.Branch}]");
+			if (!Community.Runtime.Config.Logging.ReducedLogging)
+			{
+				Logger.Warn($"Updating component '{fileName}@{Community.Runtime.Analytics.Protocol}' on {Community.Runtime.Analytics.Platform} [{Community.Runtime.Analytics.Branch}]");
+			}
+
 			byte[] buffer = await Community.Runtime.Downloader.Download(GithubReleaseUrl(file, Community.Runtime.Analytics.Protocol));
 
 			if (buffer is { Length: < 1 })

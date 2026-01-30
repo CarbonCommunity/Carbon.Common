@@ -461,6 +461,11 @@ public class Permission : Library
 			}
 		}
 
+		if (!string.IsNullOrEmpty(Community.Runtime.Config.Permissions.AdminDefaultGroup) && player.net is { connection.authLevel: 3 })
+		{
+			AddUserGroup(player.UserIDString, Community.Runtime.Config.Permissions.AdminDefaultGroup);
+		}
+
 		RustPlayer rustPlayer;
 
 		if (iPlayerField.GetValue(player) == null)
@@ -640,9 +645,9 @@ public class Permission : Library
 		return result;
 	}
 
-	public virtual void AddUserGroup(string id, string name)
+	public virtual void AddUserGroup(string id, string name, bool addIfNotExisting = false)
 	{
-		if (!GroupExists(name) || !GetUserData(id).Groups.Add(name.ToLower()))
+		if (!GroupExists(name) || !GetUserData(id, addIfNotExisting).Groups.Add(name.ToLower()))
 		{
 			return;
 		}

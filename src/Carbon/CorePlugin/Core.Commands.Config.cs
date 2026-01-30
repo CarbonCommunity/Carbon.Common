@@ -277,7 +277,7 @@ public partial class CorePlugin
 #else
 			"zip";
 #endif
-		var url = $"http://github.com/CarbonCommunity/Carbon/releases/download/{tag}_build/Carbon.{os}.{config}.{extension}";
+		var url = $"https://github.com/CarbonCommunity/Carbon/releases/download/{tag}_build/Carbon.{os}.{config}.{extension}";
 		OsEx.File.Create(txt, url);
 		arg.ReplyWith($"Overriding Carbon version to {tag} ({config}). Next server reboot will swap to the overriden version.");
 

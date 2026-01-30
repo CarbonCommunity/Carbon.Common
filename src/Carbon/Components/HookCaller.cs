@@ -229,7 +229,7 @@ public static class HookCaller
 		{
 			Caller._lastDeprecatedWarningAt[oldHookId] = now;
 
-			Carbon.Logger.Warn($"A plugin is using deprecated hook '{oldHookId}', which will stop working on {expireDate.ToString("D")}. Please ask the author to update to '{newHookId}'");
+			Carbon.Logger.Warn($"A plugin is using deprecated hook '{HookStringPool.GetOrAdd(oldHookId)}[{oldHookId}]', which will stop working on {expireDate:D}. Please ask the author to update to '{HookStringPool.GetOrAdd(newHookId)}[{newHookId}]'");
 		}
 
 		return CallStaticHook(oldHookId, flag, args);
