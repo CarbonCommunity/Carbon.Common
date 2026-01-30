@@ -158,7 +158,7 @@ public class Vault
 		item.encrypted = encrypted;
 		item.hash = encrypted ? EncryptData(buffer, CARBON_ID, out salt) : buffer;
 		item.salt = salt;
-		item.cache = value;
+		item.Cache = value;
 		item.runtimeId = "{" + factory + ":" + name + "}";
 		if (!hasItem)
 		{
@@ -202,7 +202,7 @@ public class Vault
 			return null;
 		}
 
-		return item.cache;
+		return item.Cache;
 	}
 
 	public static void Save(bool silent = false)
@@ -320,7 +320,7 @@ public class Vault
 					continue;
 				}
 
-				if (item.cache.Equals(source))
+				if (item.Cache.Equals(source))
 				{
 					return item.runtimeId;
 				}
@@ -350,7 +350,7 @@ public class Vault
 
 				if (source.Equals(item.runtimeId))
 				{
-					return item.cache;
+					return item.Cache;
 				}
 			}
 		}
@@ -429,8 +429,10 @@ public class Vault
 		public uint id;
 		public bool encrypted;
 		internal string runtimeId;
+		internal byte[] salt;
+		internal byte[] hash;
 
-		internal string cache
+		internal string Cache
 		{
 			get
 			{
@@ -444,16 +446,13 @@ public class Vault
 			set;
 		}
 
-		internal byte[] salt;
-		internal byte[] hash;
-
 		public void EnterPool()
 		{
 			id = 0;
 			hash = null;
 			salt = null;
 			encrypted = false;
-			cache = null;
+			Cache = null;
 		}
 
 		public void LeavePool()

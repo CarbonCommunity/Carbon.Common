@@ -16,7 +16,7 @@ public partial class CorePlugin
 				" " + Vault.Pool.Get(factory.id),
 				first == null ? string.Empty : Vault.Pool.Get(first.id),
 				first?.encrypted,
-				first == null || first.encrypted ? string.Empty : first.cache);
+				first == null || first.encrypted ? string.Empty : first.Cache);
 			for (int i = 1; i < factory.Count; i++)
 			{
 				var item = factory[i];
@@ -24,7 +24,7 @@ public partial class CorePlugin
 					string.Empty,
 					Vault.Pool.Get(item.id),
 					item.encrypted,
-					item.encrypted ? string.Empty : item.cache);
+					item.encrypted ? string.Empty : item.Cache);
 			}
 		}
 
