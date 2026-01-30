@@ -240,13 +240,12 @@ public class Vault
 				}
 			}
 		}
-
 		OsEx.File.Create(Defines.GetVaultFile(), memoryStream.ToArray());
 		if (!silent)
-			Logger.Log(
-				$"Saved Carbon.Vault with {factories:n0} {factories.Plural("factory", "factories")} and {items:n0} {items.Plural("item", "items")}");
+		{
+			Logger.Log($"Saved Carbon.Vault with {factories:n0} {factories.Plural("factory", "factories")} and {items:n0} {items.Plural("item", "items")}");
+		}
 	}
-
 	public static void Load(bool silent = false)
 	{
 		if (!OsEx.File.Exists(Defines.GetVaultFile()))
@@ -292,8 +291,7 @@ public class Vault
 
 			if (!silent)
 			{
-				Logger.Log(
-					$"Loaded Carbon.Vault with {factoryCount:n0} {factoryCount.Plural("factory", "factories")} and {items:n0} {items.Plural("item", "items")}");
+				Logger.Log($"Loaded Carbon.Vault with {factoryCount:n0} {factoryCount.Plural("factory", "factories")} and {items:n0} {items.Plural("item", "items")}");
 			}
 		}
 		catch (Exception ex)
@@ -446,11 +444,6 @@ public class Vault
 			set;
 		}
 
-		public string GetCache()
-		{
-			return Cache;
-		}
-
 		public void EnterPool()
 		{
 			id = 0;
@@ -512,9 +505,7 @@ public class Vault
 
 		private static uint ManifestHash(string str)
 		{
-			return string.IsNullOrEmpty(str)
-				? 0
-				: BitConverter.ToUInt32(new MD5CryptoServiceProvider().ComputeHash(Encoding.UTF8.GetBytes(str)), 0);
+		    return string.IsNullOrEmpty(str) ? 0 : BitConverter.ToUInt32(new MD5CryptoServiceProvider().ComputeHash(Encoding.UTF8.GetBytes(str)), 0);
 		}
 	}
 
