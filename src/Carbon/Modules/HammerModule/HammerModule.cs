@@ -420,12 +420,15 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 				yield return null;
 			}
 			entity.transform.position = targetPosition;
-			entity.SetParent(hit2.GetEntity(), true);
+			if (hit2.GetEntity() is BaseEntity parentEntity && parentEntity != entity)
+			{
+				entity.SetParent(parentEntity, true);
+			}
 			entity.SendNetworkUpdate_Position();
 		}
-		else if(entity.IsValid())
+		else if(entity.IsValid() && hit.GetEntity() is BaseEntity subParentEntity && subParentEntity != entity)
 		{
-			entity.SetParent(hit.GetEntity(), true);
+			entity.SetParent(subParentEntity, true);
 		}
 
 		ClearGUI(player);
