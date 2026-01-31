@@ -12,6 +12,9 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 	public override bool EnabledByDefault => true;
 	public override Type Type => typeof(HammerModule);
 
+	public ListHashSet<Func<BaseEntity, (string name, object value, bool shouldShow)>> CustomFields = new();
+	public ListHashSet<Func<BaseEntity, (string name, string color, string command, bool shouldShow)>> CustomButons = new();
+
 	private static readonly Dictionary<ulong, BaseEntity> lastCreativeModePlayers = new();
 	private static readonly Dictionary<ulong, BaseEntity> lastLastCreativeModePlayers = new();
 	private static readonly ListHashSet<ulong> editingPlayers = new();
@@ -26,7 +29,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 	{
 		base.OnEnabled(initialized);
 		timer?.Destroy();
-		timer = Community.Runtime.Core.timer.Every(.1f, TickCheck);
+		timer = Community.Runtime.Core.timer.Every(RefreshRate, TickCheck);
 	}
 
 	public override void OnDisabled(bool initialized)
@@ -140,6 +143,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		const float width = 150f;
 		const float optionHeight = 12.5f;
 		const float optionSpacing = 15f;
+		const string defaultButtonColor = ".9 .2 .3 .9";
 
 		if (!entity.IsValid())
 		{
@@ -159,6 +163,27 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		{
 			CreateButton(cui, container, container.Name, ref heightOffset, entityId, "Destroy Entity", 1);
 		}
+
+		for (int i = 0; i < CustomButons.Count; i++)
+		{
+			var buttons = CustomButons[i](entity);
+			if (!buttons.shouldShow)
+			{
+				continue;
+			}
+			CreateCustomButton(cui, container, container.Name, ref heightOffset, buttons.name, buttons.command, buttons.color ?? defaultButtonColor);
+		}
+
+		for (int i = 0; i < CustomFields.Count; i++)
+		{
+			var fields = CustomFields[i](entity);
+			if (!fields.shouldShow)
+			{
+				continue;
+			}
+			CreateOption(cui, container, container.Name, ref heightOffset, entityId, fields.name, fields.value);
+		}
+
 		CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Flags", entity?.flags);
 		CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Scale", entity?.transform.localScale);
 		CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Rotation", entity?.transform.rotation.eulerAngles);
@@ -205,6 +230,13 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 			var option = cui.CreatePanel(container, panel, ".1 .1 .1 .3", blur: true, OyMin: -optionHeight + offset, OyMax: optionHeight + offset);
 			cui.CreateProtectedButton(container, option, color, Cache.CUI.WhiteColor, name.ToUpperInvariant(), 10, font: CUI.Handler.FontTypes.RobotoCondensedBold,
 				command: $"ezeditor.editoption {optionId} {id}");
+			offset += optionHeight + optionSpacing;
+		}
+
+		static void CreateCustomButton(CUI cui, CuiElementContainer container, string panel, ref float offset, string name, string command, string color = ".9 .2 .3 .9")
+		{
+			var option = cui.CreatePanel(container, panel, ".1 .1 .1 .3", blur: true, OyMin: -optionHeight + offset, OyMax: optionHeight + offset);
+			cui.CreateProtectedButton(container, option, color, Cache.CUI.WhiteColor, name.ToUpperInvariant(), 10, font: CUI.Handler.FontTypes.RobotoCondensedBold, command: command);
 			offset += optionHeight + optionSpacing;
 		}
 
@@ -458,9 +490,23 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		}
 	}
 
+	[CommandVar("hammer.refreshrate"), AuthLevel(1)]
+	public float RefreshRate
+	{
+		get => ConfigInstance.RefreshRate;
+		set
+		{
+			ConfigInstance.RefreshRate = value.Clamp(0f, 2.5f);
+			timer?.Destroy();
+			timer = Community.Runtime.Core.timer.Every(ConfigInstance.RefreshRate, TickCheck);
+			Save();
+		}
+	}
+
 	public class HammerConfig
 	{
 		public float Distance = 5f;
 		public float Lerp = 10f;
+		public float RefreshRate = .1f;
 	}
 }
