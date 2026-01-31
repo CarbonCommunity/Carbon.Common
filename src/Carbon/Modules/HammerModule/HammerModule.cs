@@ -13,13 +13,17 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 	public override bool EnabledByDefault => true;
 	public override Type Type => typeof(HammerModule);
 
-	public ListHashSet<Func<BaseEntity, (string name, object value, bool shouldShow)>> CustomFields = new();
-	public ListHashSet<Func<BaseEntity, (string name, string color, string command, bool shouldShow)>> CustomButons = new();
+	public ListHashSet<Func<BaseEntity, bool, (string name, object value, bool shouldShow)>> CustomFields = new();
+	public ListHashSet<Func<BaseEntity, bool, (string name, string color, string command, bool shouldShow)>> CustomButons = new();
+
+	private static readonly Translate.Phrase destroyingBuildingPhrase = new("destroyedbuilding", "Destroying building: <color=white>{0}</color>/{1} entities");
+	private static readonly Translate.Phrase repairedPhrase = new("repaired", "Repairing: <color=white>{0}</color>/{1} entities");
 
 	private static readonly Dictionary<ulong, BaseEntity> lastCreativeModePlayers = new();
 	private static readonly Dictionary<ulong, BaseEntity> lastLastCreativeModePlayers = new();
 	private static readonly ListHashSet<ulong> editingPlayers = new();
 	private static readonly ListHashSet<ulong> entityMovingPlayers = new();
+	private static readonly ListHashSet<ulong> repairingDestroyingPlayers = new();
 	private static readonly Dictionary<string, ModalModule.Modal.Field> temp = new();
 
 	public ModalModule Modal;
@@ -139,7 +143,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		return (entity = hit.GetEntity()).IsValid() && !entityMovingPlayers.Contains(player.userID);
 	}
 
-	public void ApplyGUI(BasePlayer player, BaseEntity entity, bool editMode)
+	public void ApplyGUI(BasePlayer player, BaseEntity entity, bool showExtra)
 	{
 		const float width = 150f;
 		const float optionHeight = 12.5f;
@@ -155,7 +159,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		using var cui = new CUI(Community.Runtime.Core.CuiHandler);
 		var heightOffset = 0f;
 		var container = cui.CreateContainer(cuiName, Cache.CUI.BlackColor, xMin: X, xMax: X, yMin: Y, yMax: Y,
-			OxMin: -width, OxMax: width, destroyUi: cuiName, parent: CUI.ClientPanels.Hud, needsCursor: editMode, needsKeyboard: editMode);
+			OxMin: -width, OxMax: width, destroyUi: cuiName, parent: CUI.ClientPanels.Hud, needsCursor: showExtra, needsKeyboard: showExtra);
 
 		var entityId = entity.IsValid() ? entity.net.ID : default;
 
@@ -167,7 +171,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 
 		for (int i = 0; i < CustomButons.Count; i++)
 		{
-			var buttons = CustomButons[i](entity);
+			var buttons = CustomButons[i](entity, showExtra);
 			if (!buttons.shouldShow)
 			{
 				continue;
@@ -177,7 +181,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 
 		for (int i = 0; i < CustomFields.Count; i++)
 		{
-			var fields = CustomFields[i](entity);
+			var fields = CustomFields[i](entity, showExtra);
 			if (!fields.shouldShow)
 			{
 				continue;
@@ -200,20 +204,20 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		if (entity is BuildingBlock buildingBlock)
 		{
 			CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Building ID", buildingBlock.buildingID);
-			if (editMode)
+			if (showExtra)
 			{
 				CreateButton(cui, container, container.Name, ref heightOffset, entityId, $"Destroy Building ({buildingBlock.GetBuilding().decayEntities.Count:n0} entities)", 2);
 			}
 		}
 		CreateOption(cui, container, container.Name, ref heightOffset, entityId, "NetID", entityId);
 		CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Target", entity?.ShortPrefabName);
-		if (!editMode)
+		if (!showExtra)
 		{
-			CreateButton(cui, container, container.Name, ref heightOffset, entityId, "Edit", 0, "#8cbf1d");
+			CreateButton(cui, container, container.Name, ref heightOffset, entityId, "Show extra settings", 0, "#8cbf1d");
 		}
 		else
 		{
-			CreateButton(cui, container, container.Name, ref heightOffset, entityId, "End Edit", 0);
+			CreateButton(cui, container, container.Name, ref heightOffset, entityId, "Show fewer settings", 0);
 		}
 
 		static void CreateOption(CUI cui, CuiElementContainer container, string panel, ref float offset, NetworkableId id, string name, object value)
@@ -259,13 +263,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 
 	private void OnPlayerInput(BasePlayer player, InputState state)
 	{
-		var isMovingEntity = entityMovingPlayers.Contains(player.userID);
-		if (!lastCreativeModePlayers.TryGetValue(player.userID, out var entity) && !isMovingEntity)
-		{
-			return;
-		}
-
-		if (state.WasJustPressed(BUTTON.FIRE_THIRD) && entity != null)
+		if (lastCreativeModePlayers.TryGetValue(player.userID, out var entity) && state.WasJustPressed(BUTTON.FIRE_THIRD))
 		{
 			if (entity is IAlwaysOn alwaysOn)
 			{
@@ -303,7 +301,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 
 		if (state.WasJustPressed(BUTTON.FIRE_SECONDARY))
 		{
-			if (isMovingEntity)
+			if (entityMovingPlayers.Contains(player.userID))
 			{
 				entityMovingPlayers.Remove(player.userID);
 				lastCreativeModePlayers.Remove(player.userID);
@@ -315,6 +313,22 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 				player.StartCoroutine(MoveEntityRoutine(player, entity));
 			}
 		}
+	}
+
+	private object OnHammerHit(BasePlayer player, HitInfo info)
+	{
+		if (!player.IsInCreativeMode || info == null)
+		{
+			return null;
+		}
+		if (info.HitEntity is BuildingBlock block && block.GetBuilding() is BuildingManager.Building building && !repairingDestroyingPlayers.Contains(player.userID))
+		{
+			var entityPool = Pool.Get<PooledList<BaseCombatEntity>>();
+			entityPool.AddRange(building.decayEntities);
+			player.StartCoroutine(RepairEntitiesOverTime(player, entityPool));
+			return Cache.False;
+		}
+		return null;
 	}
 
 	[ProtectedCommand("ezeditor.editoption")]
@@ -354,15 +368,15 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 			}
 			case 2:
 			{
-				if (entity is not BuildingBlock block)
+				if (entity is not BuildingBlock block || repairingDestroyingPlayers.Contains(player.userID))
 				{
 					return;
 				}
 				Modal.Open(player, "Are you sure you wanna destroy that building?", temp, (player, modal) =>
 				{
 					var entityPool = Pool.Get<PooledList<BaseEntity>>();
-					entityPool.AddRange( block.GetBuilding().decayEntities);
-					player.StartCoroutine(DestroyEntitiesOverTime(entityPool));
+					entityPool.AddRange(block.GetBuilding().decayEntities);
+					player.StartCoroutine(DestroyEntitiesOverTime(player, entityPool));
 					editingPlayers.Remove(player.userID);
 					ClearGUI(player);
 				});
@@ -371,15 +385,19 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		}
 	}
 
-	private IEnumerator DestroyEntitiesOverTime(List<BaseEntity> entities)
+	private IEnumerator DestroyEntitiesOverTime(BasePlayer player, List<BaseEntity> entities)
 	{
+		repairingDestroyingPlayers.Add(player.userID);
 		var currentBatch = 0;
 		for (int i = 0; i < entities.Count; i++)
 		{
-			if (currentBatch > 5)
+			if (currentBatch > DestroyBatch)
 			{
 				yield return null;
 				yield return null;
+				yield return CoroutineEx.waitForSeconds(.25f);
+				player.ShowToast(GameTip.Styles.Red_Normal, destroyingBuildingPhrase, false, (i + 1).ToString("n0"), entities.Count.ToString("n0"));
+				currentBatch = 0;
 			}
 
 			var entity = entities[i];
@@ -389,7 +407,35 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 				currentBatch++;
 			}
 		}
+		player.ShowToast(GameTip.Styles.Red_Normal, destroyingBuildingPhrase, false, entities.Count.ToString("n0"), entities.Count.ToString("n0"));
 		Pool.FreeUnmanaged(ref entities);
+		repairingDestroyingPlayers.Remove(player.userID);
+	}
+
+	private IEnumerator RepairEntitiesOverTime(BasePlayer player, List<BaseCombatEntity> entities)
+	{
+		repairingDestroyingPlayers.Add(player.userID);
+		var currentBatch = 0;
+		for (int i = 0; i < entities.Count; i++)
+		{
+			if (currentBatch > RepairBatch)
+			{
+				currentBatch = 0;
+				player.ShowToast(GameTip.Styles.Blue_Normal, repairedPhrase, false, (i + 1).ToString("n0"), entities.Count.ToString("n0"));
+				yield return CoroutineEx.waitForSeconds(.25f);
+			}
+
+			var entity = entities[i];
+			if (entity.IsValid())
+			{
+				entity.Heal(float.MaxValue);
+				currentBatch++;
+				yield return null;
+			}
+		}
+		player.ShowToast(GameTip.Styles.Blue_Normal, repairedPhrase, false, entities.Count.ToString("n0"), entities.Count.ToString("n0"));
+		Pool.FreeUnmanaged(ref entities);
+		repairingDestroyingPlayers.Remove(player.userID);
 	}
 
 	private IEnumerator MoveEntityRoutine(BasePlayer player, BaseEntity entity)
@@ -513,6 +559,28 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		}
 	}
 
+	[CommandVar("hammer.repairbatch"), AuthLevel(1)]
+	public int RepairBatch
+	{
+		get => ConfigInstance.RepairBatch;
+		set
+		{
+			ConfigInstance.RepairBatch = value.Clamp(1, 100);
+			Save();
+		}
+	}
+
+	[CommandVar("hammer.destroybatch"), AuthLevel(1)]
+	public int DestroyBatch
+	{
+		get => ConfigInstance.DestroyBatch;
+		set
+		{
+			ConfigInstance.DestroyBatch = value.Clamp(1, 100);
+			Save();
+		}
+	}
+
 	[CommandVar("hammer.refreshrate"), AuthLevel(1)]
 	public float RefreshRate
 	{
@@ -531,6 +599,8 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		public float Distance = 5f;
 		public float Lerp = 10f;
 		public float RefreshRate = .1f;
+		public int RepairBatch = 5;
+		public int DestroyBatch = 3;
 		public float X = .75f;
 		public float Y = .25f;
 	}
