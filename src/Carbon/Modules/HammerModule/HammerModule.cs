@@ -368,11 +368,12 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		ClearGUI(player);
 		RaycastHit hit = default;
 		entity?.SetParent(null, true);
+		var transform = entity?.transform;
 		while (player.IsValid() && entity.IsValid() && entityMovingPlayers.Contains(player.userID))
 		{
 			hits.Clear();
 			hit = default;
-			GamePhysics.TraceAll(player.eyes.HeadRay(), 0f, hits, ConfigInstance.Distance, layer, QueryTriggerInteraction.Ignore);
+			GamePhysics.TraceAll(player.eyes.HeadRay(), 0f, hits, Distance, layer, QueryTriggerInteraction.Ignore);
 			for (int i = 0; i < hits.Count; i++)
 			{
 				var currentHit = hits[i];
@@ -389,19 +390,18 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 
 			if (!hasContact)
 			{
-				hit.point = player.eyes.position + (player.eyes.HeadForward() * ConfigInstance.Distance);
+				hit.point = player.eyes.position + (player.eyes.HeadForward() * Distance);
 			}
 
 			if (player.serverInput.WasJustPressed(BUTTON.RELOAD))
 			{
 				rotation += Vector3.up * 90f;
-				Debug.Log("Rotating...");
+				player.serverInput.SwallowButton(BUTTON.RELOAD);
 			}
 
-			var delta = UnityEngine.Time.deltaTime * 10f;
-			var transform = entity.transform;
+			var delta = UnityEngine.Time.deltaTime * Lerp;
 			transform.position = Vector3.Lerp(transform.position, hit.point, delta);
-			transform.rotation = Quaternion.Slerp(transform.rotation, (Quaternion.FromToRotation(Vector3.up, hit.normal) * Quaternion.Euler(rotation)) * Quaternion.Euler(player.eyes.GetLookRotation().eulerAngles.WithX(0)), delta);
+			transform.localRotation = Quaternion.Slerp(transform.localRotation, (Quaternion.FromToRotation(Vector3.up, hit.normal) * Quaternion.Euler(rotation)) * Quaternion.Euler(player.eyes.GetLookRotation().eulerAngles.WithX(0)), delta);
 			entity.SendNetworkUpdate_Position();
 			yield return null;
 		}
@@ -409,12 +409,11 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		if (!hasContact && entity.IsValid() && !player.serverInput.IsDown(BUTTON.SPRINT))
 		{
 			var position = entity.transform.position;
-			var transform = entity.transform;
 			Physics.Raycast(position,  Vector3.down, out RaycastHit hit2, float.MaxValue, ~0, QueryTriggerInteraction.Ignore);
 			var targetPosition = hit2.point;
 			while ((entity.transform.position - targetPosition).magnitude > .01f)
 			{
-				var delta = UnityEngine.Time.deltaTime * 10f;
+				var delta = UnityEngine.Time.deltaTime * Lerp;
 				transform.position = Vector3.Lerp(entity.transform.position, targetPosition, delta);
 				transform.rotation = Quaternion.Slerp(transform.rotation, (Quaternion.FromToRotation(Vector3.up, hit2.normal) * Quaternion.Euler(rotation)) * Quaternion.Euler(player.eyes.GetLookRotation().eulerAngles.WithX(0)), delta);
 				entity.SendNetworkUpdate_Position();
@@ -434,8 +433,31 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		Pool.FreeUnmanaged(ref hits);
 	}
 
+	[CommandVar("hammer.distance")]
+	public float Distance
+	{
+		get => ConfigInstance.Distance;
+		set
+		{
+			ConfigInstance.Distance = value.Clamp(.5f, 20f);
+			Save();
+		}
+	}
+
+	[CommandVar("hammer.lerp")]
+	public float Lerp
+	{
+		get => ConfigInstance.Lerp;
+		set
+		{
+			ConfigInstance.Lerp = value.Clamp(1, 20f);
+			Save();
+		}
+	}
+
 	public class HammerConfig
 	{
 		public float Distance = 5f;
+		public float Lerp = 10f;
 	}
 }
