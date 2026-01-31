@@ -577,10 +577,10 @@ public class CuiScrollViewComponent : ICuiComponent, ICuiEnableable
 	public CuiScrollbar VerticalScrollbar { get; set; }
 
 	[JsonProperty("horizontalNormalizedPosition")]
-	public float HorizontalNormalizedPosition { get; set; }
+	public float? HorizontalNormalizedPosition { get; set; }
 
 	[JsonProperty("verticalNormalizedPosition")]
-	public float VerticalNormalizedPosition { get; set; }
+	public float? VerticalNormalizedPosition { get; set; }
 
 	[JsonProperty("enabled")]
 	public bool? Enabled { get; set; }
