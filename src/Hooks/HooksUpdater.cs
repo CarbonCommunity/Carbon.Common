@@ -117,8 +117,15 @@ public sealed class Updater
 
 	private static async Task<byte[]> DownloadFile(string file, string protocol = null)
 	{
-		using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+		var timeoutSpan = TimeSpan.FromSeconds(10);
+		using var timeoutCts = new CancellationTokenSource(timeoutSpan);
 		var url = BuildUrl(file, protocol);
-		return await Community.Runtime.Downloader.Download(url, timeoutCts.Token);
+		var buffer = await Community.Runtime.Downloader.Download(url, timeoutCts.Token);
+		if (timeoutCts.IsCancellationRequested)
+		{
+			Logger.Warn($"Timed out downloading '{file}' after {timeoutSpan.Seconds}s");
+		}
+
+		return buffer;
 	}
 }
