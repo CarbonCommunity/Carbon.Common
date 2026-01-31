@@ -436,7 +436,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		Pool.FreeUnmanaged(ref hits);
 	}
 
-	[CommandVar("hammer.distance")]
+	[CommandVar("hammer.distance"), AuthLevel(1)]
 	public float Distance
 	{
 		get => ConfigInstance.Distance;
@@ -447,7 +447,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		}
 	}
 
-	[CommandVar("hammer.lerp")]
+	[CommandVar("hammer.lerp"), AuthLevel(1)]
 	public float Lerp
 	{
 		get => ConfigInstance.Lerp;
