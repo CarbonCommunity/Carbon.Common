@@ -9,6 +9,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 	public const string cuiName = "hammereditor.cui";
 
 	public override string Name => "Hammer";
+	public override VersionNumber Version => new(1, 0, 0);
 	public override bool EnabledByDefault => true;
 	public override Type Type => typeof(HammerModule);
 
