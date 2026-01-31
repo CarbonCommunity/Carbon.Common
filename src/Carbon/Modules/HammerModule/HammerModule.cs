@@ -153,7 +153,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 
 		using var cui = new CUI(Community.Runtime.Core.CuiHandler);
 		var heightOffset = 0f;
-		var container = cui.CreateContainer(cuiName, Cache.CUI.BlackColor, xMin: .75f, xMax: .75f, yMin: .3f, yMax: .3f,
+		var container = cui.CreateContainer(cuiName, Cache.CUI.BlackColor, xMin: X, xMax: X, yMin: Y, yMax: Y,
 			OxMin: -width, OxMax: width, destroyUi: cuiName, parent: CUI.ClientPanels.Hud, needsCursor: editMode, needsKeyboard: editMode);
 
 		var entityId = entity.IsValid() ? entity.net.ID : default;
@@ -490,6 +490,28 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		}
 	}
 
+	[CommandVar("hammer.x"), AuthLevel(1)]
+	public float X
+	{
+		get => ConfigInstance.X;
+		set
+		{
+			ConfigInstance.X = value.Clamp(0f, 1f);
+			Save();
+		}
+	}
+
+	[CommandVar("hammer.y"), AuthLevel(1)]
+	public float Y
+	{
+		get => ConfigInstance.Y;
+		set
+		{
+			ConfigInstance.Y = value.Clamp(0f, 1f);
+			Save();
+		}
+	}
+
 	[CommandVar("hammer.refreshrate"), AuthLevel(1)]
 	public float RefreshRate
 	{
@@ -508,5 +530,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		public float Distance = 5f;
 		public float Lerp = 10f;
 		public float RefreshRate = .1f;
+		public float X = .75f;
+		public float Y = .25f;
 	}
 }
