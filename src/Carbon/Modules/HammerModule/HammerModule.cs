@@ -295,25 +295,37 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 	{
 		if (lastCreativeModePlayers.TryGetValue(player.userID, out var entity) && state.WasJustPressed(BUTTON.FIRE_THIRD))
 		{
-			if (entity.HasFlag(BaseEntity.Flags.Reserved18))
+			switch (entity)
 			{
-				entity.SetFlag(BaseEntity.Flags.Reserved18, false);
-				entity.SetFlag(BaseEntity.Flags.On, false);
-				if (entity is IAlwaysOn alwaysOn)
+				case Door:
 				{
-					alwaysOn.SetAlwaysOn(false);
+					entity.SetFlag(BaseEntity.Flags.Open, !entity.HasFlag(BaseEntity.Flags.Open));
+					break;
 				}
-				lastCreativeModePlayers.Remove(player.userID);
-			}
-			else
-			{
-				entity.SetFlag(BaseEntity.Flags.Reserved18, true);
-				entity.SetFlag(BaseEntity.Flags.On, true);
-				if (entity is IAlwaysOn alwaysOn)
+				default:
 				{
-					alwaysOn.SetAlwaysOn(true);
+					if (entity.HasFlag(BaseEntity.Flags.Reserved18))
+					{
+						entity.SetFlag(BaseEntity.Flags.Reserved18, false);
+						entity.SetFlag(BaseEntity.Flags.On, false);
+						if (entity is IAlwaysOn alwaysOn)
+						{
+							alwaysOn.SetAlwaysOn(false);
+						}
+						lastCreativeModePlayers.Remove(player.userID);
+					}
+					else
+					{
+						entity.SetFlag(BaseEntity.Flags.Reserved18, true);
+						entity.SetFlag(BaseEntity.Flags.On, true);
+						if (entity is IAlwaysOn alwaysOn)
+						{
+							alwaysOn.SetAlwaysOn(true);
+						}
+						lastCreativeModePlayers.Remove(player.userID);
+					}
+					break;
 				}
-				lastCreativeModePlayers.Remove(player.userID);
 			}
 		}
 
