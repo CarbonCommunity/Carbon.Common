@@ -544,9 +544,18 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		{
 			for (int i = 0; i < entity.net.group.subscribers.Count; i++)
 			{
-				entity.DestroyOnClient(entity.net.group.subscribers[i]);
+				var subscriber = entity.net.group.subscribers[i];
+				for (int c = 0; c < entity.children.Count; c++)
+				{
+					entity.children[c].DestroyOnClient(subscriber);
+				}
+				entity.DestroyOnClient(subscriber);
 			}
 			entity.SendNetworkUpdateImmediate();
+			for (int c = 0; c < entity.children.Count; c++)
+			{
+				entity.children[c].SendNetworkUpdateImmediate();
+			}
 		}
 	}
 
