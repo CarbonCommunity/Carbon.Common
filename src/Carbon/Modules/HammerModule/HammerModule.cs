@@ -162,8 +162,8 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 	public void ApplyGUI(BasePlayer player, BaseEntity entity, bool showExtra)
 	{
 		const float width = 150f;
-		const float optionHeight = 12.5f;
-		const float optionSpacing = 15f;
+		const float optionHeight = 10f;
+		const float optionSpacing = 12.5f;
 		const string defaultButtonColor = ".9 .2 .3 .9";
 
 		if (!entity.IsValid())
@@ -227,9 +227,18 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 			}
 		}
 
-		CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Flags", entity?.flags);
-		CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Skin ID", entity?.skinID);
-		CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Scale", entity?.transform.localScale);
+		if (entity?.flags != 0)
+		{
+			CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Flags", entity?.flags);
+		}
+		if (entity?.skinID != 0)
+		{
+			CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Skin ID", entity?.skinID);
+		}
+		if (entity?.transform.localScale != Vector3.one)
+		{
+			CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Scale", entity?.transform.localScale);
+		}
 		CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Rotation", entity?.transform.rotation.eulerAngles);
 		CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Position", entity?.transform.position);
 		if (entity.IsValid() && entity.OwnerID != 0)
@@ -262,9 +271,9 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		static void CreateOption(CUI cui, CuiElementContainer container, string panel, ref float offset, NetworkableId id, string name, object value)
 		{
 			var option = cui.CreatePanel(container, panel, ".1 .1 .1 .3", blur: true, OyMin: -optionHeight + offset, OyMax: optionHeight + offset);
-			cui.CreateText(container, option, "1 1 1 .5", name, 11, xMax: .25f, align: TextAnchor.MiddleRight);
+			cui.CreateText(container, option, "1 1 1 .5", name, 10, xMax: .25f, align: TextAnchor.MiddleRight);
 			var input = cui.CreatePanel(container, option, "0 0 0 .5", xMin: .28f);
-			cui.CreateProtectedInputField(container, input, Cache.CUI.WhiteColor, value?.ToString() ?? "undefined", 11, 0, true, OxMin: 7.5f,
+			cui.CreateProtectedInputField(container, input, Cache.CUI.WhiteColor, value?.ToString() ?? "undefined", 10, 0, true, OxMin: 7.5f,
 				align: TextAnchor.MiddleLeft);
 			offset += optionHeight + optionSpacing;
 		}
@@ -272,7 +281,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		static void CreateButton(CUI cui, CuiElementContainer container, string panel, ref float offset, NetworkableId id, string name, int optionId, string color = ".9 .2 .3 .9")
 		{
 			var option = cui.CreatePanel(container, panel, ".1 .1 .1 .3", blur: true, OyMin: -optionHeight + offset, OyMax: optionHeight + offset);
-			cui.CreateProtectedButton(container, option, color, Cache.CUI.WhiteColor, name.ToUpperInvariant(), 10, font: CUI.Handler.FontTypes.RobotoCondensedBold,
+			cui.CreateProtectedButton(container, option, color, Cache.CUI.WhiteColor, name.ToUpperInvariant(), 9, font: CUI.Handler.FontTypes.RobotoCondensedBold,
 				command: $"ezeditor.editoption {optionId} {id}");
 			offset += optionHeight + optionSpacing;
 		}
@@ -286,9 +295,10 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 
 		static void CreateText(CUI cui, CuiElementContainer container, string panel, ref float offset, string text)
 		{
-			var option = cui.CreatePanel(container, panel, ".1 .1 .1 .3", blur: true, OyMin: -optionHeight + offset, OyMax: optionHeight + offset);
+			const float height = optionHeight + 2.5f;
+			var option = cui.CreatePanel(container, panel, ".1 .1 .1 .3", blur: true, OyMin: -height + offset, OyMax: height + offset);
 			cui.CreateText(container, option, "1 1 1 .4", text, 8, OxMin: 10f, align: TextAnchor.MiddleLeft);
-			offset += optionHeight + optionSpacing;
+			offset += height + optionSpacing;
 		}
 
 		cui.Send(container, player);
