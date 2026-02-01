@@ -25,6 +25,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 	private static readonly ListHashSet<ulong> entityMovingPlayers = new();
 	private static readonly ListHashSet<ulong> repairingDestroyingPlayers = new();
 	private static readonly Dictionary<string, ModalModule.Modal.Field> temp = new();
+	private static CuiDraggableComponent cachedDraggable = new();
 
 	public ModalModule Modal;
 
@@ -79,6 +80,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 
 		return entity switch
 		{
+			ModularCar or BasicCar => true,
 			DecayEntity => true,
 			_ => entity.ShortPrefabName switch
 			{
@@ -90,18 +92,17 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		};
 	}
 
-	public bool CanToggleAlwaysOn(BaseEntity entity)
+	public bool CanBeToggled(BaseEntity entity)
 	{
-		if (entity is IAlwaysOn)
+		return entity switch
 		{
-			return true;
-		}
-		if (entity is IOEntity ioEntity && ioEntity.inputs.Length > 0)
-		{
-			return true;
-		}
-
-		return false;
+			Door => true,
+			IOEntity ioEntity when ioEntity.inputs.Length > 0 => true,
+			StorageContainer => true,
+			IAlwaysOn => true,
+			MiningQuarry or EngineSwitch => true,
+			_ => false
+		};
 	}
 
 	public void TickCheck()
@@ -178,17 +179,15 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 			OxMin: -width, OxMax: width, destroyUi: cuiName, parent: CUI.ClientPanels.Hud, needsCursor: showExtra, needsKeyboard: showExtra);
 
 		var primaryPanel = container[0];
-		primaryPanel.Components.Add(new CuiDraggableComponent()
-		{
-			LimitToParent = true,
-			ParentLimitIndex = 1,
-			DragAlpha = .5f,
-			PositionRPC = CommunityEntity.DraggablePositionSendType.NormalizedScreen
-		});
+		primaryPanel.Components.Add(cachedDraggable);
+		cachedDraggable.LimitToParent = true;
+		cachedDraggable.ParentLimitIndex = 1;
+		cachedDraggable.DragAlpha = .5f;
+		cachedDraggable.PositionRPC = CommunityEntity.DraggablePositionSendType.NormalizedScreen;
 
 		var entityId = entity.IsValid() ? entity.net.ID : default;
 
-		CreateText(cui, container, container.Name, ref heightOffset, $"{(CanBeMoved(entity) ? "<color=green><b>✓</b></color>" : "<color=red><b>✘</b></color>")} Use <color=white>RIGHT-CLICK</color> to move the entity (hold <color=white>SPRINT</color> to skip auto-snapping)\n{(CanToggleAlwaysOn(entity) ? "<color=green><b>✓</b></color>" : "<color=red><b>✘</b></color>")} Use <color=white>MIDDLE-CLICK</color> to force AlwaysOn on the entity you're looking at");
+		CreateText(cui, container, container.Name, ref heightOffset, $"{(CanBeMoved(entity) ? "<color=green><b>✓</b></color>" : "<color=red><b>✘</b></color>")} Use <color=white>RIGHT-CLICK</color> to move the entity (hold <color=white>SPRINT</color> to skip auto-snapping)\n{(CanBeToggled(entity) ? "<color=green><b>✓</b></color>" : "<color=red><b>✘</b></color>")} Use <color=white>MIDDLE-CLICK</color> to toggle the entity (hold <color=white>SPRINT</color> to lock/unlock)");
 		if (entity is not BasePlayer playerEntity || !playerEntity.userID.IsSteamId())
 		{
 			CreateButton(cui, container, container.Name, ref heightOffset, entityId, "Destroy Entity", 1);
@@ -214,12 +213,22 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 			CreateOption(cui, container, container.Name, ref heightOffset, entityId, fields.name, fields.value);
 		}
 
-		if (entity is SleepingBag bag)
+		switch (entity)
 		{
-			CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Assigned To", BasePlayer.FindAwakeOrSleepingByID(bag.deployerUserID)?.ToString() ?? bag.deployerUserID.ToString());
+			case SleepingBag sleepingBag:
+			{
+				CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Assigned To", BasePlayer.FindAwakeOrSleepingByID(sleepingBag.deployerUserID)?.ToString() ?? sleepingBag.deployerUserID.ToString());
+				break;
+			}
+			case MiningQuarry miningQuarry:
+			{
+				CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Static Type", miningQuarry.staticType);
+				break;
+			}
 		}
 
 		CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Flags", entity?.flags);
+		CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Skin ID", entity?.skinID);
 		CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Scale", entity?.transform.localScale);
 		CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Rotation", entity?.transform.rotation.eulerAngles);
 		CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Position", entity?.transform.position);
@@ -293,40 +302,50 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 
 	private void OnPlayerInput(BasePlayer player, InputState state)
 	{
-		if (lastCreativeModePlayers.TryGetValue(player.userID, out var entity) && state.WasJustPressed(BUTTON.FIRE_THIRD))
+		if (lastCreativeModePlayers.TryGetValue(player.userID, out var entity) && state.WasJustPressed(BUTTON.FIRE_THIRD) && CanBeToggled(entity))
 		{
+			var wantsLock = state.IsDown(BUTTON.SPRINT);
+			var openFlag = wantsLock ? BaseEntity.Flags.Locked : BaseEntity.Flags.Open;
+			var onFlag = wantsLock ? BaseEntity.Flags.Locked : BaseEntity.Flags.On;
 			switch (entity)
 			{
 				case Door:
 				{
-					entity.SetFlag(BaseEntity.Flags.Open, !entity.HasFlag(BaseEntity.Flags.Open));
+					entity.SetFlag(openFlag, !entity.HasFlag(openFlag));
 					break;
 				}
-				default:
+				case IOEntity:
 				{
-					if (entity.HasFlag(BaseEntity.Flags.Reserved18))
+					var isOn = entity.HasFlag(onFlag);
+					entity.SetFlag(onFlag, !isOn);
+					entity.SetFlag(BaseEntity.Flags.Reserved8, !isOn);
+					break;
+				}
+				case StorageContainer:
+				{
+					entity.SetFlag(onFlag, !entity.HasFlag(onFlag));
+					break;
+				}
+				case EngineSwitch:
+				{
+					if (entity.GetParentEntity() is MiningQuarry quarry)
 					{
-						entity.SetFlag(BaseEntity.Flags.Reserved18, false);
-						entity.SetFlag(BaseEntity.Flags.On, false);
-						if (entity is IAlwaysOn alwaysOn)
-						{
-							alwaysOn.SetAlwaysOn(false);
-						}
-						lastCreativeModePlayers.Remove(player.userID);
+						quarry.EngineSwitch(!quarry.IsOn());
 					}
-					else
+					break;
+				}
+				case MiningQuarry quarry:
+				{
+					quarry.staticType++;
+					if ((int)quarry.staticType > 3)
 					{
-						entity.SetFlag(BaseEntity.Flags.Reserved18, true);
-						entity.SetFlag(BaseEntity.Flags.On, true);
-						if (entity is IAlwaysOn alwaysOn)
-						{
-							alwaysOn.SetAlwaysOn(true);
-						}
-						lastCreativeModePlayers.Remove(player.userID);
+						quarry.staticType = 0;
 					}
+					quarry.UpdateStaticDeposit();
 					break;
 				}
 			}
+			lastCreativeModePlayers.Remove(player.userID);
 		}
 
 		if (state.WasJustPressed(BUTTON.FIRE_SECONDARY))
@@ -363,7 +382,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 
 	private void OnCuiDraggableDrag(BasePlayer player, string name, Vector3 position, CommunityEntity.DraggablePositionSendType type)
 	{
-		if (type != CommunityEntity.DraggablePositionSendType.NormalizedParent)
+		if (!name.Equals(cuiName) || type != CommunityEntity.DraggablePositionSendType.NormalizedParent)
 		{
 			return;
 		}
@@ -395,7 +414,15 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 				{
 					editingPlayers.Add(player.userID);
 				}
-				ApplyGUI(player, entity, true);
+
+				if (ShouldShowUI(player, out _))
+				{
+					ApplyGUI(player, entity, true);
+				}
+				else
+				{
+					ClearGUI(player);
+				}
 				break;
 			}
 			case 1:
