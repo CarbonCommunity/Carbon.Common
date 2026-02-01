@@ -1,6 +1,5 @@
 ﻿using Facepunch;
 using Oxide.Game.Rust.Cui;
-using Rust.Modular;
 using Timer = Oxide.Plugins.Timer;
 
 namespace Carbon.Modules;
@@ -525,13 +524,13 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 				yield return null;
 			}
 			entity?.transform.position = targetPosition;
-			if (hit2.GetEntity() is BaseEntity parentEntity && parentEntity != entity)
+			if (hit2.GetEntity() is BaseEntity parentEntity && parentEntity != entity && parentEntity is not BasePlayer && entity is not BasePlayer)
 			{
 				entity?.SetParent(parentEntity, true);
 			}
 			entity?.SendNetworkUpdate_Position();
 		}
-		else if(entity.IsValid() && hit.GetEntity() is BaseEntity subParentEntity && subParentEntity != entity)
+		else if(entity.IsValid() && hit.GetEntity() is BaseEntity subParentEntity && subParentEntity != entity && entity is not BasePlayer && subParentEntity is not BasePlayer)
 		{
 			entity.SetParent(subParentEntity, true);
 		}
