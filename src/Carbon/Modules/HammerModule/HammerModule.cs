@@ -463,7 +463,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 	private IEnumerator MoveEntityRoutine(BasePlayer player, BaseEntity entity)
 	{
 		const int layer = Rust.Layers.World + Rust.Layers.Terrain + Rust.Layers.Deployed + Rust.Layers.Construction;
-		var rotation = Vector3.zero;
+		var rotation = Vector3.up * 180f;
 		var hits = Pool.Get<List<RaycastHit>>();
 		var hasContact = true;
 		var rigidbody = entity.GetComponent<Rigidbody>() ?? entity.GetComponentInChildren<Rigidbody>() ?? entity.GetComponentInParent<Rigidbody>();
@@ -544,9 +544,18 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		{
 			for (int i = 0; i < entity.net.group.subscribers.Count; i++)
 			{
-				entity.DestroyOnClient(entity.net.group.subscribers[i]);
+				var subscriber = entity.net.group.subscribers[i];
+				for (int c = 0; c < entity.children.Count; c++)
+				{
+					entity.children[c].DestroyOnClient(subscriber);
+				}
+				entity.DestroyOnClient(subscriber);
 			}
 			entity.SendNetworkUpdateImmediate();
+			for (int c = 0; c < entity.children.Count; c++)
+			{
+				entity.children[c].SendNetworkUpdateImmediate();
+			}
 		}
 	}
 
