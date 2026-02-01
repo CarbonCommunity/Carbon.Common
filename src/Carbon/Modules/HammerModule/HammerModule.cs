@@ -151,7 +151,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 	public bool ShouldShowUI(BasePlayer player, out BaseEntity entity)
 	{
 		entity = null;
-		if ( !player.IsInCreativeMode || player.GetActiveItem() is not Item item || item.info.itemid is not 200773292 /* Hammer */ || !Physics.Raycast(player.eyes.HeadRay(), out var hit, 3, ~0, QueryTriggerInteraction.Ignore))
+		if ( !player.IsInCreativeMode || player.GetActiveItem() is not Item item || item.info.itemid is not 200773292 /* Hammer */ || !Physics.Raycast(player.eyes.HeadRay(), out var hit, Distance, ~0, QueryTriggerInteraction.Ignore))
 		{
 			return false;
 		}
@@ -212,6 +212,11 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 				continue;
 			}
 			CreateOption(cui, container, container.Name, ref heightOffset, entityId, fields.name, fields.value);
+		}
+
+		if (entity is SleepingBag bag)
+		{
+			CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Assigned To", BasePlayer.FindAwakeOrSleepingByID(bag.deployerUserID)?.ToString() ?? bag.deployerUserID.ToString());
 		}
 
 		CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Flags", entity?.flags);
@@ -290,25 +295,37 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 	{
 		if (lastCreativeModePlayers.TryGetValue(player.userID, out var entity) && state.WasJustPressed(BUTTON.FIRE_THIRD))
 		{
-			if (entity.HasFlag(BaseEntity.Flags.Reserved18))
+			switch (entity)
 			{
-				entity.SetFlag(BaseEntity.Flags.Reserved18, false);
-				entity.SetFlag(BaseEntity.Flags.On, false);
-				if (entity is IAlwaysOn alwaysOn)
+				case Door:
 				{
-					alwaysOn.SetAlwaysOn(false);
+					entity.SetFlag(BaseEntity.Flags.Open, !entity.HasFlag(BaseEntity.Flags.Open));
+					break;
 				}
-				lastCreativeModePlayers.Remove(player.userID);
-			}
-			else
-			{
-				entity.SetFlag(BaseEntity.Flags.Reserved18, true);
-				entity.SetFlag(BaseEntity.Flags.On, true);
-				if (entity is IAlwaysOn alwaysOn)
+				default:
 				{
-					alwaysOn.SetAlwaysOn(true);
+					if (entity.HasFlag(BaseEntity.Flags.Reserved18))
+					{
+						entity.SetFlag(BaseEntity.Flags.Reserved18, false);
+						entity.SetFlag(BaseEntity.Flags.On, false);
+						if (entity is IAlwaysOn alwaysOn)
+						{
+							alwaysOn.SetAlwaysOn(false);
+						}
+						lastCreativeModePlayers.Remove(player.userID);
+					}
+					else
+					{
+						entity.SetFlag(BaseEntity.Flags.Reserved18, true);
+						entity.SetFlag(BaseEntity.Flags.On, true);
+						if (entity is IAlwaysOn alwaysOn)
+						{
+							alwaysOn.SetAlwaysOn(true);
+						}
+						lastCreativeModePlayers.Remove(player.userID);
+					}
+					break;
 				}
-				lastCreativeModePlayers.Remove(player.userID);
 			}
 		}
 
@@ -523,12 +540,16 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 				entity.SendNetworkUpdate_Position();
 				yield return null;
 			}
-			entity?.transform.position = targetPosition;
+
+			if (entity.IsValid())
+			{
+				entity.transform.position = targetPosition;
+				entity.SendNetworkUpdate_Position();
+			}
 			if (hit2.GetEntity() is BaseEntity parentEntity && parentEntity != entity && parentEntity is not BasePlayer && entity is not BasePlayer)
 			{
 				entity?.SetParent(parentEntity, true);
 			}
-			entity?.SendNetworkUpdate_Position();
 		}
 		else if(entity.IsValid() && hit.GetEntity() is BaseEntity subParentEntity && subParentEntity != entity && entity is not BasePlayer && subParentEntity is not BasePlayer)
 		{
@@ -537,26 +558,33 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 
 		ClearGUI(player);
 		entityMovingPlayers.Remove(player.userID);
-		rigidbody?.isKinematic = wasKinematic ?? false;
+		if (rigidbody != null)
+		{
+			rigidbody.isKinematic = wasKinematic ?? false;
+		}
 		Pool.FreeUnmanaged(ref hits);
 
-		if (entity.IsValid())
+		ReconstructEntity(entity);
+	}
+
+	private void ReconstructEntity(BaseEntity entity)
+	{
+		if (!entity.IsValid())
 		{
-			for (int i = 0; i < entity.net.group.subscribers.Count; i++)
+			return;
+		}
+		for (int i = 0; i < entity.net.group.subscribers.Count; i++)
+		{
+			entity.DestroyOnClient(entity.net.group.subscribers[i]);
+		}
+		if (entity.children != null)
+		{
+			for (int i = 0; i < entity.children.Count; i++)
 			{
-				var subscriber = entity.net.group.subscribers[i];
-				for (int c = 0; c < entity.children.Count; c++)
-				{
-					entity.children[c].DestroyOnClient(subscriber);
-				}
-				entity.DestroyOnClient(subscriber);
-			}
-			entity.SendNetworkUpdateImmediate();
-			for (int c = 0; c < entity.children.Count; c++)
-			{
-				entity.children[c].SendNetworkUpdateImmediate();
+				ReconstructEntity(entity.children[i]);
 			}
 		}
+		entity.SendNetworkUpdateImmediate();
 	}
 
 	public Vector2 GetCoordinates(BasePlayer player)
