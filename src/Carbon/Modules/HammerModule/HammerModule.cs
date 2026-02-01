@@ -395,7 +395,15 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 				{
 					editingPlayers.Add(player.userID);
 				}
-				ApplyGUI(player, entity, true);
+
+				if (ShouldShowUI(player, out _))
+				{
+					ApplyGUI(player, entity, true);
+				}
+				else
+				{
+					ClearGUI(player);
+				}
 				break;
 			}
 			case 1:
