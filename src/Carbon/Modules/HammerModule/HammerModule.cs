@@ -1,5 +1,6 @@
 ﻿using Facepunch;
 using Oxide.Game.Rust.Cui;
+using Rust.Modular;
 using Timer = Oxide.Plugins.Timer;
 
 namespace Carbon.Modules;
@@ -66,11 +67,27 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 			return false;
 		}
 
-		return entity.ShortPrefabName switch
+		switch (entity)
 		{
-			_ when entity.ShortPrefabName.Contains("deploy", CompareOptions.IgnoreCase) => true,
-			_ when entity.ShortPrefabName.Contains("generator", CompareOptions.IgnoreCase) => true,
-			_ => false
+			case BuildingBlock:
+				return false;
+		}
+
+		if (MoveEverything)
+		{
+			return true;
+		}
+
+		return entity switch
+		{
+			DecayEntity => true,
+			_ => entity.ShortPrefabName switch
+			{
+				_ when entity.ShortPrefabName.Contains("deploy", CompareOptions.IgnoreCase) => true,
+				_ when entity.ShortPrefabName.Contains("generator", CompareOptions.IgnoreCase) => true,
+				_ when entity.ShortPrefabName.Contains("arcade", CompareOptions.IgnoreCase) => true,
+				_ => false
+			}
 		};
 	}
 
@@ -80,8 +97,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		{
 			return true;
 		}
-
-		if (entity is IOEntity)
+		if (entity is IOEntity ioEntity && ioEntity.inputs.Length > 0)
 		{
 			return true;
 		}
@@ -158,8 +174,18 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 
 		using var cui = new CUI(Community.Runtime.Core.CuiHandler);
 		var heightOffset = 0f;
-		var container = cui.CreateContainer(cuiName, Cache.CUI.BlackColor, xMin: X, xMax: X, yMin: Y, yMax: Y,
+		var coordinates = GetCoordinates(player);
+		var container = cui.CreateContainer(cuiName, Cache.CUI.BlackColor, xMin: coordinates.x, xMax: coordinates.x, yMin: coordinates.y, yMax: coordinates.y,
 			OxMin: -width, OxMax: width, destroyUi: cuiName, parent: CUI.ClientPanels.Hud, needsCursor: showExtra, needsKeyboard: showExtra);
+
+		var primaryPanel = container[0];
+		primaryPanel.Components.Add(new CuiDraggableComponent()
+		{
+			LimitToParent = true,
+			ParentLimitIndex = 1,
+			DragAlpha = .5f,
+			PositionRPC = CommunityEntity.DraggablePositionSendType.NormalizedScreen
+		});
 
 		var entityId = entity.IsValid() ? entity.net.ID : default;
 
@@ -265,37 +291,25 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 	{
 		if (lastCreativeModePlayers.TryGetValue(player.userID, out var entity) && state.WasJustPressed(BUTTON.FIRE_THIRD))
 		{
-			if (entity is IAlwaysOn alwaysOn)
+			if (entity.HasFlag(BaseEntity.Flags.Reserved18))
 			{
-				if (alwaysOn.IsAlwaysOn())
+				entity.SetFlag(BaseEntity.Flags.Reserved18, false);
+				entity.SetFlag(BaseEntity.Flags.On, false);
+				if (entity is IAlwaysOn alwaysOn)
 				{
-					entity.SetFlag(BaseEntity.Flags.Reserved19, false);
-					entity.SetFlag(BaseEntity.Flags.On, false);
 					alwaysOn.SetAlwaysOn(false);
-					lastCreativeModePlayers.Remove(player.userID);
 				}
-				else
-				{
-					alwaysOn.SetAlwaysOn(true);
-					entity.SetFlag(BaseEntity.Flags.Reserved19, true);
-					entity.SetFlag(BaseEntity.Flags.On, true);
-					lastCreativeModePlayers.Remove(player.userID);
-				}
+				lastCreativeModePlayers.Remove(player.userID);
 			}
 			else
 			{
-				if (entity.HasFlag(BaseEntity.Flags.Reserved19))
+				entity.SetFlag(BaseEntity.Flags.Reserved18, true);
+				entity.SetFlag(BaseEntity.Flags.On, true);
+				if (entity is IAlwaysOn alwaysOn)
 				{
-					entity.SetFlag(BaseEntity.Flags.Reserved19, false);
-					entity.SetFlag(BaseEntity.Flags.On, false);
-					lastCreativeModePlayers.Remove(player.userID);
+					alwaysOn.SetAlwaysOn(true);
 				}
-				else
-				{
-					entity.SetFlag(BaseEntity.Flags.Reserved19, true);
-					entity.SetFlag(BaseEntity.Flags.On, true);
-					lastCreativeModePlayers.Remove(player.userID);
-				}
+				lastCreativeModePlayers.Remove(player.userID);
 			}
 		}
 
@@ -329,6 +343,15 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 			return Cache.False;
 		}
 		return null;
+	}
+
+	private void OnCuiDraggableDrag(BasePlayer player, string name, Vector3 position, CommunityEntity.DraggablePositionSendType type)
+	{
+		if (type != CommunityEntity.DraggablePositionSendType.NormalizedParent)
+		{
+			return;
+		}
+		SetCoordinates(player, position);
 	}
 
 	[ProtectedCommand("ezeditor.editoption")]
@@ -444,6 +467,9 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		var rotation = Vector3.zero;
 		var hits = Pool.Get<List<RaycastHit>>();
 		var hasContact = true;
+		var rigidbody = entity.GetComponent<Rigidbody>() ?? entity.GetComponentInChildren<Rigidbody>() ?? entity.GetComponentInParent<Rigidbody>();
+		var wasKinematic = rigidbody?.isKinematic;
+		rigidbody?.isKinematic = true;
 		ClearGUI(player);
 		RaycastHit hit = default;
 		entity?.SetParent(null, true);
@@ -490,7 +516,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 			var position = entity.transform.position;
 			Physics.Raycast(position,  Vector3.down, out RaycastHit hit2, float.MaxValue, ~0, QueryTriggerInteraction.Ignore);
 			var targetPosition = hit2.point;
-			while ((entity.transform.position - targetPosition).magnitude > .01f)
+			while (entity.IsValid() && (entity.transform.position - targetPosition).magnitude > .01f)
 			{
 				var delta = UnityEngine.Time.deltaTime * Lerp;
 				transform.position = Vector3.Lerp(entity.transform.position, targetPosition, delta);
@@ -498,12 +524,12 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 				entity.SendNetworkUpdate_Position();
 				yield return null;
 			}
-			entity.transform.position = targetPosition;
+			entity?.transform.position = targetPosition;
 			if (hit2.GetEntity() is BaseEntity parentEntity && parentEntity != entity)
 			{
-				entity.SetParent(parentEntity, true);
+				entity?.SetParent(parentEntity, true);
 			}
-			entity.SendNetworkUpdate_Position();
+			entity?.SendNetworkUpdate_Position();
 		}
 		else if(entity.IsValid() && hit.GetEntity() is BaseEntity subParentEntity && subParentEntity != entity)
 		{
@@ -512,7 +538,28 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 
 		ClearGUI(player);
 		entityMovingPlayers.Remove(player.userID);
+		rigidbody?.isKinematic = wasKinematic ?? false;
 		Pool.FreeUnmanaged(ref hits);
+
+		if (entity.IsValid())
+		{
+			for (int i = 0; i < entity.net.group.subscribers.Count; i++)
+			{
+				entity.DestroyOnClient(entity.net.group.subscribers[i]);
+			}
+			entity.SendNetworkUpdateImmediate();
+		}
+	}
+
+	public Vector2 GetCoordinates(BasePlayer player)
+	{
+		var id = "coord-" + player.userID;
+		return PlayerPrefs.HasKey(id) ? Vector2Ex.Parse(PlayerPrefs.GetString(id)) : new Vector2(DefaultX, DefaultY);
+	}
+
+	public void SetCoordinates(BasePlayer player, Vector2 coordinates)
+	{
+		PlayerPrefs.SetString("coord-" + player.userID, coordinates.ToParsableString());
 	}
 
 	[CommandVar("hammer.distance"), AuthLevel(1)]
@@ -538,23 +585,23 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 	}
 
 	[CommandVar("hammer.x"), AuthLevel(1)]
-	public float X
+	public float DefaultX
 	{
-		get => ConfigInstance.X;
+		get => ConfigInstance.DefaultX;
 		set
 		{
-			ConfigInstance.X = value.Clamp(0f, 1f);
+			ConfigInstance.DefaultX = value.Clamp(0f, 1f);
 			Save();
 		}
 	}
 
 	[CommandVar("hammer.y"), AuthLevel(1)]
-	public float Y
+	public float DefaultY
 	{
-		get => ConfigInstance.Y;
+		get => ConfigInstance.DefaultY;
 		set
 		{
-			ConfigInstance.Y = value.Clamp(0f, 1f);
+			ConfigInstance.DefaultY = value.Clamp(0f, 1f);
 			Save();
 		}
 	}
@@ -581,6 +628,17 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		}
 	}
 
+	[CommandVar("hammer.moveeverything"), AuthLevel(2)]
+	public bool MoveEverything
+	{
+		get => ConfigInstance.MoveEverything;
+		set
+		{
+			ConfigInstance.MoveEverything = value;
+			Save();
+		}
+	}
+
 	[CommandVar("hammer.refreshrate"), AuthLevel(1)]
 	public float RefreshRate
 	{
@@ -601,7 +659,8 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		public float RefreshRate = .1f;
 		public int RepairBatch = 5;
 		public int DestroyBatch = 3;
-		public float X = .75f;
-		public float Y = .25f;
+		public float DefaultX = .75f;
+		public float DefaultY = .25f;
+		public bool MoveEverything = false;
 	}
 }
