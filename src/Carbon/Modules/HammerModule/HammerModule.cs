@@ -25,6 +25,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 	private static readonly ListHashSet<ulong> entityMovingPlayers = new();
 	private static readonly ListHashSet<ulong> repairingDestroyingPlayers = new();
 	private static readonly Dictionary<string, ModalModule.Modal.Field> temp = new();
+	private static CuiDraggableComponent cachedDraggable = new();
 
 	public ModalModule Modal;
 
@@ -178,17 +179,15 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 			OxMin: -width, OxMax: width, destroyUi: cuiName, parent: CUI.ClientPanels.Hud, needsCursor: showExtra, needsKeyboard: showExtra);
 
 		var primaryPanel = container[0];
-		primaryPanel.Components.Add(new CuiDraggableComponent()
-		{
-			LimitToParent = true,
-			ParentLimitIndex = 1,
-			DragAlpha = .5f,
-			PositionRPC = CommunityEntity.DraggablePositionSendType.NormalizedScreen
-		});
+		primaryPanel.Components.Add(cachedDraggable);
+		cachedDraggable.LimitToParent = true;
+		cachedDraggable.ParentLimitIndex = 1;
+		cachedDraggable.DragAlpha = .5f;
+		cachedDraggable.PositionRPC = CommunityEntity.DraggablePositionSendType.NormalizedScreen;
 
 		var entityId = entity.IsValid() ? entity.net.ID : default;
 
-		CreateText(cui, container, container.Name, ref heightOffset, $"{(CanBeMoved(entity) ? "<color=green><b>✓</b></color>" : "<color=red><b>✘</b></color>")} Use <color=white>RIGHT-CLICK</color> to move the entity (hold <color=white>SPRINT</color> to skip auto-snapping)\n{(CanBeToggled(entity) ? "<color=green><b>✓</b></color>" : "<color=red><b>✘</b></color>")} Use <color=white>MIDDLE-CLICK</color> to toggle behaviour of the entity you're looking at");
+		CreateText(cui, container, container.Name, ref heightOffset, $"{(CanBeMoved(entity) ? "<color=green><b>✓</b></color>" : "<color=red><b>✘</b></color>")} Use <color=white>RIGHT-CLICK</color> to move the entity (hold <color=white>SPRINT</color> to skip auto-snapping)\n{(CanBeToggled(entity) ? "<color=green><b>✓</b></color>" : "<color=red><b>✘</b></color>")} Use <color=white>MIDDLE-CLICK</color> to toggle the entity (hold <color=white>SPRINT</color> to lock/unlock)");
 		if (entity is not BasePlayer playerEntity || !playerEntity.userID.IsSteamId())
 		{
 			CreateButton(cui, container, container.Name, ref heightOffset, entityId, "Destroy Entity", 1);
@@ -305,23 +304,26 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 	{
 		if (lastCreativeModePlayers.TryGetValue(player.userID, out var entity) && state.WasJustPressed(BUTTON.FIRE_THIRD) && CanBeToggled(entity))
 		{
+			var wantsLock = state.IsDown(BUTTON.SPRINT);
+			var openFlag = wantsLock ? BaseEntity.Flags.Locked : BaseEntity.Flags.Open;
+			var onFlag = wantsLock ? BaseEntity.Flags.Locked : BaseEntity.Flags.On;
 			switch (entity)
 			{
 				case Door:
 				{
-					entity.SetFlag(BaseEntity.Flags.Open, !entity.HasFlag(BaseEntity.Flags.Open));
+					entity.SetFlag(openFlag, !entity.HasFlag(openFlag));
 					break;
 				}
 				case IOEntity:
 				{
-					var isOn = entity.HasFlag(BaseEntity.Flags.On);
-					entity.SetFlag(BaseEntity.Flags.On, !isOn);
+					var isOn = entity.HasFlag(onFlag);
+					entity.SetFlag(onFlag, !isOn);
 					entity.SetFlag(BaseEntity.Flags.Reserved8, !isOn);
 					break;
 				}
 				case StorageContainer:
 				{
-					entity.SetFlag(BaseEntity.Flags.On, !entity.HasFlag(BaseEntity.Flags.On));
+					entity.SetFlag(onFlag, !entity.HasFlag(onFlag));
 					break;
 				}
 				case EngineSwitch:
@@ -380,7 +382,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 
 	private void OnCuiDraggableDrag(BasePlayer player, string name, Vector3 position, CommunityEntity.DraggablePositionSendType type)
 	{
-		if (type != CommunityEntity.DraggablePositionSendType.NormalizedParent)
+		if (!name.Equals(cuiName) || type != CommunityEntity.DraggablePositionSendType.NormalizedParent)
 		{
 			return;
 		}
