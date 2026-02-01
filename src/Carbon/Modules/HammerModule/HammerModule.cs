@@ -79,6 +79,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 
 		return entity switch
 		{
+			ModularCar or BasicCar => true,
 			DecayEntity => true,
 			_ => entity.ShortPrefabName switch
 			{
