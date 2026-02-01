@@ -90,18 +90,17 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		};
 	}
 
-	public bool CanToggleAlwaysOn(BaseEntity entity)
+	public bool CanBeToggled(BaseEntity entity)
 	{
-		if (entity is IAlwaysOn)
+		return entity switch
 		{
-			return true;
-		}
-		if (entity is IOEntity ioEntity && ioEntity.inputs.Length > 0)
-		{
-			return true;
-		}
-
-		return false;
+			Door => true,
+			IOEntity ioEntity when ioEntity.inputs.Length > 0 => true,
+			StorageContainer => true,
+			IAlwaysOn => true,
+			MiningQuarry or EngineSwitch => true,
+			_ => false
+		};
 	}
 
 	public void TickCheck()
@@ -188,7 +187,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 
 		var entityId = entity.IsValid() ? entity.net.ID : default;
 
-		CreateText(cui, container, container.Name, ref heightOffset, $"{(CanBeMoved(entity) ? "<color=green><b>✓</b></color>" : "<color=red><b>✘</b></color>")} Use <color=white>RIGHT-CLICK</color> to move the entity (hold <color=white>SPRINT</color> to skip auto-snapping)\n{(CanToggleAlwaysOn(entity) ? "<color=green><b>✓</b></color>" : "<color=red><b>✘</b></color>")} Use <color=white>MIDDLE-CLICK</color> to force AlwaysOn on the entity you're looking at");
+		CreateText(cui, container, container.Name, ref heightOffset, $"{(CanBeMoved(entity) ? "<color=green><b>✓</b></color>" : "<color=red><b>✘</b></color>")} Use <color=white>RIGHT-CLICK</color> to move the entity (hold <color=white>SPRINT</color> to skip auto-snapping)\n{(CanBeToggled(entity) ? "<color=green><b>✓</b></color>" : "<color=red><b>✘</b></color>")} Use <color=white>MIDDLE-CLICK</color> to toggle behaviour of the entity you're looking at");
 		if (entity is not BasePlayer playerEntity || !playerEntity.userID.IsSteamId())
 		{
 			CreateButton(cui, container, container.Name, ref heightOffset, entityId, "Destroy Entity", 1);
@@ -214,9 +213,18 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 			CreateOption(cui, container, container.Name, ref heightOffset, entityId, fields.name, fields.value);
 		}
 
-		if (entity is SleepingBag bag)
+		switch (entity)
 		{
-			CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Assigned To", BasePlayer.FindAwakeOrSleepingByID(bag.deployerUserID)?.ToString() ?? bag.deployerUserID.ToString());
+			case SleepingBag sleepingBag:
+			{
+				CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Assigned To", BasePlayer.FindAwakeOrSleepingByID(sleepingBag.deployerUserID)?.ToString() ?? sleepingBag.deployerUserID.ToString());
+				break;
+			}
+			case MiningQuarry miningQuarry:
+			{
+				CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Static Type", miningQuarry.staticType);
+				break;
+			}
 		}
 
 		CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Flags", entity?.flags);
@@ -293,7 +301,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 
 	private void OnPlayerInput(BasePlayer player, InputState state)
 	{
-		if (lastCreativeModePlayers.TryGetValue(player.userID, out var entity) && state.WasJustPressed(BUTTON.FIRE_THIRD))
+		if (lastCreativeModePlayers.TryGetValue(player.userID, out var entity) && state.WasJustPressed(BUTTON.FIRE_THIRD) && CanBeToggled(entity))
 		{
 			switch (entity)
 			{
@@ -302,31 +310,38 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 					entity.SetFlag(BaseEntity.Flags.Open, !entity.HasFlag(BaseEntity.Flags.Open));
 					break;
 				}
-				default:
+				case IOEntity:
 				{
-					if (entity.HasFlag(BaseEntity.Flags.Reserved18))
+					var isOn = entity.HasFlag(BaseEntity.Flags.On);
+					entity.SetFlag(BaseEntity.Flags.On, !isOn);
+					entity.SetFlag(BaseEntity.Flags.Reserved8, !isOn);
+					break;
+				}
+				case StorageContainer:
+				{
+					entity.SetFlag(BaseEntity.Flags.On, !entity.HasFlag(BaseEntity.Flags.On));
+					break;
+				}
+				case EngineSwitch:
+				{
+					if (entity.GetParentEntity() is MiningQuarry quarry)
 					{
-						entity.SetFlag(BaseEntity.Flags.Reserved18, false);
-						entity.SetFlag(BaseEntity.Flags.On, false);
-						if (entity is IAlwaysOn alwaysOn)
-						{
-							alwaysOn.SetAlwaysOn(false);
-						}
-						lastCreativeModePlayers.Remove(player.userID);
-					}
-					else
-					{
-						entity.SetFlag(BaseEntity.Flags.Reserved18, true);
-						entity.SetFlag(BaseEntity.Flags.On, true);
-						if (entity is IAlwaysOn alwaysOn)
-						{
-							alwaysOn.SetAlwaysOn(true);
-						}
-						lastCreativeModePlayers.Remove(player.userID);
+						quarry.EngineSwitch(!quarry.IsOn());
 					}
 					break;
 				}
+				case MiningQuarry quarry:
+				{
+					quarry.staticType++;
+					if ((int)quarry.staticType > 3)
+					{
+						quarry.staticType = 0;
+					}
+					quarry.UpdateStaticDeposit();
+					break;
+				}
 			}
+			lastCreativeModePlayers.Remove(player.userID);
 		}
 
 		if (state.WasJustPressed(BUTTON.FIRE_SECONDARY))
