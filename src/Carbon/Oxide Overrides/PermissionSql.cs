@@ -279,7 +279,7 @@ public class PermissionSql : Permission
 
 	public override UserData GetUserData(string id, bool addIfNotExisting = false)
 	{
-		if (!userdata.ContainsKey(id))
+		if (!base.UserExists(id))
 		{
 			(string userId, UserData data) = db.QueryUser(id);
 
