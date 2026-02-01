@@ -228,6 +228,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		}
 
 		CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Flags", entity?.flags);
+		CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Skin ID", entity?.skinID);
 		CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Scale", entity?.transform.localScale);
 		CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Rotation", entity?.transform.rotation.eulerAngles);
 		CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Position", entity?.transform.position);
