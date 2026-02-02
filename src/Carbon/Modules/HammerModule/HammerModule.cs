@@ -601,7 +601,10 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		}
 		Pool.FreeUnmanaged(ref hits);
 
-		ReconstructEntity(entity);
+		if (entity is not BaseCorpse && !entity.HasEntityInParents(player) && !player.HasEntityInParents(entity))
+		{
+			ReconstructEntity(entity);
+		}
 	}
 
 	private void ReconstructEntity(BaseEntity entity)
