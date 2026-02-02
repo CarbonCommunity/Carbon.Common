@@ -529,7 +529,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 			}
 			case 1:
 			{
-				if (CanBeMoved(player, entity))
+				if (CanBeMoved(player, entity) || entity is BuildingBlock)
 				{
 					entity.Kill(BaseNetworkable.DestroyMode.Gib);
 					editingPlayers.Remove(player.userID);
