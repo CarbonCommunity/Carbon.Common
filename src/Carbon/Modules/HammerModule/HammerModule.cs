@@ -632,6 +632,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		RaycastHit hit = default;
 		entity?.SetParent(null, true);
 		var transform = entity?.transform;
+		var group = entity?.net.group;
 		while (player.IsValid() && entity.IsValid() && entityMovingPlayers.Contains(player.userID))
 		{
 			hits.Clear();
@@ -709,7 +710,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		}
 		Pool.FreeUnmanaged(ref hits);
 
-		if (entity is not BaseCorpse && !entity.HasEntityInParents(player) && !player.HasEntityInParents(entity))
+		if (entity.IsValid() && entity is not BaseCorpse && !entity.HasEntityInParents(player) && !player.HasEntityInParents(entity) && entity.net.group != group)
 		{
 			ReconstructEntity(entity);
 		}
