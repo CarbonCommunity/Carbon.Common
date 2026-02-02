@@ -71,6 +71,14 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		{
 			case BuildingBlock:
 				return false;
+			case StorageContainer:
+				if (entity.ShortPrefabName.Equals("crudeoutput", StringComparison.CurrentCultureIgnoreCase) ||
+				    entity.ShortPrefabName.Equals("hopperoutput", StringComparison.CurrentCultureIgnoreCase) ||
+				    entity.ShortPrefabName.Equals("fuelstorage", StringComparison.CurrentCultureIgnoreCase))
+				{
+					return false;
+				}
+				break;
 		}
 
 		if (MoveEverything)
@@ -613,6 +621,9 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		{
 			return;
 		}
+
+		entity.networkEntityScale = entity.transform.localScale != Vector3.one;
+
 		for (int i = 0; i < entity.net.group.subscribers.Count; i++)
 		{
 			entity.DestroyOnClient(entity.net.group.subscribers[i]);
