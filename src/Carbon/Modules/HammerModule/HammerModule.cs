@@ -806,7 +806,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		PlayerPrefs.SetString("coord-" + player.userID, coordinates.ToParsableString());
 	}
 
-	[CommandVar("hammer.uidistanceflymultiplier", "The multiplication value of the distance needed for an entity to be picked up by the Hammer UI"), AuthLevel(1)]
+	[CommandVar("hammer.uidistanceflymultiplier", "The multiplication value of the distance needed for an entity to be picked up by the Hammer UI when flying"), AuthLevel(1)]
 	public float UIDistanceFlyMultiplier
 	{
 		get => ConfigInstance.UIDistanceFlyMultiplier;
