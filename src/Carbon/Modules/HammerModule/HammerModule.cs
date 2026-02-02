@@ -486,7 +486,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 			}
 			case 1:
 			{
-				entity.AdminKill();
+				entity.Kill(BaseNetworkable.DestroyMode.Gib);
 				editingPlayers.Remove(player.userID);
 				ClearGUI(player);
 				break;
@@ -528,7 +528,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 			var entity = entities[i];
 			if (entity.IsValid())
 			{
-				entity.AdminKill();
+				entity.Kill();
 				currentBatch++;
 			}
 		}
