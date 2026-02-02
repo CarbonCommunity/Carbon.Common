@@ -221,6 +221,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 			CreateOption(cui, container, container.Name, ref heightOffset, entityId, fields.name, fields.value);
 		}
 
+		ModularCar car = default;
 		switch (entity)
 		{
 			case SleepingBag sleepingBag:
@@ -233,6 +234,42 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 				CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Static Type", miningQuarry.staticType);
 				break;
 			}
+			case Door door:
+			{
+				if (door.HasLock() && door.GetLock() is CodeLock codeLock)
+				{
+					if (codeLock.hasGuestCode)
+					{
+						CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Guest Code", codeLock.guestCode);
+					}
+					CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Code", codeLock.code);
+				}
+				break;
+			}
+			case VehicleModuleEngine vehicleModuleEngine:
+			{
+				car = vehicleModuleEngine.Car;
+				break;
+			}
+			case ModularCar modularCar:
+			{
+				car = modularCar;
+				break;
+			}
+		}
+
+		if (car.IsValid() && car.CarLock.HasALock)
+		{
+			if (car.CarLock.whitelistPlayers.Count > 0)
+			{
+				var lockCreator = car.CarLock.whitelistPlayers[0];
+				CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Lock Owner ID", lockCreator);
+				if (BasePlayer.FindAwakeOrSleepingByID(lockCreator) is BasePlayer owner && owner.IsValid())
+				{
+					CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Lock Owner", owner.displayName);
+				}
+			}
+			CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Code", car.CarLock.Code);
 		}
 
 		if (entity?.flags != 0)
@@ -251,7 +288,11 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Position", entity?.transform.position);
 		if (entity.IsValid() && entity.OwnerID != 0)
 		{
-			CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Ownership", BasePlayer.FindAwakeOrSleepingByID(entity.OwnerID)?.ToString() ?? entity.OwnerID.ToString());
+			CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Owner ID", entity.OwnerID);
+			if (BasePlayer.FindAwakeOrSleepingByID(entity.OwnerID) is BasePlayer owner && owner.IsValid())
+			{
+				CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Owner", owner.displayName);
+			}
 		}
 		if (entity is BasePlayer myPlayer)
 		{
