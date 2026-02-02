@@ -16,8 +16,10 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 	public ListHashSet<Func<BaseEntity, bool, (string name, object value, bool shouldShow)>> CustomFields = new();
 	public ListHashSet<Func<BaseEntity, bool, (string name, string color, string command, bool shouldShow)>> CustomButons = new();
 
-	private static readonly Translate.Phrase destroyingBuildingPhrase = new("destroyedbuilding", "Destroying building: <color=white>{0}</color>/{1} entities");
-	private static readonly Translate.Phrase repairedPhrase = new("repaired", "Repairing: <color=white>{0}</color>/{1} entities");
+	private static readonly Translate.Phrase destroyingBuildingCancelledPhrase = new("destroyedbuildingCancelled", "Destroying building: <color=white>cancelled</color>");
+	private static readonly Translate.Phrase destroyingBuildingPhrase = new("destroyedbuilding", "Destroying building: <color=white>{0}</color>/{1} entities ({2} dead)");
+	private static readonly Translate.Phrase repairedCancelledPhrase = new("repairedCancelled", "Repairing: <color=white>cancelled</color>");
+	private static readonly Translate.Phrase repairedPhrase = new("repaired", "Repairing: <color=white>{0}</color>/{1} entities ({2} dead)");
 
 	private static readonly Dictionary<ulong, BaseEntity> lastCreativeModePlayers = new();
 	private static readonly Dictionary<ulong, BaseEntity> lastLastCreativeModePlayers = new();
@@ -47,7 +49,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 	{
 		base.OnEnabled(initialized);
 		timer?.Destroy();
-		timer = Community.Runtime.Core.timer.Every(RefreshRate, TickCheck);
+		timer = Community.Runtime.Core.timer.Every(UIRefreshRate, TickCheck);
 	}
 
 	public override void OnDisabled(bool initialized)
@@ -483,6 +485,18 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		return null;
 	}
 
+	private void OnActiveItemChanged(BasePlayer player, Item oldItem)
+	{
+		if (!player.IsInCreativeMode)
+		{
+			return;
+		}
+		if (oldItem?.info.itemid is 200773292 /* Hammer */)
+		{
+			repairingDestroyingPlayers.Remove(player.userID);
+		}
+	}
+
 	private void OnCuiDraggableDrag(BasePlayer player, string name, Vector3 position, CommunityEntity.DraggablePositionSendType type)
 	{
 		if (!name.Equals(cuiName) || type != CommunityEntity.DraggablePositionSendType.NormalizedParent)
@@ -571,14 +585,22 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 	{
 		repairingDestroyingPlayers.Add(player.userID);
 		var currentBatch = 0;
+		var completedEntities = 0;
+		var completedEntitiesDead = 0;
+		var wasCancelled = false;
 		for (int i = 0; i < entities.Count; i++)
 		{
-			if (currentBatch > DestroyBatch)
+			if (!repairingDestroyingPlayers.Contains(player.userID))
+			{
+				wasCancelled = true;
+				break;
+			}
+			if (currentBatch > BuildingDestroyBatch)
 			{
 				yield return null;
 				yield return null;
-				yield return CoroutineEx.waitForSeconds(.25f);
-				player.ShowToast(GameTip.Styles.Red_Normal, destroyingBuildingPhrase, false, (i + 1).ToString("n0"), entities.Count.ToString("n0"));
+				yield return CoroutineEx.waitForSeconds(BuildingBatchRefreshRate);
+				player.ShowToast(GameTip.Styles.Red_Normal, destroyingBuildingPhrase, false, (i + 1).ToString("n0"), entities.Count.ToString("n0"), completedEntitiesDead.ToString("n0"));
 				currentBatch = 0;
 			}
 
@@ -587,9 +609,21 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 			{
 				entity.Kill();
 				currentBatch++;
+				completedEntities++;
+			}
+			else
+			{
+				completedEntitiesDead++;
 			}
 		}
-		player.ShowToast(GameTip.Styles.Red_Normal, destroyingBuildingPhrase, false, entities.Count.ToString("n0"), entities.Count.ToString("n0"));
+		if (wasCancelled)
+		{
+			player.ShowToast(GameTip.Styles.Red_Normal, destroyingBuildingCancelledPhrase, false);
+		}
+		else
+		{
+			player.ShowToast(GameTip.Styles.Red_Normal, destroyingBuildingPhrase, false, completedEntities.ToString("n0"), entities.Count.ToString("n0"), completedEntitiesDead.ToString("n0"));
+		}
 		Pool.FreeUnmanaged(ref entities);
 		repairingDestroyingPlayers.Remove(player.userID);
 	}
@@ -598,13 +632,21 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 	{
 		repairingDestroyingPlayers.Add(player.userID);
 		var currentBatch = 0;
+		var completedEntities = 0;
+		var completedEntitiesDead = 0;
+		var wasCancelled = false;
 		for (int i = 0; i < entities.Count; i++)
 		{
-			if (currentBatch > RepairBatch)
+			if (!repairingDestroyingPlayers.Contains(player.userID))
+			{
+				wasCancelled = true;
+				break;
+			}
+			if (currentBatch > BuildingRepairBatch)
 			{
 				currentBatch = 0;
-				player.ShowToast(GameTip.Styles.Blue_Normal, repairedPhrase, false, (i + 1).ToString("n0"), entities.Count.ToString("n0"));
-				yield return CoroutineEx.waitForSeconds(.25f);
+				player.ShowToast(GameTip.Styles.Blue_Normal, repairedPhrase, false, (i + 1).ToString("n0"), entities.Count.ToString("n0"), completedEntitiesDead.ToString("n0"));
+				yield return CoroutineEx.waitForSeconds(BuildingBatchRefreshRate);
 			}
 
 			var entity = entities[i];
@@ -612,10 +654,22 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 			{
 				entity.Heal(float.MaxValue);
 				currentBatch++;
+				completedEntities++;
 				yield return null;
 			}
+			else
+			{
+				completedEntitiesDead++;
+			}
 		}
-		player.ShowToast(GameTip.Styles.Blue_Normal, repairedPhrase, false, entities.Count.ToString("n0"), entities.Count.ToString("n0"));
+		if (wasCancelled)
+		{
+			player.ShowToast(GameTip.Styles.Red_Normal, repairedCancelledPhrase, false);
+		}
+		else
+		{
+			player.ShowToast(GameTip.Styles.Blue_Normal, repairedPhrase, false, entities.Count.ToString("n0"), entities.Count.ToString("n0"), completedEntitiesDead.ToString("n0"));
+		}
 		Pool.FreeUnmanaged(ref entities);
 		repairingDestroyingPlayers.Remove(player.userID);
 	}
@@ -663,7 +717,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 				player.serverInput.SwallowButton(BUTTON.RELOAD);
 			}
 
-			var delta = UnityEngine.Time.deltaTime * Lerp;
+			var delta = UnityEngine.Time.deltaTime * MoveLerp;
 			transform.position = Vector3.Lerp(transform.position, hit.point, delta);
 			transform.localRotation = Quaternion.Slerp(transform.localRotation, (Quaternion.FromToRotation(Vector3.up, hit.normal) * Quaternion.Euler(rotation)) * Quaternion.Euler(player.eyes.GetLookRotation().eulerAngles.WithX(0)), delta);
 			entity.SendNetworkUpdate_Position();
@@ -672,17 +726,19 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 
 		if (!hasContact && entity.IsValid() && !player.serverInput.IsDown(BUTTON.SPRINT))
 		{
-			const float transitionTime = 1f;
+			const float transitionTime = .75f;
 			var position = entity.transform.position;
 			Physics.Raycast(position,  Vector3.down, out RaycastHit hit2, float.MaxValue, ~0, QueryTriggerInteraction.Ignore);
 			var targetPosition = hit2.point;
+			var targetRotation = (Quaternion.FromToRotation(Vector3.up, hit2.normal) * Quaternion.Euler(rotation)) *
+			                     Quaternion.Euler(player.eyes.GetLookRotation().eulerAngles.WithX(0));
 			var currentTime = 0f;
 			while (entity.IsValid() && currentTime <= transitionTime)
 			{
 				currentTime += UnityEngine.Time.deltaTime;
 				var delta = currentTime.Scale(0f, transitionTime, 0f, 1f);
-				transform.position = Vector3.Lerp(entity.transform.position, targetPosition, delta);
-				transform.rotation = Quaternion.Slerp(transform.rotation, (Quaternion.FromToRotation(Vector3.up, hit2.normal) * Quaternion.Euler(rotation)) * Quaternion.Euler(player.eyes.GetLookRotation().eulerAngles.WithX(0)), delta);
+				transform.position = Vector3.Lerp(transform.position, targetPosition, delta);
+				transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, delta);
 				entity.SendNetworkUpdate_Position();
 				yield return null;
 			}
@@ -772,6 +828,19 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		}
 	}
 
+	[CommandVar("hammer.uirefreshrate"), AuthLevel(1)]
+	public float UIRefreshRate
+	{
+		get => ConfigInstance.UIRefreshRate;
+		set
+		{
+			ConfigInstance.UIRefreshRate = value.Clamp(0f, 2.5f);
+			timer?.Destroy();
+			timer = Community.Runtime.Core.timer.Every(ConfigInstance.UIRefreshRate, TickCheck);
+			Save();
+		}
+	}
+
 	[CommandVar("hammer.movedistance"), AuthLevel(1)]
 	public float MoveDistance
 	{
@@ -783,57 +852,13 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		}
 	}
 
-	[CommandVar("hammer.lerp"), AuthLevel(1)]
-	public float Lerp
+	[CommandVar("hammer.movelerp"), AuthLevel(1)]
+	public float MoveLerp
 	{
-		get => ConfigInstance.Lerp;
+		get => ConfigInstance.MoveLerp;
 		set
 		{
-			ConfigInstance.Lerp = value.Clamp(1, 20f);
-			Save();
-		}
-	}
-
-	[CommandVar("hammer.x"), AuthLevel(1)]
-	public float DefaultX
-	{
-		get => ConfigInstance.DefaultX;
-		set
-		{
-			ConfigInstance.DefaultX = value.Clamp(0f, 1f);
-			Save();
-		}
-	}
-
-	[CommandVar("hammer.y"), AuthLevel(1)]
-	public float DefaultY
-	{
-		get => ConfigInstance.DefaultY;
-		set
-		{
-			ConfigInstance.DefaultY = value.Clamp(0f, 1f);
-			Save();
-		}
-	}
-
-	[CommandVar("hammer.repairbatch"), AuthLevel(1)]
-	public int RepairBatch
-	{
-		get => ConfigInstance.RepairBatch;
-		set
-		{
-			ConfigInstance.RepairBatch = value.Clamp(1, 100);
-			Save();
-		}
-	}
-
-	[CommandVar("hammer.destroybatch"), AuthLevel(1)]
-	public int DestroyBatch
-	{
-		get => ConfigInstance.DestroyBatch;
-		set
-		{
-			ConfigInstance.DestroyBatch = value.Clamp(1, 100);
+			ConfigInstance.MoveLerp = value.Clamp(1, 20f);
 			Save();
 		}
 	}
@@ -849,30 +874,73 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		}
 	}
 
-	[CommandVar("hammer.refreshrate"), AuthLevel(1)]
-	public float RefreshRate
+	[CommandVar("hammer.uix"), AuthLevel(1)]
+	public float DefaultX
 	{
-		get => ConfigInstance.RefreshRate;
+		get => ConfigInstance.UIDefaultX;
 		set
 		{
-			ConfigInstance.RefreshRate = value.Clamp(0f, 2.5f);
-			timer?.Destroy();
-			timer = Community.Runtime.Core.timer.Every(ConfigInstance.RefreshRate, TickCheck);
+			ConfigInstance.UIDefaultX = value.Clamp(0f, 1f);
+			Save();
+		}
+	}
+
+	[CommandVar("hammer.uiy"), AuthLevel(1)]
+	public float DefaultY
+	{
+		get => ConfigInstance.UIDefaultY;
+		set
+		{
+			ConfigInstance.UIDefaultY = value.Clamp(0f, 1f);
+			Save();
+		}
+	}
+
+	[CommandVar("hammer.brepairbatch"), AuthLevel(1)]
+	public int BuildingRepairBatch
+	{
+		get => ConfigInstance.BuildingRepairBatchCount;
+		set
+		{
+			ConfigInstance.BuildingRepairBatchCount = value.Clamp(1, 100);
+			Save();
+		}
+	}
+
+	[CommandVar("hammer.bdestroybatch"), AuthLevel(1)]
+	public int BuildingDestroyBatch
+	{
+		get => ConfigInstance.BuildingDestroyBatchCount;
+		set
+		{
+			ConfigInstance.BuildingDestroyBatchCount = value.Clamp(1, 100);
+			Save();
+		}
+	}
+
+	[CommandVar("hammer.bbatchrefreshrate"), AuthLevel(1)]
+	public float BuildingBatchRefreshRate
+	{
+		get => ConfigInstance.BuildingBatchRefreshRate;
+		set
+		{
+			ConfigInstance.BuildingBatchRefreshRate = value.Clamp(0, 2);
 			Save();
 		}
 	}
 
 	public class HammerConfig
 	{
+		public float UIRefreshRate = .1f;
 		public float UIDistance = 10f;
 		public float UIDistanceFlyMultiplier = 2.5f;
+		public float UIDefaultX = .75f;
+		public float UIDefaultY = .25f;
 		public float MoveDistance = 5f;
-		public float Lerp = 10f;
-		public float RefreshRate = .1f;
-		public int RepairBatch = 5;
-		public int DestroyBatch = 3;
-		public float DefaultX = .75f;
-		public float DefaultY = .25f;
+		public float MoveLerp = 10f;
 		public bool MoveEverything = false;
+		public float BuildingBatchRefreshRate = .25f;
+		public int BuildingRepairBatchCount = 50;
+		public int BuildingDestroyBatchCount = 15;
 	}
 }
