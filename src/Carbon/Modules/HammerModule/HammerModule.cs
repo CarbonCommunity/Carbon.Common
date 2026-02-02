@@ -1,10 +1,11 @@
 ﻿using Facepunch;
+using Newtonsoft.Json;
 using Oxide.Game.Rust.Cui;
 using Timer = Oxide.Plugins.Timer;
 
 namespace Carbon.Modules;
 
-public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, EmptyModuleData>
+public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, HammerModule.HammerData>
 {
 	public const string cuiName = "hammereditor.cui";
 
@@ -28,6 +29,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 	private static readonly ListHashSet<ulong> repairingDestroyingPlayers = new();
 	private static readonly Dictionary<string, ModalModule.Modal.Field> temp = new();
 	private static CuiDraggableComponent cachedDraggable = new();
+	private static HammerModule ins;
 
 	private static readonly string[] blacklistedMovingPrefabs =
 	[
@@ -44,6 +46,13 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 	public ModalModule Modal;
 
 	private Timer timer;
+
+	public override void OnPostServerInit(bool initial)
+	{
+		base.OnPostServerInit(initial);
+		ins = this;
+		Modal = BaseModule.GetModule<ModalModule>();
+	}
 
 	public override void OnEnabled(bool initialized)
 	{
@@ -156,15 +165,13 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 
 	public void TickCheck()
 	{
-		Modal ??= GetModule<ModalModule>();
-
-		using var missingPlayers = Pool.Get<PooledList<BasePlayer>>();
+		using var missingPlayers = Pool.Get<PooledList<HammerEditor>>();
 		foreach(var playerId in lastCreativeModePlayers)
 		{
-			var player = BasePlayer.FindAwakeOrSleepingByID(playerId.Key);
-			if (!ShouldShowUI(player, out _))
+			var editor = DataInstance.GetOrCreateEditor(playerId.Key);
+			if (!ShouldShowUI(editor, out _))
 			{
-				missingPlayers.Add(player);
+				missingPlayers.Add(editor);
 			}
 		}
 
@@ -178,7 +185,8 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		for (int i = 0; i < BasePlayer.activePlayerList.Count; i++)
 		{
 			var player = BasePlayer.activePlayerList[i];
-			if (ShouldShowUI(player, out var entity) && !IsEditing(player.userID))
+			var editor = DataInstance.GetOrCreateEditor(player.userID);
+			if (ShouldShowUI(editor, out var entity) && !IsEditing(player.userID))
 			{
 				if (!lastLastCreativeModePlayers.TryGetValue(player.userID, out var lastEntity) || lastEntity != entity)
 				{
@@ -189,19 +197,20 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		}
 		for (int i = 0; i < missingPlayers.Count; i++)
 		{
-			var player = missingPlayers[i];
-			if (IsEditing(player.userID))
+			var editor = missingPlayers[i];
+			if (IsEditing(editor.playerId))
 			{
 				continue;
 			}
-			ClearGUI(player);
+			ClearGUI(editor.GetPlayer());
 		}
 	}
 
-	public bool ShouldShowUI(BasePlayer player, out BaseEntity entity)
+	public bool ShouldShowUI(HammerEditor editor, out BaseEntity entity)
 	{
 		entity = null;
-		var distance = UIDistance;
+		var player = editor.GetPlayer();
+		var distance = editor.uiDistance;
 		if (player.IsFlying)
 		{
 			distance *= UIDistanceFlyMultiplier;
@@ -230,8 +239,9 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		}
 
 		using var cui = new CUI(Community.Runtime.Core.CuiHandler);
+		var editor = DataInstance.GetOrCreateEditor(player.userID);
 		var heightOffset = 0f;
-		var coordinates = GetCoordinates(player);
+		var coordinates = editor.GetCoordinates();
 		var container = cui.CreateContainer(cuiName, Cache.CUI.BlackColor, xMin: coordinates.x, xMax: coordinates.x, yMin: coordinates.y, yMax: coordinates.y,
 			OxMin: -width, OxMax: width, destroyUi: cuiName, parent: CUI.ClientPanels.Hud, needsCursor: showExtra, needsKeyboard: showExtra);
 
@@ -408,6 +418,8 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		cui.Destroy(cuiName, player);
 	}
 
+	#region Hooks
+
 	private void OnPlayerInput(BasePlayer player, InputState state)
 	{
 		if (lastCreativeModePlayers.TryGetValue(player.userID, out var entity) && state.WasJustPressed(BUTTON.FIRE_THIRD) && CanBeToggled(entity))
@@ -506,13 +518,16 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		{
 			return;
 		}
-		SetCoordinates(player, position);
+		DataInstance.GetOrCreateEditor(player.userID).SetCoordinates(position);
 	}
+
+	#endregion
 
 	[ProtectedCommand("ezeditor.editoption")]
 	private void EditOption(ConsoleSystem.Arg arg)
 	{
 		var player = arg.Player();
+		var editor = DataInstance.GetOrCreateEditor(player.userID);
 		var option = arg.GetInt(0);
 		var entity = BaseNetworkable.serverEntities.Find(arg.GetEntityID(1)) as BaseEntity;
 
@@ -535,7 +550,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 					editingPlayers.Add(player.userID);
 				}
 
-				if (ShouldShowUI(player, out _))
+				if (ShouldShowUI(editor, out _))
 				{
 					ApplyGUI(player, entity, true);
 				}
@@ -798,15 +813,47 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		entity.SendNetworkUpdateImmediate();
 	}
 
-	public Vector2 GetCoordinates(BasePlayer player)
+	[ConsoleCommand("hammer")]
+	public void Hammer(ConsoleSystem.Arg arg)
 	{
-		var id = "coord-" + player.userID;
-		return PlayerPrefs.HasKey(id) ? Vector2Ex.Parse(PlayerPrefs.GetString(id)) : new Vector2(DefaultX, DefaultY);
-	}
+		var player = arg.Player();
+		if (player == null)
+		{
+			arg.ReplyWith("Command must be called from a client");
+			return;
+		}
 
-	public void SetCoordinates(BasePlayer player, Vector2 coordinates)
-	{
-		PlayerPrefs.SetString("coord-" + player.userID, coordinates.ToParsableString());
+		if (!player.IsInCreativeMode)
+		{
+			arg.ReplyWith("You must be in creative mode");
+			return;
+		}
+
+		var editor = DataInstance.GetOrCreateEditor(player.userID);
+		var setting = arg.GetString(0);
+		switch (setting)
+		{
+			case "uidistance":
+			{
+				editor.uiDistance = arg.GetFloat(1, editor.uiDistance);
+				break;
+			}
+			case "movedistance":
+			{
+				editor.moveDistance = arg.GetFloat(1, editor.moveDistance);
+				break;
+			}
+			default:
+			{
+				using var table = new StringTable("option", "help");
+				{
+					table.AddRow("uidistance", "Minimum distance from the player to the entity to show the Hammer UI");
+					table.AddRow("movedistance", "Distance the entity will float in front of the player if not connecting to a surface");
+				}
+				arg.ReplyWith($"Invalid syntax!\n{table.Write(StringTable.FormatTypes.None)}");
+				break;
+			}
+		}
 	}
 
 	[CommandVar("hammer.uidistanceflymultiplier", "The multiplication value of the distance needed for an entity to be picked up by the Hammer UI when flying"), AuthLevel(1)]
@@ -821,12 +868,12 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 	}
 
 	[CommandVar("hammer.uidistance", "The minimum distance from an entity you're looking at to be picked up by the Hammer UI"), AuthLevel(1)]
-	public float UIDistance
+	public float UIDefaultDistance
 	{
-		get => ConfigInstance.UIDistance;
+		get => ConfigInstance.UIDefaultDistance;
 		set
 		{
-			ConfigInstance.UIDistance = value.Clamp(.5f, 50f);
+			ConfigInstance.UIDefaultDistance = value.Clamp(.5f, 50f);
 			Save();
 		}
 	}
@@ -847,10 +894,10 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 	[CommandVar("hammer.movedistance", "The maximum distance away of the moved entity from the player's face"), AuthLevel(1)]
 	public float MoveDistance
 	{
-		get => ConfigInstance.MoveDistance;
+		get => ConfigInstance.DefaultMoveDistance;
 		set
 		{
-			ConfigInstance.MoveDistance = value.Clamp(.5f, 50f);
+			ConfigInstance.DefaultMoveDistance = value.Clamp(.5f, 50f);
 			Save();
 		}
 	}
@@ -932,18 +979,64 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		}
 	}
 
+	public class HammerEditor
+	{
+		[JsonIgnore] public ulong playerId;
+		public float x = ins.DefaultX;
+		public float y = ins.DefaultY;
+		public float uiDistance = ins.UIDefaultDistance;
+		public float moveDistance = ins.MoveDistance;
+
+		private BasePlayer player;
+
+		public BasePlayer GetPlayer()
+		{
+			if (!player.IsValid())
+			{
+				player = BasePlayer.FindAwakeOrSleepingByID(playerId);
+			}
+			return player;
+		}
+
+		public Vector2 GetCoordinates() => new(x, y);
+
+		public void SetCoordinates(Vector2 value)
+		{
+			x = value.x;
+			y = value.y;
+		}
+	}
+
 	public class HammerConfig
 	{
 		public float UIRefreshRate = .1f;
-		public float UIDistance = 10f;
+		public float UIDefaultDistance = 10f;
 		public float UIDistanceFlyMultiplier = 2.5f;
 		public float UIDefaultX = .75f;
 		public float UIDefaultY = .25f;
-		public float MoveDistance = 5f;
+		public float DefaultMoveDistance = 5f;
 		public float MoveLerp = 10f;
 		public bool MoveEverything = false;
 		public float BuildingBatchRefreshRate = .25f;
 		public int BuildingRepairBatchCount = 50;
 		public int BuildingDestroyBatchCount = 15;
+	}
+
+	public class HammerData
+	{
+		public Dictionary<ulong, HammerEditor> Editors = new();
+
+		public HammerEditor GetOrCreateEditor(ulong playerId)
+		{
+			if (!Editors.TryGetValue(playerId, out var editor))
+			{
+				Editors[playerId] = editor = new();
+			}
+			if (editor.playerId == 0)
+			{
+				editor.playerId = playerId;
+			}
+			return editor;
+		}
 	}
 }
