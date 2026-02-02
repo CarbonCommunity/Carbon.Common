@@ -219,6 +219,9 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		const float optionHeight = 10f;
 		const float optionSpacing = 12.5f;
 		const string defaultButtonColor = ".9 .2 .3 .9";
+		const string optionColor = ".1 .1 .1 .3";
+		const string optionTitleColor = "1 1 1 .5";
+		const string noticeColor = "1 1 1 .4";
 
 		if (!entity.IsValid())
 		{
@@ -365,8 +368,8 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 
 		static void CreateOption(CUI cui, CuiElementContainer container, string panel, ref float offset, NetworkableId id, string name, object value)
 		{
-			var option = cui.CreatePanel(container, panel, ".1 .1 .1 .3", blur: true, OyMin: -optionHeight + offset, OyMax: optionHeight + offset);
-			cui.CreateText(container, option, "1 1 1 .5", name, 10, xMax: .25f, align: TextAnchor.MiddleRight);
+			var option = cui.CreatePanel(container, panel, optionColor, blur: true, OyMin: -optionHeight + offset, OyMax: optionHeight + offset);
+			cui.CreateText(container, option, optionTitleColor, name, 10, xMax: .25f, align: TextAnchor.MiddleRight);
 			var input = cui.CreatePanel(container, option, "0 0 0 .5", xMin: .28f);
 			cui.CreateProtectedInputField(container, input, Cache.CUI.WhiteColor, value?.ToString() ?? "undefined", 10, 0, true, OxMin: 7.5f,
 				align: TextAnchor.MiddleLeft);
@@ -375,7 +378,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 
 		static void CreateButton(CUI cui, CuiElementContainer container, string panel, ref float offset, NetworkableId id, string name, int optionId, string color = ".9 .2 .3 .9")
 		{
-			var option = cui.CreatePanel(container, panel, ".1 .1 .1 .3", blur: true, OyMin: -optionHeight + offset, OyMax: optionHeight + offset);
+			var option = cui.CreatePanel(container, panel, optionColor, blur: true, OyMin: -optionHeight + offset, OyMax: optionHeight + offset);
 			cui.CreateProtectedButton(container, option, color, Cache.CUI.WhiteColor, name.ToUpperInvariant(), 9, font: CUI.Handler.FontTypes.RobotoCondensedBold,
 				command: $"ezeditor.editoption {optionId} {id}");
 			offset += optionHeight + optionSpacing;
@@ -383,16 +386,16 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 
 		static void CreateCustomButton(CUI cui, CuiElementContainer container, string panel, ref float offset, string name, string command, string color = ".9 .2 .3 .9")
 		{
-			var option = cui.CreatePanel(container, panel, ".1 .1 .1 .3", blur: true, OyMin: -optionHeight + offset, OyMax: optionHeight + offset);
-			cui.CreateProtectedButton(container, option, color, Cache.CUI.WhiteColor, name.ToUpperInvariant(), 10, font: CUI.Handler.FontTypes.RobotoCondensedBold, command: command);
+			var option = cui.CreatePanel(container, panel, optionColor, blur: true, OyMin: -optionHeight + offset, OyMax: optionHeight + offset);
+			cui.CreateProtectedButton(container, option, color, Cache.CUI.WhiteColor, name.ToUpperInvariant(), 8, font: CUI.Handler.FontTypes.RobotoCondensedBold, command: command);
 			offset += optionHeight + optionSpacing;
 		}
 
 		static void CreateText(CUI cui, CuiElementContainer container, string panel, ref float offset, string text)
 		{
 			const float height = optionHeight + 2.5f;
-			var option = cui.CreatePanel(container, panel, ".1 .1 .1 .3", blur: true, OyMin: -height + offset, OyMax: height + offset);
-			cui.CreateText(container, option, "1 1 1 .4", text, 8, OxMin: 10f, align: TextAnchor.MiddleLeft);
+			var option = cui.CreatePanel(container, panel, optionColor, blur: true, OyMin: -height + offset, OyMax: height + offset);
+			cui.CreateText(container, option, noticeColor, text, 8, OxMin: 10f, align: TextAnchor.MiddleLeft);
 			offset += height + optionSpacing;
 		}
 
