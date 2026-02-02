@@ -47,10 +47,15 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 
 	private Timer timer;
 
+	public override void Init()
+	{
+		base.Init();
+		ins = this;
+	}
+
 	public override void OnPostServerInit(bool initial)
 	{
 		base.OnPostServerInit(initial);
-		ins = this;
 		Modal = BaseModule.GetModule<ModalModule>();
 	}
 
