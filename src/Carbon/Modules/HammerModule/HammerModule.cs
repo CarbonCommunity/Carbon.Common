@@ -60,9 +60,14 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		return editingPlayers.Contains(playerId);
 	}
 
-	public bool CanBeMoved(BaseEntity entity)
+	public bool CanBeMoved(BasePlayer player, BaseEntity entity)
 	{
 		if (!entity.IsValid())
+		{
+			return false;
+		}
+
+		if (player.net.ID.Equals(entity.net.ID))
 		{
 			return false;
 		}
@@ -195,7 +200,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 
 		var entityId = entity.IsValid() ? entity.net.ID : default;
 
-		CreateText(cui, container, container.Name, ref heightOffset, $"{(CanBeMoved(entity) ? "<color=green><b>✓</b></color>" : "<color=red><b>✘</b></color>")} Use <color=white>RIGHT-CLICK</color> to move the entity (hold <color=white>SPRINT</color> to skip auto-snapping)\n{(CanBeToggled(entity) ? "<color=green><b>✓</b></color>" : "<color=red><b>✘</b></color>")} Use <color=white>MIDDLE-CLICK</color> to toggle the entity (hold <color=white>SPRINT</color> to lock/unlock)");
+		CreateText(cui, container, container.Name, ref heightOffset, $"{(CanBeMoved(player, entity) ? "<color=green><b>✓</b></color>" : "<color=red><b>✘</b></color>")} Use <color=white>RIGHT-CLICK</color> to move the entity (hold <color=white>SPRINT</color> to skip auto-snapping)\n{(CanBeToggled(entity) ? "<color=green><b>✓</b></color>" : "<color=red><b>✘</b></color>")} Use <color=white>MIDDLE-CLICK</color> to toggle the entity (hold <color=white>SPRINT</color> to lock/unlock)");
 		if (entity is not BasePlayer playerEntity || !playerEntity.userID.IsSteamId())
 		{
 			CreateButton(cui, container, container.Name, ref heightOffset, entityId, "Destroy Entity", 1);
@@ -414,7 +419,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 				entityMovingPlayers.Remove(player.userID);
 				lastCreativeModePlayers.Remove(player.userID);
 			}
-			else if(CanBeMoved(entity))
+			else if(CanBeMoved(player, entity))
 			{
 				entityMovingPlayers.Add(player.userID);
 				lastCreativeModePlayers.Remove(player.userID);
