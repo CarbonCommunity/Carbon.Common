@@ -27,6 +27,14 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 	private static readonly Dictionary<string, ModalModule.Modal.Field> temp = new();
 	private static CuiDraggableComponent cachedDraggable = new();
 
+	private static readonly string[] blacklistedMovingPrefabs =
+	[
+		"crudeoutput",
+		"hopperoutput",
+		"fuelstorage",
+		"excavator_output_pile"
+	];
+
 	public ModalModule Modal;
 
 	private Timer timer;
@@ -72,18 +80,18 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 			return false;
 		}
 
+		for (int i = 0; i < blacklistedMovingPrefabs.Length; i++)
+		{
+			if (entity.ShortPrefabName.Equals(blacklistedMovingPrefabs[i], StringComparison.CurrentCultureIgnoreCase))
+			{
+				return false;
+			}
+		}
+
 		switch (entity)
 		{
 			case BuildingBlock:
 				return false;
-			case StorageContainer:
-				if (entity.ShortPrefabName.Equals("crudeoutput", StringComparison.CurrentCultureIgnoreCase) ||
-				    entity.ShortPrefabName.Equals("hopperoutput", StringComparison.CurrentCultureIgnoreCase) ||
-				    entity.ShortPrefabName.Equals("fuelstorage", StringComparison.CurrentCultureIgnoreCase))
-				{
-					return false;
-				}
-				break;
 		}
 
 		if (MoveEverything)
@@ -91,15 +99,42 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 			return true;
 		}
 
+		if (entity is BasePlayer targetPlayer && targetPlayer.IsSleeping())
+		{
+			return true;
+		}
 		return entity switch
 		{
+			NPCVendingMachine => false,
+			BigWheelBettingTerminal => false,
+			SlotMachine => false,
+			MarketTerminal => false,
+			FuseBox => false,
+			ANDSwitch or ORSwitch or XORSwitch or RANDSwitch or SmartSwitch or DummySwitch or ElectricSwitch or FluidSwitch or TimerSwitch or PressButton or RFBroadcaster or CardReader or DoorManipulator => false,
+			Recycler => false,
+			WheelSwitch => false,
+			ProgressDoor => false,
+			HackableLockedCrate => false,
+			Door => false,
+			Lift => false,
+			ComputerStation => false,
+			HarborCraneContainerPickup or HarborCraneStatic or MagnetCrane => false,
+			Barricade => false,
+
+			BaseLadder => true,
+			TreeEntity => true,
+			Snowmobile or Bike or Minicopter or ScrapTransportHelicopter => true,
 			ModularCar or BasicCar => true,
 			DecayEntity => true,
 			_ => entity.ShortPrefabName switch
 			{
+				_ when entity.ShortPrefabName.Contains("static", CompareOptions.IgnoreCase) => false,
+				_ when entity.ShortPrefabName.Contains("caboose", CompareOptions.IgnoreCase) => false,
+				_ when entity.ShortPrefabName.Contains("generator.static", CompareOptions.IgnoreCase) => false,
+				_ when entity.ShortPrefabName.Contains("elevator", CompareOptions.IgnoreCase) => false,
+				_ when entity.ShortPrefabName.Contains("mission", CompareOptions.IgnoreCase) => false,
+
 				_ when entity.ShortPrefabName.Contains("deploy", CompareOptions.IgnoreCase) => true,
-				_ when entity.ShortPrefabName.Contains("generator", CompareOptions.IgnoreCase) => true,
-				_ when entity.ShortPrefabName.Contains("arcade", CompareOptions.IgnoreCase) => true,
 				_ => false
 			}
 		};
@@ -165,7 +200,12 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 	public bool ShouldShowUI(BasePlayer player, out BaseEntity entity)
 	{
 		entity = null;
-		if ( !player.IsInCreativeMode || player.GetActiveItem() is not Item item || item.info.itemid is not 200773292 /* Hammer */ || !Physics.Raycast(player.eyes.HeadRay(), out var hit, Distance, ~0, QueryTriggerInteraction.Ignore))
+		var distance = UIDistance;
+		if (player.IsFlying)
+		{
+			distance *= UIDistanceFlyMultiplier;
+		}
+		if ( !player.IsInCreativeMode || player.GetActiveItem() is not Item item || item.info.itemid is not 200773292 /* Hammer */ || !Physics.Raycast(player.eyes.HeadRay(), out var hit, distance, ~0, QueryTriggerInteraction.Ignore))
 		{
 			return false;
 		}
@@ -491,9 +531,22 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 			}
 			case 1:
 			{
-				entity.Kill(BaseNetworkable.DestroyMode.Gib);
-				editingPlayers.Remove(player.userID);
-				ClearGUI(player);
+				if (CanBeMoved(player, entity))
+				{
+					entity.Kill(BaseNetworkable.DestroyMode.Gib);
+					editingPlayers.Remove(player.userID);
+					ClearGUI(player);
+				}
+				else
+				{
+					Modal.Open(player, "Are you sure you wanna destroy that entity?", temp, (player, modal) =>
+					{
+						entity.Kill(BaseNetworkable.DestroyMode.Gib);
+						editingPlayers.Remove(player.userID);
+						ClearGUI(player);
+					});
+				}
+
 				break;
 			}
 			case 2:
@@ -585,7 +638,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		{
 			hits.Clear();
 			hit = default;
-			GamePhysics.TraceAll(player.eyes.HeadRay(), 0f, hits, Distance, layer, QueryTriggerInteraction.Ignore);
+			GamePhysics.TraceAll(player.eyes.HeadRay(), 0f, hits, MoveDistance, layer, QueryTriggerInteraction.Ignore);
 			for (int i = 0; i < hits.Count; i++)
 			{
 				var currentHit = hits[i];
@@ -602,7 +655,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 
 			if (!hasContact)
 			{
-				hit.point = player.eyes.position + (player.eyes.HeadForward() * Distance);
+				hit.point = player.eyes.position + (player.eyes.HeadForward() * MoveDistance);
 			}
 
 			if (player.serverInput.WasJustPressed(BUTTON.RELOAD))
@@ -620,12 +673,15 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 
 		if (!hasContact && entity.IsValid() && !player.serverInput.IsDown(BUTTON.SPRINT))
 		{
+			const float transitionTime = 1f;
 			var position = entity.transform.position;
 			Physics.Raycast(position,  Vector3.down, out RaycastHit hit2, float.MaxValue, ~0, QueryTriggerInteraction.Ignore);
 			var targetPosition = hit2.point;
-			while (entity.IsValid() && (entity.transform.position - targetPosition).magnitude > .01f)
+			var currentTime = 0f;
+			while (entity.IsValid() && currentTime <= transitionTime)
 			{
-				var delta = UnityEngine.Time.deltaTime * Lerp;
+				currentTime += UnityEngine.Time.deltaTime;
+				var delta = currentTime.Scale(0f, transitionTime, 0f, 1f);
 				transform.position = Vector3.Lerp(entity.transform.position, targetPosition, delta);
 				transform.rotation = Quaternion.Slerp(transform.rotation, (Quaternion.FromToRotation(Vector3.up, hit2.normal) * Quaternion.Euler(rotation)) * Quaternion.Euler(player.eyes.GetLookRotation().eulerAngles.WithX(0)), delta);
 				entity.SendNetworkUpdate_Position();
@@ -695,13 +751,35 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		PlayerPrefs.SetString("coord-" + player.userID, coordinates.ToParsableString());
 	}
 
-	[CommandVar("hammer.distance"), AuthLevel(1)]
-	public float Distance
+	[CommandVar("hammer.uidistanceflymultiplier"), AuthLevel(1)]
+	public float UIDistanceFlyMultiplier
 	{
-		get => ConfigInstance.Distance;
+		get => ConfigInstance.UIDistanceFlyMultiplier;
 		set
 		{
-			ConfigInstance.Distance = value.Clamp(.5f, 20f);
+			ConfigInstance.UIDistanceFlyMultiplier = value.Clamp(1, 10);
+			Save();
+		}
+	}
+
+	[CommandVar("hammer.uidistance"), AuthLevel(1)]
+	public float UIDistance
+	{
+		get => ConfigInstance.UIDistance;
+		set
+		{
+			ConfigInstance.UIDistance = value.Clamp(.5f, 50f);
+			Save();
+		}
+	}
+
+	[CommandVar("hammer.movedistance"), AuthLevel(1)]
+	public float MoveDistance
+	{
+		get => ConfigInstance.MoveDistance;
+		set
+		{
+			ConfigInstance.MoveDistance = value.Clamp(.5f, 50f);
 			Save();
 		}
 	}
@@ -787,7 +865,9 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 
 	public class HammerConfig
 	{
-		public float Distance = 5f;
+		public float UIDistance = 10f;
+		public float UIDistanceFlyMultiplier = 2.5f;
+		public float MoveDistance = 5f;
 		public float Lerp = 10f;
 		public float RefreshRate = .1f;
 		public int RepairBatch = 5;
