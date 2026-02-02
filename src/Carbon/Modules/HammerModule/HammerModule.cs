@@ -32,7 +32,11 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		"crudeoutput",
 		"hopperoutput",
 		"fuelstorage",
-		"excavator_output_pile"
+		"excavator_output_pile",
+		"static",
+		"caboose",
+		"elevator",
+		"mission",
 	];
 
 	public ModalModule Modal;
@@ -80,14 +84,6 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 			return false;
 		}
 
-		for (int i = 0; i < blacklistedMovingPrefabs.Length; i++)
-		{
-			if (entity.ShortPrefabName.Equals(blacklistedMovingPrefabs[i], StringComparison.CurrentCultureIgnoreCase))
-			{
-				return false;
-			}
-		}
-
 		switch (entity)
 		{
 			case BuildingBlock:
@@ -97,6 +93,14 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		if (MoveEverything)
 		{
 			return true;
+		}
+
+		for (int i = 0; i < blacklistedMovingPrefabs.Length; i++)
+		{
+			if (entity.ShortPrefabName.Contains(blacklistedMovingPrefabs[i], StringComparison.CurrentCultureIgnoreCase))
+			{
+				return false;
+			}
 		}
 
 		if (entity is BasePlayer targetPlayer && targetPlayer.IsSleeping())
@@ -121,6 +125,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 			HarborCraneContainerPickup or HarborCraneStatic or MagnetCrane => false,
 			Barricade => false,
 
+			BaseCorpse => true,
 			BaseLadder => true,
 			TreeEntity => true,
 			Snowmobile or Bike or Minicopter or ScrapTransportHelicopter => true,
@@ -128,12 +133,6 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 			DecayEntity => true,
 			_ => entity.ShortPrefabName switch
 			{
-				_ when entity.ShortPrefabName.Contains("static", CompareOptions.IgnoreCase) => false,
-				_ when entity.ShortPrefabName.Contains("caboose", CompareOptions.IgnoreCase) => false,
-				_ when entity.ShortPrefabName.Contains("generator.static", CompareOptions.IgnoreCase) => false,
-				_ when entity.ShortPrefabName.Contains("elevator", CompareOptions.IgnoreCase) => false,
-				_ when entity.ShortPrefabName.Contains("mission", CompareOptions.IgnoreCase) => false,
-
 				_ when entity.ShortPrefabName.Contains("deploy", CompareOptions.IgnoreCase) => true,
 				_ => false
 			}
@@ -531,7 +530,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 			}
 			case 1:
 			{
-				if (CanBeMoved(player, entity))
+				if (CanBeMoved(player, entity) || entity is BuildingBlock)
 				{
 					entity.Kill(BaseNetworkable.DestroyMode.Gib);
 					editingPlayers.Remove(player.userID);
@@ -711,7 +710,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		}
 		Pool.FreeUnmanaged(ref hits);
 
-		if (entity is not BaseCorpse && !entity.HasEntityInParents(player) && !player.HasEntityInParents(entity))
+		if (entity.IsValid() && entity is not BaseCorpse && !entity.HasEntityInParents(player) && !player.HasEntityInParents(entity))
 		{
 			ReconstructEntity(entity);
 		}
