@@ -806,7 +806,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		PlayerPrefs.SetString("coord-" + player.userID, coordinates.ToParsableString());
 	}
 
-	[CommandVar("hammer.uidistanceflymultiplier"), AuthLevel(1)]
+	[CommandVar("hammer.uidistanceflymultiplier", "The multiplication value of the distance needed for an entity to be picked up by the Hammer UI"), AuthLevel(1)]
 	public float UIDistanceFlyMultiplier
 	{
 		get => ConfigInstance.UIDistanceFlyMultiplier;
@@ -817,7 +817,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		}
 	}
 
-	[CommandVar("hammer.uidistance"), AuthLevel(1)]
+	[CommandVar("hammer.uidistance", "The minimum distance from an entity you're looking at to be picked up by the Hammer UI"), AuthLevel(1)]
 	public float UIDistance
 	{
 		get => ConfigInstance.UIDistance;
@@ -828,7 +828,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		}
 	}
 
-	[CommandVar("hammer.uirefreshrate"), AuthLevel(1)]
+	[CommandVar("hammer.uirefreshrate", "The responsiveness of how fast the Hammer UI updates (lower is more accurate, but could be affecting performance)"), AuthLevel(1)]
 	public float UIRefreshRate
 	{
 		get => ConfigInstance.UIRefreshRate;
@@ -841,7 +841,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		}
 	}
 
-	[CommandVar("hammer.movedistance"), AuthLevel(1)]
+	[CommandVar("hammer.movedistance", "The maximum distance away of the moved entity from the player's face"), AuthLevel(1)]
 	public float MoveDistance
 	{
 		get => ConfigInstance.MoveDistance;
@@ -852,7 +852,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		}
 	}
 
-	[CommandVar("hammer.movelerp"), AuthLevel(1)]
+	[CommandVar("hammer.movelerp", "Smoothing value of the moved entity (lesser is smoother)"), AuthLevel(1)]
 	public float MoveLerp
 	{
 		get => ConfigInstance.MoveLerp;
@@ -863,7 +863,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		}
 	}
 
-	[CommandVar("hammer.moveeverything"), AuthLevel(2)]
+	[CommandVar("hammer.moveeverything", "Bypass all logical checks for important entities when moving entities (use cautiously!)"), AuthLevel(2)]
 	public bool MoveEverything
 	{
 		get => ConfigInstance.MoveEverything;
@@ -874,7 +874,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		}
 	}
 
-	[CommandVar("hammer.uix"), AuthLevel(1)]
+	[CommandVar("hammer.uix", "Default UI X-axis position"), AuthLevel(1)]
 	public float DefaultX
 	{
 		get => ConfigInstance.UIDefaultX;
@@ -885,7 +885,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		}
 	}
 
-	[CommandVar("hammer.uiy"), AuthLevel(1)]
+	[CommandVar("hammer.uiy", "Default UI Y-axis position"), AuthLevel(1)]
 	public float DefaultY
 	{
 		get => ConfigInstance.UIDefaultY;
@@ -896,7 +896,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		}
 	}
 
-	[CommandVar("hammer.brepairbatch"), AuthLevel(1)]
+	[CommandVar("hammer.brepairbatch", "Building entity repair count per batch"), AuthLevel(1)]
 	public int BuildingRepairBatch
 	{
 		get => ConfigInstance.BuildingRepairBatchCount;
@@ -907,7 +907,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		}
 	}
 
-	[CommandVar("hammer.bdestroybatch"), AuthLevel(1)]
+	[CommandVar("hammer.bdestroybatch", "Building entity destruction count per batch"), AuthLevel(1)]
 	public int BuildingDestroyBatch
 	{
 		get => ConfigInstance.BuildingDestroyBatchCount;
@@ -918,7 +918,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Empt
 		}
 	}
 
-	[CommandVar("hammer.bbatchrefreshrate"), AuthLevel(1)]
+	[CommandVar("hammer.bbatchrefreshrate", "Speed of how fast batch iterations happen for building repairing and destroying"), AuthLevel(1)]
 	public float BuildingBatchRefreshRate
 	{
 		get => ConfigInstance.BuildingBatchRefreshRate;
