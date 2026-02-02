@@ -813,7 +813,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		entity.SendNetworkUpdateImmediate();
 	}
 
-	[ConsoleCommand("hammer")]
+	[ConsoleCommand("hammer", "Player-specific configuration editing for the Hammer UI and its behaviour")]
 	public void Hammer(ConsoleSystem.Arg arg)
 	{
 		var player = arg.Player();
@@ -831,16 +831,18 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 
 		var editor = DataInstance.GetOrCreateEditor(player.userID);
 		var setting = arg.GetString(0);
+		var hasChanges = true;
+		var value = (object)null;
 		switch (setting)
 		{
 			case "uidistance":
 			{
-				editor.uiDistance = arg.GetFloat(1, editor.uiDistance);
+				value = editor.uiDistance = arg.GetFloat(1, editor.uiDistance);
 				break;
 			}
 			case "movedistance":
 			{
-				editor.moveDistance = arg.GetFloat(1, editor.moveDistance);
+				value = editor.moveDistance = arg.GetFloat(1, editor.moveDistance);
 				break;
 			}
 			default:
@@ -851,8 +853,15 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 					table.AddRow("movedistance", "Distance the entity will float in front of the player if not connecting to a surface");
 				}
 				arg.ReplyWith($"Invalid syntax!\n{table.Write(StringTable.FormatTypes.None)}");
+				hasChanges = false;
 				break;
 			}
+		}
+
+		if (hasChanges)
+		{
+			arg.ReplyWith($"Hammer config - {setting}: {value}");
+			Save();
 		}
 	}
 
@@ -1004,6 +1013,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		{
 			x = value.x;
 			y = value.y;
+			ins.Save();
 		}
 	}
 
