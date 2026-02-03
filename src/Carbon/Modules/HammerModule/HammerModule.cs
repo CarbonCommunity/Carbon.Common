@@ -310,6 +310,16 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 				}
 				break;
 			}
+			case IOEntity ioEntity:
+			{
+				CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Power", ioEntity.currentEnergy.ToString("0"));
+				break;
+			}
+			case PlanterBox:
+			{
+				CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Temperature", $"{entity.currentTemperature:0}°C / {CelsiusToFahrenheit(entity.currentTemperature):0}°F");
+				break;
+			}
 			case VehicleModuleEngine vehicleModuleEngine:
 			{
 				car = vehicleModuleEngine.Car;
@@ -527,6 +537,11 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 	}
 
 	#endregion
+
+	public static float CelsiusToFahrenheit(float celsius)
+	{
+		return (celsius * 9f / 5f) + 32f;
+	}
 
 	[ProtectedCommand("ezeditor.editoption")]
 	private void EditOption(ConsoleSystem.Arg arg)
