@@ -484,7 +484,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 			{
 				entityMovingPlayers.Add(player.userID);
 				lastCreativeModePlayers.Remove(player.userID);
-				player.StartCoroutine(MoveEntityRoutine(player, entity));
+				player.StartCoroutine(MoveEntityRoutine(DataInstance.GetOrCreateEditor(player.userID), entity));
 			}
 		}
 	}
@@ -697,9 +697,10 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		repairingDestroyingPlayers.Remove(player.userID);
 	}
 
-	private IEnumerator MoveEntityRoutine(BasePlayer player, BaseEntity entity)
+	private IEnumerator MoveEntityRoutine(HammerEditor editor, BaseEntity entity)
 	{
 		const int layer = Rust.Layers.World + Rust.Layers.Terrain + Rust.Layers.Deployed + Rust.Layers.Construction;
+		var player = editor.GetPlayer();
 		var rotation = Vector3.up * 180f;
 		var hits = Pool.Get<List<RaycastHit>>();
 		var hasContact = true;
@@ -714,7 +715,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		{
 			hits.Clear();
 			hit = default;
-			GamePhysics.TraceAll(player.eyes.HeadRay(), 0f, hits, MoveDistance, layer, QueryTriggerInteraction.Ignore);
+			GamePhysics.TraceAll(player.eyes.HeadRay(), 0f, hits, editor.moveDistance, layer, QueryTriggerInteraction.Ignore);
 			for (int i = 0; i < hits.Count; i++)
 			{
 				var currentHit = hits[i];
@@ -731,7 +732,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 
 			if (!hasContact)
 			{
-				hit.point = player.eyes.position + (player.eyes.HeadForward() * MoveDistance);
+				hit.point = player.eyes.position + (player.eyes.HeadForward() * editor.moveDistance);
 			}
 
 			if (player.serverInput.WasJustPressed(BUTTON.RELOAD))
@@ -852,10 +853,10 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 			}
 			default:
 			{
-				using var table = new StringTable("option", "help");
+				using var table = new StringTable("option", "value", "help");
 				{
-					table.AddRow("uidistance", "Minimum distance from the player to the entity to show the Hammer UI");
-					table.AddRow("movedistance", "Distance the entity will float in front of the player if not connecting to a surface");
+					table.AddRow("uidistance", editor.uiDistance, "Minimum distance from the player to the entity to show the Hammer UI");
+					table.AddRow("movedistance", editor.moveDistance, "Distance the entity will float in front of the player if not connecting to a surface");
 				}
 				arg.ReplyWith($"Invalid syntax!\n{table.Write(StringTable.FormatTypes.None)}");
 				hasChanges = false;
@@ -906,7 +907,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 	}
 
 	[CommandVar("hammer.movedistance", "The maximum distance away of the moved entity from the player's face"), AuthLevel(1)]
-	public float MoveDistance
+	public float DefaultMoveDistance
 	{
 		get => ConfigInstance.DefaultMoveDistance;
 		set
@@ -999,7 +1000,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		public float x = ins.DefaultX;
 		public float y = ins.DefaultY;
 		public float uiDistance = ins.UIDefaultDistance;
-		public float moveDistance = ins.MoveDistance;
+		public float moveDistance = ins.DefaultMoveDistance;
 
 		private BasePlayer player;
 
