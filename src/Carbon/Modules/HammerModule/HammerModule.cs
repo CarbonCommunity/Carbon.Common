@@ -779,32 +779,36 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		{
 			const float transitionTime = .75f;
 			var position = entity.transform.position;
-			Physics.Raycast(position,  Vector3.down, out RaycastHit hit2, float.MaxValue, ~0, QueryTriggerInteraction.Ignore);
+			Physics.Raycast(position, Vector3.down, out RaycastHit hit2, float.MaxValue, ~0, QueryTriggerInteraction.Ignore);
 			var targetPosition = hit2.point;
 			var targetRotation = (Quaternion.FromToRotation(Vector3.up, hit2.normal) * Quaternion.Euler(rotation)) *
-			                     Quaternion.Euler(player.eyes.GetLookRotation().eulerAngles.WithX(0));
-			var currentTime = 0f;
-			while (entity.IsValid() && currentTime <= transitionTime)
-			{
-				currentTime += UnityEngine.Time.deltaTime;
-				var delta = currentTime.Scale(0f, transitionTime, 0f, 1f);
-				transform.position = Vector3.Lerp(transform.position, targetPosition, delta);
-				transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, delta);
-				entity.SendNetworkUpdate_Position();
-				yield return null;
-			}
+								 Quaternion.Euler(player.eyes.GetLookRotation().eulerAngles.WithX(0));
 
-			if (entity.IsValid())
+			if (targetPosition != Vector3.zero)
 			{
-				entity.transform.position = targetPosition;
-				entity.SendNetworkUpdate_Position();
-			}
-			if (hit2.GetEntity() is BaseEntity parentEntity && parentEntity != entity && parentEntity is not BasePlayer && entity is not BasePlayer)
-			{
-				entity?.SetParent(parentEntity, true);
+				var currentTime = 0f;
+				while (entity.IsValid() && currentTime <= transitionTime)
+				{
+					currentTime += UnityEngine.Time.deltaTime;
+					var delta = currentTime.Scale(0f, transitionTime, 0f, 1f);
+					transform.position = Vector3.Lerp(transform.position, targetPosition, delta);
+					transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, delta);
+					entity.SendNetworkUpdate_Position();
+					yield return null;
+				}
+
+				if (entity.IsValid())
+				{
+					entity.transform.position = targetPosition;
+					entity.SendNetworkUpdate_Position();
+				}
+				if (hit2.GetEntity() is BaseEntity parentEntity && parentEntity != entity && parentEntity is not BasePlayer && entity is not BasePlayer)
+				{
+					entity?.SetParent(parentEntity, true);
+				}
 			}
 		}
-		else if(entity.IsValid() && hit.GetEntity() is BaseEntity subParentEntity && subParentEntity != entity && entity is not BasePlayer && subParentEntity is not BasePlayer)
+		else if (entity.IsValid() && hit.GetEntity() is BaseEntity subParentEntity && subParentEntity != entity && entity is not BasePlayer && subParentEntity is not BasePlayer)
 		{
 			entity.SetParent(subParentEntity, true);
 		}
