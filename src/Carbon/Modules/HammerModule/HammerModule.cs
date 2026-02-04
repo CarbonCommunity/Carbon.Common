@@ -141,6 +141,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 			HarborCraneContainerPickup or HarborCraneStatic or MagnetCrane => false,
 			Barricade => false,
 
+			HotAirBalloon => true,
 			BaseCorpse => true,
 			BaseLadder => true,
 			TreeEntity => true,
@@ -164,6 +165,8 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 			StorageContainer => true,
 			IAlwaysOn => true,
 			MiningQuarry or EngineSwitch => true,
+			BuildingBlock => true,
+			VendingMachine => true,
 			_ => false
 		};
 	}
@@ -444,6 +447,36 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 			var onFlag = wantsLock ? BaseEntity.Flags.Locked : BaseEntity.Flags.On;
 			switch (entity)
 			{
+				case VendingMachine vm:
+				{
+					if (vm.CanRotate())
+					{
+						entity.transform.rotation = Quaternion.LookRotation(-entity.transform.forward, entity.transform.up);
+						entity.SendNetworkUpdate();
+					}
+					break;
+				}
+				case BuildingBlock block:
+				{
+					if (block.blockDefinition != null && block.blockDefinition.canRotateAfterPlacement)
+					{
+						block.transform.localRotation *= Quaternion.Euler(block.blockDefinition.rotationAmount);
+						block.RefreshEntityLinks();
+						block.UpdateSurroundingEntities();
+						block.UpdateSkin(force: true);
+						block.RefreshNeighbours(linkToNeighbours: false);
+						block.SendNetworkUpdateImmediate();
+						block.ClientRPC(RpcTarget.NetworkGroup("RefreshSkin"));
+						if (!block.globalNetworkCooldown)
+						{
+							block.globalNetworkCooldown = true;
+							GlobalNetworkHandler.server.TrySendNetworkUpdate(block);
+							block.CancelInvoke(block.ResetGlobalNetworkCooldown);
+							block.Invoke(block.ResetGlobalNetworkCooldown, 15f);
+						}
+					}
+					break;
+				}
 				case Door:
 				{
 					entity.SetFlag(openFlag, !entity.HasFlag(openFlag));
@@ -734,6 +767,10 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		var rigidbody = entity.GetComponent<Rigidbody>() ?? entity.GetComponentInChildren<Rigidbody>() ?? entity.GetComponentInParent<Rigidbody>();
 		var wasKinematic = rigidbody?.isKinematic;
 		rigidbody?.isKinematic = true;
+		if (entity is BaseHelicopter)
+		{
+			entity.SetFlag(BaseEntity.Flags.Protected, true);
+		}
 		ClearGUI(player);
 		RaycastHit hit = default;
 		entity?.SetParent(null, true);
@@ -815,6 +852,10 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		}
 		Pool.FreeUnmanaged(ref hits);
 
+		if (entity.IsValid() && entity is BaseHelicopter)
+		{
+			entity.SetFlag(BaseEntity.Flags.Protected, false);
+		}
 		if (entity.IsValid() && entity is not BaseCorpse && !entity.HasEntityInParents(player) && !player.HasEntityInParents(entity))
 		{
 			ReconstructEntity(entity);
