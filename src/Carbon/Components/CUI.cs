@@ -209,7 +209,7 @@ public readonly struct CUI : IDisposable
 	{
 		return Manager.Countdown(container, parent, startTime, endTime, step, command, fadeIn, fadeOut, id, destroyUi, update, activeSelf);
 	}
-	public Pair<string, CuiElement> CreateScrollView(CuiElementContainer container, string parent,bool vertical, bool horizontal, ScrollRect.MovementType movementType, float elasticity, bool inertia, float decelerationRate, float scrollSensitivity, out CuiRectTransform contentTransformComponent, out CuiScrollbar horizontalScrollBar, out CuiScrollbar verticalScrollBar, float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string id = null, string destroyUi = null, bool update = false, bool activeSelf = true, float rotation = 0, float pivotX = 0.5f, float pivotY = 0.5f, float scrollPosHorizontal = 0, float scrollPosVertical = 0)
+	public Pair<string, CuiElement> CreateScrollView(CuiElementContainer container, string parent,bool vertical, bool horizontal, ScrollRect.MovementType movementType, float elasticity, bool inertia, float decelerationRate, float scrollSensitivity, out CuiRectTransform contentTransformComponent, out CuiScrollbar horizontalScrollBar, out CuiScrollbar verticalScrollBar, float xMin = 0f, float xMax = 1f, float yMin = 0f, float yMax = 1f, float OxMin = 0f, float OxMax = 0f, float OyMin = 0f, float OyMax = 0f, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string id = null, string destroyUi = null, bool update = false, bool activeSelf = true, float rotation = 0, float pivotX = 0.5f, float pivotY = 0.5f, float scrollPosHorizontal = 0, float scrollPosVertical = 1)
 	{
 		return Manager.ScrollView(container, parent, vertical, horizontal, movementType, elasticity, inertia, decelerationRate, scrollSensitivity, out contentTransformComponent, out horizontalScrollBar, out verticalScrollBar, xMin, xMax, yMin, yMax, OxMin, OxMax, OyMin, OyMax, fadeIn, fadeOut, needsCursor, needsKeyboard, id, destroyUi, update, activeSelf, rotation, pivotX, pivotY, scrollPosHorizontal, scrollPosVertical);
 	}
@@ -393,7 +393,11 @@ public readonly struct CUI : IDisposable
 		private CuiNeedsKeyboardComponent _defaultNeedsKeyboard = new();
 		private CuiCountdownComponent _defaultCountdown = new();
 		private CuiOutlineComponent _defaultOutline = new();
-		private CuiScrollViewComponent _defaultScrollView = new();
+		private CuiScrollViewComponent _defaultScrollView = new()
+		{
+			HorizontalNormalizedPosition = 0,
+			VerticalNormalizedPosition = 1f
+		};
 		private CuiScrollbar _defaultScrollBar = new();
 
 		#endregion
@@ -769,63 +773,50 @@ public readonly struct CUI : IDisposable
 			{
 				element = new CuiScrollViewComponent();
 				element.ContentTransform ??= new();
-				element.HorizontalScrollbar ??= TakeFromPoolScrollbar();
-				element.VerticalScrollbar ??= TakeFromPoolScrollbar();
+				element.HorizontalScrollbar ??= new();
+				element.VerticalScrollbar ??= new();
 			}
 			else
 			{
 				element = (_scrollViews[0] as CuiScrollViewComponent)!;
-				element.Vertical = _defaultScrollView.Vertical;
-				element.Horizontal = _defaultScrollView.Horizontal;
-				element.MovementType = _defaultScrollView.MovementType;
-				element.Elasticity = _defaultScrollView.Elasticity;
-				element.Inertia = _defaultScrollView.Inertia;
-				element.DecelerationRate = _defaultScrollView.DecelerationRate;
-				element.ScrollSensitivity = _defaultScrollView.ScrollSensitivity;
-				element.ContentTransform ??= new();
-				element.ContentTransform.AnchorMin = "0 0";
-				element.ContentTransform.AnchorMax = "1 1";
-				element.ContentTransform.OffsetMin = "0 0";
-				element.ContentTransform.OffsetMax = "0 0";
-				element.HorizontalScrollbar = TakeFromPoolScrollbar();
-				element.VerticalScrollbar = TakeFromPoolScrollbar();
-				element.HorizontalNormalizedPosition = _defaultScrollView.HorizontalNormalizedPosition;
-				element.VerticalNormalizedPosition = _defaultScrollView.VerticalNormalizedPosition;
-				element.Enabled = _defaultScrollView.Enabled;
-
 				_scrollViews.RemoveAt(0);
 			}
+
+			element.Vertical = _defaultScrollView.Vertical;
+			element.Horizontal = _defaultScrollView.Horizontal;
+			element.MovementType = _defaultScrollView.MovementType;
+			element.Elasticity = _defaultScrollView.Elasticity;
+			element.Inertia = _defaultScrollView.Inertia;
+			element.DecelerationRate = _defaultScrollView.DecelerationRate;
+			element.ScrollSensitivity = _defaultScrollView.ScrollSensitivity;
+			element.ContentTransform ??= new();
+			element.ContentTransform.AnchorMin = "0 0";
+			element.ContentTransform.AnchorMax = "1 1";
+			element.ContentTransform.OffsetMin = "0 0";
+			element.ContentTransform.OffsetMax = "0 0";
+			element.HorizontalScrollbar ??= new();
+			ResetScrollbar(element.HorizontalScrollbar);
+			element.VerticalScrollbar ??= new();
+			ResetScrollbar(element.VerticalScrollbar);
+			element.HorizontalNormalizedPosition = _defaultScrollView.HorizontalNormalizedPosition;
+			element.VerticalNormalizedPosition = _defaultScrollView.VerticalNormalizedPosition;
+			element.Enabled = _defaultScrollView.Enabled;
 
 			_queue.Add(element);
 			return element;
 		}
-		public CuiScrollbar TakeFromPoolScrollbar()
+		public void ResetScrollbar(CuiScrollbar scrollbar)
 		{
-			var element = (CuiScrollbar)null;
-
-			if (_scrollbars.Count == 0)
-			{
-				element = new CuiScrollbar();
-			}
-			else
-			{
-				element = (_scrollbars[0] as CuiScrollbar)!;
-				element.Invert = _defaultScrollBar.Invert;
-				element.AutoHide = _defaultScrollBar.AutoHide;
-				element.HandleSprite = _defaultScrollBar.HandleSprite;
-				element.Size = _defaultScrollBar.Size;
-				element.HandleColor = _defaultScrollBar.HandleColor;
-				element.HighlightColor = _defaultScrollBar.HighlightColor;
-				element.PressedColor = _defaultScrollBar.PressedColor;
-				element.TrackSprite = _defaultScrollBar.TrackSprite;
-				element.TrackColor = _defaultScrollBar.TrackColor;
-				element.Enabled = _defaultScrollBar.Enabled;
-
-				_scrollbars.RemoveAt(0);
-			}
-
-			_queue.Add(element);
-			return element;
+			scrollbar.Invert = _defaultScrollBar.Invert;
+			scrollbar.AutoHide = _defaultScrollBar.AutoHide;
+			scrollbar.HandleSprite = _defaultScrollBar.HandleSprite;
+			scrollbar.Size = _defaultScrollBar.Size;
+			scrollbar.HandleColor = _defaultScrollBar.HandleColor;
+			scrollbar.HighlightColor = _defaultScrollBar.HighlightColor;
+			scrollbar.PressedColor = _defaultScrollBar.PressedColor;
+			scrollbar.TrackSprite = _defaultScrollBar.TrackSprite;
+			scrollbar.TrackColor = _defaultScrollBar.TrackColor;
+			scrollbar.Enabled = _defaultScrollBar.Enabled;
 		}
 
 		#endregion
@@ -1401,7 +1392,7 @@ public static class CUIStatics
 		if (!update) container?.Add(element);
 		return new Pair<string, CuiElement>(id, element);
 	}
-	public static Pair<string, CuiElement> ScrollView(this Handler cui, CuiElementContainer container, string parent, bool vertical, bool horizontal, ScrollRect.MovementType movementType, float elasticity, bool inertia, float decelerationRate, float scrollSensitivity, out CuiRectTransform contentTransformComponent, out CuiScrollbar horizontalScrollBar, out CuiScrollbar verticalScrollBar, float xMin, float xMax, float yMin, float yMax, float OxMin, float OxMax, float OyMin, float OyMax, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string id = null, string destroyUi = null, bool update = false, bool activeSelf = true, float rotation = 0, float pivotX = 0.5f, float pivotY = 0.5f, float scrollPosHorizontal = 0, float scrollPosVertical = 0)
+	public static Pair<string, CuiElement> ScrollView(this Handler cui, CuiElementContainer container, string parent, bool vertical, bool horizontal, ScrollRect.MovementType movementType, float elasticity, bool inertia, float decelerationRate, float scrollSensitivity, out CuiRectTransform contentTransformComponent, out CuiScrollbar horizontalScrollBar, out CuiScrollbar verticalScrollBar, float xMin, float xMax, float yMin, float yMax, float OxMin, float OxMax, float OyMin, float OyMax, float fadeIn = 0f, float fadeOut = 0f, bool needsCursor = false, bool needsKeyboard = false, string id = null, string destroyUi = null, bool update = false, bool activeSelf = true, float rotation = 0, float pivotX = 0.5f, float pivotY = 0.5f, float scrollPosHorizontal = 0, float scrollPosVertical = 1)
 	{
 		if (id == null) id = cui.AppendId();
 		var element = cui.TakeFromPool(id, parent, fadeOut, destroyUi, update, activeSelf);

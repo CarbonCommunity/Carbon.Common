@@ -20,7 +20,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 	private static readonly Translate.Phrase destroyingBuildingCancelledPhrase = new("destroyedbuildingCancelled", "Destroying building: <color=white>cancelled</color>");
 	private static readonly Translate.Phrase destroyingBuildingPhrase = new("destroyedbuilding", "Destroying building: <color=white>{0}</color>/{1} entities ({2} dead)");
 	private static readonly Translate.Phrase repairedCancelledPhrase = new("repairedCancelled", "Repairing: <color=white>cancelled</color>");
-	private static readonly Translate.Phrase repairedPhrase = new("repaired", "Repairing: <color=white>{0}</color>/{1} entities ({2} dead)");
+	private static readonly Translate.Phrase repairedPhrase = new("repaired", "Repairing: <color=white>{0}</color>/{1} entities ({2} needed repair, {3} dead)");
 
 	private static readonly Dictionary<ulong, BaseEntity> lastCreativeModePlayers = new();
 	private static readonly Dictionary<ulong, BaseEntity> lastLastCreativeModePlayers = new();
@@ -47,10 +47,15 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 
 	private Timer timer;
 
+	public override void Init()
+	{
+		base.Init();
+		ins = this;
+	}
+
 	public override void OnPostServerInit(bool initial)
 	{
 		base.OnPostServerInit(initial);
-		ins = this;
 		Modal = BaseModule.GetModule<ModalModule>();
 	}
 
@@ -215,7 +220,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		{
 			distance *= UIDistanceFlyMultiplier;
 		}
-		if ( !player.IsInCreativeMode || player.GetActiveItem() is not Item item || item.info.itemid is not 200773292 /* Hammer */ || !Physics.Raycast(player.eyes.HeadRay(), out var hit, distance, ~0, QueryTriggerInteraction.Ignore))
+		if (!(player.IsInCreativeMode || editor.bypassCreativeMode) || player.GetActiveItem() is not Item item || !(item.info.itemid is 200773292 /* Hammer */ or 1803831286 /* Gmod Tool Gun */) || !Physics.Raycast(player.eyes.HeadRay(), out var hit, distance, ~0, QueryTriggerInteraction.Ignore))
 		{
 			return false;
 		}
@@ -303,6 +308,16 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 					}
 					CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Code", codeLock.code);
 				}
+				break;
+			}
+			case IOEntity ioEntity:
+			{
+				CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Power", ioEntity.currentEnergy.ToString("0"));
+				break;
+			}
+			case PlanterBox:
+			{
+				CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Temperature", $"{entity.currentTemperature:0}°C / {CelsiusToFahrenheit(entity.currentTemperature):0}°F");
 				break;
 			}
 			case VehicleModuleEngine vehicleModuleEngine:
@@ -479,14 +494,19 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 			{
 				entityMovingPlayers.Add(player.userID);
 				lastCreativeModePlayers.Remove(player.userID);
-				player.StartCoroutine(MoveEntityRoutine(player, entity));
+				player.StartCoroutine(MoveEntityRoutine(DataInstance.GetOrCreateEditor(player.userID), entity));
 			}
 		}
 	}
 
 	private object OnHammerHit(BasePlayer player, HitInfo info)
 	{
-		if (!player.IsInCreativeMode || info == null)
+		if (player.Connection.authLevel < 1)
+		{
+			return null;
+		}
+		var editor = DataInstance.GetOrCreateEditor(player.userID);
+		if ((!player.IsInCreativeMode && !editor.bypassCreativeMode) || info == null)
 		{
 			return null;
 		}
@@ -502,11 +522,11 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 
 	private void OnActiveItemChanged(BasePlayer player, Item oldItem)
 	{
-		if (!player.IsInCreativeMode)
+		if (oldItem == null || player.Connection.authLevel < 1)
 		{
 			return;
 		}
-		if (oldItem?.info.itemid is 200773292 /* Hammer */)
+		if (oldItem.info.itemid is 200773292 /* Hammer */ or 1803831286 /* Gmod Tool Gun */)
 		{
 			repairingDestroyingPlayers.Remove(player.userID);
 		}
@@ -522,6 +542,11 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 	}
 
 	#endregion
+
+	public static float CelsiusToFahrenheit(float celsius)
+	{
+		return (celsius * 9f / 5f) + 32f;
+	}
 
 	[ProtectedCommand("ezeditor.editoption")]
 	private void EditOption(ConsoleSystem.Arg arg)
@@ -606,6 +631,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		var completedEntities = 0;
 		var completedEntitiesDead = 0;
 		var wasCancelled = false;
+		player.ShowToast(GameTip.Styles.Red_Normal, destroyingBuildingPhrase, false, "1", entities.Count.ToString("n0"), completedEntitiesDead.ToString("n0"));
 		for (int i = 0; i < entities.Count; i++)
 		{
 			if (!repairingDestroyingPlayers.Contains(player.userID))
@@ -652,7 +678,9 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		var currentBatch = 0;
 		var completedEntities = 0;
 		var completedEntitiesDead = 0;
+		var completedEntitiesNeededRepair = 0;
 		var wasCancelled = false;
+		player.ShowToast(GameTip.Styles.Blue_Normal, repairedPhrase, false, "1", entities.Count.ToString("n0"), completedEntitiesNeededRepair.ToString("n0"), completedEntitiesDead.ToString("n0"));
 		for (int i = 0; i < entities.Count; i++)
 		{
 			if (!repairingDestroyingPlayers.Contains(player.userID))
@@ -663,14 +691,18 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 			if (currentBatch > BuildingRepairBatch)
 			{
 				currentBatch = 0;
-				player.ShowToast(GameTip.Styles.Blue_Normal, repairedPhrase, false, (i + 1).ToString("n0"), entities.Count.ToString("n0"), completedEntitiesDead.ToString("n0"));
+				player.ShowToast(GameTip.Styles.Blue_Normal, repairedPhrase, false, (i + 1).ToString("n0"), entities.Count.ToString("n0"), completedEntitiesNeededRepair.ToString("n0"), completedEntitiesDead.ToString("n0"));
 				yield return CoroutineEx.waitForSeconds(BuildingBatchRefreshRate);
 			}
 
 			var entity = entities[i];
 			if (entity.IsValid())
 			{
-				entity.Heal(float.MaxValue);
+				if (!Mathf.Approximately(entity.healthFraction, 1))
+				{
+					completedEntitiesNeededRepair++;
+					entity.Heal(float.MaxValue);
+				}
 				currentBatch++;
 				completedEntities++;
 				yield return null;
@@ -686,15 +718,16 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		}
 		else
 		{
-			player.ShowToast(GameTip.Styles.Blue_Normal, repairedPhrase, false, entities.Count.ToString("n0"), entities.Count.ToString("n0"), completedEntitiesDead.ToString("n0"));
+			player.ShowToast(GameTip.Styles.Blue_Normal, repairedPhrase, false, entities.Count.ToString("n0"), entities.Count.ToString("n0"), completedEntitiesNeededRepair.ToString("n0"), completedEntitiesDead.ToString("n0"));
 		}
 		Pool.FreeUnmanaged(ref entities);
 		repairingDestroyingPlayers.Remove(player.userID);
 	}
 
-	private IEnumerator MoveEntityRoutine(BasePlayer player, BaseEntity entity)
+	private IEnumerator MoveEntityRoutine(HammerEditor editor, BaseEntity entity)
 	{
 		const int layer = Rust.Layers.World + Rust.Layers.Terrain + Rust.Layers.Deployed + Rust.Layers.Construction;
+		var player = editor.GetPlayer();
 		var rotation = Vector3.up * 180f;
 		var hits = Pool.Get<List<RaycastHit>>();
 		var hasContact = true;
@@ -709,7 +742,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		{
 			hits.Clear();
 			hit = default;
-			GamePhysics.TraceAll(player.eyes.HeadRay(), 0f, hits, MoveDistance, layer, QueryTriggerInteraction.Ignore);
+			GamePhysics.TraceAll(player.eyes.HeadRay(), 0f, hits, editor.moveDistance, layer, QueryTriggerInteraction.Ignore);
 			for (int i = 0; i < hits.Count; i++)
 			{
 				var currentHit = hits[i];
@@ -726,7 +759,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 
 			if (!hasContact)
 			{
-				hit.point = player.eyes.position + (player.eyes.HeadForward() * MoveDistance);
+				hit.point = player.eyes.position + (player.eyes.HeadForward() * editor.moveDistance);
 			}
 
 			if (player.serverInput.WasJustPressed(BUTTON.RELOAD))
@@ -746,32 +779,30 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		{
 			const float transitionTime = .75f;
 			var position = entity.transform.position;
-			Physics.Raycast(position,  Vector3.down, out RaycastHit hit2, float.MaxValue, ~0, QueryTriggerInteraction.Ignore);
+			Physics.Raycast(position, Vector3.down, out RaycastHit hit2, float.MaxValue, ~0, QueryTriggerInteraction.Ignore);
 			var targetPosition = hit2.point;
 			var targetRotation = (Quaternion.FromToRotation(Vector3.up, hit2.normal) * Quaternion.Euler(rotation)) *
-			                     Quaternion.Euler(player.eyes.GetLookRotation().eulerAngles.WithX(0));
-			var currentTime = 0f;
-			while (entity.IsValid() && currentTime <= transitionTime)
-			{
-				currentTime += UnityEngine.Time.deltaTime;
-				var delta = currentTime.Scale(0f, transitionTime, 0f, 1f);
-				transform.position = Vector3.Lerp(transform.position, targetPosition, delta);
-				transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, delta);
-				entity.SendNetworkUpdate_Position();
-				yield return null;
-			}
+								 Quaternion.Euler(player.eyes.GetLookRotation().eulerAngles.WithX(0));
 
-			if (entity.IsValid())
+			if (targetPosition != Vector3.zero)
 			{
-				entity.transform.position = targetPosition;
-				entity.SendNetworkUpdate_Position();
-			}
-			if (hit2.GetEntity() is BaseEntity parentEntity && parentEntity != entity && parentEntity is not BasePlayer && entity is not BasePlayer)
-			{
-				entity?.SetParent(parentEntity, true);
+				var currentTime = 0f;
+				while (entity.IsValid() && currentTime <= transitionTime)
+				{
+					currentTime += UnityEngine.Time.deltaTime;
+					var delta = currentTime.Scale(0f, transitionTime, 0f, 1f);
+					transform.position = Vector3.Lerp(transform.position, targetPosition, delta);
+					transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, delta);
+					entity.SendNetworkUpdate_Position();
+					yield return null;
+				}
+				if (hit2.GetEntity() is BaseEntity parentEntity && parentEntity != entity && parentEntity is not BasePlayer && entity is not BasePlayer)
+				{
+					entity?.SetParent(parentEntity, true);
+				}
 			}
 		}
-		else if(entity.IsValid() && hit.GetEntity() is BaseEntity subParentEntity && subParentEntity != entity && entity is not BasePlayer && subParentEntity is not BasePlayer)
+		else if (entity.IsValid() && hit.GetEntity() is BaseEntity subParentEntity && subParentEntity != entity && entity is not BasePlayer && subParentEntity is not BasePlayer)
 		{
 			entity.SetParent(subParentEntity, true);
 		}
@@ -813,19 +844,13 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		entity.SendNetworkUpdateImmediate();
 	}
 
-	[ConsoleCommand("hammer", "Player-specific configuration editing for the Hammer UI and its behaviour")]
+	[ConsoleCommand("hammer", "Player-specific configuration editing for the Hammer UI and its behaviour"), AuthLevel(1)]
 	public void Hammer(ConsoleSystem.Arg arg)
 	{
 		var player = arg.Player();
 		if (player == null)
 		{
 			arg.ReplyWith("Command must be called from a client");
-			return;
-		}
-
-		if (!player.IsInCreativeMode)
-		{
-			arg.ReplyWith("You must be in creative mode");
 			return;
 		}
 
@@ -847,10 +872,10 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 			}
 			default:
 			{
-				using var table = new StringTable("option", "help");
+				using var table = new StringTable("option", "value", "help");
 				{
-					table.AddRow("uidistance", "Minimum distance from the player to the entity to show the Hammer UI");
-					table.AddRow("movedistance", "Distance the entity will float in front of the player if not connecting to a surface");
+					table.AddRow("uidistance", editor.uiDistance, "Minimum distance from the player to the entity to show the Hammer UI");
+					table.AddRow("movedistance", editor.moveDistance, "Distance the entity will float in front of the player if not connecting to a surface");
 				}
 				arg.ReplyWith($"Invalid syntax!\n{table.Write(StringTable.FormatTypes.None)}");
 				hasChanges = false;
@@ -863,6 +888,22 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 			arg.ReplyWith($"Hammer config - {setting}: {value}");
 			Save();
 		}
+	}
+
+	[ConsoleCommand("hammer.creativebypass", "Allow players to use the Hammer UI regardless if they're in creative mode or not"), AuthLevel(1)]
+	public void HammerCreativeBypass(ConsoleSystem.Arg arg)
+	{
+		var player = arg.Player();
+		if (player == null)
+		{
+			arg.ReplyWith("Command must be called from a client");
+			return;
+		}
+
+		var editor = DataInstance.GetOrCreateEditor(player.userID);
+		editor.bypassCreativeMode = arg.GetBool(0);
+		arg.ReplyWith($"bypassCreativeMode @ {player}: {editor.bypassCreativeMode}");
+		Save();
 	}
 
 	[CommandVar("hammer.uidistanceflymultiplier", "The multiplication value of the distance needed for an entity to be picked up by the Hammer UI when flying"), AuthLevel(1)]
@@ -901,7 +942,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 	}
 
 	[CommandVar("hammer.movedistance", "The maximum distance away of the moved entity from the player's face"), AuthLevel(1)]
-	public float MoveDistance
+	public float DefaultMoveDistance
 	{
 		get => ConfigInstance.DefaultMoveDistance;
 		set
@@ -994,7 +1035,8 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		public float x = ins.DefaultX;
 		public float y = ins.DefaultY;
 		public float uiDistance = ins.UIDefaultDistance;
-		public float moveDistance = ins.MoveDistance;
+		public float moveDistance = ins.DefaultMoveDistance;
+		public bool bypassCreativeMode;
 
 		private BasePlayer player;
 
