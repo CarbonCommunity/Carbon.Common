@@ -166,6 +166,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 			IAlwaysOn => true,
 			MiningQuarry or EngineSwitch => true,
 			BuildingBlock => true,
+			VendingMachine => true,
 			_ => false
 		};
 	}
@@ -446,6 +447,15 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 			var onFlag = wantsLock ? BaseEntity.Flags.Locked : BaseEntity.Flags.On;
 			switch (entity)
 			{
+				case VendingMachine vm:
+				{
+					if (vm.CanRotate())
+					{
+						entity.transform.rotation = Quaternion.LookRotation(-entity.transform.forward, entity.transform.up);
+						entity.SendNetworkUpdate();
+					}
+					break;
+				}
 				case BuildingBlock block:
 				{
 					if (block.blockDefinition != null && block.blockDefinition.canRotateAfterPlacement)
