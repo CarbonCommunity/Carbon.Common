@@ -734,6 +734,10 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		var rigidbody = entity.GetComponent<Rigidbody>() ?? entity.GetComponentInChildren<Rigidbody>() ?? entity.GetComponentInParent<Rigidbody>();
 		var wasKinematic = rigidbody?.isKinematic;
 		rigidbody?.isKinematic = true;
+		if (entity is BaseHelicopter)
+		{
+			entity.SetFlag(BaseEntity.Flags.Protected, true);
+		}
 		ClearGUI(player);
 		RaycastHit hit = default;
 		entity?.SetParent(null, true);
@@ -815,6 +819,10 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		}
 		Pool.FreeUnmanaged(ref hits);
 
+		if (entity.IsValid() && entity is BaseHelicopter)
+		{
+			entity.SetFlag(BaseEntity.Flags.Protected, false);
+		}
 		if (entity.IsValid() && entity is not BaseCorpse && !entity.HasEntityInParents(player) && !player.HasEntityInParents(entity))
 		{
 			ReconstructEntity(entity);
