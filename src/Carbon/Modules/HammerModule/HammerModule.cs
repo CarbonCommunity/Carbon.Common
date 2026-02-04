@@ -220,7 +220,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		{
 			distance *= UIDistanceFlyMultiplier;
 		}
-		if ( !player.IsInCreativeMode || player.GetActiveItem() is not Item item || item.info.itemid is not 200773292 /* Hammer */ || !Physics.Raycast(player.eyes.HeadRay(), out var hit, distance, ~0, QueryTriggerInteraction.Ignore))
+		if (!(player.IsInCreativeMode || editor.bypassCreativeMode) || player.GetActiveItem() is not Item item || !(item.info.itemid is 200773292 /* Hammer */ or 1803831286 /* Gmod Tool Gun */) || !Physics.Raycast(player.eyes.HeadRay(), out var hit, distance, ~0, QueryTriggerInteraction.Ignore))
 		{
 			return false;
 		}
@@ -501,7 +501,12 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 
 	private object OnHammerHit(BasePlayer player, HitInfo info)
 	{
-		if (!player.IsInCreativeMode || info == null)
+		if (player.Connection.authLevel < 1)
+		{
+			return null;
+		}
+		var editor = DataInstance.GetOrCreateEditor(player.userID);
+		if ((!player.IsInCreativeMode && !editor.bypassCreativeMode) || info == null)
 		{
 			return null;
 		}
@@ -517,11 +522,11 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 
 	private void OnActiveItemChanged(BasePlayer player, Item oldItem)
 	{
-		if (!player.IsInCreativeMode)
+		if (oldItem == null || player.Connection.authLevel < 1)
 		{
 			return;
 		}
-		if (oldItem?.info.itemid is 200773292 /* Hammer */)
+		if (oldItem.info.itemid is 200773292 /* Hammer */ or 1803831286 /* Gmod Tool Gun */)
 		{
 			repairingDestroyingPlayers.Remove(player.userID);
 		}
@@ -841,19 +846,13 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		entity.SendNetworkUpdateImmediate();
 	}
 
-	[ConsoleCommand("hammer", "Player-specific configuration editing for the Hammer UI and its behaviour")]
+	[ConsoleCommand("hammer", "Player-specific configuration editing for the Hammer UI and its behaviour"), AuthLevel(1)]
 	public void Hammer(ConsoleSystem.Arg arg)
 	{
 		var player = arg.Player();
 		if (player == null)
 		{
 			arg.ReplyWith("Command must be called from a client");
-			return;
-		}
-
-		if (!player.IsInCreativeMode)
-		{
-			arg.ReplyWith("You must be in creative mode");
 			return;
 		}
 
@@ -891,6 +890,22 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 			arg.ReplyWith($"Hammer config - {setting}: {value}");
 			Save();
 		}
+	}
+
+	[ConsoleCommand("hammer.creativebypass", "Allow players to use the Hammer UI regardless if they're in creative mode or not"), AuthLevel(1)]
+	public void HammerCreativeBypass(ConsoleSystem.Arg arg)
+	{
+		var player = arg.Player();
+		if (player == null)
+		{
+			arg.ReplyWith("Command must be called from a client");
+			return;
+		}
+
+		var editor = DataInstance.GetOrCreateEditor(player.userID);
+		editor.bypassCreativeMode = arg.GetBool(0);
+		arg.ReplyWith($"bypassCreativeMode @ {player}: {editor.bypassCreativeMode}");
+		Save();
 	}
 
 	[CommandVar("hammer.uidistanceflymultiplier", "The multiplication value of the distance needed for an entity to be picked up by the Hammer UI when flying"), AuthLevel(1)]
@@ -1023,6 +1038,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		public float y = ins.DefaultY;
 		public float uiDistance = ins.UIDefaultDistance;
 		public float moveDistance = ins.DefaultMoveDistance;
+		public bool bypassCreativeMode;
 
 		private BasePlayer player;
 
