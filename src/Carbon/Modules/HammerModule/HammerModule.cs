@@ -141,6 +141,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 			HarborCraneContainerPickup or HarborCraneStatic or MagnetCrane => false,
 			Barricade => false,
 
+			HotAirBalloon => true,
 			BaseCorpse => true,
 			BaseLadder => true,
 			TreeEntity => true,
