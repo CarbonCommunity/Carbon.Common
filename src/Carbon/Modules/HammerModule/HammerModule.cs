@@ -796,12 +796,6 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 					entity.SendNetworkUpdate_Position();
 					yield return null;
 				}
-
-				if (entity.IsValid())
-				{
-					entity.transform.position = targetPosition;
-					entity.SendNetworkUpdate_Position();
-				}
 				if (hit2.GetEntity() is BaseEntity parentEntity && parentEntity != entity && parentEntity is not BasePlayer && entity is not BasePlayer)
 				{
 					entity?.SetParent(parentEntity, true);
