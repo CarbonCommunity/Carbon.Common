@@ -165,6 +165,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 			StorageContainer => true,
 			IAlwaysOn => true,
 			MiningQuarry or EngineSwitch => true,
+			BuildingBlock => true,
 			_ => false
 		};
 	}
@@ -445,6 +446,27 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 			var onFlag = wantsLock ? BaseEntity.Flags.Locked : BaseEntity.Flags.On;
 			switch (entity)
 			{
+				case BuildingBlock block:
+				{
+					if (block.blockDefinition != null && block.blockDefinition.canRotateAfterPlacement)
+					{
+						block.transform.localRotation *= Quaternion.Euler(block.blockDefinition.rotationAmount);
+						block.RefreshEntityLinks();
+						block.UpdateSurroundingEntities();
+						block.UpdateSkin(force: true);
+						block.RefreshNeighbours(linkToNeighbours: false);
+						block.SendNetworkUpdateImmediate();
+						block.ClientRPC(RpcTarget.NetworkGroup("RefreshSkin"));
+						if (!block.globalNetworkCooldown)
+						{
+							block.globalNetworkCooldown = true;
+							GlobalNetworkHandler.server.TrySendNetworkUpdate(block);
+							block.CancelInvoke(block.ResetGlobalNetworkCooldown);
+							block.Invoke(block.ResetGlobalNetworkCooldown, 15f);
+						}
+					}
+					break;
+				}
 				case Door:
 				{
 					entity.SetFlag(openFlag, !entity.HasFlag(openFlag));
