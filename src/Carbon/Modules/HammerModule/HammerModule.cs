@@ -555,7 +555,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 
 	private void OnActiveItemChanged(BasePlayer player, Item oldItem)
 	{
-		if (oldItem == null || player.Connection.authLevel < 1)
+		if (oldItem == null || !player.IsValid() || !player.IsConnected || player.Connection.authLevel < 1)
 		{
 			return;
 		}
