@@ -20,7 +20,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 	private static readonly Translate.Phrase destroyingBuildingCancelledPhrase = new("destroyedbuildingCancelled", "Destroying building: <color=white>cancelled</color>");
 	private static readonly Translate.Phrase destroyingBuildingPhrase = new("destroyedbuilding", "Destroying building: <color=white>{0}</color>/{1} entities ({2} dead)");
 	private static readonly Translate.Phrase repairedCancelledPhrase = new("repairedCancelled", "Repairing: <color=white>cancelled</color>");
-	private static readonly Translate.Phrase repairedPhrase = new("repaired", "Repairing: <color=white>{0}</color>/{1} entities ({2} dead)");
+	private static readonly Translate.Phrase repairedPhrase = new("repaired", "Repairing: <color=white>{0}</color>/{1} entities ({2} needed repair, {3} dead)");
 
 	private static readonly Dictionary<ulong, BaseEntity> lastCreativeModePlayers = new();
 	private static readonly Dictionary<ulong, BaseEntity> lastLastCreativeModePlayers = new();
@@ -673,8 +673,9 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		var currentBatch = 0;
 		var completedEntities = 0;
 		var completedEntitiesDead = 0;
+		var completedEntitiesNeededRepair = 0;
 		var wasCancelled = false;
-		player.ShowToast(GameTip.Styles.Blue_Normal, repairedPhrase, false, "1", entities.Count.ToString("n0"), completedEntitiesDead.ToString("n0"));
+		player.ShowToast(GameTip.Styles.Blue_Normal, repairedPhrase, false, "1", entities.Count.ToString("n0"), completedEntitiesNeededRepair.ToString("n0"), completedEntitiesDead.ToString("n0"));
 		for (int i = 0; i < entities.Count; i++)
 		{
 			if (!repairingDestroyingPlayers.Contains(player.userID))
@@ -685,14 +686,18 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 			if (currentBatch > BuildingRepairBatch)
 			{
 				currentBatch = 0;
-				player.ShowToast(GameTip.Styles.Blue_Normal, repairedPhrase, false, (i + 1).ToString("n0"), entities.Count.ToString("n0"), completedEntitiesDead.ToString("n0"));
+				player.ShowToast(GameTip.Styles.Blue_Normal, repairedPhrase, false, (i + 1).ToString("n0"), entities.Count.ToString("n0"), completedEntitiesNeededRepair.ToString("n0"), completedEntitiesDead.ToString("n0"));
 				yield return CoroutineEx.waitForSeconds(BuildingBatchRefreshRate);
 			}
 
 			var entity = entities[i];
 			if (entity.IsValid())
 			{
-				entity.Heal(float.MaxValue);
+				if (!Mathf.Approximately(entity.healthFraction, 1))
+				{
+					completedEntitiesNeededRepair++;
+					entity.Heal(float.MaxValue);
+				}
 				currentBatch++;
 				completedEntities++;
 				yield return null;
@@ -708,7 +713,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		}
 		else
 		{
-			player.ShowToast(GameTip.Styles.Blue_Normal, repairedPhrase, false, entities.Count.ToString("n0"), entities.Count.ToString("n0"), completedEntitiesDead.ToString("n0"));
+			player.ShowToast(GameTip.Styles.Blue_Normal, repairedPhrase, false, entities.Count.ToString("n0"), entities.Count.ToString("n0"), completedEntitiesNeededRepair.ToString("n0"), completedEntitiesDead.ToString("n0"));
 		}
 		Pool.FreeUnmanaged(ref entities);
 		repairingDestroyingPlayers.Remove(player.userID);
