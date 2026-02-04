@@ -626,6 +626,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		var completedEntities = 0;
 		var completedEntitiesDead = 0;
 		var wasCancelled = false;
+		player.ShowToast(GameTip.Styles.Red_Normal, destroyingBuildingPhrase, false, "1", entities.Count.ToString("n0"), completedEntitiesDead.ToString("n0"));
 		for (int i = 0; i < entities.Count; i++)
 		{
 			if (!repairingDestroyingPlayers.Contains(player.userID))
@@ -673,6 +674,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		var completedEntities = 0;
 		var completedEntitiesDead = 0;
 		var wasCancelled = false;
+		player.ShowToast(GameTip.Styles.Blue_Normal, repairedPhrase, false, "1", entities.Count.ToString("n0"), completedEntitiesDead.ToString("n0"));
 		for (int i = 0; i < entities.Count; i++)
 		{
 			if (!repairingDestroyingPlayers.Contains(player.userID))
