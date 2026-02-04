@@ -155,10 +155,6 @@ public partial class AdminModule
 							optionsOffset += optionsWidth + optionsSpacing;
 						}
 
-						var scroll = cui.CreateScrollView(container, panel, true, false,
-							ScrollRect.MovementType.Elastic, 0.1f, true, 0.1f, 150,
-							out var content, out _, out var verticalBar, yMax: 1f - optionsHeight);
-
 						const float cardWidth = 150;
 						const float cardWidthMargin = 50;
 						const float cardHeight = 190;
@@ -180,19 +176,23 @@ public partial class AdminModule
 						page.TotalPages = maxPages;
 						page.Check();
 
-						content.AnchorMin = "0 0";
-						content.AnchorMax = "1 1";
+						var scroll = cui.CreateScrollView(container, panel, true, false,
+							ScrollRect.MovementType.Elastic, 0.1f, true, 0.1f, 150,
+							out var content, out _, out var verticalBar, yMax: 1f - optionsHeight);
+
+						content.AnchorMin = "0 1";
+						content.AnchorMax = "1 2";
 						content.OffsetMin = $"0 -{height}";
 						content.OffsetMax = $"0 0";
-						verticalBar.Size = 7;
+						verticalBar.Size = 4f;
 						verticalBar.AutoHide = false;
-						verticalBar.Invert = true;
+						verticalBar.Invert = false;
 
 						cui.CreateImage(container, scroll, selectedVendor.Hero, Cache.CUI.WhiteColor,
 							yMin: 1, yMax: 1, OyMin: -500);
 
-						var contentPanel = cui.CreatePanel(container, scroll, "0 0.1 0.3 0.4", yMin: 1,
-							yMax: 1, OyMin: -(height + 450));
+						var contentPanel = cui.CreatePanel(container, scroll, "0 0.1 0.3 0.4",
+							yMin: 1, yMax: 1, OyMin: -(height + 450));
 
 						if (!plugins.Any())
 						{
@@ -298,7 +298,7 @@ public partial class AdminModule
 
 							cui.CreateImage(container, card, "fade", Cache.CUI.WhiteColor);
 
-							// cui.CreateText(container, card, pageButtonColorLightDark, (index * (page.CurrentPage + 1)).ToString(), 8, yMin: 0, yMax: 0, OyMin: -10);
+							// cui.CreateText(container, card, pageButtonColorLightDark, (index * (page.CurrentPage + 1)).ToString(), 8, yMin: 1, yMax: 1, OyMin: -10);
 
 							if (plugin.IsInstalled())
 							{
@@ -478,7 +478,7 @@ public partial class AdminModule
 						}
 
 						var selectedPlugin = cui.CreatePanel(container, panel, Cache.CUI.BlankColor,
-							xMin: 0, xMax: 0, yMin: 0, yMax: 0, id: "selectedpluginpnl");
+							xMin: 0, xMax: 0, yMin: 1, yMax: 1, id: "selectedpluginpnl");
 						{
 							cui.CreatePanel(container, selectedPlugin, "0 0 0 0.6", blur: true);
 							cui.CreatePanel(container, selectedPlugin, "0 0 0 0.6");
