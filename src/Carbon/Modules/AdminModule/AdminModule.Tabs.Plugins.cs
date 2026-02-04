@@ -180,8 +180,8 @@ public partial class AdminModule
 							ScrollRect.MovementType.Elastic, 0.1f, true, 0.1f, 150,
 							out var content, out _, out var verticalBar, yMax: 1f - optionsHeight);
 
-						content.AnchorMin = "0 1";
-						content.AnchorMax = "1 2";
+						content.AnchorMin = "0 0";
+						content.AnchorMax = "1 1";
 						content.OffsetMin = $"0 -{height}";
 						content.OffsetMax = $"0 0";
 						verticalBar.Size = 4f;
