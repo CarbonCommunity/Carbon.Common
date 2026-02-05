@@ -142,6 +142,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 			Barricade => false,
 
 			HotAirBalloon => true,
+			BaseChair => true,
 			BaseBoat => true,
 			BaseCorpse => true,
 			BaseLadder => true,
