@@ -635,12 +635,21 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 				}
 				else
 				{
-					Modal.Open(player, "Are you sure you wanna destroy that entity?", temp, (player, modal) =>
+					if (editor.bypassImmovableEntityDestroyConfirmations)
 					{
 						entity.Kill(BaseNetworkable.DestroyMode.Gib);
 						editingPlayers.Remove(player.userID);
 						ClearGUI(player);
-					});
+					}
+					else
+					{
+						Modal.Open(player, "Are you sure you wanna destroy that entity?", temp, (player, modal) =>
+						{
+							entity.Kill(BaseNetworkable.DestroyMode.Gib);
+							editingPlayers.Remove(player.userID);
+							ClearGUI(player);
+						});
+					}
 				}
 
 				break;
@@ -928,6 +937,11 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 				value = editor.waterLayer = arg.GetBool(1, editor.waterLayer);
 				break;
 			}
+			case "bypassimmovableentitydestroyconfirmations":
+			{
+				value = editor.bypassImmovableEntityDestroyConfirmations = arg.GetBool(1, editor.bypassImmovableEntityDestroyConfirmations);
+				break;
+			}
 			default:
 			{
 				using var table = new StringTable("option", "value", "help");
@@ -935,6 +949,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 					table.AddRow("uidistance", editor.uiDistance, "Minimum distance from the player to the entity to show the Hammer UI");
 					table.AddRow("movedistance", editor.moveDistance, "Distance the entity will float in front of the player if not connecting to a surface");
 					table.AddRow("waterlayer", editor.waterLayer, "Should the water layer of the ocean be considered?");
+					table.AddRow("bypassimmovableentitydestroyconfirmations", editor.waterLayer, "Should the confirmation popup happen when attempting to destroy an entity that can't be moved?");
 				}
 				arg.ReplyWith($"Invalid syntax!\n{table.Write(StringTable.FormatTypes.None)}");
 				hasChanges = false;
@@ -1097,6 +1112,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		public float moveDistance = ins.DefaultMoveDistance;
 		public bool bypassCreativeMode;
 		public bool waterLayer = true;
+		public bool bypassImmovableEntityDestroyConfirmations = false;
 
 		private BasePlayer player;
 
