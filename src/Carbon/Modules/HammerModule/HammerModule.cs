@@ -858,6 +858,8 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		if (rigidbody != null)
 		{
 			rigidbody.isKinematic = wasKinematic ?? false;
+			rigidbody.transform.hasChanged = true;
+			rigidbody.WakeUp();
 		}
 		Pool.FreeUnmanaged(ref hits);
 
