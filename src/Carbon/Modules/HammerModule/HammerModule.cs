@@ -153,6 +153,10 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 			_ => entity.ShortPrefabName switch
 			{
 				_ when entity.ShortPrefabName.Contains("deploy", CompareOptions.IgnoreCase) => true,
+				_ when entity.ShortPrefabName.Contains("cliff", CompareOptions.IgnoreCase) => true,
+				_ when entity.ShortPrefabName.Contains("rock", CompareOptions.IgnoreCase) => true,
+				_ when entity.ShortPrefabName.Contains("admin_invis", CompareOptions.IgnoreCase) => true,
+				_ when entity.ShortPrefabName.Contains("grass_displace", CompareOptions.IgnoreCase) => true,
 				_ => false
 			}
 		};
