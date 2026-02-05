@@ -761,7 +761,11 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 
 	private IEnumerator MoveEntityRoutine(HammerEditor editor, BaseEntity entity)
 	{
-		const int layer = Rust.Layers.World + Rust.Layers.Terrain + Rust.Layers.Deployed + Rust.Layers.Construction;
+		int layer = Rust.Layers.World + Rust.Layers.Terrain + Rust.Layers.Deployed + Rust.Layers.Construction;
+		if (editor.waterLayer)
+		{
+			layer += Rust.Layers.Water;
+		}
 		var player = editor.GetPlayer();
 		var rotation = Vector3.up * 180f;
 		var hits = Pool.Get<List<RaycastHit>>();
@@ -817,8 +821,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		if (!hasContact && entity.IsValid() && !player.serverInput.IsDown(BUTTON.SPRINT))
 		{
 			const float transitionTime = .75f;
-			var position = entity.transform.position;
-			Physics.Raycast(position, Vector3.down, out RaycastHit hit2, float.MaxValue, ~0, QueryTriggerInteraction.Ignore);
+			GamePhysics.Trace(new Ray(transform.position, Vector3.down), 0, out var hit2, float.MaxValue, layer, QueryTriggerInteraction.Ignore);
 			var targetPosition = hit2.point;
 			var targetRotation = (Quaternion.FromToRotation(Vector3.up, hit2.normal) * Quaternion.Euler(rotation)) *
 								 Quaternion.Euler(player.eyes.GetLookRotation().eulerAngles.WithX(0));
@@ -913,12 +916,18 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 				value = editor.moveDistance = arg.GetFloat(1, editor.moveDistance);
 				break;
 			}
+			case "waterlayer":
+			{
+				value = editor.waterLayer = arg.GetBool(1, editor.waterLayer);
+				break;
+			}
 			default:
 			{
 				using var table = new StringTable("option", "value", "help");
 				{
 					table.AddRow("uidistance", editor.uiDistance, "Minimum distance from the player to the entity to show the Hammer UI");
 					table.AddRow("movedistance", editor.moveDistance, "Distance the entity will float in front of the player if not connecting to a surface");
+					table.AddRow("waterlayer", editor.waterLayer, "Should the water layer of the ocean be considered?");
 				}
 				arg.ReplyWith($"Invalid syntax!\n{table.Write(StringTable.FormatTypes.None)}");
 				hasChanges = false;
@@ -1080,6 +1089,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		public float uiDistance = ins.UIDefaultDistance;
 		public float moveDistance = ins.DefaultMoveDistance;
 		public bool bypassCreativeMode;
+		public bool waterLayer = true;
 
 		private BasePlayer player;
 
