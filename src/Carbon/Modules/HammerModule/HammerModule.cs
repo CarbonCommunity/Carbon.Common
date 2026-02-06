@@ -295,6 +295,15 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 			CreateOption(cui, container, container.Name, ref heightOffset, entityId, fields.name, fields.value);
 		}
 
+		if (entity.GetLock() is CodeLock codeLock)
+		{
+			if (codeLock.hasGuestCode)
+			{
+				CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Guest Code", codeLock.guestCode);
+			}
+			CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Code", codeLock.code);
+		}
+
 		ModularCar car = default;
 		switch (entity)
 		{
@@ -306,18 +315,6 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 			case MiningQuarry miningQuarry:
 			{
 				CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Static Type", miningQuarry.staticType);
-				break;
-			}
-			case Door door:
-			{
-				if (door.HasLock() && door.GetLock() is CodeLock codeLock)
-				{
-					if (codeLock.hasGuestCode)
-					{
-						CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Guest Code", codeLock.guestCode);
-					}
-					CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Code", codeLock.code);
-				}
 				break;
 			}
 			case IOEntity ioEntity:
