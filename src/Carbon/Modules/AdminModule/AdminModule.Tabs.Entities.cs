@@ -546,29 +546,6 @@ public partial class AdminModule
 						}
 					}
 
-					if (Singleton.HasAccess(ap3.Player, "entities.spectate_players"))
-					{
-						if (!multiSelection && ap3.Player != player && (ap3.Player.spectatingTarget != player && ap3.Player.spectatingTarget != entity))
-						{
-							tab.AddButton(1, "Spectate", ap =>
-							{
-								StartSpectating(ap.Player, entity);
-								SelectEntity(tab, ap, entity);
-								DrawEntitySettings(tab, column, ap3);
-							});
-						}
-
-						if (!multiSelection && !string.IsNullOrEmpty(ap3.Player.spectateFilter) && (ap3.Player.UserIDString == player?.UserIDString || ap3.Player.spectatingTarget == entity))
-						{
-							tab.AddButton(1, "End Spectating", ap =>
-							{
-								StopSpectating(ap.Player);
-								SelectEntity(tab, ap, entity);
-								DrawEntitySettings(tab, column, ap3);
-							}, ap => Tab.OptionButton.Types.Selected);
-						}
-					}
-
 					if (!multiSelection && entity.parentEntity.IsValid(true)) tab.AddButton(column, $"Parent: {entity.parentEntity.Get(true)}", ap => { DrawEntities(tab, ap); SelectEntity(tab, ap, entity.parentEntity.Get(true)); DrawEntitySettings(tab, 1, ap); });
 
 					if (!multiSelection && entity.children.Count > 0)

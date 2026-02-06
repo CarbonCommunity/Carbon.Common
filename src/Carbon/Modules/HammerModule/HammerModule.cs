@@ -141,7 +141,10 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 			HarborCraneContainerPickup or HarborCraneStatic or MagnetCrane => false,
 			Barricade => false,
 
+			CinematicEntity => true,
 			HotAirBalloon => true,
+			BaseChair => true,
+			BaseBoat => true,
 			BaseCorpse => true,
 			BaseLadder => true,
 			TreeEntity => true,
@@ -151,6 +154,10 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 			_ => entity.ShortPrefabName switch
 			{
 				_ when entity.ShortPrefabName.Contains("deploy", CompareOptions.IgnoreCase) => true,
+				_ when entity.ShortPrefabName.Contains("cliff", CompareOptions.IgnoreCase) => true,
+				_ when entity.ShortPrefabName.Contains("rock", CompareOptions.IgnoreCase) => true,
+				_ when entity.ShortPrefabName.Contains("admin_invis", CompareOptions.IgnoreCase) => true,
+				_ when entity.ShortPrefabName.Contains("grass_displace", CompareOptions.IgnoreCase) => true,
 				_ => false
 			}
 		};
@@ -555,7 +562,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 
 	private void OnActiveItemChanged(BasePlayer player, Item oldItem)
 	{
-		if (oldItem == null || player.Connection.authLevel < 1)
+		if (oldItem == null || !player.IsValid() || !player.IsConnected || player.Connection.authLevel < 1)
 		{
 			return;
 		}
@@ -628,12 +635,21 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 				}
 				else
 				{
-					Modal.Open(player, "Are you sure you wanna destroy that entity?", temp, (player, modal) =>
+					if (editor.bypassImmovableEntityDestroyConfirmations)
 					{
 						entity.Kill(BaseNetworkable.DestroyMode.Gib);
 						editingPlayers.Remove(player.userID);
 						ClearGUI(player);
-					});
+					}
+					else
+					{
+						Modal.Open(player, "Are you sure you wanna destroy that entity?", temp, (player, modal) =>
+						{
+							entity.Kill(BaseNetworkable.DestroyMode.Gib);
+							editingPlayers.Remove(player.userID);
+							ClearGUI(player);
+						});
+					}
 				}
 
 				break;
@@ -759,7 +775,11 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 
 	private IEnumerator MoveEntityRoutine(HammerEditor editor, BaseEntity entity)
 	{
-		const int layer = Rust.Layers.World + Rust.Layers.Terrain + Rust.Layers.Deployed + Rust.Layers.Construction;
+		int layer = Rust.Layers.World + Rust.Layers.Terrain + Rust.Layers.Deployed + Rust.Layers.Construction;
+		if (editor.waterLayer)
+		{
+			layer += Rust.Layers.Water;
+		}
 		var player = editor.GetPlayer();
 		var rotation = Vector3.up * 180f;
 		var hits = Pool.Get<List<RaycastHit>>();
@@ -815,8 +835,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		if (!hasContact && entity.IsValid() && !player.serverInput.IsDown(BUTTON.SPRINT))
 		{
 			const float transitionTime = .75f;
-			var position = entity.transform.position;
-			Physics.Raycast(position, Vector3.down, out RaycastHit hit2, float.MaxValue, ~0, QueryTriggerInteraction.Ignore);
+			GamePhysics.Trace(new Ray(transform.position, Vector3.down), 0, out var hit2, float.MaxValue, layer, QueryTriggerInteraction.Ignore);
 			var targetPosition = hit2.point;
 			var targetRotation = (Quaternion.FromToRotation(Vector3.up, hit2.normal) * Quaternion.Euler(rotation)) *
 								 Quaternion.Euler(player.eyes.GetLookRotation().eulerAngles.WithX(0));
@@ -849,6 +868,8 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		if (rigidbody != null)
 		{
 			rigidbody.isKinematic = wasKinematic ?? false;
+			rigidbody.transform.hasChanged = true;
+			rigidbody.WakeUp();
 		}
 		Pool.FreeUnmanaged(ref hits);
 
@@ -911,12 +932,24 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 				value = editor.moveDistance = arg.GetFloat(1, editor.moveDistance);
 				break;
 			}
+			case "waterlayer":
+			{
+				value = editor.waterLayer = arg.GetBool(1, editor.waterLayer);
+				break;
+			}
+			case "bypassimmovableentitydestroyconfirmations":
+			{
+				value = editor.bypassImmovableEntityDestroyConfirmations = arg.GetBool(1, editor.bypassImmovableEntityDestroyConfirmations);
+				break;
+			}
 			default:
 			{
 				using var table = new StringTable("option", "value", "help");
 				{
 					table.AddRow("uidistance", editor.uiDistance, "Minimum distance from the player to the entity to show the Hammer UI");
 					table.AddRow("movedistance", editor.moveDistance, "Distance the entity will float in front of the player if not connecting to a surface");
+					table.AddRow("waterlayer", editor.waterLayer, "Should the water layer of the ocean be considered?");
+					table.AddRow("bypassimmovableentitydestroyconfirmations", editor.waterLayer, "Should the confirmation popup happen when attempting to destroy an entity that can't be moved?");
 				}
 				arg.ReplyWith($"Invalid syntax!\n{table.Write(StringTable.FormatTypes.None)}");
 				hasChanges = false;
@@ -1078,6 +1111,8 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		public float uiDistance = ins.UIDefaultDistance;
 		public float moveDistance = ins.DefaultMoveDistance;
 		public bool bypassCreativeMode;
+		public bool waterLayer = true;
+		public bool bypassImmovableEntityDestroyConfirmations = false;
 
 		private BasePlayer player;
 

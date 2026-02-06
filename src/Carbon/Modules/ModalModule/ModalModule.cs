@@ -117,10 +117,13 @@ public partial class ModalModule : CarbonModule<EmptyModuleConfig, EmptyModuleDa
 
 		internal void _drawInternal(CUI cui, CuiElementContainer container, string panel)
 		{
-			var subText = $"<b><color=red>*</color></b>  {"Assign all required field values.".ToUpper().SpacedString(1)}" +
-				$"\n    {(IsValid() ? $"<b><color=green>{"The modal is valid.".ToUpper().SpacedString(1)}</color></b>" : $"<b><color=red>{"The modal has invalid fields.".ToUpper().SpacedString(1)}</color></b>")}" +
-				$"{(InvalidMessages != null ? $"\n{InvalidMessages.ToString("\n")}" : "")}";
-			cui.CreateText(container, panel, "1 1 1 1", subText.Trim(), 9, align: TextAnchor.LowerLeft, xMin: 0.05f, yMin: 0.05f);
+			if (Fields.Count > 0)
+			{
+				var subText = $"<b><color=red>*</color></b>  {"Assign all required field values.".ToUpper().SpacedString(1)}" +
+					$"\n    {(IsValid() ? $"<b><color=green>{"The modal is valid.".ToUpper().SpacedString(1)}</color></b>" : $"<b><color=red>{"The modal has invalid fields.".ToUpper().SpacedString(1)}</color></b>")}" +
+					$"{(InvalidMessages != null ? $"\n{InvalidMessages.ToString("\n")}" : "")}";
+				cui.CreateText(container, panel, "1 1 1 1", subText.Trim(), 9, align: TextAnchor.LowerLeft, xMin: 0.05f, yMin: 0.05f);
+			}
 
 			var main = cui.CreatePanel(container, panel, "0 0 0 0", xMin: 0.1f, xMax: 0.9f, yMin: 0.2f, yMax: 0.9f);
 			cui.CreateText(container, main, "1 1 1 0.7", Title, 20, xMin: 0.025f, yMax: 0.985f, align: TextAnchor.UpperLeft);
