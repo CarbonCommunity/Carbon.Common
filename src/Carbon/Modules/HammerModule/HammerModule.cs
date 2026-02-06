@@ -449,6 +449,11 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 			var wantsLock = state.IsDown(BUTTON.SPRINT);
 			var openFlag = wantsLock ? BaseEntity.Flags.Locked : BaseEntity.Flags.Open;
 			var onFlag = wantsLock ? BaseEntity.Flags.Locked : BaseEntity.Flags.On;
+			if (wantsLock && entity.GetLock() is BaseLock @lock)
+			{
+				@lock.SetFlag(BaseEntity.Flags.Locked, !@lock.IsLocked());
+				return;
+			}
 			switch (entity)
 			{
 				case VendingMachine vm:
