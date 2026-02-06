@@ -64,8 +64,6 @@ public partial class AdminModule
 		{
 			PlayersTab.BlindedPlayers.Remove(player);
 		}
-
-		StopSpectating(player);
 	}
 
 	[Conditional("!MINIMAL")]
