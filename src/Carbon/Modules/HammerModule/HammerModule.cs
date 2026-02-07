@@ -11,7 +11,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 
 	public override string Name => "Hammer";
 	public override VersionNumber Version => new(1, 0, 0);
-	public override bool EnabledByDefault => true;
+	public override bool EnabledByDefault => false;
 	public override Type Type => typeof(HammerModule);
 
 	public ListHashSet<Func<BaseEntity, bool, (string name, object value, bool shouldShow)>> CustomFields = new();
@@ -104,6 +104,11 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		{
 			case BuildingBlock:
 				return false;
+		}
+
+		if (entity.GetRootParentEntity() is PlayerBoat)
+		{
+			return false;
 		}
 
 		if (MoveEverything)
@@ -270,6 +275,10 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		var entityId = entity.IsValid() ? entity.net.ID : default;
 
 		CreateText(cui, container, container.Name, ref heightOffset, $"{(CanBeMoved(player, entity) ? "<color=green><b>✓</b></color>" : "<color=red><b>✘</b></color>")} Use <color=white>RIGHT-CLICK</color> to move the entity (hold <color=white>SPRINT</color> to skip auto-snapping)\n{(CanBeToggled(entity) ? "<color=green><b>✓</b></color>" : "<color=red><b>✘</b></color>")} Use <color=white>MIDDLE-CLICK</color> to toggle the entity (hold <color=white>SPRINT</color> to lock/unlock)");
+		if (showExtra || editor.destructionMode)
+		{
+			CreateButton(cui, container, container.Name, ref heightOffset, entityId, "Destruction Mode", 3, editor.destructionMode ? "#8bb52a" : ".9 .2 .3 .4");
+		}
 		if (entity is not BasePlayer playerEntity || !playerEntity.userID.IsSteamId())
 		{
 			CreateButton(cui, container, container.Name, ref heightOffset, entityId, "Destroy Entity", 1);
@@ -320,6 +329,11 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 			case IOEntity ioEntity:
 			{
 				CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Power", ioEntity.currentEnergy.ToString("0"));
+				break;
+			}
+			case SteeringWheel steeringWheel:
+			{
+				CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Code", steeringWheel.BoatLock?.Code);
 				break;
 			}
 			case PlanterBox:
@@ -552,6 +566,11 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		{
 			return null;
 		}
+		if (editor.destructionMode && info.HitEntity is BaseEntity entity && (CanBeMoved(player, entity) || CanBeToggled(entity)))
+		{
+			entity.Kill(BaseNetworkable.DestroyMode.Gib);
+			return Cache.False;
+		}
 		if (info.HitEntity is BuildingBlock block && block.GetBuilding() is BuildingManager.Building building && !repairingDestroyingPlayers.Contains(player.userID))
 		{
 			var entityPool = Pool.Get<PooledList<BaseCombatEntity>>();
@@ -570,6 +589,8 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		}
 		if (oldItem.info.itemid is 200773292 /* Hammer */ or 1803831286 /* Gmod Tool Gun */)
 		{
+			var editor = DataInstance.GetOrCreateEditor(player.userID);
+			editor.destructionMode = false;
 			repairingDestroyingPlayers.Remove(player.userID);
 		}
 	}
@@ -670,6 +691,13 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 					editingPlayers.Remove(player.userID);
 					ClearGUI(player);
 				});
+				break;
+			}
+			case 3:
+			{
+				editor.destructionMode = !editor.destructionMode;
+				editingPlayers.Remove(player.userID);
+				ClearGUI(player);
 				break;
 			}
 		}
@@ -1115,6 +1143,9 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		public bool bypassCreativeMode;
 		public bool waterLayer = true;
 		public bool bypassImmovableEntityDestroyConfirmations = false;
+
+		[JsonIgnore]
+		public bool destructionMode;
 
 		private BasePlayer player;
 
