@@ -102,8 +102,17 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 
 		switch (entity)
 		{
+			case SimpleBuildingBlock:
 			case BuildingBlock:
 				return false;
+			case IOEntity ioEntity:
+			{
+				if(ioEntity.GetConnectedInputCount() > 0 || ioEntity.GetConnectedOutputCount() > 0)
+				{
+					return false;
+				}
+				break;
+			}
 		}
 
 		if (entity.GetRootParentEntity() is PlayerBoat || entity.PrefabName.Contains("boatbuilding", CompareOptions.OrdinalIgnoreCase))
