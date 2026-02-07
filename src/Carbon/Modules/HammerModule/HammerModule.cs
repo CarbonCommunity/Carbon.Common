@@ -180,6 +180,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 			MiningQuarry or EngineSwitch => true,
 			BuildingBlock => true,
 			VendingMachine => true,
+			SteeringWheel => true,
 			_ => false
 		};
 	}
