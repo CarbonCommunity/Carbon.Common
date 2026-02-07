@@ -148,6 +148,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 
 			CinematicEntity => true,
 			HotAirBalloon => true,
+			BaseHelicopter => true,
 			BaseChair => true,
 			BaseBoat => true,
 			BaseCorpse => true,
