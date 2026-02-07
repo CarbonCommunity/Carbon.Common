@@ -502,6 +502,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 					}
 					break;
 				}
+				case SteeringWheel:
 				case Door:
 				{
 					entity.SetFlag(openFlag, !entity.HasFlag(openFlag));
