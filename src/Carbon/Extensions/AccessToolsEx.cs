@@ -25,6 +25,11 @@ public static class AccessToolsEx
 
 		if (name.Contains('`'))
 		{
+			if (name.Contains("["))
+			{
+				name = name.Replace("[", "<").Replace("]", ">");
+			}
+
 			var bracketIndex = name.IndexOf('<');
 			var genericTypeDefName = name[..bracketIndex];
 			var genericArgPart = name[bracketIndex..];
