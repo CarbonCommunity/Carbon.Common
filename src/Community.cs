@@ -52,7 +52,11 @@ public partial class Community
 							Array.Clear(trace, 0, trace.Length);
 							resultTrace = resultTrace.TrimEnd();
 							Logger.Write(API.Logger.Severity.Error, $"Unhandled error occurred ({condition})\n{resultTrace}", nativeLog: false);
+#if WIN
 							ServerConsole.Instance.HandleLog(resultTrace, null, type);
+#else
+							Console.WriteLine(resultTrace);
+#endif
 						}
 						break;
 				}
