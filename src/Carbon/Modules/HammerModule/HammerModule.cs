@@ -102,11 +102,20 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 
 		switch (entity)
 		{
+			case SimpleBuildingBlock:
 			case BuildingBlock:
 				return false;
+			case IOEntity ioEntity:
+			{
+				if(ioEntity.GetConnectedInputCount() > 0 || ioEntity.GetConnectedOutputCount() > 0)
+				{
+					return false;
+				}
+				break;
+			}
 		}
 
-		if (entity.GetRootParentEntity() is PlayerBoat)
+		if (entity.GetRootParentEntity() is PlayerBoat || entity.PrefabName.Contains("boatbuilding", CompareOptions.OrdinalIgnoreCase))
 		{
 			return false;
 		}
@@ -146,6 +155,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 			HarborCraneContainerPickup or HarborCraneStatic or MagnetCrane => false,
 			Barricade => false,
 
+			Candle => true,
 			CinematicEntity => true,
 			HotAirBalloon => true,
 			BaseHelicopter => true,
@@ -502,6 +512,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 					}
 					break;
 				}
+				case Candle:
 				case SteeringWheel:
 				case Door:
 				{
@@ -808,14 +819,14 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 
 	private IEnumerator MoveEntityRoutine(HammerEditor editor, BaseEntity entity)
 	{
-		int layer = Rust.Layers.World + Rust.Layers.Terrain + Rust.Layers.Deployed + Rust.Layers.Construction;
+		int layer = Rust.Layers.Solid;
 		if (editor.waterLayer)
 		{
 			layer += Rust.Layers.Water;
 		}
 		var player = editor.GetPlayer();
 		var rotation = Vector3.up * 180f;
-		var hits = Pool.Get<List<RaycastHit>>();
+		var hits = Pool.Get<List<RaycastHit>>(); 
 		var hasContact = true;
 		var rigidbody = entity.GetComponent<Rigidbody>() ?? entity.GetComponentInChildren<Rigidbody>() ?? entity.GetComponentInParent<Rigidbody>();
 		var wasKinematic = rigidbody?.isKinematic;
@@ -903,6 +914,10 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 			rigidbody.isKinematic = wasKinematic ?? false;
 			rigidbody.transform.hasChanged = true;
 			rigidbody.WakeUp();
+		}
+		if (entity is BaseBoat boat)
+		{
+			boat.OnServerWake();
 		}
 		Pool.FreeUnmanaged(ref hits);
 
