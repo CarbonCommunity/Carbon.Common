@@ -36,8 +36,7 @@ public partial class Community
 					case LogType.Error:
 					case LogType.Exception:
 					case LogType.Assert:
-						if (!string.IsNullOrEmpty(condition) &&
-						(condition.StartsWith("Null") || condition.StartsWith("Index")))
+						if (!string.IsNullOrEmpty(condition) &&	(condition.StartsWith("Null") || condition.StartsWith("Index")))
 						{
 							var trace = stackTrace.Split(newlineSplit, StringSplitOptions.RemoveEmptyEntries);
 							var resultTrace = string.Empty;
@@ -53,7 +52,7 @@ public partial class Community
 							Array.Clear(trace, 0, trace.Length);
 							resultTrace = resultTrace.TrimEnd();
 							Logger.Write(API.Logger.Severity.Error, $"Unhandled error occurred ({condition})\n{resultTrace}", nativeLog: false);
-							Console.WriteLine(resultTrace);
+							ServerConsole.Instance.HandleLog(resultTrace, null, type);
 						}
 						break;
 				}
