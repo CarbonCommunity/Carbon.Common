@@ -316,7 +316,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 			CreateOption(cui, container, container.Name, ref heightOffset, entityId, fields.name, fields.value);
 		}
 
-		if (entity.GetLock() is CodeLock codeLock)
+		if (showExtra && entity.GetLock() is CodeLock codeLock)
 		{
 			if (codeLock.hasGuestCode)
 			{
@@ -345,7 +345,10 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 			}
 			case SteeringWheel steeringWheel:
 			{
-				CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Code", steeringWheel.BoatLock?.Code);
+				if (showExtra)
+				{
+					CreateOption(cui, container, container.Name, ref heightOffset, entityId, "Code", steeringWheel.BoatLock?.Code);
+				}
 				break;
 			}
 			case PlanterBox:
@@ -365,7 +368,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 			}
 		}
 
-		if (car.IsValid() && car.CarLock.HasALock)
+		if (showExtra && car.IsValid() && car.CarLock.HasALock)
 		{
 			if (car.CarLock.whitelistPlayers.Count > 0)
 			{
