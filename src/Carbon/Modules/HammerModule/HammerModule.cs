@@ -24,9 +24,6 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 
 	private static readonly Dictionary<ulong, BaseEntity> lastCreativeModePlayers = new();
 	private static readonly Dictionary<ulong, BaseEntity> lastLastCreativeModePlayers = new();
-	private static readonly ListHashSet<ulong> editingPlayers = new();
-	private static readonly ListHashSet<ulong> entityMovingPlayers = new();
-	private static readonly ListHashSet<ulong> repairingDestroyingPlayers = new();
 	private static readonly Dictionary<string, ModalModule.Modal.Field> temp = new();
 	private static CuiDraggableComponent cachedDraggable = new();
 	private static HammerModule ins;
@@ -74,18 +71,11 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 
 		lastCreativeModePlayers.Clear();
 		lastLastCreativeModePlayers.Clear();
-		entityMovingPlayers.Clear();
-		editingPlayers.Clear();
 		for (int i = 0; i < BasePlayer.activePlayerList.Count; i++)
 		{
 			var player = BasePlayer.activePlayerList[i];
 			ClearGUI(player);
 		}
-	}
-
-	public bool IsEditing(ulong playerId)
-	{
-		return editingPlayers.Contains(playerId);
 	}
 
 	public bool CanBeMoved(BasePlayer player, BaseEntity entity)
@@ -218,7 +208,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		{
 			var player = BasePlayer.activePlayerList[i];
 			var editor = DataInstance.GetOrCreateEditor(player.userID);
-			if (ShouldShowUI(editor, out var entity) && !IsEditing(player.userID))
+			if (ShouldShowUI(editor, out var entity) && !editor.showExtra)
 			{
 				if (!lastLastCreativeModePlayers.TryGetValue(player.userID, out var lastEntity) || lastEntity != entity)
 				{
@@ -230,7 +220,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		for (int i = 0; i < missingPlayers.Count; i++)
 		{
 			var editor = missingPlayers[i];
-			if (IsEditing(editor.playerId))
+			if (editor.showExtra)
 			{
 				continue;
 			}
@@ -251,7 +241,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		{
 			return false;
 		}
-		return (entity = hit.GetEntity()).IsValid() && !entityMovingPlayers.Contains(player.userID);
+		return (entity = hit.GetEntity()).IsValid() && !editor.isMovingEntity;
 	}
 
 	public void ApplyGUI(BasePlayer player, BaseEntity entity, bool showExtra)
@@ -558,14 +548,15 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 
 		if (state.WasJustPressed(BUTTON.FIRE_SECONDARY))
 		{
-			if (entityMovingPlayers.Contains(player.userID))
+			var editor = DataInstance.GetOrCreateEditor(player.userID);
+			if (editor.isMovingEntity)
 			{
-				entityMovingPlayers.Remove(player.userID);
+				editor.isMovingEntity = false;
 				lastCreativeModePlayers.Remove(player.userID);
 			}
 			else if(CanBeMoved(player, entity))
 			{
-				entityMovingPlayers.Add(player.userID);
+				editor.isMovingEntity = true;
 				lastCreativeModePlayers.Remove(player.userID);
 				player.StartCoroutine(MoveEntityRoutine(DataInstance.GetOrCreateEditor(player.userID), entity));
 			}
@@ -588,11 +579,11 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 			entity.Kill(BaseNetworkable.DestroyMode.Gib);
 			return Cache.False;
 		}
-		if (info.HitEntity is BuildingBlock block && block.GetBuilding() is BuildingManager.Building building && !repairingDestroyingPlayers.Contains(player.userID))
+		if (info.HitEntity is BuildingBlock block && block.GetBuilding() is BuildingManager.Building building && !editor.isRepairingOrDestroyingBuilding)
 		{
 			var entityPool = Pool.Get<PooledList<BaseCombatEntity>>();
 			entityPool.AddRange(building.decayEntities);
-			player.StartCoroutine(RepairEntitiesOverTime(player, entityPool));
+			player.StartCoroutine(RepairEntitiesOverTime(editor, entityPool));
 			return Cache.False;
 		}
 		return null;
@@ -607,9 +598,31 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		if (oldItem.info.itemid is 200773292 /* Hammer */ or 1803831286 /* Gmod Tool Gun */)
 		{
 			var editor = DataInstance.GetOrCreateEditor(player.userID);
-			editor.destructionMode = false;
-			repairingDestroyingPlayers.Remove(player.userID);
+			editor.Reset();
+			ClearGUI(player);
 		}
+	}
+
+	private void OnPlayerSleep(BasePlayer player)
+	{
+		if (!player.IsValid() || !player.IsConnected || player.Connection.authLevel < 1)
+		{
+			return;
+		}
+		var editor = DataInstance.GetOrCreateEditor(player.userID);
+		editor.Reset();
+		ClearGUI(player);
+	}
+
+	private void OnPlayerDeath(BasePlayer player)
+	{
+		if (!player.IsConnected || player.Connection.authLevel < 1)
+		{
+			return;
+		}
+		var editor = DataInstance.GetOrCreateEditor(player.userID);
+		editor.Reset();
+		ClearGUI(player);
 	}
 
 	private void OnCuiDraggableDrag(BasePlayer player, string name, Vector3 position, CommunityEntity.DraggablePositionSendType type)
@@ -646,14 +659,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		{
 			case 0:
 			{
-				if (IsEditing(player.userID))
-				{
-					editingPlayers.Remove(player.userID);
-				}
-				else
-				{
-					editingPlayers.Add(player.userID);
-				}
+				editor.showExtra = !editor.showExtra;
 
 				if (ShouldShowUI(editor, out _))
 				{
@@ -670,7 +676,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 				if (CanBeMoved(player, entity) || entity is BuildingBlock)
 				{
 					entity.Kill(BaseNetworkable.DestroyMode.Gib);
-					editingPlayers.Remove(player.userID);
+					editor.showExtra = false;
 					ClearGUI(player);
 				}
 				else
@@ -678,7 +684,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 					if (editor.bypassImmovableEntityDestroyConfirmations)
 					{
 						entity.Kill(BaseNetworkable.DestroyMode.Gib);
-						editingPlayers.Remove(player.userID);
+						editor.showExtra = false;
 						ClearGUI(player);
 					}
 					else
@@ -686,7 +692,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 						Modal.Open(player, "Are you sure you wanna destroy that entity?", temp, (player, modal) =>
 						{
 							entity.Kill(BaseNetworkable.DestroyMode.Gib);
-							editingPlayers.Remove(player.userID);
+					editor.showExtra = false;
 							ClearGUI(player);
 						});
 					}
@@ -696,7 +702,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 			}
 			case 2:
 			{
-				if (entity is not BuildingBlock block || repairingDestroyingPlayers.Contains(player.userID))
+				if (entity is not BuildingBlock block || editor.isRepairingOrDestroyingBuilding)
 				{
 					return;
 				}
@@ -704,8 +710,8 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 				{
 					var entityPool = Pool.Get<PooledList<BaseEntity>>();
 					entityPool.AddRange(block.GetBuilding().decayEntities);
-					player.StartCoroutine(DestroyEntitiesOverTime(player, entityPool));
-					editingPlayers.Remove(player.userID);
+					player.StartCoroutine(DestroyEntitiesOverTime(editor, entityPool));
+					editor.showExtra = false;
 					ClearGUI(player);
 				});
 				break;
@@ -713,16 +719,17 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 			case 3:
 			{
 				editor.destructionMode = !editor.destructionMode;
-				editingPlayers.Remove(player.userID);
+				editor.showExtra = false;
 				ClearGUI(player);
 				break;
 			}
 		}
 	}
 
-	private IEnumerator DestroyEntitiesOverTime(BasePlayer player, List<BaseEntity> entities)
+	private IEnumerator DestroyEntitiesOverTime(HammerEditor editor, List<BaseEntity> entities)
 	{
-		repairingDestroyingPlayers.Add(player.userID);
+		var player = editor.GetPlayer();
+		editor.isRepairingOrDestroyingBuilding = true;
 		var currentBatch = 0;
 		var completedEntities = 0;
 		var completedEntitiesDead = 0;
@@ -730,7 +737,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		player.ShowToast(GameTip.Styles.Red_Normal, destroyingBuildingPhrase, false, "1", entities.Count.ToString("n0"), completedEntitiesDead.ToString("n0"));
 		for (int i = 0; i < entities.Count; i++)
 		{
-			if (!repairingDestroyingPlayers.Contains(player.userID))
+			if (!editor.isRepairingOrDestroyingBuilding)
 			{
 				wasCancelled = true;
 				break;
@@ -765,12 +772,13 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 			player.ShowToast(GameTip.Styles.Red_Normal, destroyingBuildingPhrase, false, completedEntities.ToString("n0"), entities.Count.ToString("n0"), completedEntitiesDead.ToString("n0"));
 		}
 		Pool.FreeUnmanaged(ref entities);
-		repairingDestroyingPlayers.Remove(player.userID);
+		editor.isRepairingOrDestroyingBuilding = false;
 	}
 
-	private IEnumerator RepairEntitiesOverTime(BasePlayer player, List<BaseCombatEntity> entities)
+	private IEnumerator RepairEntitiesOverTime(HammerEditor editor, List<BaseCombatEntity> entities)
 	{
-		repairingDestroyingPlayers.Add(player.userID);
+		var player = editor.GetPlayer();
+		editor.isRepairingOrDestroyingBuilding = true;
 		var currentBatch = 0;
 		var completedEntities = 0;
 		var completedEntitiesDead = 0;
@@ -779,7 +787,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		player.ShowToast(GameTip.Styles.Blue_Normal, repairedPhrase, false, "1", entities.Count.ToString("n0"), completedEntitiesNeededRepair.ToString("n0"), completedEntitiesDead.ToString("n0"));
 		for (int i = 0; i < entities.Count; i++)
 		{
-			if (!repairingDestroyingPlayers.Contains(player.userID))
+			if (!editor.isRepairingOrDestroyingBuilding)
 			{
 				wasCancelled = true;
 				break;
@@ -817,7 +825,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 			player.ShowToast(GameTip.Styles.Blue_Normal, repairedPhrase, false, entities.Count.ToString("n0"), entities.Count.ToString("n0"), completedEntitiesNeededRepair.ToString("n0"), completedEntitiesDead.ToString("n0"));
 		}
 		Pool.FreeUnmanaged(ref entities);
-		repairingDestroyingPlayers.Remove(player.userID);
+		editor.isRepairingOrDestroyingBuilding = false;
 	}
 
 	private IEnumerator MoveEntityRoutine(HammerEditor editor, BaseEntity entity)
@@ -842,7 +850,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		RaycastHit hit = default;
 		entity?.SetParent(null, true);
 		var transform = entity?.transform;
-		while (player.IsValid() && entity.IsValid() && entityMovingPlayers.Contains(player.userID))
+		while (player.IsValid() && entity.IsValid() && editor.isMovingEntity && !player.IsSleeping())
 		{
 			hits.Clear();
 			hit = default;
@@ -911,7 +919,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		}
 
 		ClearGUI(player);
-		entityMovingPlayers.Remove(player.userID);
+		editor.isMovingEntity = false;
 		if (rigidbody != null)
 		{
 			rigidbody.isKinematic = wasKinematic ?? false;
@@ -1164,9 +1172,10 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		public bool bypassCreativeMode;
 		public bool waterLayer = true;
 		public bool bypassImmovableEntityDestroyConfirmations = false;
-
-		[JsonIgnore]
-		public bool destructionMode;
+		[JsonIgnore] public bool showExtra;
+		[JsonIgnore] public bool destructionMode;
+		[JsonIgnore] public bool isMovingEntity;
+		[JsonIgnore] public bool isRepairingOrDestroyingBuilding;
 
 		private BasePlayer player;
 
@@ -1177,6 +1186,14 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 				player = BasePlayer.FindAwakeOrSleepingByID(playerId);
 			}
 			return player;
+		}
+
+		public void Reset()
+		{
+			showExtra = false;
+			isMovingEntity = false;
+			isRepairingOrDestroyingBuilding = false;
+			destructionMode = false;
 		}
 
 		public Vector2 GetCoordinates() => new(x, y);
