@@ -21,8 +21,6 @@ public class WebRequests : Library
 	private readonly object _lockQueue = new();
 	private readonly AutoResetEvent _workEvent = new(false);
 	private readonly Thread _workerThread;
-	private readonly int _minAvailableWorkerThreads;
-	private readonly int _minAvailableCompletionPortThreads;
 	private volatile bool _shutdown;
 
 	public WebRequests()
@@ -30,10 +28,6 @@ public class WebRequests : Library
 		ServicePointManager.Expect100Continue = false;
 		ServicePointManager.ServerCertificateValidationCallback = (sender, cert, chain, error) => true;
 		ServicePointManager.DefaultConnectionLimit = 200;
-
-		ThreadPool.GetMaxThreads(out var maxWorkerThreads, out var maxCompletionPortThreads);
-		_minAvailableWorkerThreads = (int)(maxWorkerThreads * 0.75);
-		_minAvailableCompletionPortThreads = (int)(maxCompletionPortThreads * 0.6);
 
 		_workerThread = new Thread(Worker) { IsBackground = true, Name = "Carbon.WebRequests" };
 		_workerThread.Start();
@@ -68,13 +62,6 @@ public class WebRequests : Library
 		{
 			while (!_shutdown)
 			{
-				ThreadPool.GetAvailableThreads(out var availableWorkerThreads, out var availableCompletionPortThreads);
-				if (availableWorkerThreads <= _minAvailableWorkerThreads || availableCompletionPortThreads <= _minAvailableCompletionPortThreads)
-				{
-					Thread.Sleep(100);
-					continue;
-				}
-
 				WebRequest request = null;
 
 				lock (_lockQueue)
