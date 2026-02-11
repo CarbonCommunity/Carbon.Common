@@ -579,7 +579,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 			entity.Kill(BaseNetworkable.DestroyMode.Gib);
 			return Cache.False;
 		}
-		if (info.HitEntity is PlayerBoat boat)
+		if (info.HitEntity?.GetParentEntity() is PlayerBoat boat)
 		{
 			boat.Heal(float.MaxValue);
 			return Cache.False;
