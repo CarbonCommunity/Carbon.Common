@@ -80,7 +80,7 @@ public partial class CorePlugin
 				return;
 			}
 
-			if (_ovenBlacklist != value || OvenBlacklistCache == null)
+			if (_ovenBlacklist != value || OvenBlacklistCache.Count == 0)
 			{
 				OvenBlacklistCache.Clear();
 				OvenBlacklistCache.AddRange(value.SplitEnumerable(','));
