@@ -17,132 +17,39 @@ public enum RequestMethod
 
 public class WebRequests : Library
 {
-	private readonly Queue<WebRequest> _queue = new();
-	private readonly object _lockQueue = new();
-	private readonly AutoResetEvent _workEvent = new(false);
-	private readonly Thread _workerThread;
-	private readonly int _minAvailableWorkerThreads;
-	private readonly int _minAvailableCompletionPortThreads;
-	private volatile bool _shutdown;
-
 	public WebRequests()
 	{
 		ServicePointManager.Expect100Continue = false;
 		ServicePointManager.ServerCertificateValidationCallback = (sender, cert, chain, error) => true;
 		ServicePointManager.DefaultConnectionLimit = 200;
-
-		ThreadPool.GetMaxThreads(out var maxWorkerThreads, out var maxCompletionPortThreads);
-		_minAvailableWorkerThreads = (int)(maxWorkerThreads * 0.75);
-		_minAvailableCompletionPortThreads = (int)(maxCompletionPortThreads * 0.6);
-
-		_workerThread = new Thread(Worker) { IsBackground = true, Name = "Carbon.WebRequests" };
-		_workerThread.Start();
-	}
-
-	public override void Shutdown()
-	{
-		if (_shutdown)
-		{
-			return;
-		}
-
-		_shutdown = true;
-		_workEvent.Set();
-		_workerThread.Join(500);
-	}
-
-	private WebRequest QueueRequest(WebRequest request)
-	{
-		lock (_lockQueue)
-		{
-			_queue.Enqueue(request);
-		}
-
-		_workEvent.Set();
-		return request;
-	}
-
-	private void Worker()
-	{
-		try
-		{
-			while (!_shutdown)
-			{
-				ThreadPool.GetAvailableThreads(out var availableWorkerThreads, out var availableCompletionPortThreads);
-				if (availableWorkerThreads <= _minAvailableWorkerThreads || availableCompletionPortThreads <= _minAvailableCompletionPortThreads)
-				{
-					Thread.Sleep(100);
-					continue;
-				}
-
-				WebRequest request = null;
-
-				lock (_lockQueue)
-				{
-					if (_queue.Count > 0)
-					{
-						request = _queue.Dequeue();
-					}
-				}
-
-				if (request != null)
-				{
-					try
-					{
-						request.Start();
-					}
-					catch (Exception ex)
-					{
-						request.FailStart(ex);
-					}
-
-					continue;
-				}
-
-				_workEvent.WaitOne();
-			}
-		}
-		catch (ThreadAbortException)
-		{
-		}
-		catch (ObjectDisposedException)
-		{
-		}
-		catch (Exception ex)
-		{
-			if (!_shutdown)
-			{
-				Logger.Error("WebRequests worker crashed", ex);
-			}
-		}
 	}
 
 	public WebRequest Enqueue(string url, string body, Action<int, string> callback, Plugin owner, RequestMethod method = RequestMethod.GET, Dictionary<string, string> headers = null, float timeout = 0f, DecompressionMethods decompressionMethod = DecompressionMethods.None)
 	{
-		return QueueRequest(new WebRequest(url, callback, owner)
+		return new WebRequest(url, callback, owner)
 		{
 			Method = method.ToString(),
 			RequestHeaders = headers,
 			Timeout = timeout,
 			Body = body,
 			DecompressionMethod = decompressionMethod
-		});
+		}.Start();
 	}
 	public WebRequest EnqueueData(string url, string body, Action<int, byte[]> callback, Plugin owner, RequestMethod method = RequestMethod.GET, Dictionary<string, string> headers = null, float timeout = 0f, DecompressionMethods decompressionMethod = DecompressionMethods.None)
 	{
-		return QueueRequest(new WebRequest(url, callback, owner)
+		return new WebRequest(url, callback, owner)
 		{
 			Method = method.ToString(),
 			RequestHeaders = headers,
 			Timeout = timeout,
 			Body = body,
 			DecompressionMethod = decompressionMethod
-		});
+		}.Start();
 	}
 
 	public async Task<WebRequest> EnqueueAsync(string url, string body, Action<int, string> callback, Plugin owner, RequestMethod method = RequestMethod.GET, Dictionary<string, string> headers = null, float timeout = 0f, DecompressionMethods decompressionMethod = DecompressionMethods.None)
 	{
-		var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+		var tcs = new TaskCompletionSource<bool>();
 
 		WebRequest request = default;
 
@@ -156,6 +63,8 @@ public class WebRequests : Library
 			{
 				Logger.Error($"Failed executing '{request.Method}' async webrequest [callback] ({request.Url})", ex);
 			}
+
+			tcs.SetResult(true);
 		}, owner)
 		{
 			Method = method.ToString(),
@@ -163,11 +72,7 @@ public class WebRequests : Library
 			Timeout = timeout,
 			Body = body,
 			DecompressionMethod = decompressionMethod
-		};
-
-		request.CompletionCallback = _ => tcs.TrySetResult(true);
-
-		QueueRequest(request);
+		}.Start();
 
 		await tcs.Task;
 
@@ -175,7 +80,7 @@ public class WebRequests : Library
 	}
 	public async Task<WebRequest> EnqueueDataAsync(string url, string body, Action<int, byte[]> callback, Plugin owner, RequestMethod method = RequestMethod.GET, Dictionary<string, string> headers = null, float timeout = 0f, DecompressionMethods decompressionMethod = DecompressionMethods.None)
 	{
-		var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+		var tcs = new TaskCompletionSource<bool>();
 
 		WebRequest request = default;
 
@@ -189,6 +94,8 @@ public class WebRequests : Library
 			{
 				Logger.Error($"Failed executing '{request.Method}' async webrequest [callback] ({request.Url})", ex);
 			}
+
+			tcs.SetResult(true);
 		}, owner)
 		{
 			Method = method.ToString(),
@@ -196,11 +103,7 @@ public class WebRequests : Library
 			Timeout = timeout,
 			Body = body,
 			DecompressionMethod = decompressionMethod
-		};
-
-		request.CompletionCallback = _ => tcs.TrySetResult(true);
-
-		QueueRequest(request);
+		}.Start();
 
 		await tcs.Task;
 
@@ -248,10 +151,6 @@ public class WebRequests : Library
 		internal bool _data;
 		internal Uri _uri;
 		internal Client _client;
-		internal int _disposed;
-		internal int _started;
-		internal int _completed;
-		internal Action<WebRequest> CompletionCallback;
 
 		public WebRequest(string url, Action<int, string> callback, Plugin owner)
 		{
@@ -272,52 +171,24 @@ public class WebRequests : Library
 
 		public WebRequest Start()
 		{
-			if (Volatile.Read(ref _disposed) == 1)
-			{
-				OnComplete();
-				return this;
-			}
-
-			if (Interlocked.Exchange(ref _started, 1) == 1)
-			{
-				return this;
-			}
-
-			if (Owner != null && !Owner.IsLoaded)
-			{
-				ResponseError = new OperationCanceledException($"Owner plugin unloaded before '{Method}' webrequest start ({Url})");
-				OnComplete();
-				return this;
-			}
-
-			var client = new Client();
-			_client = client;
-
-			if (Volatile.Read(ref _disposed) == 1 || _uri == null)
-			{
-				client.Dispose();
-				_client = null;
-				OnComplete();
-				return this;
-			}
-
-			client.Headers["User-Agent"] = Community.Runtime.Analytics.UserAgent;
+			_client = new Client();
+			_client.Headers["User-Agent"] = Community.Runtime.Analytics.UserAgent;
 
 			if (Method != "GET")
 			{
-				client.Headers["Content-Type"] = "application/x-www-form-urlencoded";
+				_client.Headers["Content-Type"] = "application/x-www-form-urlencoded";
 			}
 
-			client.Credentials = CredentialCache.DefaultCredentials;
-			client.Proxy = null;
-			client.Encoding = Encoding.UTF8;
-			client.AutomaticDecompression = DecompressionMethod;
+			_client.Credentials = CredentialCache.DefaultCredentials;
+			_client.Proxy = null;
+			_client.Encoding = Encoding.UTF8;
+			_client.AutomaticDecompression = DecompressionMethod;
 
 			if (RequestHeaders != null && RequestHeaders.Count > 0)
 			{
 				foreach (var header in RequestHeaders)
 				{
-					client.Headers[header.Key] = header.Value;
+					_client.Headers[header.Key] = header.Value;
 				}
 			}
 
@@ -330,20 +201,14 @@ public class WebRequests : Library
 					{
 						if (_data)
 						{
-							client.DownloadDataCompleted += (_, e) =>
+							_client.DownloadDataCompleted += (_, e) =>
 							{
 								ResponseDuration = DateTime.Now - _time;
-								ResponseCode = client.StatusCode;
+								ResponseCode = _client.StatusCode;
 
 								try
 								{
 									if (e == null)
-									{
-										OnComplete();
-										return;
-									}
-
-									if (e.Cancelled)
 									{
 										OnComplete();
 										return;
@@ -366,24 +231,18 @@ public class WebRequests : Library
 									OnComplete();
 								}
 							};
-							client.DownloadDataAsync(_uri);
+							_client.DownloadDataAsync(_uri);
 						}
 						else
 						{
-							client.DownloadStringCompleted += (_, e) =>
+							_client.DownloadStringCompleted += (_, e) =>
 							{
 								ResponseDuration = DateTime.Now - _time;
-								ResponseCode = client.StatusCode;
+								ResponseCode = _client.StatusCode;
 
 								try
 								{
 									if (e == null)
-									{
-										OnComplete();
-										return;
-									}
-
-									if (e.Cancelled)
 									{
 										OnComplete();
 										return;
@@ -406,13 +265,13 @@ public class WebRequests : Library
 									OnComplete();
 								}
 							};
-							client.DownloadStringAsync(_uri);
+							_client.DownloadStringAsync(_uri);
 						}
 					}
 					catch (Exception ex)
 					{
 						Logger.Error($"Failed executing '{Method}' webrequest [internal] ({Url})", ex);
-						ResponseCode = client.StatusCode;
+						ResponseCode = _client.StatusCode;
 						ResponseError = ex;
 						OnComplete();
 					}
@@ -429,20 +288,14 @@ public class WebRequests : Library
 					{
 						if (_data)
 						{
-							client.UploadDataCompleted += (_, e) =>
+							_client.UploadDataCompleted += (_, e) =>
 							{
 								ResponseDuration = DateTime.Now - _time;
-								ResponseCode = client.StatusCode;
+								ResponseCode = _client.StatusCode;
 
 								try
 								{
 									if (e == null)
-									{
-										OnComplete();
-										return;
-									}
-
-									if (e.Cancelled)
 									{
 										OnComplete();
 										return;
@@ -465,24 +318,18 @@ public class WebRequests : Library
 									OnComplete();
 								}
 							};
-							client.UploadDataAsync(_uri, Method, Encoding.UTF8.GetBytes(Body ?? string.Empty));
+							_client.UploadDataAsync(_uri, Method, Encoding.Default.GetBytes(Body));
 						}
 						else
 						{
-							client.UploadStringCompleted += (_, e) =>
+							_client.UploadStringCompleted += (_, e) =>
 							{
 								ResponseDuration = DateTime.Now - _time;
-								ResponseCode = client.StatusCode;
+								ResponseCode = _client.StatusCode;
 
 								try
 								{
 									if (e == null)
-									{
-										OnComplete();
-										return;
-									}
-
-									if (e.Cancelled)
 									{
 										OnComplete();
 										return;
@@ -505,22 +352,17 @@ public class WebRequests : Library
 									OnComplete();
 								}
 							};
-							client.UploadStringAsync(_uri, Method, string.IsNullOrEmpty(Body) ? string.Empty : Body);
+							_client.UploadStringAsync(_uri, Method, string.IsNullOrEmpty(Body) ? string.Empty : Body);
 						}
 					}
 					catch (Exception ex)
 					{
 						Logger.Error($"Failed executing '{Method}' webrequest [internal] ({Url})", ex);
-						ResponseCode = client.StatusCode;
+						ResponseCode = _client.StatusCode;
 						ResponseError = ex;
 						OnComplete();
 					}
 
-					break;
-
-				default:
-					ResponseError = new NotSupportedException($"Unsupported webrequest method '{Method}'");
-					OnComplete();
 					break;
 			}
 
@@ -529,73 +371,36 @@ public class WebRequests : Library
 
 		private void OnComplete()
 		{
-			if (Interlocked.Exchange(ref _completed, 1) == 1)
+			Owner?.TrackStart();
+
+			var text = "Web request callback raised an exception";
+
+			if (Owner && Owner != null)
 			{
-				return;
+				text += $" in '{Owner.ToPrettyString()}' plugin";
 			}
 
 			try
 			{
-				CompletionCallback?.Invoke(this);
+				if (_data)
+				{
+					DataCallback?.Invoke(ResponseCode, ResponseObject as byte[]);
+				}
+				else
+				{
+					Callback?.Invoke(ResponseCode, ResponseObject?.ToString());
+				}
 			}
 			catch (Exception ex)
 			{
-				Logger.Error($"Failed running '{Method}' webrequest completion callback ({Url})", ex);
+				Logger.Error($"{text} [{ResponseCode}]", ex);
 			}
 
-			Interface.Oxide.NextTick(() =>
-			{
-				if (Owner != null && !Owner.IsLoaded)
-				{
-					Dispose();
-					return;
-				}
-
-				var owner = Owner;
-				owner?.TrackStart();
-
-				var text = "Web request callback raised an exception";
-
-				if (owner != null)
-				{
-					text += $" in '{owner.ToPrettyString()}' plugin";
-				}
-
-				try
-				{
-					if (_data)
-					{
-						DataCallback?.Invoke(ResponseCode, ResponseObject as byte[]);
-					}
-					else
-					{
-						Callback?.Invoke(ResponseCode, ResponseObject?.ToString());
-					}
-				}
-				catch (Exception ex)
-				{
-					Logger.Error($"{text} [{ResponseCode}]", ex);
-				}
-
-				owner?.TrackEnd();
-				Dispose();
-			});
+			Owner?.TrackEnd();
+			Dispose();
 		}
-
-		internal void FailStart(Exception ex)
-		{
-			ResponseError = ex;
-			Logger.Error($"Failed executing '{Method}' webrequest [internal] ({Url})", ex);
-			OnComplete();
-		}
-
 		public void Dispose()
 		{
-			if (Interlocked.Exchange(ref _disposed, 1) == 1)
-			{
-				return;
-			}
-
 			Owner = null;
 
 			_uri = null;

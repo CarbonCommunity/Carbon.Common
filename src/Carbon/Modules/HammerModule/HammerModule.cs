@@ -579,6 +579,11 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 			entity.Kill(BaseNetworkable.DestroyMode.Gib);
 			return Cache.False;
 		}
+		if (info.HitEntity?.GetParentEntity() is PlayerBoat boat)
+		{
+			boat.Heal(float.MaxValue);
+			return Cache.False;
+		}
 		if (info.HitEntity is BuildingBlock block && block.GetBuilding() is BuildingManager.Building building && !editor.isRepairingOrDestroyingBuilding)
 		{
 			var entityPool = Pool.Get<PooledList<BaseCombatEntity>>();

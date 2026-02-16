@@ -98,13 +98,23 @@ public partial class CorePlugin
 	[Conditional("!MINIMAL")]
 	internal object IOvenSmeltSpeedMultiplier(BaseOven oven)
 	{
-		if (OvenBlacklistCache == null)
+		if (OvenBlacklistCache.Count == 0)
 		{
 			return null;
 		}
 
-		if (Enumerable.Contains(OvenBlacklistCache, oven.ShortPrefabName) ||
-		    Enumerable.Contains(OvenBlacklistCache, oven.GetType().Name))
+		var isBlacklisted = false;
+		for (int i = 0; i < OvenBlacklistCache.Count; i++)
+		{
+			var item = OvenBlacklistCache[i];
+			if (oven.ShortPrefabName.Contains(item, CompareOptions.IgnoreCase))
+			{
+				isBlacklisted = true;
+				break;
+			}
+		}
+
+		if (isBlacklisted)
 		{
 			if (OvenBlacklistSpeedMultiplier != -1)
 			{

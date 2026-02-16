@@ -63,7 +63,7 @@ public partial class CorePlugin
 	[AuthLevel(2)]
 	public float ExcavatorBeltSpeedMaxMultiplier = -1;
 
-	public IEnumerable<string> OvenBlacklistCache;
+	public List<string> OvenBlacklistCache = new();
 
 	private string _ovenBlacklist = "furnace,bbq.static,furnace.large";
 
@@ -76,13 +76,14 @@ public partial class CorePlugin
 		{
 			if (string.IsNullOrEmpty(value))
 			{
-				OvenBlacklistCache = default;
+				OvenBlacklistCache.Clear();
 				return;
 			}
 
-			if (_ovenBlacklist != value || OvenBlacklistCache == null)
+			if (_ovenBlacklist != value || OvenBlacklistCache.Count == 0)
 			{
-				OvenBlacklistCache = value.SplitEnumerable(',');
+				OvenBlacklistCache.Clear();
+				OvenBlacklistCache.AddRange(value.SplitEnumerable(','));
 			}
 
 			_ovenBlacklist = value;

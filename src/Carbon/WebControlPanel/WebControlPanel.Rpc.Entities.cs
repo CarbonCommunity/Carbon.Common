@@ -111,8 +111,8 @@ public static partial class WebControlPanel
 			playerEntity.metabolism.hydration.value = playerData["Thirst"].ToObject<float>();
 			playerEntity.metabolism.calories.max = playerData["MaxHunger"].ToObject<float>();
 			playerEntity.metabolism.calories.value = playerData["Hunger"].ToObject<float>();
-			playerEntity.metabolism.radiation_level.max = playerData["MaxRads"].ToObject<float>();
-			playerEntity.metabolism.radiation_level.value = playerData["Rads"].ToObject<float>();
+			playerEntity.metabolism.radiation_poison.max = playerData["MaxRads"].ToObject<float>();
+			playerEntity.metabolism.radiation_poison.value = playerData["Rads"].ToObject<float>();
 			playerEntity.metabolism.bleeding.max = playerData["MaxBleed"].ToObject<float>();
 			playerEntity.metabolism.bleeding.value = playerData["Bleed"].ToObject<float>();
 		}
@@ -240,8 +240,8 @@ public static partial class WebControlPanel
 				write.WriteObject((float)Math.Round(playerEntity.metabolism.hydration.max, 2));
 				write.WriteObject((float)Math.Round(playerEntity.metabolism.calories.value, 2));
 				write.WriteObject((float)Math.Round(playerEntity.metabolism.calories.max, 2));
-				write.WriteObject((float)Math.Round(playerEntity.metabolism.radiation_level.value, 2));
-				write.WriteObject((float)Math.Round(playerEntity.metabolism.radiation_level.max, 2));
+				write.WriteObject((float)Math.Round(playerEntity.metabolism.radiation_poison.value, 2));
+				write.WriteObject((float)Math.Round(playerEntity.metabolism.radiation_poison.max, 2));
 				write.WriteObject((float)Math.Round(playerEntity.metabolism.bleeding.value, 2));
 				write.WriteObject((float)Math.Round(playerEntity.metabolism.bleeding.max, 2));
 			}
