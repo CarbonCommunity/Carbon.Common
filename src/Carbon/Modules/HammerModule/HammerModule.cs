@@ -1254,13 +1254,13 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 
 	public class HammerData
 	{
-		public Dictionary<ulong, HammerEditor> Editors = new();
+		public Dictionary<ulong, HammerEditor> Hammers = new();
 
 		public HammerEditor GetOrCreateEditor(ulong playerId)
 		{
-			if (!Editors.TryGetValue(playerId, out var editor))
+			if (!Hammers.TryGetValue(playerId, out var editor))
 			{
-				Editors[playerId] = editor = new();
+				Hammers[playerId] = editor = new();
 			}
 			if (editor.playerId == 0)
 			{
