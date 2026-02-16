@@ -15,6 +15,7 @@ public class FileLogger : IDisposable
 	public int SplitSize { get; set; } = (int)(5f * 1000000f);
 
 	public bool HasInit { get; private set; }
+	private int _isFlushing;
 
 	private readonly List<string> _buffer = [];
 	private StreamWriter _file;
@@ -110,17 +111,29 @@ public class FileLogger : IDisposable
 	/// </summary>
 	public virtual void Dispose()
 	{
-		lock (_sync)
+		while (Interlocked.CompareExchange(ref _isFlushing, 1, 0) != 0)
 		{
-			if (_file != null)
-			{
-				_file.Flush();
-				_file.Close();
-				_file.Dispose();
-				_file = null;
-			}
+			Thread.Yield();
+		}
 
-			HasInit = false;
+		try
+		{
+			lock (_sync)
+			{
+				if (_file != null)
+				{
+					_file.Flush();
+					_file.Close();
+					_file.Dispose();
+					_file = null;
+				}
+
+				HasInit = false;
+			}
+		}
+		finally
+		{
+			Interlocked.Exchange(ref _isFlushing, 0);
 		}
 	}
 
@@ -129,37 +142,62 @@ public class FileLogger : IDisposable
 	/// </summary>
 	public virtual void Flush()
 	{
-		lock (_sync)
+		if (Interlocked.CompareExchange(ref _isFlushing, 1, 0) != 0)
 		{
-			if (_file == null || _buffer.Count == 0)
+			return;
+		}
+
+		try
+		{
+			while (true)
 			{
-				return;
-			}
-
-			var buffer = Facepunch.Pool.Get<List<string>>();
-
-			try
-			{
-				buffer.AddRange(_buffer);
-
-				foreach (var line in buffer)
+				lock (_sync)
 				{
-					_file.WriteLine(line);
+					if (_file == null || _buffer.Count == 0)
+					{
+						return;
+					}
+
+					var count = _buffer.Count;
+					for (var i = 0; i < count; i++)
+					{
+						_file.WriteLine(_buffer[i]);
+					}
+
+					_file.Flush();
+
+					if (_buffer.Count == count)
+					{
+						_buffer.Clear();
+					}
+					else
+					{
+						_buffer.RemoveRange(0, count);
+					}
+
+					if (_file.BaseStream.Length > SplitSize)
+					{
+						_file.Flush();
+						_file.Close();
+						_file.Dispose();
+						_file = null;
+
+						HasInit = false;
+						Init(archive: true);
+					}
 				}
 
-				_file.Flush();
-				_buffer.Clear();
-
-				if (_file.BaseStream.Length > SplitSize)
+				if (!(Community.IsConfigReady && Community.Runtime.Config.Logging.LogFileMode == 2))
 				{
-					Dispose();
-					Init(archive: true);
+					return;
 				}
+
+				Thread.Yield();
 			}
-			finally
-			{
-				Facepunch.Pool.FreeUnmanaged(ref buffer);
-			}
+		}
+		finally
+		{
+			Interlocked.Exchange(ref _isFlushing, 0);
 		}
 	}
 
@@ -175,15 +213,22 @@ public class FileLogger : IDisposable
 			return;
 		}
 
+		var shouldFlush = false;
+
 		lock (_sync)
 		{
 			_buffer.Add($"[{Logger.GetDate()}] {message}");
 
-			// If logging allowes immediate flushing, flush
+			// If logging allows immediate flushing, flush
 			if (Community.IsConfigReady && Community.Runtime.Config.Logging.LogFileMode == 2)
 			{
-				Flush();
+				shouldFlush = true;
 			}
+		}
+
+		if (shouldFlush)
+		{
+			Flush();
 		}
 	}
 }
