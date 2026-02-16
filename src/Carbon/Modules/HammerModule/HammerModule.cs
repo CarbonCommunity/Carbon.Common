@@ -237,7 +237,9 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		{
 			distance *= UIDistanceFlyMultiplier;
 		}
-		if (!(player.IsInCreativeMode || editor.bypassCreativeMode) || player.GetActiveItem() is not Item item || !(item.info.itemid is 200773292 /* Hammer */ or 1803831286 /* Gmod Tool Gun */) || !Physics.Raycast(player.eyes.HeadRay(), out var hit, distance, ~0, QueryTriggerInteraction.Ignore))
+		var item = player.GetActiveItem();
+		var holdsHammer = editor.bypassHammer || (item != null && item.info.itemid is 200773292 /* Hammer */ or 1803831286 /* Gmod Tool Gun */);
+		if (!(player.IsInCreativeMode || editor.bypassCreativeMode) || !holdsHammer || !Physics.Raycast(player.eyes.HeadRay(), out var hit, distance, ~0, QueryTriggerInteraction.Ignore))
 		{
 			return false;
 		}
@@ -546,7 +548,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 			lastCreativeModePlayers.Remove(player.userID);
 		}
 
-		if (state.WasJustPressed(BUTTON.FIRE_SECONDARY))
+		if (state.WasJustPressed(BUTTON.FIRE_SECONDARY) && player.Connection.authLevel >= MinimumAuthLevel)
 		{
 			var editor = DataInstance.GetOrCreateEditor(player.userID);
 			if (editor.isMovingEntity)
@@ -565,7 +567,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 
 	private object OnHammerHit(BasePlayer player, HitInfo info)
 	{
-		if (player.Connection.authLevel < 1)
+		if (player.Connection.authLevel < MinimumAuthLevel)
 		{
 			return null;
 		}
@@ -596,13 +598,13 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 
 	private void OnActiveItemChanged(BasePlayer player, Item oldItem)
 	{
-		if (oldItem == null || !player.IsValid() || !player.IsConnected || player.Connection.authLevel < 1)
+		if (!player.IsValid() || !player.IsConnected || player.Connection.authLevel < MinimumAuthLevel)
 		{
 			return;
 		}
-		if (oldItem.info.itemid is 200773292 /* Hammer */ or 1803831286 /* Gmod Tool Gun */)
+		var editor = DataInstance.GetOrCreateEditor(player.userID);
+		if (editor.bypassHammer || (oldItem != null && oldItem.info.itemid is 200773292 /* Hammer */ or 1803831286 /* Gmod Tool Gun */))
 		{
-			var editor = DataInstance.GetOrCreateEditor(player.userID);
 			editor.Reset();
 			ClearGUI(player);
 		}
@@ -610,7 +612,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 
 	private void OnPlayerSleep(BasePlayer player)
 	{
-		if (!player.IsValid() || !player.IsConnected || player.Connection.authLevel < 1)
+		if (!player.IsValid() || !player.IsConnected || player.Connection.authLevel < MinimumAuthLevel)
 		{
 			return;
 		}
@@ -621,13 +623,23 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 
 	private void OnPlayerDeath(BasePlayer player)
 	{
-		if (!player.IsConnected || player.Connection.authLevel < 1)
+		if (!player.IsConnected || player.Connection.authLevel < MinimumAuthLevel)
 		{
 			return;
 		}
 		var editor = DataInstance.GetOrCreateEditor(player.userID);
 		editor.Reset();
 		ClearGUI(player);
+	}
+
+	private void OnPlayerDisconnected(BasePlayer player)
+	{
+		if (!player.IsValid() || player.Connection.authLevel < MinimumAuthLevel)
+		{
+			return;
+		}
+		var editor = DataInstance.GetOrCreateEditor(player.userID);
+		editor.Reset();
 	}
 
 	private void OnCuiDraggableDrag(BasePlayer player, string name, Vector3 position, CommunityEntity.DraggablePositionSendType type)
@@ -697,7 +709,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 						Modal.Open(player, "Are you sure you wanna destroy that entity?", temp, (player, modal) =>
 						{
 							entity.Kill(BaseNetworkable.DestroyMode.Gib);
-					editor.showExtra = false;
+							editor.showExtra = false;
 							ClearGUI(player);
 						});
 					}
@@ -970,7 +982,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		entity.SendNetworkUpdateImmediate();
 	}
 
-	[ConsoleCommand("hammer", "Player-specific configuration editing for the Hammer UI and its behaviour"), AuthLevel(1)]
+	[ConsoleCommand("hammer", "Player-specific configuration editing for the Hammer UI and its behaviour")]
 	public void Hammer(ConsoleSystem.Arg arg)
 	{
 		var player = arg.Player();
@@ -979,7 +991,11 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 			arg.ReplyWith("Command must be called from a client");
 			return;
 		}
-
+		if (player.Connection.authLevel < MinimumAuthLevel)
+		{
+			arg.ReplyWith("Low auth level");
+			return;
+		}
 		var editor = DataInstance.GetOrCreateEditor(player.userID);
 		var setting = arg.GetString(0);
 		var hasChanges = true;
@@ -1001,6 +1017,16 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 				value = editor.waterLayer = arg.GetBool(1, editor.waterLayer);
 				break;
 			}
+			case "creativebypass":
+			{
+				value = editor.bypassCreativeMode = arg.GetBool(1, editor.bypassCreativeMode);
+				break;
+			}
+			case "hammerbypass":
+			{
+				value = editor.bypassHammer = arg.GetBool(1, editor.bypassHammer);
+				break;
+			}
 			case "bypassimmovableentitydestroyconfirmations":
 			{
 				value = editor.bypassImmovableEntityDestroyConfirmations = arg.GetBool(1, editor.bypassImmovableEntityDestroyConfirmations);
@@ -1013,6 +1039,8 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 					table.AddRow("uidistance", editor.uiDistance, "Minimum distance from the player to the entity to show the Hammer UI");
 					table.AddRow("movedistance", editor.moveDistance, "Distance the entity will float in front of the player if not connecting to a surface");
 					table.AddRow("waterlayer", editor.waterLayer, "Should the water layer of the ocean be considered?");
+					table.AddRow("creativebypass", editor.bypassCreativeMode, "Allow players to use the Hammer UI regardless if they're in creative mode or not");
+					table.AddRow("hammerbypass", editor.bypassHammer, "Allow players to use the Hammer UI regardless if they're holding a hammer item");
 					table.AddRow("bypassimmovableentitydestroyconfirmations", editor.waterLayer, "Should the confirmation popup happen when attempting to destroy an entity that can't be moved?");
 				}
 				arg.ReplyWith($"Invalid syntax!\n{table.Write(StringTable.FormatTypes.None)}");
@@ -1026,22 +1054,6 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 			arg.ReplyWith($"Hammer config - {setting}: {value}");
 			Save();
 		}
-	}
-
-	[ConsoleCommand("hammer.creativebypass", "Allow players to use the Hammer UI regardless if they're in creative mode or not"), AuthLevel(1)]
-	public void HammerCreativeBypass(ConsoleSystem.Arg arg)
-	{
-		var player = arg.Player();
-		if (player == null)
-		{
-			arg.ReplyWith("Command must be called from a client");
-			return;
-		}
-
-		var editor = DataInstance.GetOrCreateEditor(player.userID);
-		editor.bypassCreativeMode = arg.GetBool(0);
-		arg.ReplyWith($"bypassCreativeMode @ {player}: {editor.bypassCreativeMode}");
-		Save();
 	}
 
 	[CommandVar("hammer.uidistanceflymultiplier", "The multiplication value of the distance needed for an entity to be picked up by the Hammer UI when flying"), AuthLevel(1)]
@@ -1167,6 +1179,17 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		}
 	}
 
+	[CommandVar("hammer.minauthlevel", "Minimum auth level for certain Hammer UI checks"), AuthLevel(2)]
+	public int MinimumAuthLevel
+	{
+		get => ConfigInstance.MinimumAuthLevel;
+		set
+		{
+			ConfigInstance.MinimumAuthLevel = value.Clamp(0, 4);
+			Save();
+		}
+	}
+
 	public class HammerEditor
 	{
 		[JsonIgnore] public ulong playerId;
@@ -1177,6 +1200,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		public bool bypassCreativeMode;
 		public bool waterLayer = true;
 		public bool bypassImmovableEntityDestroyConfirmations = false;
+		public bool bypassHammer = false;
 		[JsonIgnore] public bool showExtra;
 		[JsonIgnore] public bool destructionMode;
 		[JsonIgnore] public bool isMovingEntity;
@@ -1199,6 +1223,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 			isMovingEntity = false;
 			isRepairingOrDestroyingBuilding = false;
 			destructionMode = false;
+			lastCreativeModePlayers.Remove(playerId);
 		}
 
 		public Vector2 GetCoordinates() => new(x, y);
@@ -1213,6 +1238,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 
 	public class HammerConfig
 	{
+		public int MinimumAuthLevel = 1;
 		public float UIRefreshRate = .1f;
 		public float UIDefaultDistance = 10f;
 		public float UIDistanceFlyMultiplier = 2.5f;
