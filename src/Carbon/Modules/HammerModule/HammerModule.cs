@@ -27,6 +27,8 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 	private static readonly Dictionary<string, ModalModule.Modal.Field> temp = new();
 	private static CuiDraggableComponent cachedDraggable = new();
 	private static HammerModule ins;
+	private static bool isSubscribedToOnPlayerInput;
+	private static bool forcefullySubscribeToOnPlayerInput;
 
 	private static readonly string[] blacklistedMovingPrefabs =
 	[
@@ -61,6 +63,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		base.OnEnabled(initialized);
 		timer?.Destroy();
 		timer = Community.Runtime.Core.timer.Every(UIRefreshRate, TickCheck);
+		ValidatePermanentPlayerInputHook();
 	}
 
 	public override void OnDisabled(bool initialized)
@@ -76,6 +79,42 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 			var player = BasePlayer.activePlayerList[i];
 			ClearGUI(player);
 		}
+	}
+
+	public override void Load()
+	{
+		base.Load();
+		ValidatePermanentPlayerInputHook();
+	}
+
+	public bool AnyPlayersInCreativeMode()
+	{
+		for(int i = 0; i < BasePlayer.activePlayerList.Count; i++)
+		{
+			var player = BasePlayer.activePlayerList[i];
+			if (!player.IsValid())
+			{
+				continue;
+			}
+			if (player.IsInCreativeMode)
+			{
+				return true;
+			}
+		}
+		return forcefullySubscribeToOnPlayerInput;
+	}
+
+	public void ValidatePermanentPlayerInputHook()
+	{
+		foreach(var hammer in DataInstance.Hammers)
+		{
+			if (hammer.Value.bypassHammer)
+			{
+				forcefullySubscribeToOnPlayerInput = true;
+				return;
+			}
+		}
+		forcefullySubscribeToOnPlayerInput = false;
 	}
 
 	public bool CanBeMoved(BasePlayer player, BaseEntity entity)
@@ -94,7 +133,9 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		{
 			case SimpleBuildingBlock:
 			case BuildingBlock:
+			{
 				return false;
+			}
 			case IOEntity ioEntity:
 			{
 				if(ioEntity.GetConnectedInputCount() > 0 || ioEntity.GetConnectedOutputCount() > 0)
@@ -127,6 +168,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		{
 			return true;
 		}
+
 		return entity switch
 		{
 			NPCVendingMachine => false,
@@ -146,6 +188,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 			Barricade => false,
 
 			Candle => true,
+			DroppedItemContainer => true,
 			CinematicEntity => true,
 			HotAirBalloon => true,
 			BaseHelicopter => true,
@@ -153,6 +196,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 			BaseBoat => true,
 			BaseCorpse => true,
 			BaseLadder => true,
+			RidableHorse => true,
 			TreeEntity => true,
 			Snowmobile or Bike or Minicopter or ScrapTransportHelicopter => true,
 			ModularCar or BasicCar => true,
@@ -187,6 +231,18 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 
 	public void TickCheck()
 	{
+		var anyInCreativeMode = AnyPlayersInCreativeMode();
+		if (anyInCreativeMode && !isSubscribedToOnPlayerInput)
+		{
+			Subscribe(nameof(OnPlayerInput));
+			isSubscribedToOnPlayerInput = true;
+		}
+		else if(!anyInCreativeMode && isSubscribedToOnPlayerInput)
+		{
+			Unsubscribe(nameof(OnPlayerInput));
+			isSubscribedToOnPlayerInput = false;
+		}
+
 		using var missingPlayers = Pool.Get<PooledList<HammerEditor>>();
 		foreach(var playerId in lastCreativeModePlayers)
 		{
@@ -863,6 +919,10 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		{
 			entity.SetFlag(BaseEntity.Flags.Protected, true);
 		}
+		if (entity is RidableHorse)
+		{
+			entity.SetFlag(BaseEntity.Flags.Reserved12, true);
+		}
 		ClearGUI(player);
 		RaycastHit hit = default;
 		entity?.SetParent(null, true);
@@ -953,6 +1013,10 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		{
 			entity.SetFlag(BaseEntity.Flags.Protected, false);
 		}
+		if(entity.IsValid() && entity is RidableHorse)
+		{
+			entity.SetFlag(BaseEntity.Flags.Reserved12, false);
+		}
 		if (entity.IsValid() && entity is not BaseCorpse && !entity.HasEntityInParents(player) && !player.HasEntityInParents(entity))
 		{
 			ReconstructEntity(entity);
@@ -1025,6 +1089,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 			case "hammerbypass":
 			{
 				value = editor.bypassHammer = arg.GetBool(1, editor.bypassHammer);
+				ValidatePermanentPlayerInputHook();
 				break;
 			}
 			case "bypassimmovableentitydestroyconfirmations":
