@@ -125,7 +125,7 @@ public sealed class StoredModifiers
 				Entities.Remove(deadIds[i]);
 			}
 
-			using (var file = File.OpenWrite(savePath))
+			using (var file = File.Create(savePath))
 			{
 				Serializer.Serialize(file, Entities);
 				Logger.Log($"Saved {Entities.Count:n0} {Entities.Count.Plural("ent", "ents")} with Carbon modifier data");
