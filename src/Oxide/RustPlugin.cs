@@ -1,4 +1,5 @@
-﻿using Logger = Carbon.Logger;
+﻿using Cysharp.Text;
+using Logger = Carbon.Logger;
 using Player = Oxide.Game.Rust.Libraries.Player;
 
 namespace Oxide.Plugins;
@@ -19,6 +20,11 @@ public class RustPlugin : Plugin
 
 	public Player Player { get { return rust.Player; } private set { } }
 	public Server Server { get { return rust.Server; } private set { } }
+
+	private string _cachedLogFolder;
+	private string _cachedDateStr;
+	private int _cachedDay;
+	private HashSet<string> _createdLogFolders;
 
 	public virtual void SetupMod(ModLoader.Package mod, string name, string author, VersionNumber version, string description)
 	{
@@ -57,6 +63,10 @@ public class RustPlugin : Plugin
 
 		timer?.Clear();
 		timer = null;
+
+		_createdLogFolders = null;
+		_cachedLogFolder = null;
+		_cachedDateStr = null;
 
 		if (persistence != null)
 		{
@@ -197,6 +207,12 @@ public class RustPlugin : Plugin
 
 		DateTime now = DateTime.Now;
 
+		if (_cachedDay != now.Day)
+		{
+			_cachedDay = now.Day;
+			_cachedDateStr = now.ToString("yyyy-MM-dd");
+		}
+
 		string logFolder, finalFileName;
 
 		if (plugin == null)
@@ -209,24 +225,29 @@ public class RustPlugin : Plugin
 				: Path.Combine(Defines.GetLogsFolder(), subFolder);
 
 			finalFileName = timeStamp
-				? string.Concat(fileOnly, "-", now.ToString("yyyy-MM-dd"), ".txt")
-				: string.Concat(fileOnly, ".txt");
+				? ZString.Concat(fileOnly, "-", _cachedDateStr, ".txt")
+				: ZString.Concat(fileOnly, ".txt");
 		}
 		else
 		{
-			logFolder = Path.Combine(Defines.GetLogsFolder(), plugin.Name);
-			finalFileName = (timeStamp
-				? string.Concat(plugin.Name, "_", filename, "-", now.ToString("yyyy-MM-dd"), ".txt")
-				: string.Concat(plugin.Name, "_", filename, ".txt")).ToLower();
+			logFolder = _cachedLogFolder ??= Path.Combine(Defines.GetLogsFolder(), plugin.Name);
+
+			finalFileName = timeStamp
+				? ZString.Concat(plugin.Name, "_", filename, "-", _cachedDateStr, ".txt").ToLower()
+				: ZString.Concat(plugin.Name, "_", filename, ".txt").ToLower();
 		}
 
-		OsEx.Folder.Create(logFolder);
+		_createdLogFolders ??= new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+		if (_createdLogFolders.Add(logFolder))
+		{
+			OsEx.Folder.Create(logFolder);
+		}
 
 		string fullPath = Path.Combine(logFolder, Utility.CleanPath(finalFileName));
 
 		string logEntry = timeStamp
-			? string.Concat("[", now.ToString("yyyy-MM-dd HH:mm:ss"), "] ", text, Environment.NewLine)
-			: string.Concat(text, Environment.NewLine);
+			? ZString.Concat("[", _cachedDateStr, " ", now.ToString("HH:mm:ss"), "] ", text, Environment.NewLine)
+			: ZString.Concat(text, Environment.NewLine);
 
 		OsEx.File.Append(fullPath, logEntry);
 	}
