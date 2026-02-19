@@ -63,7 +63,7 @@ public partial class CorePlugin
 	[AuthLevel(2)]
 	public float ExcavatorBeltSpeedMaxMultiplier = -1;
 
-	public List<string> OvenBlacklistCache = new();
+	public List<string> OvenBlacklistCache = [];
 
 	private string _ovenBlacklist = "furnace,bbq.static,furnace.large";
 
