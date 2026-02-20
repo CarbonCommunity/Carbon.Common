@@ -27,7 +27,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 	private static readonly Dictionary<string, ModalModule.Modal.Field> temp = new();
 	private static CuiDraggableComponent cachedDraggable = new();
 	private static HammerModule ins;
-	private static bool isSubscribedToOnPlayerInput;
+	private static bool isSubscribedToOnPlayerInput = true;
 	private static bool forcefullySubscribeToOnPlayerInput;
 
 	private static readonly string[] blacklistedMovingPrefabs =
