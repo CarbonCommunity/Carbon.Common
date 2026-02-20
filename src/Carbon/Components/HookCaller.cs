@@ -158,9 +158,11 @@ public static class HookCaller
 		var result = (object)null;
 		var conflicts = Facepunch.Pool.Get<List<Conflict>>();
 
-		for (int i = 0; i < Community.Runtime.ModuleProcessor.Modules.Count; i++)
+		var moduleList = Community.Runtime.ModuleProcessor.Modules;
+
+		for (int i = 0; i < moduleList.Count; i++)
 		{
-			var hookable = Community.Runtime.ModuleProcessor.Modules[i];
+			var hookable = moduleList[i];
 
 			try
 			{
