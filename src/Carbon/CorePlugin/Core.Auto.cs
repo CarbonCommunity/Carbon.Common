@@ -98,14 +98,6 @@ public partial class CorePlugin
 	[AuthLevel(2)]
 	public float OvenBlacklistSpeedMultiplier = -1;
 
-	[CarbonAutoModdedVar("oventemperaturemultiplier", "Oven Temperature (*)", help: "The burning temperature multiplier of ovens.")]
-	[AuthLevel(2)]
-	public float OvenTemperatureMultiplier = -1;
-
-	[CarbonAutoModdedVar("ovenblacklisttemperaturemultiplier", "Oven Blacklist Temperature Duration (*)", help: "The burning temperature multiplier of blacklisted ovens.")]
-	[AuthLevel(2)]
-	public float OvenBlacklistTemperatureMultiplier = -1;
-
 	[CarbonAutoVar("notechtreeunlock", "No TechTree Unlocks", help: "Players will no longer be able to progress on any tech trees.")]
 	[AuthLevel(2)]
 	public string NoTechTreeUnlock
