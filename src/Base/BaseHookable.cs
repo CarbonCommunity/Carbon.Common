@@ -13,7 +13,7 @@ public class BaseHookable : Integrations.ITestable
 	public List<PluginReferenceAttribute> PluginReferences;
 
 	public HookCachePool HookPool = new();
-	public List<uint> IgnoredHooks = new();
+	public HashSet<uint> IgnoredHooks = new();
 
 	public class HookCachePool : Dictionary<uint, CachedHookInstance>
 	{
