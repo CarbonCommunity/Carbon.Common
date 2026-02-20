@@ -7,15 +7,29 @@ public class FileLogger : IDisposable
 {
 	public string Name { get; set; } = "default";
 
+	private readonly object _sync = new();
+
 	/// <summary>
 	/// By default, each log file gets split when it reaches exactly 2.5MB in file size and sent in the archive folder.
 	/// </summary>
 	public int SplitSize { get; set; } = (int)(5f * 1000000f);
 
 	public bool HasInit { get; private set; }
+	private int _isFlushing;
 
-	internal List<string> _buffer = new();
-	internal StreamWriter _file;
+	private readonly List<string> _buffer = [];
+	private StreamWriter _file;
+
+	public int PendingCount
+	{
+		get
+		{
+			lock (_sync)
+			{
+				return _buffer.Count;
+			}
+		}
+	}
 
 	public FileLogger() { }
 	public FileLogger(string name)
@@ -30,63 +44,66 @@ public class FileLogger : IDisposable
 	/// <param name="backup">If true, it'll back up the existent log file.</param>
 	public virtual void Init(bool archive = false, bool backup = false)
 	{
-		if (HasInit && !archive)
+		lock (_sync)
 		{
-			return;
-		}
-
-		var path = Path.Combine(Defines.GetLogsFolder(), $"{Name}.log");
-		var archiveFolder = Path.Combine(Defines.GetLogsFolder(), "archive");
-		var backupFailed = false;
-		OsEx.Folder.Create(archiveFolder);
-
-		if (backup && OsEx.File.Exists(path))
-		{
-			try
+			if (HasInit && !archive)
 			{
-				var backupPath = Path.Combine(archiveFolder, $"{Name}.backup.{DateTime.Now:yyyy.MM.dd}.log");
-				var logContent = OsEx.File.ReadText(path);
+				return;
+			}
 
-				if (OsEx.File.Exists(backupPath))
+			var path = Path.Combine(Defines.GetLogsFolder(), $"{Name}.log");
+			var archiveFolder = Path.Combine(Defines.GetLogsFolder(), "archive");
+			var backupFailed = false;
+			OsEx.Folder.Create(archiveFolder);
+
+			if (backup && OsEx.File.Exists(path))
+			{
+				try
 				{
-					File.AppendAllText(backupPath, logContent);
+					var backupPath = Path.Combine(archiveFolder, $"{Name}.backup.{DateTime.Now:yyyy.MM.dd}.log");
+					var logContent = OsEx.File.ReadText(path);
+
+					if (OsEx.File.Exists(backupPath))
+					{
+						File.AppendAllText(backupPath, logContent);
+					}
+					else
+					{
+						OsEx.File.Create(backupPath, logContent);
+					}
 				}
-				else
+				catch (Exception ex)
 				{
-					OsEx.File.Create(backupPath, logContent);
+					backupFailed = true;
+					Debug.LogError($"Failed backing up the current log file. Most likely because it's in use. ({ex.Message})\n{ex.StackTrace}");
 				}
 			}
-			catch (Exception ex)
+
+			if (archive && !backupFailed)
 			{
-				backupFailed = true;
-				Debug.LogError($"Failed backing up the current log file. Most likely because it's in use. ({ex.Message})\n{ex.StackTrace}");
+				if (OsEx.File.Exists(path))
+				{
+					OsEx.File.Move(path, Path.Combine(archiveFolder, $"{Name}.{DateTime.Now:yyyy.MM.dd.HHmmss}.log"));
+				}
 			}
-		}
 
-		if (archive && !backupFailed)
-		{
-			if (OsEx.File.Exists(path))
+			if (!backupFailed)
 			{
-				OsEx.File.Move(path, Path.Combine(archiveFolder, $"{Name}.{DateTime.Now:yyyy.MM.dd.HHmmss}.log"));
+				try
+				{
+					File.Delete(path);
+				}
+				catch { }
 			}
-		}
-
-		if (!backupFailed)
-		{
-			try
+			else
 			{
-				File.Delete(path);
+				path = Path.Combine(Defines.GetLogsFolder(), $"{Name}_locked.log");
 			}
-			catch { }
-		}
-		else
-		{
-			path = Path.Combine(Defines.GetLogsFolder(), $"{Name}_locked.log");
-		}
 
-		HasInit = true;
+			HasInit = true;
 
-		_file = new StreamWriter(path, append: true);
+			_file = new StreamWriter(path, append: true);
+		}
 	}
 
 	/// <summary>
@@ -94,11 +111,30 @@ public class FileLogger : IDisposable
 	/// </summary>
 	public virtual void Dispose()
 	{
-		_file.Flush();
-		_file.Close();
-		_file.Dispose();
+		while (Interlocked.CompareExchange(ref _isFlushing, 1, 0) != 0)
+		{
+			Thread.Yield();
+		}
 
-		HasInit = false;
+		try
+		{
+			lock (_sync)
+			{
+				if (_file != null)
+				{
+					_file.Flush();
+					_file.Close();
+					_file.Dispose();
+					_file = null;
+				}
+
+				HasInit = false;
+			}
+		}
+		finally
+		{
+			Interlocked.Exchange(ref _isFlushing, 0);
+		}
 	}
 
 	/// <summary>
@@ -106,22 +142,62 @@ public class FileLogger : IDisposable
 	/// </summary>
 	public virtual void Flush()
 	{
-		var buffer = Facepunch.Pool.Get<List<string>>();
-		buffer.AddRange(_buffer);
-
-		foreach (var line in buffer)
+		if (Interlocked.CompareExchange(ref _isFlushing, 1, 0) != 0)
 		{
-			_file?.WriteLine(line);
+			return;
 		}
 
-		_file.Flush();
-		_buffer.Clear();
-		Facepunch.Pool.FreeUnmanaged(ref buffer);
-
-		if (_file.BaseStream.Length > SplitSize)
+		try
 		{
-			Dispose();
-			Init(archive: true);
+			while (true)
+			{
+				lock (_sync)
+				{
+					if (_file == null || _buffer.Count == 0)
+					{
+						return;
+					}
+
+					var count = _buffer.Count;
+					for (var i = 0; i < count; i++)
+					{
+						_file.WriteLine(_buffer[i]);
+					}
+
+					_file.Flush();
+
+					if (_buffer.Count == count)
+					{
+						_buffer.Clear();
+					}
+					else
+					{
+						_buffer.RemoveRange(0, count);
+					}
+
+					if (_file.BaseStream.Length > SplitSize)
+					{
+						_file.Flush();
+						_file.Close();
+						_file.Dispose();
+						_file = null;
+
+						HasInit = false;
+						Init(archive: true);
+					}
+				}
+
+				if (!(Community.IsConfigReady && Community.Runtime.Config.Logging.LogFileMode == 2))
+				{
+					return;
+				}
+
+				Thread.Yield();
+			}
+		}
+		finally
+		{
+			Interlocked.Exchange(ref _isFlushing, 0);
 		}
 	}
 
@@ -130,17 +206,27 @@ public class FileLogger : IDisposable
 	/// </summary>
 	/// <param name="message"></param>
 	public virtual void QueueLog(object message)
-	{ 
-		/// Logging is disabled
+	{
+		// Logging is disabled
 		if (Community.IsConfigReady && Community.Runtime.Config.Logging.LogFileMode == 0)
 		{
 			return;
 		}
 
-		_buffer.Add($"[{Logger.GetDate()}] {message}");
+		var shouldFlush = false;
 
-		/// If logging allowes immediate flushing, flush
-		if (Community.IsConfigReady && Community.Runtime.Config.Logging.LogFileMode == 2)
+		lock (_sync)
+		{
+			_buffer.Add($"[{Logger.GetDate()}] {message}");
+
+			// If logging allows immediate flushing, flush
+			if (Community.IsConfigReady && Community.Runtime.Config.Logging.LogFileMode == 2)
+			{
+				shouldFlush = true;
+			}
+		}
+
+		if (shouldFlush)
 		{
 			Flush();
 		}

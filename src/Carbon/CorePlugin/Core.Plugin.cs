@@ -148,7 +148,7 @@ public partial class CorePlugin : CarbonPlugin
 
 		timer.Every(5f, () =>
 		{
-			if (Community.Runtime == null || Logger.CoreLog == null || !Logger.CoreLog.HasInit || Logger.CoreLog._buffer.Count == 0 || Community.Runtime.Config.Logging.LogFileMode != 1)
+			if (Community.Runtime == null || Logger.CoreLog == null || !Logger.CoreLog.HasInit || Logger.CoreLog.PendingCount == 0 || Community.Runtime.Config.Logging.LogFileMode != 1)
 			{
 				return;
 			}
