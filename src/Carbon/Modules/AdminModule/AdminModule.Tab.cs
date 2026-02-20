@@ -232,11 +232,9 @@ public partial class AdminModule
 		}
 		public Tab AddWidget(int column, int height, Action<PlayerSession, CUI, CuiElementContainer, string> callback)
 		{
-			var space = Pool.Get<OptionSpace>();
-
 			for (int i = 0; i < height; i++)
 			{
-				AddRow(column, space);
+				AddRow(column, Pool.Get<OptionSpace>());
 			}
 
 			var option = Pool.Get<OptionWidget>();
@@ -248,12 +246,11 @@ public partial class AdminModule
 		}
 		public Tab AddChart(int column, string name, TextAnchor nameAlign, int nameSize, IEnumerable<Components.Graphics.Chart.Layer> layers, IEnumerable<string> verticalLabels, IEnumerable<string> horizontalLabels, Components.Graphics.Chart.ChartSettings settings, bool responsive = true)
 		{
-			var space = Pool.Get<OptionSpace>();
 			var chartIndex = Columns[column].Count;
 
 			for (int i = 0; i < 8; i++)
 			{
-				AddRow(column, space);
+				AddRow(column, Pool.Get<OptionSpace>());
 			}
 
 			if (!responsive)
@@ -262,7 +259,7 @@ public partial class AdminModule
 				{
 					for (int z = 0; z < 9; z++)
 					{
-						InsertRow(i, chartIndex, space);
+						InsertRow(i, chartIndex, Pool.Get<OptionSpace>());
 					}
 				}
 			}
