@@ -156,7 +156,7 @@ public static class HookCaller
 		}
 
 		var result = (object)null;
-		var conflicts = Facepunch.Pool.Get<List<Conflict>>();
+		List<Conflict> conflicts = null;
 
 		for (int i = 0; i < Community.Runtime.ModuleProcessor.Modules.Count; i++)
 		{
@@ -170,6 +170,7 @@ public static class HookCaller
 
 				if (methodResult == null) continue;
 
+				conflicts ??= Facepunch.Pool.Get<List<Conflict>>();
 				result = methodResult;
 				ResultOverride(conflicts, hookable, hookId, result);
 			}
@@ -198,6 +199,7 @@ public static class HookCaller
 						continue;
 					}
 
+					conflicts ??= Facepunch.Pool.Get<List<Conflict>>();
 					result = methodResult;
 					ResultOverride(conflicts, plugin, hookId, result);
 				}
@@ -212,7 +214,7 @@ public static class HookCaller
 
 		ConflictCheck(conflicts, ref result, hookId);
 
-		Facepunch.Pool.FreeUnmanaged(ref conflicts);
+		if (conflicts != null) Facepunch.Pool.FreeUnmanaged(ref conflicts);
 
 		return result;
 	}
