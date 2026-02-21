@@ -6,6 +6,22 @@ namespace Oxide.Plugins;
 
 public class RustPlugin : Plugin
 {
+	private sealed class OnlinePlayerFieldTracker
+	{
+		public FieldInfo Field;
+		public Type ValueType;
+		public ConstructorInfo ValueConstructor;
+		public FieldInfo PlayerField;
+		public MethodInfo AddMethod;
+		public MethodInfo RemoveMethod;
+	}
+
+	private static readonly object OnlinePlayerTrackingLock = new();
+	private static readonly HashSet<RustPlugin> OnlinePlayerTrackingPlugins = [];
+
+	private readonly List<OnlinePlayerFieldTracker> _onlinePlayerFields = [];
+	private bool _onlinePlayerTrackingInitialized;
+
 	public bool IsPrecompiled { get; set; }
 	public bool IsExtension { get; set; }
 
@@ -26,10 +42,277 @@ public class RustPlugin : Plugin
 	private int _cachedDay;
 	private HashSet<string> _createdLogFolders;
 
+	public override bool IInit()
+	{
+		InitializeOnlinePlayerTracking();
+		return base.IInit();
+	}
+
+	public override void IUnload()
+	{
+		DisableOnlinePlayerTracking();
+		base.IUnload();
+	}
+
 	public virtual void SetupMod(ModLoader.Package mod, string name, string author, VersionNumber version, string description)
 	{
 		Package = mod;
 		Setup(name, author, version, description);
+	}
+
+	private void InitializeOnlinePlayerTracking()
+	{
+		if (_onlinePlayerTrackingInitialized)
+		{
+			return;
+		}
+
+		_onlinePlayerTrackingInitialized = true;
+		_onlinePlayerFields.Clear();
+
+		foreach (var field in GetType().GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public))
+		{
+			if (field.GetCustomAttribute<OnlinePlayersAttribute>() == null)
+			{
+				continue;
+			}
+
+			if (!TryCreateOnlinePlayerFieldTracker(field, out var tracker, out var reason))
+			{
+				Puts($"The {field.Name} field {reason} (online players will not be tracked)");
+				continue;
+			}
+
+			_onlinePlayerFields.Add(tracker);
+		}
+
+		if (_onlinePlayerFields.Count == 0)
+		{
+			return;
+		}
+
+		foreach (var player in BasePlayer.activePlayerList)
+		{
+			AddOnlinePlayer(player);
+		}
+
+		lock (OnlinePlayerTrackingLock)
+		{
+			OnlinePlayerTrackingPlugins.Add(this);
+		}
+	}
+
+	private void DisableOnlinePlayerTracking()
+	{
+		lock (OnlinePlayerTrackingLock)
+		{
+			OnlinePlayerTrackingPlugins.Remove(this);
+		}
+
+		_onlinePlayerFields.Clear();
+		_onlinePlayerTrackingInitialized = false;
+	}
+
+	private bool TryCreateOnlinePlayerFieldTracker(FieldInfo field, out OnlinePlayerFieldTracker tracker, out string reason)
+	{
+		tracker = null;
+
+		var genericArguments = field.FieldType.GetGenericArguments();
+		if (genericArguments.Length != 2 || genericArguments[0] != typeof(BasePlayer))
+		{
+			reason = "is not a Hash with a BasePlayer key";
+			return false;
+		}
+
+		var addMethod = field.FieldType.GetMethod("Add", [typeof(BasePlayer), genericArguments[1]]);
+		if (addMethod == null)
+		{
+			reason = "does not support adding BasePlayer keys";
+			return false;
+		}
+
+		var removeMethod = field.FieldType.GetMethod("Remove", [typeof(BasePlayer)]);
+		if (removeMethod == null)
+		{
+			reason = "does not support removing BasePlayer keys";
+			return false;
+		}
+
+		var playerField = genericArguments[1].GetField("Player", BindingFlags.Instance | BindingFlags.Public);
+		if (playerField == null || !playerField.FieldType.IsAssignableFrom(typeof(BasePlayer)))
+		{
+			reason = $"is using a class without a public Player field";
+			return false;
+		}
+
+		var valueConstructor = genericArguments[1].GetConstructor([typeof(BasePlayer)])
+			?? genericArguments[1].GetConstructor(Type.EmptyTypes);
+		if (valueConstructor == null)
+		{
+			reason = "is using a class which contains no valid constructor";
+			return false;
+		}
+
+		if (field.GetValue(this) == null && field.FieldType.GetConstructor(Type.EmptyTypes) == null)
+		{
+			reason = "is null and cannot be instantiated";
+			return false;
+		}
+
+		tracker = new OnlinePlayerFieldTracker
+		{
+			Field = field,
+			ValueType = genericArguments[1],
+			ValueConstructor = valueConstructor,
+			PlayerField = playerField,
+			AddMethod = addMethod,
+			RemoveMethod = removeMethod
+		};
+
+		reason = string.Empty;
+		return true;
+	}
+
+	private object GetOnlinePlayerFieldValue(OnlinePlayerFieldTracker field)
+	{
+		var value = field.Field.GetValue(this);
+		if (value != null)
+		{
+			return value;
+		}
+
+		var constructor = field.Field.FieldType.GetConstructor(Type.EmptyTypes);
+		if (constructor == null)
+		{
+			return null;
+		}
+
+		value = constructor.Invoke(null);
+		field.Field.SetValue(this, value);
+		return value;
+	}
+
+	private void AddOnlinePlayer(BasePlayer player)
+	{
+		if (player == null || _onlinePlayerFields.Count == 0)
+		{
+			return;
+		}
+
+		foreach (var trackedField in _onlinePlayerFields)
+		{
+			try
+			{
+				var fieldValue = GetOnlinePlayerFieldValue(trackedField);
+				if (fieldValue == null)
+				{
+					continue;
+				}
+
+				var onlinePlayer = trackedField.ValueConstructor.GetParameters().Length == 0
+					? Activator.CreateInstance(trackedField.ValueType)
+					: trackedField.ValueConstructor.Invoke([player]);
+
+				trackedField.PlayerField.SetValue(onlinePlayer, player);
+				trackedField.AddMethod.Invoke(fieldValue, [player, onlinePlayer]);
+			}
+			catch (Exception ex)
+			{
+				Logger.Error($"[{Title}] Failed tracking online player connect for field '{trackedField.Field.Name}'", ex);
+			}
+		}
+	}
+
+	private void RemoveOnlinePlayer(BasePlayer player)
+	{
+		if (player == null || _onlinePlayerFields.Count == 0)
+		{
+			return;
+		}
+
+		foreach (var trackedField in _onlinePlayerFields)
+		{
+			try
+			{
+				var fieldValue = trackedField.Field.GetValue(this);
+				if (fieldValue == null)
+				{
+					continue;
+				}
+
+				trackedField.RemoveMethod.Invoke(fieldValue, [player]);
+			}
+			catch (Exception ex)
+			{
+				Logger.Error($"[{Title}] Failed tracking online player disconnect for field '{trackedField.Field.Name}'", ex);
+			}
+		}
+	}
+
+	private static RustPlugin[] GetOnlinePlayerTrackingPlugins()
+	{
+		lock (OnlinePlayerTrackingLock)
+		{
+			return OnlinePlayerTrackingPlugins.Count == 0
+				? []
+				: [..OnlinePlayerTrackingPlugins];
+		}
+	}
+
+	internal static void HandleOnlinePlayerConnected(BasePlayer player)
+	{
+		if (player == null)
+		{
+			return;
+		}
+
+		foreach (var plugin in GetOnlinePlayerTrackingPlugins())
+		{
+			if (plugin == null || !plugin.IsLoaded)
+			{
+				continue;
+			}
+
+			plugin.AddOnlinePlayer(player);
+		}
+	}
+
+	internal static void HandleOnlinePlayerDisconnected(BasePlayer player)
+	{
+		if (player == null)
+		{
+			return;
+		}
+
+		var trackedPlugins = GetOnlinePlayerTrackingPlugins();
+		if (trackedPlugins.Length == 0)
+		{
+			return;
+		}
+
+		if (Community.Runtime?.Core != null)
+		{
+			Community.Runtime.Core.NextTick(RemoveFromTrackedPlugins);
+		}
+		else
+		{
+			RemoveFromTrackedPlugins();
+		}
+
+		return;
+
+		void RemoveFromTrackedPlugins()
+		{
+			foreach (var plugin in trackedPlugins)
+			{
+				if (plugin == null || !plugin.IsLoaded)
+				{
+					continue;
+				}
+
+				plugin.RemoveOnlinePlayer(player);
+			}
+		}
 	}
 
 	public virtual void Setup(string name, string author, VersionNumber version, string description)

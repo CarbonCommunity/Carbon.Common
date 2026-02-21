@@ -13,6 +13,7 @@ public partial class CorePlugin
 		player.SendEntitySnapshot(CommunityEntity.ServerInstance);
 
 		core.permission.RefreshUser(player);
+		HandleOnlinePlayerConnected(player);
 
 		// OnPlayerConnected
 		HookCaller.CallStaticHook(2848347654, player);
@@ -60,6 +61,8 @@ public partial class CorePlugin
 
 	private void OnPlayerDisconnected(BasePlayer player, string reason)
 	{
+		HandleOnlinePlayerDisconnected(player);
+
 		// OnUserDisconnected
 		HookCaller.CallStaticHook(649612044, player?.AsIPlayer(), reason);
 
