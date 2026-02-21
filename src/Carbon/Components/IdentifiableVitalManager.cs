@@ -59,6 +59,21 @@ public static class IdentifiableVitalManager
 		return identifiableVital;
 	}
 
+	public static VitalDictionary<SharedIdentifiableVital> GetSharedVitals() => sharedVitals;
+
+	public static VitalDictionary<PlayerIdentifiableVital> GetPlayerVitals(ulong playerId)
+	{
+		if (playerVitals.TryGetValue(playerId, out var vitals))
+		{
+			return vitals;
+		}
+		return null;
+	}
+
+	public static VitalDictionary<PlayerIdentifiableVital> GetPlayerVitals(BasePlayer player) => GetPlayerVitals(player.userID);
+
+	public static int GetTotalPlayerVitalCount(ulong playerId) => GetSharedVitals().Count + (GetPlayerVitals(playerId)?.Count ?? 0);
+
 	public static bool TryGetVital(uint id, out PlayerIdentifiableVital vital)
 	{
 		var values = playerVitals.Values;
