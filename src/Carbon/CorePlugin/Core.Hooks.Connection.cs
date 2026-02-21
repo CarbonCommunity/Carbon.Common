@@ -20,6 +20,8 @@ public partial class CorePlugin
 		// OnUserConnected
 		HookCaller.CallStaticHook(1253832323, player.AsIPlayer());
 
+		IdentifiableVitalManager.SendVitals(player);
+
 		return null;
 	}
 	internal static object IOnUserApprove(Connection connection)
