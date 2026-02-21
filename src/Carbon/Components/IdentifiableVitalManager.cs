@@ -5,8 +5,8 @@ namespace Carbon.Components;
 
 public static class IdentifiableVitalManager
 {
-	private static IdentifiableVitalDictionary sharedVitals = new();
-	private static Dictionary<ulong, IdentifiableVitalDictionary> playerVitals = [];
+	private static VitalDictionary<SharedIdentifiableVital> sharedVitals = new();
+	private static ListDictionary<ulong, VitalDictionary<PlayerIdentifiableVital>> playerVitals = [];
 
 	public static CustomVitalInfo RentVitalInfo(
 		string icon = null, Color iconColor = default,
@@ -35,9 +35,10 @@ public static class IdentifiableVitalManager
 	{
 		if (!playerVitals.TryGetValue(player.userID, out var vitals))
 		{
-			playerVitals[player.userID] = vitals = new();
+			playerVitals.Add(player.userID, vitals = new VitalDictionary<PlayerIdentifiableVital>());
 		}
 		var identifiableVital = vitals.AddVital(vital);
+		identifiableVital.player = player;
 		if (sendUpdate)
 		{
 			SendVitals(player);
@@ -57,6 +58,22 @@ public static class IdentifiableVitalManager
 		}
 		return identifiableVital;
 	}
+
+	public static bool TryGetVital(uint id, out PlayerIdentifiableVital vital)
+	{
+		var values = playerVitals.Values;
+		for (int i = 0; i < playerVitals.Count; i++)
+		{
+			if (values[i].TryGetVital(id, out vital))
+			{
+				return true;
+			}
+		}
+		vital = null;
+		return false;
+	}
+
+	public static bool TryGetSharedVital(uint id, out SharedIdentifiableVital vital) => sharedVitals.TryGetVital(id, out vital);
 
 	public static bool RemoveVital(BasePlayer player, IdentifiableVital vital, bool sendUpdate = true) => RemoveVital(player, vital.id, sendUpdate);
 
@@ -116,6 +133,10 @@ public static class IdentifiableVitalManager
 
 	public static void SendVitals(BasePlayer player)
 	{
+		if (!player.IsValid())
+		{
+			return;
+		}
 		var vitals = Pool.Get<CustomVitals>();
 		vitals.vitals = Pool.Get<List<CustomVitalInfo>>();
 		if (playerVitals.TryGetValue(player.userID, out var pv))
@@ -136,9 +157,9 @@ public static class IdentifiableVitalManager
 		}
 	}
 
-	public class IdentifiableVitalDictionary
+	public class VitalDictionary<T> where T : IdentifiableVital, new()
 	{
-		private ListDictionary<uint, IdentifiableVital> buffer = [];
+		private ListDictionary<uint, T> buffer = [];
 
 		public static uint nextVitalId = 100;
 
@@ -146,7 +167,7 @@ public static class IdentifiableVitalManager
 
 		public bool HasAny() => Count > 0;
 
-		public void GetVitals(List<IdentifiableVital> vitals)
+		public void GetVitals(List<T> vitals)
 		{
 			for (int i = 0; i < buffer.Count; i++)
 			{
@@ -160,30 +181,30 @@ public static class IdentifiableVitalManager
 			for (int i = 0; i < Count; i++)
 			{
 				var identifiableVital = values[i];
-				if (identifiableVital.info.timeLeft > 0)
-				{
-					var newTimeLeft = Mathf.Max(identifiableVital.totalTimeLeft - (int)identifiableVital.sinceTimeLeftStart, 0);
-					if (newTimeLeft != 0)
-					{
-						identifiableVital.info.timeLeft = newTimeLeft;
-					}
-				}
+				identifiableVital.info.timeLeft = Mathf.Max(identifiableVital.totalTimeLeft - (int)identifiableVital.sinceTimeLeftStarted, 0);
 				vitals.vitals.Add(identifiableVital.info);
 			}
 		}
 
-		public IdentifiableVital AddVital(CustomVitalInfo vital)
+		public T AddVital(CustomVitalInfo vital)
 		{
-			IdentifiableVital identifiableVital = default;
+			T identifiableVital = Pool.Get<T>();
 			identifiableVital.id = ++nextVitalId;
 			identifiableVital.info = vital;
-			identifiableVital.totalTimeLeft = vital.timeLeft;
-			identifiableVital.sinceTimeLeftStart = 0;
+			identifiableVital.SetTimeLeft(vital.timeLeft);
 			buffer.Add(identifiableVital.id, identifiableVital);
 			return identifiableVital;
 		}
 
-		public bool RemoveVital(IdentifiableVital vital) => RemoveVital(vital.id);
+		public bool RemoveVital(T vital)
+		{
+			if (!buffer.Remove(vital.id))
+			{
+				return false;
+			}
+			Pool.Free(ref vital);
+			return true;
+		}
 
 		public bool RemoveVital(uint id)
 		{
@@ -191,9 +212,13 @@ public static class IdentifiableVitalManager
 			{
 				return false;
 			}
-			var value = vital.info;
-			Pool.Free(ref value);
+			Pool.Free(ref vital);
 			return buffer.Remove(id);
+		}
+
+		public bool TryGetVital(uint id, out T vital)
+		{
+			return buffer.TryGetValue(id, out vital);
 		}
 
 		public void ClearVitals()
@@ -207,16 +232,59 @@ public static class IdentifiableVitalManager
 		}
 	}
 
-	public struct IdentifiableVital
+	public abstract class IdentifiableVital : Pool.IPooled
 	{
 		public uint id;
 		public CustomVitalInfo info;
-		public TimeSince sinceTimeLeftStart;
+		public TimeSince sinceTimeLeftStarted;
 		public int totalTimeLeft;
 
-		public void MarkDirty()
+		public virtual void SetTimeLeft(int timeLeft)
+		{
+			info.timeLeft = timeLeft;
+			totalTimeLeft = info.timeLeft;
+			sinceTimeLeftStarted = 0;
+		}
+
+		public abstract void SendUpdate();
+
+		public virtual void EnterPool()
+		{
+			id = 0;
+			totalTimeLeft = 0;
+			if (info != null)
+			{
+				Pool.Free(ref info);
+			}
+		}
+
+		public virtual void LeavePool()
+		{
+			sinceTimeLeftStarted = 0;
+		}
+	}
+
+	public class SharedIdentifiableVital : IdentifiableVital
+	{
+		public override void SendUpdate()
 		{
 			SendVitalsToEveryone();
+		}
+	}
+
+	public class PlayerIdentifiableVital : IdentifiableVital
+	{
+		public BasePlayer player;
+
+		public override void SendUpdate()
+		{
+			SendVitals(player);
+		}
+
+		public override void EnterPool()
+		{
+			base.EnterPool();
+			player = null;
 		}
 	}
 }
