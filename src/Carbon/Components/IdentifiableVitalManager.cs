@@ -38,7 +38,7 @@ public static class IdentifiableVitalManager
 			playerVitals.Add(player.userID, vitals = new VitalDictionary<PlayerIdentifiableVital>());
 		}
 		var identifiableVital = vitals.AddVital(vital);
-		identifiableVital.player = player;
+		identifiableVital.playerId = player.userID;
 		if (sendUpdate)
 		{
 			SendVitals(player);
@@ -274,16 +274,28 @@ public static class IdentifiableVitalManager
 
 	public class PlayerIdentifiableVital : IdentifiableVital
 	{
-		public BasePlayer player;
+		public ulong playerId;
+
+		private BasePlayer player;
+
+		public BasePlayer GetPlayer()
+		{
+			if (!player.IsValid())
+			{
+				player = BasePlayer.FindByID(playerId);
+			}
+			return player;
+		}
 
 		public override void SendUpdate()
 		{
-			SendVitals(player);
+			SendVitals(GetPlayer());
 		}
 
 		public override void EnterPool()
 		{
 			base.EnterPool();
+			playerId = 0;
 			player = null;
 		}
 	}
