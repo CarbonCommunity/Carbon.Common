@@ -27,7 +27,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 	private static readonly Dictionary<string, ModalModule.Modal.Field> temp = new();
 	private static CuiDraggableComponent cachedDraggable = new();
 	private static HammerModule ins;
-	private static bool isSubscribedToOnPlayerInput;
+	private static bool isSubscribedToOnPlayerInput = true;
 	private static bool forcefullySubscribeToOnPlayerInput;
 
 	private static readonly string[] blacklistedMovingPrefabs =
@@ -87,8 +87,12 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 		ValidatePermanentPlayerInputHook();
 	}
 
-	public bool AnyPlayersInCreativeMode()
+	public bool ShouldSubscribeToOnPlayerInput()
 	{
+		if (forcefullySubscribeToOnPlayerInput)
+		{
+			return true;
+		}
 		for(int i = 0; i < BasePlayer.activePlayerList.Count; i++)
 		{
 			var player = BasePlayer.activePlayerList[i];
@@ -101,14 +105,14 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 				return true;
 			}
 		}
-		return forcefullySubscribeToOnPlayerInput;
+		return false;
 	}
 
 	public void ValidatePermanentPlayerInputHook()
 	{
 		foreach(var hammer in DataInstance.Hammers)
 		{
-			if (hammer.Value.bypassHammer)
+			if (hammer.Value.bypassHammer || hammer.Value.bypassCreativeMode)
 			{
 				forcefullySubscribeToOnPlayerInput = true;
 				return;
@@ -231,56 +235,59 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 
 	public void TickCheck()
 	{
-		var anyInCreativeMode = AnyPlayersInCreativeMode();
-		if (anyInCreativeMode && !isSubscribedToOnPlayerInput)
+		using(TimeMeasure.New("Hammer.TickCheck", 100))
 		{
-			Subscribe(nameof(OnPlayerInput));
-			isSubscribedToOnPlayerInput = true;
-		}
-		else if(!anyInCreativeMode && isSubscribedToOnPlayerInput)
-		{
-			Unsubscribe(nameof(OnPlayerInput));
-			isSubscribedToOnPlayerInput = false;
-		}
-
-		using var missingPlayers = Pool.Get<PooledList<HammerEditor>>();
-		foreach(var playerId in lastCreativeModePlayers)
-		{
-			var editor = DataInstance.GetOrCreateEditor(playerId.Key);
-			if (!ShouldShowUI(editor, out _))
+			var shouldSubscribeToOPI = ShouldSubscribeToOnPlayerInput();
+			if (shouldSubscribeToOPI && !isSubscribedToOnPlayerInput)
 			{
-				missingPlayers.Add(editor);
+				Subscribe(nameof(OnPlayerInput));
+				isSubscribedToOnPlayerInput = true;
 			}
-		}
-
-		lastLastCreativeModePlayers.Clear();
-		foreach (var element in lastCreativeModePlayers)
-		{
-			lastLastCreativeModePlayers[element.Key] = element.Value;
-		}
-
-		lastCreativeModePlayers.Clear();
-		for (int i = 0; i < BasePlayer.activePlayerList.Count; i++)
-		{
-			var player = BasePlayer.activePlayerList[i];
-			var editor = DataInstance.GetOrCreateEditor(player.userID);
-			if (ShouldShowUI(editor, out var entity) && !editor.showExtra)
+			else if (!shouldSubscribeToOPI && isSubscribedToOnPlayerInput)
 			{
-				if (!lastLastCreativeModePlayers.TryGetValue(player.userID, out var lastEntity) || lastEntity != entity)
+				Unsubscribe(nameof(OnPlayerInput));
+				isSubscribedToOnPlayerInput = false;
+			}
+
+			using var missingPlayers = Pool.Get<PooledList<HammerEditor>>();
+			foreach (var playerId in lastCreativeModePlayers)
+			{
+				var editor = DataInstance.GetOrCreateEditor(playerId.Key);
+				if (!ShouldShowUI(editor, out _))
 				{
-					ApplyGUI(player, entity, false);
+					missingPlayers.Add(editor);
 				}
-				lastCreativeModePlayers[player.userID] = entity;
 			}
-		}
-		for (int i = 0; i < missingPlayers.Count; i++)
-		{
-			var editor = missingPlayers[i];
-			if (editor.showExtra)
+
+			lastLastCreativeModePlayers.Clear();
+			foreach (var element in lastCreativeModePlayers)
 			{
-				continue;
+				lastLastCreativeModePlayers[element.Key] = element.Value;
 			}
-			ClearGUI(editor.GetPlayer());
+
+			lastCreativeModePlayers.Clear();
+			for (int i = 0; i < BasePlayer.activePlayerList.Count; i++)
+			{
+				var player = BasePlayer.activePlayerList[i];
+				var editor = DataInstance.GetOrCreateEditor(player.userID);
+				if (ShouldShowUI(editor, out var entity) && !editor.showExtra)
+				{
+					if (!lastLastCreativeModePlayers.TryGetValue(player.userID, out var lastEntity) || lastEntity != entity)
+					{
+						ApplyGUI(player, entity, false);
+					}
+					lastCreativeModePlayers[player.userID] = entity;
+				}
+			}
+			for (int i = 0; i < missingPlayers.Count; i++)
+			{
+				var editor = missingPlayers[i];
+				if (editor.showExtra)
+				{
+					continue;
+				}
+				ClearGUI(editor.GetPlayer());
+			}
 		}
 	}
 
