@@ -31,13 +31,13 @@ public static class IdentifiableVitalManager
 	/// <summary>
 	/// Use RentVitalInfo to get a vital instance to add it to a player
 	/// </summary>
-	public static IdentifiableVital AddVital(BasePlayer player, CustomVitalInfo vital, bool sendUpdate = true)
+	public static PlayerIdentifiableVital AddVital(BasePlayer player, CustomVitalInfo vital, float expiry = 0, bool sendUpdate = true)
 	{
 		if (!playerVitals.TryGetValue(player.userID, out var vitals))
 		{
 			playerVitals.Add(player.userID, vitals = new VitalDictionary<PlayerIdentifiableVital>());
 		}
-		var identifiableVital = vitals.AddVital(vital);
+		var identifiableVital = vitals.AddVital(vital, expiry);
 		identifiableVital.playerId = player.userID;
 		if (sendUpdate)
 		{
@@ -49,9 +49,9 @@ public static class IdentifiableVitalManager
 	/// <summary>
 	/// Use RentVitalInfo to get a vital instance to add it for all connected players (shared vital)
 	/// </summary>
-	public static IdentifiableVital AddSharedVital(CustomVitalInfo vital, bool sendUpdate = true)
+	public static SharedIdentifiableVital AddSharedVital(CustomVitalInfo vital, float expiry = 0, bool sendUpdate = true)
 	{
-		var identifiableVital = sharedVitals.AddVital(vital);
+		var identifiableVital = sharedVitals.AddVital(vital, expiry);
 		if (sendUpdate)
 		{
 			SendVitalsToEveryone();
@@ -201,12 +201,14 @@ public static class IdentifiableVitalManager
 			}
 		}
 
-		public T AddVital(CustomVitalInfo vital)
+		public T AddVital(CustomVitalInfo vital, float expiry = 0)
 		{
 			T identifiableVital = Pool.Get<T>();
 			identifiableVital.id = ++nextVitalId;
 			identifiableVital.info = vital;
+			identifiableVital.expiry = expiry;
 			identifiableVital.SetTimeLeft(vital.timeLeft);
+			identifiableVital.RestartExpiry();
 			buffer.Add(identifiableVital.id, identifiableVital);
 			return identifiableVital;
 		}
@@ -253,6 +255,12 @@ public static class IdentifiableVitalManager
 		public CustomVitalInfo info;
 		public TimeSince sinceTimeLeftStarted;
 		public int totalTimeLeft;
+		public float expiry;
+
+		protected bool _isPooled;
+		protected Action _cachedExpiryAction;
+
+		public bool IsPooled() => _isPooled;
 
 		public virtual void SetTimeLeft(int timeLeft)
 		{
@@ -263,26 +271,58 @@ public static class IdentifiableVitalManager
 
 		public abstract void SendUpdate();
 
+		public abstract void RemoveSelf();
+
+		public void RestartExpiry()
+		{
+			_cachedExpiryAction ??= RemoveSelf;
+
+			if (ServerMgr.Instance.IsInvoking(_cachedExpiryAction))
+			{
+				ServerMgr.Instance.CancelInvoke(_cachedExpiryAction);
+			}
+			if (expiry > 0)
+			{
+				ServerMgr.Instance.Invoke(_cachedExpiryAction, expiry);
+			}
+		}
+
 		public virtual void EnterPool()
 		{
 			id = 0;
 			totalTimeLeft = 0;
+			expiry = 0;
 			if (info != null)
 			{
 				Pool.Free(ref info);
 			}
+			_isPooled = true;
 		}
 
 		public virtual void LeavePool()
 		{
 			sinceTimeLeftStarted = 0;
+			_isPooled = false;
 		}
 	}
 
 	public class SharedIdentifiableVital : IdentifiableVital
 	{
+		public override void RemoveSelf()
+		{
+			if (_isPooled)
+			{
+				return;
+			}
+			RemoveSharedVital(id);
+		}
+
 		public override void SendUpdate()
 		{
+			if (_isPooled)
+			{
+				return;
+			}
 			SendVitalsToEveryone();
 		}
 	}
@@ -302,8 +342,21 @@ public static class IdentifiableVitalManager
 			return player;
 		}
 
+		public override void RemoveSelf()
+		{
+			if (_isPooled || GetPlayer() is not BasePlayer player || !player.IsValid())
+			{
+				return;
+			}
+			RemoveVital(player, id);
+		}
+
 		public override void SendUpdate()
 		{
+			if (_isPooled)
+			{
+				return;
+			}
 			SendVitals(GetPlayer());
 		}
 
