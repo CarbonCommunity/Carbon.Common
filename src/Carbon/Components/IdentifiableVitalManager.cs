@@ -61,7 +61,7 @@ public static class IdentifiableVitalManager
 		return identifiableVital as T;
 	}
 
-	public static SharedIdentifiableVital AddSharedVital(BasePlayer player, CustomVitalInfo vital, float expiry = 0, bool sendUpdate = true) => AddSharedVital<SharedIdentifiableVital>(vital, expiry, sendUpdate);
+	public static SharedIdentifiableVital AddSharedVital(CustomVitalInfo vital, float expiry = 0, bool sendUpdate = true) => AddSharedVital<SharedIdentifiableVital>(vital, expiry, sendUpdate);
 
 	public static VitalDictionary<SharedIdentifiableVital> GetSharedVitals() => sharedVitals;
 
