@@ -31,7 +31,7 @@ public static class IdentifiableVitalManager
 	/// <summary>
 	/// Use RentVitalInfo to get a vital instance to add it to a player
 	/// </summary>
-	public static PlayerIdentifiableVital AddVital(BasePlayer player, CustomVitalInfo vital, float expiry = 0, bool sendUpdate = true)
+	public static T AddVital<T>(BasePlayer player, CustomVitalInfo vital, float expiry = 0, bool sendUpdate = true) where T : PlayerIdentifiableVital
 	{
 		if (!playerVitals.TryGetValue(player.userID, out var vitals))
 		{
@@ -43,20 +43,20 @@ public static class IdentifiableVitalManager
 		{
 			SendVitals(player);
 		}
-		return identifiableVital;
+		return identifiableVital as T;
 	}
 
 	/// <summary>
 	/// Use RentVitalInfo to get a vital instance to add it for all connected players (shared vital)
 	/// </summary>
-	public static SharedIdentifiableVital AddSharedVital(CustomVitalInfo vital, float expiry = 0, bool sendUpdate = true)
+	public static T AddSharedVital<T>(CustomVitalInfo vital, float expiry = 0, bool sendUpdate = true) where T : SharedIdentifiableVital
 	{
 		var identifiableVital = sharedVitals.AddVital(vital, expiry);
 		if (sendUpdate)
 		{
 			SendVitalsToEveryone();
 		}
-		return identifiableVital;
+		return identifiableVital as T;
 	}
 
 	public static VitalDictionary<SharedIdentifiableVital> GetSharedVitals() => sharedVitals;
@@ -74,13 +74,14 @@ public static class IdentifiableVitalManager
 
 	public static int GetTotalPlayerVitalCount(ulong playerId) => GetSharedVitals().Count + (GetPlayerVitals(playerId)?.Count ?? 0);
 
-	public static bool TryGetVital(uint id, out PlayerIdentifiableVital vital)
+	public static bool TryGetVital<T>(uint id, out T vital) where T : PlayerIdentifiableVital
 	{
 		var values = playerVitals.Values;
 		for (int i = 0; i < playerVitals.Count; i++)
 		{
-			if (values[i].TryGetVital(id, out vital))
+			if (values[i].TryGetVital(id, out var playerVital))
 			{
+				vital = playerVital as T;
 				return true;
 			}
 		}
@@ -88,7 +89,16 @@ public static class IdentifiableVitalManager
 		return false;
 	}
 
-	public static bool TryGetSharedVital(uint id, out SharedIdentifiableVital vital) => sharedVitals.TryGetVital(id, out vital);
+	public static bool TryGetSharedVital<T>(uint id, out T vital) where T : SharedIdentifiableVital
+	{
+		if(sharedVitals.TryGetVital(id, out var sharedVital))
+		{
+			vital = sharedVital as T;
+			return true;
+		}
+		vital = null;
+		return false;
+	}
 
 	public static bool RemoveVital(BasePlayer player, IdentifiableVital vital, bool sendUpdate = true) => RemoveVital(player, vital.id, sendUpdate);
 
