@@ -20,7 +20,7 @@ public partial class CorePlugin
 		// OnUserConnected
 		HookCaller.CallStaticHook(1253832323, player.AsIPlayer());
 
-		IdentifiableVitalManager.SendVitals(player);
+		CustomVitalManager.SendVitals(player);
 
 		return null;
 	}

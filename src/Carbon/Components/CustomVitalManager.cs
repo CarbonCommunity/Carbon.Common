@@ -3,7 +3,7 @@ using ProtoBuf;
 
 namespace Carbon.Components;
 
-public static class IdentifiableVitalManager
+public static class CustomVitalManager
 {
 	private static VitalDictionary<SharedIdentifiableVital> sharedVitals = new();
 	private static ListDictionary<ulong, VitalDictionary<PlayerIdentifiableVital>> playerVitals = [];
@@ -93,7 +93,26 @@ public static class IdentifiableVitalManager
 		return false;
 	}
 
+	public static bool TryGetVital<T>(ulong playerId, uint id, out T vital) where T : PlayerIdentifiableVital
+	{
+		if (!playerVitals.TryGetValue(playerId, out var dictionary))
+		{
+			vital = null;
+			return false;
+		}
+
+		if (dictionary.TryGetVital(id, out var playerVital))
+		{
+			vital = playerVital as T;
+			return true;
+		}
+		vital = null;
+		return false;
+	}
+
 	public static bool TryGetVital(uint id, out PlayerIdentifiableVital vital) => TryGetVital<PlayerIdentifiableVital>(id, out vital);
+
+	public static bool TryGetVital(ulong playerId, uint id, out PlayerIdentifiableVital vital) => TryGetVital<PlayerIdentifiableVital>(playerId, id, out vital);
 
 	public static bool TryGetSharedVital<T>(uint id, out T vital) where T : SharedIdentifiableVital
 	{
