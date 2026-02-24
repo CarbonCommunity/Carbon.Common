@@ -46,6 +46,8 @@ public static class IdentifiableVitalManager
 		return identifiableVital as T;
 	}
 
+	public static PlayerIdentifiableVital AddVital(BasePlayer player, CustomVitalInfo vital, float expiry = 0, bool sendUpdate = true) => AddVital<PlayerIdentifiableVital>(player, vital, expiry, sendUpdate);
+
 	/// <summary>
 	/// Use RentVitalInfo to get a vital instance to add it for all connected players (shared vital)
 	/// </summary>
@@ -58,6 +60,8 @@ public static class IdentifiableVitalManager
 		}
 		return identifiableVital as T;
 	}
+
+	public static SharedIdentifiableVital AddSharedVital(BasePlayer player, CustomVitalInfo vital, float expiry = 0, bool sendUpdate = true) => AddSharedVital<SharedIdentifiableVital>(vital, expiry, sendUpdate);
 
 	public static VitalDictionary<SharedIdentifiableVital> GetSharedVitals() => sharedVitals;
 
