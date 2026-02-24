@@ -93,6 +93,8 @@ public static class IdentifiableVitalManager
 		return false;
 	}
 
+	public static bool TryGetVital(uint id, out PlayerIdentifiableVital vital) => TryGetVital<PlayerIdentifiableVital>(id, out vital);
+
 	public static bool TryGetSharedVital<T>(uint id, out T vital) where T : SharedIdentifiableVital
 	{
 		if(sharedVitals.TryGetVital(id, out var sharedVital))
@@ -103,6 +105,8 @@ public static class IdentifiableVitalManager
 		vital = null;
 		return false;
 	}
+
+	public static bool TryGetSharedVital(uint id, out SharedIdentifiableVital vital) => TryGetSharedVital<SharedIdentifiableVital>(id, out vital);
 
 	public static bool RemoveVital(BasePlayer player, IdentifiableVital vital, bool sendUpdate = true) => RemoveVital(player, vital.id, sendUpdate);
 
