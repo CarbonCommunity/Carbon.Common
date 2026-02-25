@@ -1104,10 +1104,20 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 				value = editor.bypassImmovableEntityDestroyConfirmations = arg.GetBool(1, editor.bypassImmovableEntityDestroyConfirmations);
 				break;
 			}
+			case "resetui":
+			{
+				editor.x = ConfigInstance.UIDefaultX;
+				editor.y = ConfigInstance.UIDefaultY;
+				editor.Reset();
+
+				value = "Hammer UI has been reset";
+				break;
+			}
 			default:
 			{
 				using var table = new StringTable("option", "value", "help");
 				{
+					table.AddRow("resetui", null, "Resets the position of the UI, in case it's stuck somehow, even though it shouldn't");
 					table.AddRow("uidistance", editor.uiDistance, "Minimum distance from the player to the entity to show the Hammer UI");
 					table.AddRow("movedistance", editor.moveDistance, "Distance the entity will float in front of the player if not connecting to a surface");
 					table.AddRow("waterlayer", editor.waterLayer, "Should the water layer of the ocean be considered?");
