@@ -206,6 +206,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 			BaseCorpse => true,
 			BaseLadder => true,
 			RidableHorse => true,
+			MiningQuarry => true,
 			TreeEntity => true,
 			Snowmobile or Bike or Minicopter or ScrapTransportHelicopter => true,
 			ModularCar or BasicCar => true,
