@@ -79,6 +79,11 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 			var player = BasePlayer.activePlayerList[i];
 			ClearGUI(player);
 		}
+		foreach (var hammer in DataInstance.Hammers)
+		{
+			var hammerVal = hammer.Value;
+			hammerVal.Reset();
+		}
 	}
 
 	public override void Load()
