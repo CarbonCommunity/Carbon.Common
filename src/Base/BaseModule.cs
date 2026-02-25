@@ -47,6 +47,8 @@ public class EmptyModuleData;
 
 public abstract class CarbonModule<C, D> : BaseModule, IModule
 {
+	private bool _isEnabledCached;
+
 	public Configuration ModuleConfiguration { get; set; }
 	public DynamicConfigFile Config { get; private set; }
 	public DynamicConfigFile Data { get; private set; }
@@ -68,6 +70,7 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 	{
 		Config = null;
 		ModuleConfiguration = null;
+		RefreshEnabledCache();
 	}
 
 	public virtual void Init()
@@ -182,6 +185,8 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 			ModuleConfiguration.Enabled = true;
 		}
 
+		RefreshEnabledCache();
+
 		if (typeof(D) != typeof(EmptyModuleData))
 		{
 			if (!Data.Exists())
@@ -231,6 +236,8 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 		{
 			ModuleConfiguration.Enabled = true;
 		}
+
+		RefreshEnabledCache();
 
 		Config.WriteObject(ModuleConfiguration);
 		if (DataInstance != null) Data?.WriteObject(DataInstance);
@@ -297,6 +304,7 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 		if (ModuleConfiguration != null)
 		{
 			ModuleConfiguration.Enabled = enable;
+			RefreshEnabledCache();
 			OnEnableStatus();
 		}
 
@@ -323,7 +331,12 @@ public abstract class CarbonModule<C, D> : BaseModule, IModule
 	}
 	public override bool IsEnabled()
 	{
-		return !ForceDisabled && ModuleConfiguration is { Enabled: true };
+		return _isEnabledCached;
+	}
+
+	private void RefreshEnabledCache()
+	{
+		_isEnabledCached = !ForceDisabled && ModuleConfiguration is { Enabled: true };
 	}
 
 	public virtual void OnDisabled(bool initialized)
