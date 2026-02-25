@@ -165,17 +165,24 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 			return true;
 		}
 
+		if (entity is BasePlayer targetPlayer && targetPlayer.IsSleeping())
+		{
+			return true;
+		}
+
+
 		for (int i = 0; i < blacklistedMovingPrefabs.Length; i++)
 		{
+			// Exceptions
+			if (entity is MiningQuarry)
+			{
+				continue;
+			}
+
 			if (entity.ShortPrefabName.Contains(blacklistedMovingPrefabs[i], StringComparison.CurrentCultureIgnoreCase))
 			{
 				return false;
 			}
-		}
-
-		if (entity is BasePlayer targetPlayer && targetPlayer.IsSleeping())
-		{
-			return true;
 		}
 
 		return entity switch
