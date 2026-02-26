@@ -79,6 +79,11 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 			var player = BasePlayer.activePlayerList[i];
 			ClearGUI(player);
 		}
+		foreach (var hammer in DataInstance.Hammers)
+		{
+			var hammerVal = hammer.Value;
+			hammerVal.Reset();
+		}
 	}
 
 	public override void Load()
@@ -160,17 +165,24 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 			return true;
 		}
 
+		if (entity is BasePlayer targetPlayer && targetPlayer.IsSleeping())
+		{
+			return true;
+		}
+
+
 		for (int i = 0; i < blacklistedMovingPrefabs.Length; i++)
 		{
+			// Exceptions
+			if (entity is MiningQuarry)
+			{
+				continue;
+			}
+
 			if (entity.ShortPrefabName.Contains(blacklistedMovingPrefabs[i], StringComparison.CurrentCultureIgnoreCase))
 			{
 				return false;
 			}
-		}
-
-		if (entity is BasePlayer targetPlayer && targetPlayer.IsSleeping())
-		{
-			return true;
 		}
 
 		return entity switch
@@ -201,6 +213,7 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 			BaseCorpse => true,
 			BaseLadder => true,
 			RidableHorse => true,
+			MiningQuarry => true,
 			TreeEntity => true,
 			Snowmobile or Bike or Minicopter or ScrapTransportHelicopter => true,
 			ModularCar or BasicCar => true,
@@ -1104,10 +1117,20 @@ public partial class HammerModule : CarbonModule<HammerModule.HammerConfig, Hamm
 				value = editor.bypassImmovableEntityDestroyConfirmations = arg.GetBool(1, editor.bypassImmovableEntityDestroyConfirmations);
 				break;
 			}
+			case "resetui":
+			{
+				editor.x = ConfigInstance.UIDefaultX;
+				editor.y = ConfigInstance.UIDefaultY;
+				editor.Reset();
+
+				value = "Hammer UI has been reset";
+				break;
+			}
 			default:
 			{
 				using var table = new StringTable("option", "value", "help");
 				{
+					table.AddRow("resetui", null, "Resets the position of the UI, in case it's stuck somehow, even though it shouldn't");
 					table.AddRow("uidistance", editor.uiDistance, "Minimum distance from the player to the entity to show the Hammer UI");
 					table.AddRow("movedistance", editor.moveDistance, "Distance the entity will float in front of the player if not connecting to a surface");
 					table.AddRow("waterlayer", editor.waterLayer, "Should the water layer of the ocean be considered?");
