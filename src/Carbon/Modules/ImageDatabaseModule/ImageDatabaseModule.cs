@@ -472,11 +472,7 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 		if (array == null)
 			return;
 
-		CommunityEntity.ServerInstance.ClientRPCEx<uint, uint, byte[]>(new Network.SendInfo(player.net.connection)
-		{
-			channel = 2,
-			method = Network.SendMethod.Reliable
-		}, null, "CL_ReceiveFilePng", image, (uint)array.Length, array);
+		CommunityEntity.ServerInstance.ClientRPC(RpcTarget.Player("CL_ReceiveFilePng", player), image, (uint)array.Length, array);
 	}
 	public bool HasImage(string keyOrUrl)
 	{
