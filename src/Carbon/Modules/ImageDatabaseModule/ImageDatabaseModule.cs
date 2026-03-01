@@ -462,7 +462,7 @@ public partial class ImageDatabaseModule : CarbonModule<ImageDatabaseConfig, Emp
 	{
 		return GetImage(keyOrUrl).ToString();
 	}
-	public void SendItem(BasePlayer player, string name)
+	public void SendImage(BasePlayer player, string name)
 	{
 		var image = GetImage(name);
 		if (image == default) return;
