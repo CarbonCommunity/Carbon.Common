@@ -84,6 +84,8 @@ public class PermissionSql : Permission
 	public void MigrateToProto(Permission database)
 	{
 		Logger.Log($"Migrating database..");
+		database.groupdata = new Dictionary<string, GroupData>(database.groupdata, StringComparer.OrdinalIgnoreCase);
+		database.userdata = new Dictionary<string, UserData>(database.userdata, StringComparer.OrdinalIgnoreCase);
 		var totalPerms = 0;
 		foreach (var perm in permset)
 		{
@@ -95,13 +97,21 @@ public class PermissionSql : Permission
 		var groupdata = db.QueryAllGroups();
 		foreach (var group in groupdata)
 		{
+			if (!string.IsNullOrEmpty(group.data.ParentGroup))
+			{
+				group.data.ParentGroup = group.data.ParentGroup.ToLowerInvariant();
+			}
 			database.groupdata[group.groupName] = group.data;
 			Logger.Log($" Group {group.groupName} with {group.data.Perms.Count} perms");
 		}
-		var userdata = db.QueryUsers();
-		Logger.Log($" Migrating {userdata.Count():n0} users..");
+		var userdata = db.QueryUsers().ToList();
+		Logger.Log($" Migrating {userdata.Count:n0} users..");
 		foreach (var user in userdata)
 		{
+			if (user.data.Groups?.Count > 0)
+			{
+				user.data.Groups = new HashSet<string>(user.data.Groups.Select(g => g.ToLowerInvariant()), StringComparer.OrdinalIgnoreCase);
+			}
 			database.userdata[user.userId] = user.data;
 		}
 		Logger.Log($"Successfully migrated database!");
@@ -188,6 +198,44 @@ public class PermissionSql : Permission
 			{
 				name = name.ToLower();
 			}
+			if (!perm.IsLower())
+			{
+				perm = perm.ToLower();
+			}
+
+			if (perm.EndsWith(StarStr))
+			{
+				HashSet<string> source;
+				if (owner == null)
+				{
+					source = new HashSet<string>(permset.Values.SelectMany(v => v));
+				}
+				else if (!permset.TryGetValue(owner, out source))
+				{
+					return false;
+				}
+
+				if (perm.Equals(StarStr))
+				{
+					foreach (var s in source)
+					{
+						db?.Execute("INSERT OR IGNORE INTO groupsPerms ( groupName, permission ) VALUES ( ?, ? )", name, s);
+					}
+					return true;
+				}
+
+				perm = perm.TrimEnd(Star);
+				foreach (var s in source)
+				{
+					if (!s.StartsWith(perm))
+					{
+						continue;
+					}
+					db?.Execute("INSERT OR IGNORE INTO groupsPerms ( groupName, permission ) VALUES ( ?, ? )", name, s);
+				}
+				return true;
+			}
+
 			db?.Execute("INSERT OR IGNORE INTO groupsPerms ( groupName, permission ) VALUES ( ?, ? )", name, perm);
 			return true;
 		}
@@ -202,6 +250,23 @@ public class PermissionSql : Permission
 			{
 				name = name.ToLower();
 			}
+			if (!perm.IsLower())
+			{
+				perm = perm.ToLower();
+			}
+
+			if (perm.EndsWith(StarStr))
+			{
+				if (perm.Equals(StarStr))
+				{
+					db?.Execute("DELETE FROM groupsPerms WHERE groupName = ?", name);
+					return true;
+				}
+				perm = perm.TrimEnd(Star);
+				db?.Execute("DELETE FROM groupsPerms WHERE groupName = ? AND permission LIKE ?", name, perm + "%");
+				return true;
+			}
+
 			db?.Execute("DELETE FROM groupsPerms WHERE groupName = ? AND permission = ?", name, perm);
 			return true;
 		}
@@ -214,7 +279,7 @@ public class PermissionSql : Permission
 
 	public override UserData GetUserData(string id, bool addIfNotExisting = false)
 	{
-		if (!UserExists(id))
+		if (!base.UserExists(id))
 		{
 			(string userId, UserData data) = db.QueryUser(id);
 
@@ -232,9 +297,60 @@ public class PermissionSql : Permission
 		return base.GetUserData(id, addIfNotExisting);
 	}
 
+	public override bool UserExists(string id)
+	{
+		if (base.UserExists(id))
+		{
+			return true;
+		}
+
+		if (string.IsNullOrEmpty(id))
+		{
+			return false;
+		}
+
+		(string userId, UserData data) = db.QueryUser(id);
+		if (!string.IsNullOrEmpty(userId) && data != null)
+		{
+			userdata[userId] = data;
+			return true;
+		}
+
+		return false;
+	}
+
+	public override bool UserExists(string id, out UserData data)
+	{
+		if (userdata.TryGetValue(id, out data))
+		{
+			return true;
+		}
+
+		if (string.IsNullOrEmpty(id))
+		{
+			return false;
+		}
+
+		(string userId, UserData dbData) = db.QueryUser(id);
+		if (!string.IsNullOrEmpty(userId) && dbData != null)
+		{
+			userdata[userId] = dbData;
+			data = dbData;
+			return true;
+		}
+
+		return false;
+	}
+
 	public override void CommitUser(string userId, UserData data)
 	{
-		db?.Execute("INSERT OR REPLACE INTO users ( userId, lastSeenNickname, language ) VALUES ( ?, ?, ? )", userId, data.LastSeenNickname, data.Language);
+		if (db == null)
+		{
+			return;
+		}
+
+		db.Execute("INSERT OR IGNORE INTO users ( userId, lastSeenNickname, language ) VALUES ( ?, ?, ? )", userId, data.LastSeenNickname, data.Language);
+		db.Execute("UPDATE users SET lastSeenNickname = ?, language = ? WHERE userId = ?", data.LastSeenNickname, data.Language, userId);
 	}
 
 	public override bool GrantUserPermission(string id, string perm, BaseHookable owner)
@@ -354,6 +470,7 @@ public class PermissionSql : Permission
 				return false;
 			}
 
+			db?.Execute("DELETE FROM userPerms WHERE userId = ?", id);
 			userData.Perms.Clear();
 			return true;
 		}
@@ -399,7 +516,7 @@ public class PermissionSql : Permission
 
 		var userData = GetUserData(id);
 
-		if (name.Equals(Star))
+		if (name.Equals(StarStr))
 		{
 			if (userData.Groups.Count <= 0)
 			{

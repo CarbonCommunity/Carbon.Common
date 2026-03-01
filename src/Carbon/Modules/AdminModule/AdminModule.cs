@@ -47,7 +47,6 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 	const string PanelId = "carbonmodularui";
 	const string CursorPanelId = "carbonmodularuicur";
-	const string SpectatePanelId = "carbonmodularuispectate";
 	readonly string[] AdminPermissions =
 	[
 		"greet",
@@ -66,7 +65,6 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		"entities.loot_players",
 		"entities.respawn_players",
 		"entities.blind_players",
-		"entities.spectate_players",
 		"entities.owner_change",
 		"environment.use",
 		"modules.use",
@@ -97,7 +95,6 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 		[LogType.Warning] = "#dbbe2a",
 		[LogType.Error] = "#db2a2a"
 	};
-	internal static Dictionary<ulong, Vector3> _spectateStartPosition = new();
 
 	public bool HandleEnableNeedsKeyboard(PlayerSession ap)
 	{
@@ -2142,54 +2139,6 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 	#region Core Tabs
 
-	#region Administration - Custom Commands
-
-	[Conditional("!MINIMAL")]
-	[ProtectedCommand("carbongg.endspectate")]
-	private void EndSpectate(Arg arg)
-	{
-		StopSpectating(arg.Player());
-	}
-
-	[Conditional("!MINIMAL")]
-	[ProtectedCommand("carbongg.skipspectate")]
-	private void SkipSpectate(Arg arg)
-	{
-		var player = arg.Player();
-
-		if (!player.IsSpectating())
-		{
-			return;
-		}
-
-		var parent = player.GetParentEntity();
-
-		if (parent is not BasePlayer spectatedPlayer)
-		{
-			return;
-		}
-
-		var skip = arg.GetInt(0);
-		var players = BasePlayer.allPlayerList.Where(x => x != player);
-		var index = players.IndexOf(spectatedPlayer) + skip;
-
-		var lastIndex = players.Count() - 1;
-
-		if (index > lastIndex)
-		{
-			index = 0;
-		}
-		else if (index < 0)
-		{
-			index = lastIndex;
-		}
-
-		StopSpectating(player, false);
-		StartSpectating(player, players.FindAt(index));
-	}
-
-	#endregion
-
 	[Conditional("!MINIMAL")]
 	private void OnPluginLoaded(RustPlugin plugin)
 	{
@@ -2278,130 +2227,6 @@ public partial class AdminModule : CarbonModule<AdminConfig, AdminData>
 
 		// OnCarbonPrivateMessage
 		HookCaller.CallStaticHook(468227819, player, target, message);
-	}
-
-	public static void StartSpectating(BasePlayer player, BaseEntity target)
-	{
-		if (!string.IsNullOrEmpty(player.spectateFilter))
-		{
-			StopSpectating(player);
-		}
-
-		if (target == null)
-		{
-			return;
-		}
-
-		_spectateStartPosition[player.userID] = player.transform.position;
-
-		var targetPlayer = target as BasePlayer;
-		player.DisablePlayerCollider();
-		Rust.Ai.SimpleAIMemory.AddIgnorePlayer(player);
-		BaseEntity.Query.Server.RemovePlayer(player);
-		player.Teleport(target.transform.position);
-		player.SetPlayerFlag(BasePlayer.PlayerFlags.Spectating, b: true);
-		player.gameObject.SetLayerRecursive(10);
-		player.CancelInvoke(player.InventoryUpdate);
-		player.SendEntitySnapshot(target);
-		player.gameObject.Identity();
-		player.SetParent(target);
-		player.viewAngles = target.transform.rotation.eulerAngles;
-		player.eyes.NetworkUpdate(target.transform.rotation);
-		player.SendNetworkUpdate();
-		player.spectateFilter = targetPlayer != null ? targetPlayer.UserIDString : target.net.ID.ToString();
-		player.limitNetworking = true;
-		player.UpdateNetworkGroup();
-
-		// OnCarbonSpectateStart
-		HookCaller.CallStaticHook(597991647, player, targetPlayer);
-
-		using var cui = new CUI(Singleton.Handler);
-		var container = cui.CreateContainer(SpectatePanelId, color: Cache.CUI.BlankColor, needsCursor: targetPlayer != null && targetPlayer.IsSleeping(), parent: ClientPanels.Overlay, destroyUi: SpectatePanelId);
-		var panel = cui.CreatePanel(container, SpectatePanelId, Cache.CUI.BlankColor);
-
-		if (Singleton.ConfigInstance.SpectatingInfoOverlay)
-		{
-			var item = target.GetItem();
-			cui.CreateText(container, panel,
-				color: "1 1 1 0.2",
-				text: $"YOU'RE SPECTATING ".SpacedString(1, false) +
-				      $"<b>{(targetPlayer == null ? item != null ? item.info.displayName.english.ToUpper().SpacedString(1) : target.ShortPrefabName.ToUpper().SpacedString(1) : targetPlayer.displayName.ToUpper().SpacedString(1))}</b>",
-				15);
-		}
-
-		if (targetPlayer != null)
-		{
-			cui.CreateProtectedButton(container, panel,
-				color: "0.3 0.3 0.3 0.9", textColor: "0.7 0.7 0.7 1",
-				text: "<", 10,
-				xMin: 0.425f, xMax: 0.445f, yMin: 0.15f, yMax: 0.19f, command: "carbongg.skipspectate -1");
-
-			cui.CreateProtectedButton(container, panel,
-				color: "0.3 0.3 0.3 0.9", textColor: "0.7 0.7 0.7 1",
-				text: ">", 10,
-				xMin: 0.555f, xMax: 0.575f, yMin: 0.15f, yMax: 0.19f, command: "carbongg.skipspectate 1");
-		}
-
-		cui.CreateProtectedButton(container, panel,
-			color: "0.3 0.3 0.3 0.9", textColor: "0.7 0.7 0.7 1",
-			text: "END SPECTATE".SpacedString(1), 10,
-			xMin: 0.45f, xMax: 0.55f, yMin: 0.15f, yMax: 0.19f, command: "carbongg.endspectate");
-
-		cui.Send(container, player);
-
-		Community.Runtime.Core.NextTick(() => Singleton.Close(player));
-	}
-
-	public static void StopSpectating(BasePlayer player, bool clearUi = true)
-	{
-		if (clearUi)
-		{
-			using var cui = new CUI(Singleton.Handler);
-			cui.Destroy(SpectatePanelId, player);
-		}
-
-		if (!player.IsSpectating() || string.IsNullOrEmpty(player.spectateFilter))
-		{
-			return;
-		}
-
-		var spectated = player.GetParentEntity();
-		player.SetParent(null, true, true);
-		player.SetPlayerFlag(BasePlayer.PlayerFlags.Spectating, b: false);
-		player.InvokeRepeating(player.InventoryUpdate, 1f, 0.1f * UnityEngine.Random.Range(0.99f, 1.01f));
-		player.gameObject.SetLayerRecursive(17);
-		if (spectated != null) player.Teleport(spectated.transform.position);
-		player.spectateFilter = string.Empty;
-		if (!player.IsFlying) player.SendConsoleCommand("noclip");
-		player.limitNetworking = false;
-		player.UpdateNetworkGroup();
-		Rust.Ai.SimpleAIMemory.RemoveIgnorePlayer(player);
-		BaseEntity.Query.Server.RemovePlayer(player);
-		BaseEntity.Query.Server.AddPlayer(player);
-
-		if (Singleton.ConfigInstance.SpectatingEndTeleportBack && _spectateStartPosition.TryGetValue(player.userID, out var position))
-		{
-			player.Teleport(position);
-		}
-		else
-		{
-			player.Teleport(player.transform.position + (Vector3.up * -3f));
-		}
-
-		// OnCarbonSpectateEnd
-		HookCaller.CallStaticHook(2609635685, player, spectated);
-
-		if (clearUi)
-		{
-			var tab = Singleton.GetTab(player);
-			var ap = Singleton.GetPlayerSession(player);
-			if (tab != null)
-			{
-				EntitiesTab.SelectEntity(tab, ap, spectated);
-				EntitiesTab.DrawEntitySettings(tab, 1, ap);
-				Singleton.Draw(player);
-			}
-		}
 	}
 
 	public static void MutePlayer(BasePlayer player, BasePlayer target, bool wants, string reason = "No reason given")

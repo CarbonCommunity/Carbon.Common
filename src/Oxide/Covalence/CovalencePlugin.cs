@@ -30,12 +30,12 @@ namespace Oxide.Plugins
 
 			public IPlayer FindPlayer(string partialNameOrId)
 			{
-				return All.FirstOrDefault(x => x.Id.Contains(partialNameOrId) || x.Name.Contains(partialNameOrId, CompareOptions.OrdinalIgnoreCase));
+				return All.FirstOrDefault(x => x.Id.Equals(partialNameOrId) || x.Name.Contains(partialNameOrId, CompareOptions.OrdinalIgnoreCase));
 			}
 
 			public IPlayer FindPlayerById(string id)
 			{
-				return All.FirstOrDefault(x => x.Id.Contains(id));
+				return All.FirstOrDefault(x => x.Id.Equals(id));
 			}
 
 			public IPlayer FindPlayerByObj(object obj)
@@ -48,7 +48,7 @@ namespace Oxide.Plugins
 
 			public IEnumerable<IPlayer> FindPlayers(string partialNameOrId)
 			{
-				return All.Where(x => x.Id.Contains(partialNameOrId) || x.Name.Contains(partialNameOrId, CompareOptions.OrdinalIgnoreCase));
+				return All.Where(x => x.Id.Equals(partialNameOrId) || x.Name.Contains(partialNameOrId, CompareOptions.OrdinalIgnoreCase));
 			}
 #endif
 		}

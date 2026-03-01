@@ -198,8 +198,7 @@ public class CarbonAuto : API.Abstracts.CarbonAuto
 
 				if (IsForceModded())
 				{
-					Logger.Warn($" The server Carbon auto options have been changed which are gameplay significant.\n" +
-								$" Any values that aren't \"-1\" will force the server to modded!");
+					Logger.Warn($"Carbon Auto: Gameplay-significant options have been modified. Please run c.whymodded to see why the server's modded");
 				}
 			}
 			catch (Exception ex)

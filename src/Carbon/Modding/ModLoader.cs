@@ -444,138 +444,175 @@ public static partial class ModLoader
 		var fields = type.GetFields(flags | BindingFlags.Public);
 		var properties = type.GetProperties(flags | BindingFlags.Public);
 
+		var hasPrefix = !string.IsNullOrEmpty(prefix);
+
 		foreach (var method in methods)
 		{
-			var chatCommands = method.GetCustomAttributes<ChatCommandAttribute>();
-			var consoleCommands = method.GetCustomAttributes<ConsoleCommandAttribute>();
-			var rconCommands = method.GetCustomAttributes<RConCommandAttribute>();
-			var protectedCommands = method.GetCustomAttributes<ProtectedCommandAttribute>();
-			var commands = method.GetCustomAttributes<CommandAttribute>();
-			var permissions = method.GetCustomAttributes<PermissionAttribute>();
-			var groups = method.GetCustomAttributes<GroupAttribute>();
-			var authLevelAttribute = method.GetCustomAttribute<AuthLevelAttribute>();
-			var cooldown = method.GetCustomAttribute<CooldownAttribute>();
-			var authLevel = authLevelAttribute == null ? -1 : authLevelAttribute.AuthLevel;
-			var ps = permissions.Count() == 0 ? null : permissions?.Select(x => x.Name).ToArray();
-			var gs = groups.Count() == 0 ? null : groups?.Select(x => x.Name).ToArray();
-			var cooldownTime = cooldown == null ? 0 : cooldown.Miliseconds;
-			var doCooldownPenalty = cooldown?.DoCooldownPenalty ?? false;
+			var allAttrs = method.GetCustomAttributes(false);
+			if (allAttrs.Length == 0) continue;
 
-			foreach (var command in commands)
+			int permCount = 0, groupCount = 0;
+			int authLevel = -1;
+			int cooldownTime = 0;
+			bool doCooldownPenalty = false;
+			bool hasAnyCommand = false;
+
+			foreach (var attr in allAttrs)
 			{
-				foreach (var commandName in command.Names)
+				switch (attr)
 				{
-					var name = string.IsNullOrEmpty(prefix) ? commandName : $"{prefix}.{commandName}";
-					Community.Runtime.Core.cmd.AddChatCommand(name, hookable, method, help: string.Empty, reference: method, permissions: ps, groups: gs, authLevel: authLevel, cooldown: cooldownTime, isHidden: hidden, silent: true, doCooldownPenalty: doCooldownPenalty);
-					Community.Runtime.Core.cmd.AddConsoleCommand(name, hookable, method, help: string.Empty, reference: method, permissions: ps, groups: gs, authLevel: authLevel, cooldown: cooldownTime, isHidden: hidden, silent: true, doCooldownPenalty: doCooldownPenalty);
+					case PermissionAttribute: permCount++; break;
+					case GroupAttribute: groupCount++; break;
+					case AuthLevelAttribute al: authLevel = al.AuthLevel; break;
+					case CooldownAttribute cd:
+						cooldownTime = cd.Miliseconds;
+						doCooldownPenalty = cd.DoCooldownPenalty;
+						break;
+					case ChatCommandAttribute:
+					case ConsoleCommandAttribute:
+					case RConCommandAttribute:
+					case ProtectedCommandAttribute:
+					case CommandAttribute:
+						hasAnyCommand = true;
+						break;
 				}
 			}
 
-			foreach (var chatCommand in chatCommands)
+			if (!hasAnyCommand) continue;
+
+			string[] ps = null;
+			if (permCount > 0)
 			{
-				Community.Runtime.Core.cmd.AddChatCommand(string.IsNullOrEmpty(prefix) ? chatCommand.Name : $"{prefix}.{chatCommand.Name}", hookable, method, help: chatCommand.Help, reference: method, permissions: ps, groups: gs, authLevel: authLevel, cooldown: cooldownTime, isHidden: hidden, silent: true, doCooldownPenalty: doCooldownPenalty);
+				ps = new string[permCount];
+				int idx = 0;
+				foreach (var attr in allAttrs)
+					if (attr is PermissionAttribute p) ps[idx++] = p.Name;
 			}
 
-			foreach (var consoleCommand in consoleCommands)
+			string[] gs = null;
+			if (groupCount > 0)
 			{
-				Community.Runtime.Core.cmd.AddConsoleCommand(string.IsNullOrEmpty(prefix) ? consoleCommand.Name : $"{prefix}.{consoleCommand.Name}", hookable,
-					arg =>
-					{
-						var parameters = method.GetParameters();
-						var argBuffer = HookCaller.Caller.AllocateBuffer(parameters.Length);
-						if (argBuffer.Length >= 1)
-						{
-							argBuffer[0] = arg;
-						}
-
-						try
-						{
-							var result = method.Invoke(hookable, argBuffer);
-							if (result != null && arg.Option.PrintOutput)
-							{
-								Logger.Log(result);
-							}
-						}
-						catch (Exception ex)
-						{
-							ex = ex.InnerException;
-							if (arg.IsRcon)
-							{
-								arg.ReplyWith($"Failed executing command ({ex.Message})\n{ex.StackTrace}");
-							}
-							else
-							{
-								Logger.Error($"Failed executing command", ex);
-							}
-						}
-						finally
-						{
-							HookCaller.Caller.ReturnBuffer(argBuffer);
-						}
-						return true;
-					}, help: consoleCommand.Help, reference: method, permissions: ps, groups: gs, authLevel: authLevel, cooldown: cooldownTime, isHidden: hidden, silent: true, doCooldownPenalty: doCooldownPenalty);
+				gs = new string[groupCount];
+				int idx = 0;
+				foreach (var attr in allAttrs)
+					if (attr is GroupAttribute g) gs[idx++] = g.Name;
 			}
 
-			foreach (var protectedCommand in protectedCommands)
-			{
-				Community.Runtime.Core.cmd.AddConsoleCommand(Community.Protect(string.IsNullOrEmpty(prefix) ? protectedCommand.Name : $"{prefix}.{protectedCommand.Name}"), hookable,
-					arg =>
-					{
-						var parameters = method.GetParameters();
-						var argBuffer = HookCaller.Caller.AllocateBuffer(parameters.Length);
-						if (argBuffer.Length >= 1)
-						{
-							argBuffer[0] = arg;
-						}
-						try
-						{
-							var result = method.Invoke(hookable, argBuffer);
-							if (result != null && arg.Option.PrintOutput)
-							{
-								Logger.Log(result);
-							}
-						}
-						finally
-						{
-							HookCaller.Caller.ReturnBuffer(argBuffer);
-						}
-						return true;
-					}, help: protectedCommand.Help, reference: method, permissions: ps, groups: gs, authLevel: authLevel, cooldown: cooldownTime, isHidden: true, silent: true, doCooldownPenalty: doCooldownPenalty);
-			}
+			var parameterCount = method.GetParameters().Length;
 
-			foreach (var rconCommand in rconCommands)
+			foreach (var attr in allAttrs)
 			{
-				var cmd = new API.Commands.Command.RCon
+				switch (attr)
 				{
-					Name = string.IsNullOrEmpty(prefix) ? rconCommand.Name : $"{prefix}.{rconCommand.Name}",
-					Reference = hookable,
-					Callback = arg =>
-					{
-						var parameters = method.GetParameters();
-						var argBuffer = HookCaller.Caller.AllocateBuffer(parameters.Length);
-						if (argBuffer.Length >= 1)
+					case CommandAttribute command:
+						foreach (var commandName in command.Names)
 						{
-							argBuffer[0] = arg.Token ?? arg;
+							var name = hasPrefix ? $"{prefix}.{commandName}" : commandName;
+							Community.Runtime.Core.cmd.AddChatCommand(name, hookable, method, help: string.Empty, reference: method, permissions: ps, groups: gs, authLevel: authLevel, cooldown: cooldownTime, isHidden: hidden, silent: true, doCooldownPenalty: doCooldownPenalty);
+							Community.Runtime.Core.cmd.AddConsoleCommand(name, hookable, method, help: string.Empty, reference: method, permissions: ps, groups: gs, authLevel: authLevel, cooldown: cooldownTime, isHidden: hidden, silent: true, doCooldownPenalty: doCooldownPenalty);
 						}
-						try
-						{
-							var result = method.Invoke(hookable, argBuffer);
-							if (result != null && arg.PrintOutput)
-							{
-								Logger.Log(result);
-							}
-						}
-						finally
-						{
-							HookCaller.Caller.ReturnBuffer(argBuffer);
-						}
-					},
-					Help = rconCommand.Help,
-					Token = rconCommand,
-					CanExecute = (_, _) => true
-				};
+						break;
 
-				Community.Runtime.CommandManager.RegisterCommand(cmd, out _);
+					case ChatCommandAttribute chatCommand:
+						Community.Runtime.Core.cmd.AddChatCommand(hasPrefix ? $"{prefix}.{chatCommand.Name}" : chatCommand.Name, hookable, method, help: chatCommand.Help, reference: method, permissions: ps, groups: gs, authLevel: authLevel, cooldown: cooldownTime, isHidden: hidden, silent: true, doCooldownPenalty: doCooldownPenalty);
+						break;
+
+					case ConsoleCommandAttribute consoleCommand:
+						Community.Runtime.Core.cmd.AddConsoleCommand(hasPrefix ? $"{prefix}.{consoleCommand.Name}" : consoleCommand.Name, hookable,
+							arg =>
+							{
+								var argBuffer = HookCaller.Caller.AllocateBuffer(parameterCount);
+								if (argBuffer.Length >= 1)
+								{
+									argBuffer[0] = arg;
+								}
+
+								try
+								{
+									var result = method.Invoke(hookable, argBuffer);
+									if (result != null && arg.Option.PrintOutput)
+									{
+										Logger.Log(result);
+									}
+								}
+								catch (Exception ex)
+								{
+									ex = ex.InnerException;
+									if (arg.IsRcon)
+									{
+										arg.ReplyWith($"Failed executing command ({ex.Message})\n{ex.StackTrace}");
+									}
+									else
+									{
+										Logger.Error($"Failed executing command", ex);
+									}
+								}
+								finally
+								{
+									HookCaller.Caller.ReturnBuffer(argBuffer);
+								}
+								return true;
+							}, help: consoleCommand.Help, reference: method, permissions: ps, groups: gs, authLevel: authLevel, cooldown: cooldownTime, isHidden: hidden, silent: true, doCooldownPenalty: doCooldownPenalty);
+						break;
+
+					case ProtectedCommandAttribute protectedCommand:
+						Community.Runtime.Core.cmd.AddConsoleCommand(Community.Protect(hasPrefix ? $"{prefix}.{protectedCommand.Name}" : protectedCommand.Name), hookable,
+							arg =>
+							{
+								var argBuffer = HookCaller.Caller.AllocateBuffer(parameterCount);
+								if (argBuffer.Length >= 1)
+								{
+									argBuffer[0] = arg;
+								}
+								try
+								{
+									var result = method.Invoke(hookable, argBuffer);
+									if (result != null && arg.Option.PrintOutput)
+									{
+										Logger.Log(result);
+									}
+								}
+								finally
+								{
+									HookCaller.Caller.ReturnBuffer(argBuffer);
+								}
+								return true;
+							}, help: protectedCommand.Help, reference: method, permissions: ps, groups: gs, authLevel: authLevel, cooldown: cooldownTime, isHidden: true, silent: true, doCooldownPenalty: doCooldownPenalty);
+						break;
+
+					case RConCommandAttribute rconCommand:
+						var cmd = new API.Commands.Command.RCon
+						{
+							Name = hasPrefix ? $"{prefix}.{rconCommand.Name}" : rconCommand.Name,
+							Reference = hookable,
+							Callback = arg =>
+							{
+								var argBuffer = HookCaller.Caller.AllocateBuffer(parameterCount);
+								if (argBuffer.Length >= 1)
+								{
+									argBuffer[0] = arg.Token ?? arg;
+								}
+								try
+								{
+									var result = method.Invoke(hookable, argBuffer);
+									if (result != null && arg.PrintOutput)
+									{
+										Logger.Log(result);
+									}
+								}
+								finally
+								{
+									HookCaller.Caller.ReturnBuffer(argBuffer);
+								}
+							},
+							Help = rconCommand.Help,
+							Token = rconCommand,
+							CanExecute = (_, _) => true
+						};
+
+						Community.Runtime.CommandManager.RegisterCommand(cmd, out _);
+						break;
+				}
 			}
 
 			if (ps != null && ps.Length > 0)
@@ -594,20 +631,52 @@ public static partial class ModLoader
 
 		foreach (var field in fields)
 		{
-			var var = field.GetCustomAttribute<CommandVarAttribute>();
-			var permissions = field.GetCustomAttributes<PermissionAttribute>();
-			var groups = field.GetCustomAttributes<GroupAttribute>();
-			var authLevelAttribute = field.GetCustomAttribute<AuthLevelAttribute>();
-			var cooldown = field.GetCustomAttribute<CooldownAttribute>();
-			var authLevel = authLevelAttribute == null ? -1 : authLevelAttribute.AuthLevel;
-			var ps = permissions.Count() == 0 ? null : permissions?.Select(x => x.Name).ToArray();
-			var gs = groups.Count() == 0 ? null : groups?.Select(x => x.Name).ToArray();
-			var cooldownTime = cooldown == null ? 0 : cooldown.Miliseconds;
-			var doCooldownPenalty = cooldown?.DoCooldownPenalty ?? false;
+			var allAttrs = field.GetCustomAttributes(false);
+			if (allAttrs.Length == 0) continue;
 
-			if (var != null)
+			CommandVarAttribute cmdVar = null;
+			int authLevel = -1;
+			int cooldownTime = 0;
+			bool doCooldownPenalty = false;
+			int permCount = 0, groupCount = 0;
+
+			foreach (var attr in allAttrs)
 			{
-				Community.Runtime.Core.cmd.AddConsoleCommand(string.IsNullOrEmpty(prefix) ? var.Name : $"{prefix}.{var.Name}", hookable, args =>
+				switch (attr)
+				{
+					case CommandVarAttribute cv: cmdVar = cv; break;
+					case AuthLevelAttribute al: authLevel = al.AuthLevel; break;
+					case CooldownAttribute cd:
+						cooldownTime = cd.Miliseconds;
+						doCooldownPenalty = cd.DoCooldownPenalty;
+						break;
+					case PermissionAttribute: permCount++; break;
+					case GroupAttribute: groupCount++; break;
+				}
+			}
+
+			if (cmdVar == null) continue;
+
+			string[] ps = null;
+			if (permCount > 0)
+			{
+				ps = new string[permCount];
+				int idx = 0;
+				foreach (var attr in allAttrs)
+					if (attr is PermissionAttribute p) ps[idx++] = p.Name;
+			}
+
+			string[] gs = null;
+			if (groupCount > 0)
+			{
+				gs = new string[groupCount];
+				int idx = 0;
+				foreach (var attr in allAttrs)
+					if (attr is GroupAttribute g) gs[idx++] = g.Name;
+			}
+
+			{
+				Community.Runtime.Core.cmd.AddConsoleCommand(hasPrefix ? $"{prefix}.{cmdVar.Name}" : cmdVar.Name, hookable, args =>
 				{
 					var value = field.GetValue(hookable);
 
@@ -650,30 +719,62 @@ public static partial class ModLoader
 					}
 
 					value = field.GetValue(hookable);
-					if (value != null && var.Protected) value = new string('*', value.ToString().Length);
+					if (value != null && cmdVar.Protected) value = new string('*', value.ToString().Length);
 
 					args.ReplyWith($"{args.cmd.FullName}: \"{value}\"");
 					return true;
-				}, help: var.Help, reference: field, permissions: ps, groups: gs, authLevel: authLevel, cooldown: cooldownTime, @protected: var.Protected, isHidden: hidden, silent: true, doCooldownPenalty: doCooldownPenalty);
+				}, help: cmdVar.Help, reference: field, permissions: ps, groups: gs, authLevel: authLevel, cooldown: cooldownTime, @protected: cmdVar.Protected, isHidden: hidden, silent: true, doCooldownPenalty: doCooldownPenalty);
 			}
 		}
 
 		foreach (var property in properties)
 		{
-			var var = property.GetCustomAttribute<CommandVarAttribute>();
-			var permissions = property.GetCustomAttributes<PermissionAttribute>();
-			var groups = property.GetCustomAttributes<GroupAttribute>();
-			var authLevelAttribute = property.GetCustomAttribute<AuthLevelAttribute>();
-			var cooldown = property.GetCustomAttribute<CooldownAttribute>();
-			var authLevel = authLevelAttribute == null ? -1 : authLevelAttribute.AuthLevel;
-			var ps = permissions.Count() == 0 ? null : permissions?.Select(x => x.Name).ToArray();
-			var gs = groups.Count() == 0 ? null : groups?.Select(x => x.Name).ToArray();
-			var cooldownTime = cooldown == null ? 0 : cooldown.Miliseconds;
-			var doCooldownPenalty = cooldown?.DoCooldownPenalty ?? false;
+			var allAttrs = property.GetCustomAttributes(false);
+			if (allAttrs.Length == 0) continue;
 
-			if (var != null)
+			CommandVarAttribute cmdVar = null;
+			int authLevel = -1;
+			int cooldownTime = 0;
+			bool doCooldownPenalty = false;
+			int permCount = 0, groupCount = 0;
+
+			foreach (var attr in allAttrs)
 			{
-				Community.Runtime.Core.cmd.AddConsoleCommand(string.IsNullOrEmpty(prefix) ? var.Name : $"{prefix}.{var.Name}", hookable, args =>
+				switch (attr)
+				{
+					case CommandVarAttribute cv: cmdVar = cv; break;
+					case AuthLevelAttribute al: authLevel = al.AuthLevel; break;
+					case CooldownAttribute cd:
+						cooldownTime = cd.Miliseconds;
+						doCooldownPenalty = cd.DoCooldownPenalty;
+						break;
+					case PermissionAttribute: permCount++; break;
+					case GroupAttribute: groupCount++; break;
+				}
+			}
+
+			if (cmdVar == null) continue;
+
+			string[] ps = null;
+			if (permCount > 0)
+			{
+				ps = new string[permCount];
+				int idx = 0;
+				foreach (var attr in allAttrs)
+					if (attr is PermissionAttribute p) ps[idx++] = p.Name;
+			}
+
+			string[] gs = null;
+			if (groupCount > 0)
+			{
+				gs = new string[groupCount];
+				int idx = 0;
+				foreach (var attr in allAttrs)
+					if (attr is GroupAttribute g) gs[idx++] = g.Name;
+			}
+
+			{
+				Community.Runtime.Core.cmd.AddConsoleCommand(hasPrefix ? $"{prefix}.{cmdVar.Name}" : cmdVar.Name, hookable, args =>
 				{
 					var value = property.GetValue(hookable);
 
@@ -681,34 +782,14 @@ public static partial class ModLoader
 					{
 						try
 						{
-							if (property.PropertyType == typeof(string))
-							{
-								value = args.GetString(0);
-							}
-							else if (property.PropertyType == typeof(bool))
-							{
-								value = args.GetBool(0);
-							}
-							if (property.PropertyType == typeof(int))
-							{
-								value = args.GetInt(0);
-							}
-							if (property.PropertyType == typeof(uint))
-							{
-								value = args.GetUInt(0);
-							}
-							else if (property.PropertyType == typeof(float))
-							{
-								value = args.GetFloat(0);
-							}
-							else if (property.PropertyType == typeof(long))
-							{
-								value = args.GetLong(0);
-							}
-							else if (property.PropertyType == typeof(ulong))
-							{
-								value = args.GetULong(0);
-							}
+							var pt = property.PropertyType;
+							if (pt == typeof(string)) value = args.GetString(0);
+							else if (pt == typeof(bool)) value = args.GetBool(0);
+							else if (pt == typeof(int)) value = args.GetInt(0);
+							else if (pt == typeof(uint)) value = args.GetUInt(0);
+							else if (pt == typeof(float)) value = args.GetFloat(0);
+							else if (pt == typeof(long)) value = args.GetLong(0);
+							else if (pt == typeof(ulong)) value = args.GetULong(0);
 
 							property.SetValue(hookable, value);
 						}
@@ -716,17 +797,13 @@ public static partial class ModLoader
 					}
 
 					value = property.GetValue(hookable);
-					if (value != null && var.Protected) value = new string('*', value.ToString().Length);
+					if (value != null && cmdVar.Protected) value = new string('*', value.ToString().Length);
 
 					args.ReplyWith($"{args.cmd.FullName}: \"{value}\"");
 					return true;
-				}, help: var.Help, reference: property, permissions: ps, groups: gs, authLevel: authLevel, cooldown: cooldownTime, @protected: var.Protected, isHidden: hidden, silent: true, doCooldownPenalty: doCooldownPenalty);
+				}, help: cmdVar.Help, reference: property, permissions: ps, groups: gs, authLevel: authLevel, cooldown: cooldownTime, @protected: cmdVar.Protected, isHidden: hidden, silent: true, doCooldownPenalty: doCooldownPenalty);
 			}
 		}
-
-		Array.Clear(methods, 0, methods.Length);
-		Array.Clear(fields, 0, fields.Length);
-		Array.Clear(properties, 0, properties.Length);
 	}
 	public static void RemoveCommands(BaseHookable hookable)
 	{

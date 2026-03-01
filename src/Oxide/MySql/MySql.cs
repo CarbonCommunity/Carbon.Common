@@ -1,6 +1,6 @@
 ﻿using System.Data;
 using System.Data.Common;
-using MySql.Data.MySqlClient;
+using MySqlConnector;
 using Logger = Carbon.Logger;
 
 namespace Oxide.Core.MySql.Libraries;
@@ -56,7 +56,12 @@ public class MySql : Library, IDatabaseProvider
 	}
 
 	public Connection OpenDb(string host, int port, string database, string user, string password, Plugin plugin, bool persistent = false)
-		=> OpenDb($"Server={host};Port={port};Database={database};User={user};Password={password};Pooling=false;default command timeout=120;Allow Zero Datetime=true;", plugin, persistent);
+	{
+		return OpenDb(
+			$"Server={host};Port={port};Database={database};User={user};Password={password};" +
+			$"Pooling=false;default command timeout=120;Allow Zero Datetime=true;SslMode=Disabled;AllowPublicKeyRetrieval=true;CharSet=utf8mb4;",
+			plugin, persistent);
+	}
 
 	public Connection OpenDb(string conStr, Plugin plugin, bool persistent = false)
 	{
@@ -174,7 +179,6 @@ public class MySql : Library, IDatabaseProvider
 	{
 		internal object _cmdSource;
 		internal object _connectionSource;
-		internal IAsyncResult _result;
 
 		internal MySqlCommand _cmd()
 		{
@@ -223,15 +227,13 @@ public class MySql : Library, IDatabaseProvider
 				_cmd().CommandTimeout = 120;
 				_cmd().CommandText = Sql.SQL;
 				Sql.AddParams(_cmd(), Sql.Arguments, "@");
-				_result = (NonQuery ? _cmd().BeginExecuteNonQuery() : _cmd().BeginExecuteReader());
-				_result.AsyncWaitHandle.WaitOne();
 				if (NonQuery)
 				{
-					nonQueryResult = _cmd().EndExecuteNonQuery(_result);
+					nonQueryResult = _cmd().ExecuteNonQuery();
 				}
 				else
 				{
-					using var mySqlDataReader = _cmd().EndExecuteReader(_result);
+					using var mySqlDataReader = _cmd().ExecuteReader();
 					list = new List<Dictionary<string, object>>();
 					while (mySqlDataReader.Read() && (!Connection.ConnectionPersistent || (Connection.Con.State != ConnectionState.Closed && Connection.Con.State != ConnectionState.Broken)))
 					{

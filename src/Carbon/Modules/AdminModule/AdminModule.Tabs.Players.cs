@@ -294,28 +294,6 @@ public partial class AdminModule
 			{
 				PrivateMessagePlayer(ap.Player, player, args.ToString(" "));
 			});
-			if (aap.Player != player && aap.Player.spectateFilter != player.UserIDString)
-			{
-				tab.AddButton(column, "Spectate", ap =>
-				{
-					StartSpectating(ap.Player, player);
-					ShowInfo(column, tab, ap, player);
-				});
-			}
-
-			if (Singleton.HasAccess(aap.Player, "entities.spectate_players"))
-			{
-				if (!string.IsNullOrEmpty(aap.Player.spectateFilter) &&
-				    (aap.Player.UserIDString == player.UserIDString ||
-				     aap.Player.spectateFilter == player.UserIDString))
-				{
-					tab.AddButton(column, "End Spectating", ap =>
-					{
-						StopSpectating(ap.Player);
-						ShowInfo(column, tab, ap, player);
-					}, _ => Tab.OptionButton.Types.Selected);
-				}
-			}
 
 			if (Singleton.HasAccess(aap.Player, "entities.blind_players"))
 			{
